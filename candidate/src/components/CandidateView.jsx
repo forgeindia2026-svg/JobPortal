@@ -201,37 +201,7 @@ export default function CandidateView({ API_URL, currentUser }) {
           {/* PAGE 1: CATEGORIES VIEW */}
           {!selectedCategory && !selectedCompany && (
             <div>
-              {/* Vibrant Hero Banner */}
-              <div className="portal-hero-card">
-                <div className="hero-content">
-                  <div className="hero-pill-badge">
-                    <Sparkles size={14} /> Official Recruitment Portal
-                  </div>
-                  <h1 className="hero-title">
-                    Discover Your Next <span className="hero-gradient-text">Career Step</span>
-                  </h1>
-                  <p className="hero-subtitle">
-                    Select a job category below to explore top verified companies, instant interview rounds, and direct openings.
-                  </p>
 
-                  {/* Search Bar */}
-                  <div className="hero-search-wrapper">
-                    <Search className="search-icon" size={20} />
-                    <input
-                      type="text"
-                      className="hero-search-input"
-                      placeholder="Search jobs by title, company, or location (e.g., Chennai, Relationship Officer)..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {searchQuery && (
-                      <button className="search-clear-btn" onClick={() => setSearchQuery('')}>
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
 
               {/* SECTION HEADER */}
               <div className="section-header">
