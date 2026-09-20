@@ -119,107 +119,170 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
             </div>
           </div>
 
-          {/* BOX BOX MODEL DESIGN FOR TRAINING PERIOD PHASES */}
-          {trainingList.length > 0 && (
+          {/* BOX MODEL DESIGN FOR TRAINING PERIOD & FEES */}
+          <div style={{
+            background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+            border: '1.5px solid #bfdbfe',
+            borderRadius: '14px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.65rem' }}>
+              <Award size={20} color="#2563eb" />
+              <div>
+                <h4 style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 700, margin: 0 }}>
+                  Training Program & Fees
+                </h4>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  Complete breakdown of training period and course charges
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 1: TRAINING FEE & FEE REFUND SUMMARY CARD (ALWAYS VISIBLE) */}
             <div style={{
-              background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
-              border: '1.5px solid #bfdbfe',
-              borderRadius: '14px',
-              padding: '1.25rem',
+              background: '#ffffff',
+              border: '1.5px solid #93c5fd',
+              borderRadius: '12px',
+              padding: '1rem 1.25rem',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.08)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1rem'
+              gap: '0.75rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px stroke #e2e8f0', paddingBottom: '0.65rem' }}>
-                <Award size={20} color="#2563eb" />
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 700, margin: 0 }}>
-                    Training Period Structure
-                  </h4>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                    Multi-phase training schedule & stipend breakdown
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e40af', background: '#dbeafe', padding: '3px 10px', borderRadius: '6px' }}>
+                    💳 CARD 1: TRAINING FEE DETAILS
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: job.feeRefundType && job.feeRefundType.includes('100%') ? '#15803d' : '#1d4ed8',
+                  background: job.feeRefundType && job.feeRefundType.includes('100%') ? '#dcfce7' : '#eff6ff',
+                  border: `1px solid ${job.feeRefundType && job.feeRefundType.includes('100%') ? '#86efac' : '#bfdbfe'}`,
+                  padding: '4px 12px',
+                  borderRadius: '20px'
+                }}>
+                  🔄 {job.feeRefundType || '100% Refundable'}
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '4px' }}>
+                <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                    Training Fee Amount
+                  </span>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 800, color: job.trainingFee && job.trainingFee.toLowerCase().includes('free') ? '#16a34a' : '#0f172a' }}>
+                    {job.trainingFee || 'No Upfront Fee / Free'}
+                  </span>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                    Fee Refund Eligibility
+                  </span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#2563eb' }}>
+                    {job.feeRefundType || 'Subject to probation policy'}
                   </span>
                 </div>
               </div>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '1rem'
-              }}>
-                {trainingList.map((phase, idx) => (
-                  <div key={idx} style={{
-                    background: '#ffffff',
-                    border: '1.5px solid #3b82f6',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.1)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '10px',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                      color: '#ffffff',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      padding: '3px 12px 3px 10px',
-                      borderBottomLeftRadius: '10px'
-                    }}>
-                      PHASE {idx + 1}
-                    </div>
-
-                    <div style={{ marginTop: '6px' }}>
-                      <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
-                        Duration
-                      </span>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
-                        {phase.duration || 'N/A'}
-                      </span>
-                    </div>
-
-                    {phase.mode && (
-                      <div>
-                        <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
-                          Training Mode
-                        </span>
-                        <span style={{
-                          fontSize: '0.825rem',
-                          fontWeight: 700,
-                          color: '#1d4ed8',
-                          background: '#eff6ff',
-                          border: '1px solid #bfdbfe',
-                          padding: '3px 10px',
-                          borderRadius: '6px',
-                          display: 'inline-block',
-                          marginTop: '2px'
-                        }}>
-                          {phase.mode}
-                        </span>
-                      </div>
-                    )}
-
-                    {phase.stipend && (
-                      <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
-                        <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
-                          Stipend / Salary
-                        </span>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#047857' }}>
-                          {phase.stipend}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {job.feeRefundDetails && (
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', fontSize: '0.825rem', color: '#1e40af', fontWeight: 600 }}>
+                  ℹ️ <strong>Terms:</strong> {job.feeRefundDetails}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* CARD 2: STEP-BY-STEP TRAINING PERIOD PHASES */}
+            {trainingList.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e40af', background: '#dbeafe', padding: '3px 10px', borderRadius: '6px', width: 'fit-content' }}>
+                  📅 CARD 2: STEP-BY-STEP TRAINING PHASES
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '1rem'
+                }}>
+                  {trainingList.map((phase, idx) => (
+                    <div key={idx} style={{
+                      background: '#ffffff',
+                      border: '1.5px solid #3b82f6',
+                      borderRadius: '12px',
+                      padding: '1rem',
+                      boxShadow: '0 4px 14px rgba(59, 130, 246, 0.1)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
+                        color: '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '3px 12px 3px 10px',
+                        borderBottomLeftRadius: '10px'
+                      }}>
+                        PHASE {idx + 1}
+                      </div>
+
+                      <div style={{ marginTop: '6px' }}>
+                        <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                          Duration
+                        </span>
+                        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>
+                          {phase.duration || 'N/A'}
+                        </span>
+                      </div>
+
+                      {phase.mode && (
+                        <div>
+                          <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                            Training Mode
+                          </span>
+                          <span style={{
+                            fontSize: '0.825rem',
+                            fontWeight: 700,
+                            color: '#1d4ed8',
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            padding: '3px 10px',
+                            borderRadius: '6px',
+                            display: 'inline-block',
+                            marginTop: '2px'
+                          }}>
+                            {phase.mode}
+                          </span>
+                        </div>
+                      )}
+
+                      {phase.stipend && (
+                        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                          <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                            Stipend / Salary
+                          </span>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#047857' }}>
+                            {phase.stipend}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div>
             <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>Job Overview</h4>
@@ -275,54 +338,119 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
             </div>
           )}
 
-          {job.interviewSteps && job.interviewSteps.length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #ffffff 0%, #faf5ff 100%)',
+            border: '1.5px solid #e9d5ff',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            boxShadow: '0 4px 20px rgba(168, 85, 247, 0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f3e8ff', paddingBottom: '0.75rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={18} color="#9333ea" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: 800, margin: 0 }}>
+                  Selection Process & Interview Crack Terms
+                </h4>
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  Interview rounds, selection fees & qualification guidelines
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 1: INTERVIEW SELECTION & CRACK FEE BOX (ALWAYS VISIBLE) */}
             <div style={{
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              border: '1.5px solid #e2e8f0',
-              borderRadius: '16px',
-              padding: '1.5rem',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
+              background: '#ffffff',
+              border: '1.5px solid #c084fc',
+              borderRadius: '12px',
+              padding: '1rem 1.25rem',
+              boxShadow: '0 4px 12px rgba(168, 85, 247, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Clock size={18} color="#2563eb" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', padding: '3px 10px', borderRadius: '6px' }}>
+                  🏆 CARD 1: INTERVIEW SELECTION & CRACK FEE
+                </span>
+                <span style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: job.interviewFeeStage && job.interviewFeeStage.includes('Free') ? '#15803d' : '#7e22ce',
+                  background: job.interviewFeeStage && job.interviewFeeStage.includes('Free') ? '#dcfce7' : '#faf5ff',
+                  border: `1px solid ${job.interviewFeeStage && job.interviewFeeStage.includes('Free') ? '#86efac' : '#e9d5ff'}`,
+                  padding: '4px 12px',
+                  borderRadius: '20px'
+                }}>
+                  ⏳ {job.interviewFeeStage || 'After Clearing Interview'}
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '4px' }}>
+                <div style={{ background: '#faf5ff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #f3e8ff' }}>
+                  <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                    Interview Selection / Crack Fee
+                  </span>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 800, color: job.interviewCrackFee && job.interviewCrackFee.toLowerCase().includes('free') ? '#16a34a' : '#6b21a8' }}>
+                    {job.interviewCrackFee || '100% Free Selection'}
+                  </span>
                 </div>
-                <div>
-                  <h4 style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: 800, margin: 0 }}>
-                    Recruitment & Selection Process
-                  </h4>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                    Step-by-step interview rounds & selection pipeline
+
+                <div style={{ background: '#faf5ff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                    Fee Payment Stage
+                  </span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#7e22ce' }}>
+                    {job.interviewFeeStage || 'After Passing Final Interview'}
                   </span>
                 </div>
               </div>
 
-              <div className="interview-stepper-vertical">
-                {job.interviewSteps.map((step, idx) => (
-                  <React.Fragment key={idx}>
-                    <div className="stepper-step-card-vertical">
-                      <div className="stepper-badge-row">
-                        <span className="stepper-num-badge">{step.stepNumber || idx + 1}</span>
-                        <span className="stepper-round-label">ROUND {idx + 1}</span>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h5 className="stepper-step-title">{step.title}</h5>
-                        {step.description && (
-                          <p className="stepper-step-desc">{step.description}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {idx < job.interviewSteps.length - 1 && (
-                      <div className="stepper-vertical-connector">
-                        <ChevronDown size={22} color="#3b82f6" />
-                      </div>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
+              {job.interviewFeeDetails && (
+                <div style={{ background: '#f3e8ff', border: '1px solid #d8b4fe', borderRadius: '8px', padding: '8px 12px', fontSize: '0.825rem', color: '#6b21a8', fontWeight: 600 }}>
+                  ℹ️ <strong>Selection Terms:</strong> {job.interviewFeeDetails}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* CARD 2: VERTICAL STEPPER INTERVIEW ROUNDS */}
+            {job.interviewSteps && job.interviewSteps.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', padding: '3px 10px', borderRadius: '6px', width: 'fit-content' }}>
+                  🪜 CARD 2: SEQUENTIAL INTERVIEW ROUNDS
+                </div>
+
+                <div className="interview-stepper-vertical">
+                  {job.interviewSteps.map((step, idx) => (
+                    <React.Fragment key={idx}>
+                      <div className="stepper-step-card-vertical">
+                        <div className="stepper-badge-row">
+                          <span className="stepper-num-badge">{step.stepNumber || idx + 1}</span>
+                          <span className="stepper-round-label">ROUND {idx + 1}</span>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <h5 className="stepper-step-title">{step.title}</h5>
+                          {step.description && (
+                            <p className="stepper-step-desc">{step.description}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {idx < job.interviewSteps.length - 1 && (
+                        <div className="stepper-vertical-connector">
+                          <ChevronDown size={22} color="#3b82f6" />
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {job.documentsRequired && job.documentsRequired.length > 0 && (
             <div>

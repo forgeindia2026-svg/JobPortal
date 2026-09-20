@@ -53,6 +53,12 @@ const jobSchema = new mongoose.Schema({
   qualification: String,
   salary: String,
   trainingPeriod: String,
+  trainingFee: String,
+  feeRefundType: String,
+  feeRefundDetails: String,
+  interviewCrackFee: String,
+  interviewFeeStage: String,
+  interviewFeeDetails: String,
   trainingDetails: mongoose.Schema.Types.Mixed,
   trainingPhases: [{
     duration: String,
@@ -74,7 +80,7 @@ const jobSchema = new mongoose.Schema({
   status: { type: String, default: 'Active' },
   createdAt: { type: String, default: () => new Date().toISOString() },
   updatedAt: String
-});
+}, { strict: false });
 
 const candidateSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },

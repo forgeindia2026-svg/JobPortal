@@ -12,11 +12,19 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [salary, setSalary] = useState('');
   const [trainingPeriod, setTrainingPeriod] = useState('');
   
-  // Structured Multi-Phase Training Period States
+  // Structured Multi-Phase Training Period & Fee Refund States
   const [hasTraining, setHasTraining] = useState('Yes');
+  const [trainingFee, setTrainingFee] = useState('');
+  const [feeRefundType, setFeeRefundType] = useState('100% Refundable');
+  const [feeRefundDetails, setFeeRefundDetails] = useState('');
   const [trainingPhases, setTrainingPhases] = useState([
     { duration: '', mode: '', stipend: '' }
   ]);
+
+  // Interview Crack / Selection Fee States
+  const [interviewCrackFee, setInterviewCrackFee] = useState('');
+  const [interviewFeeStage, setInterviewFeeStage] = useState('After Clearing Interview');
+  const [interviewFeeDetails, setInterviewFeeDetails] = useState('');
 
   const [openings, setOpenings] = useState('');
   const [description, setDescription] = useState('');
@@ -45,6 +53,12 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setQualification(jobToEdit.qualification || '');
       setSalary(jobToEdit.salary || '');
       setTrainingPeriod(jobToEdit.trainingPeriod || '');
+      setTrainingFee(jobToEdit.trainingFee || '');
+      setFeeRefundType(jobToEdit.feeRefundType || '100% Refundable');
+      setFeeRefundDetails(jobToEdit.feeRefundDetails || '');
+      setInterviewCrackFee(jobToEdit.interviewCrackFee || '');
+      setInterviewFeeStage(jobToEdit.interviewFeeStage || 'After Clearing Interview');
+      setInterviewFeeDetails(jobToEdit.interviewFeeDetails || '');
       
       if (jobToEdit.trainingPhases && jobToEdit.trainingPhases.length > 0) {
         setHasTraining(jobToEdit.hasTraining !== undefined ? jobToEdit.hasTraining : 'Yes');
@@ -84,6 +98,12 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setQualification('');
       setSalary('');
       setTrainingPeriod('');
+      setTrainingFee('');
+      setFeeRefundType('100% Refundable');
+      setFeeRefundDetails('');
+      setInterviewCrackFee('');
+      setInterviewFeeStage('After Clearing Interview');
+      setInterviewFeeDetails('');
       
       setHasTraining('Yes');
       setTrainingPhases([{ duration: '', mode: '', stipend: '' }]);
@@ -105,8 +125,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const handleAddTrainingPhase = () => {
     setTrainingPhases([...trainingPhases, { duration: '', mode: '', stipend: '' }]);
   };
-  const handleRemoveTrainingPhase = (idx) => {
-    setTrainingPhases(trainingPhases.filter((_, i) => i !== idx));
+  const handleRemoveTrainingPhase = (index) => {
+    setTrainingPhases(trainingPhases.filter((_, i) => i !== index));
   };
 
   const handleAddResponsibility = () => setResponsibilities([...responsibilities, '']);
@@ -150,6 +170,12 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         qualification,
         salary,
         trainingPeriod: formattedTrainingPeriod,
+        trainingFee,
+        feeRefundType,
+        feeRefundDetails,
+        interviewCrackFee,
+        interviewFeeStage,
+        interviewFeeDetails,
         trainingPhases: validPhases,
         hasTraining,
         openings: Number(openings),
@@ -326,7 +352,76 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
               </div>
 
               {hasTraining === 'Yes' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* CARD 1: Training Fee & Fee Refund Policy Box */}
+                  <div style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #93c5fd',
+                    borderRadius: '10px',
+                    padding: '1rem',
+                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.06)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1e40af', background: '#dbeafe', padding: '3px 10px', borderRadius: '6px' }}>
+                        💳 CARD 1: Training Fee & Fee Refund Policy
+                      </span>
+                    </div>
+
+                    <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                          Training Fee / Course Charges
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="e.g. ₹25,000 / Free / Fully Sponsored"
+                          value={trainingFee}
+                          onChange={e => setTrainingFee(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                          Fee Refund Policy / Type
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          list="fee-refund-policy-list"
+                          placeholder="Type manually or select (e.g. 100% Refundable / Refunded Post Probation)"
+                          value={feeRefundType}
+                          onChange={e => setFeeRefundType(e.target.value)}
+                        />
+                        <datalist id="fee-refund-policy-list">
+                          <option value="100% Refundable" />
+                          <option value="50% Refundable" />
+                          <option value="Refunded Post-Probation" />
+                          <option value="Salary Deduction (No Upfront Fee)" />
+                          <option value="Fully Sponsored by Bank / Company" />
+                          <option value="Non-Refundable" />
+                        </datalist>
+                      </div>
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                        Terms & Conditions
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="e.g. 100% Fee refunded in 3 monthly installments after completing 6 months of continuous employment"
+                        value={feeRefundDetails}
+                        onChange={e => setFeeRefundDetails(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* CARD 2: Multi-Phase Training Breakdown */}
+                  <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1e40af', background: '#eff6ff', padding: '4px 10px', borderRadius: '6px', width: 'fit-content', border: '1px solid #bfdbfe' }}>
+                    📅 CARD 2: Training Period Phase Breakdown
+                  </div>
+
                   {trainingPhases.map((phase, idx) => (
                     <div
                       key={idx}
@@ -518,13 +613,86 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
               />
             </div>
 
-            <div style={{ marginBottom: '1.25rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label className="form-label" style={{ margin: 0 }}>Interview Process Steps</label>
-                <button type="button" className="btn-secondary" onClick={handleAddInterviewStep} style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+            {/* STRUCTURED INTERVIEW PROCESS & SELECTION CRACK FEE SECTION */}
+            <div style={{ marginBottom: '1.25rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <label className="form-label" style={{ margin: 0, fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>
+                  🎯 Interview Process & Selection Fee Terms
+                </label>
+                <button type="button" className="btn-secondary" onClick={handleAddInterviewStep} style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Plus size={14} /> Add Step
                 </button>
               </div>
+
+              {/* CARD 1: INTERVIEW CRACK / SELECTION FEE BOX */}
+              <div style={{
+                background: '#ffffff',
+                border: '1.5px solid #a855f7',
+                borderRadius: '10px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                boxShadow: '0 2px 8px rgba(168, 85, 247, 0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', padding: '3px 10px', borderRadius: '6px' }}>
+                    🏆 CARD 1: Interview Selection / Crack Fee & Guidelines
+                  </span>
+                </div>
+
+                <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                      Interview Crack / Selection Fee
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. ₹5,000 / No Fee (100% Free Selection)"
+                      value={interviewCrackFee}
+                      onChange={e => setInterviewCrackFee(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                      Payment Stage / Timing
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      list="payment-stage-list"
+                      placeholder="Type manually or select (e.g. After Clearing Interview / Offer Letter)"
+                      value={interviewFeeStage}
+                      onChange={e => setInterviewFeeStage(e.target.value)}
+                    />
+                    <datalist id="payment-stage-list">
+                      <option value="After Clearing Interview" />
+                      <option value="After Receiving Offer Letter" />
+                      <option value="Deducted After Joining (First Salary)" />
+                      <option value="During Pre-Boarding Training" />
+                      <option value="100% Free (No Selection Fee)" />
+                    </datalist>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                    Selection Fee Guidelines & Conditions
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Amount is payable ONLY after passing final interview round and receiving official selection confirmation"
+                    value={interviewFeeDetails}
+                    onChange={e => setInterviewFeeDetails(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* CARD 2: VERTICAL STEPPER INTERVIEW ROUNDS */}
+              <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', padding: '4px 10px', borderRadius: '6px', width: 'fit-content', border: '1px solid #d8b4fe', marginBottom: '0.75rem' }}>
+                🪜 CARD 2: Sequential Interview Process Steps
+              </div>
+
               {interviewSteps.map((step, idx) => (
                 <div key={idx} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 32px', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748b', textAlign: 'center' }}>
