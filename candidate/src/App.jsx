@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import CandidateNavbar from './components/CandidateNavbar';
 import CandidateView from './components/CandidateView';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function App() {
   const [currentUser] = useState({
