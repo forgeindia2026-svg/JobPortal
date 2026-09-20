@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect width="240" height="240" rx="36" fill="#c41230"/>
+  <g transform="translate(20, 20)">
+    <!-- Aditya Birla Sunburst Triangle -->
+    <polygon points="100,25 160,115 40,115" fill="#ffcb05"/>
+    <polygon points="100,45 140,105 60,105" fill="#c41230"/>
+    <polygon points="100,60 125,98 75,98" fill="#ffcb05"/>
+    <text x="100" y="152" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">ADITYA BIRLA</text>
+    <text x="100" y="174" font-family="'Inter', 'Arial', sans-serif" font-weight="800" font-size="14" fill="#ffcb05" text-anchor="middle" letter-spacing="1">CAPITAL</text>
+  </g>
+</svg>

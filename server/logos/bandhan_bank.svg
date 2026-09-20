@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect width="240" height="240" rx="36" fill="#002b49"/>
+  <g transform="translate(20, 20)">
+    <!-- Bandhan Flame Symbol -->
+    <path d="M100 30 C65 65, 60 110, 100 145 C140 110, 135 65, 100 30 Z" fill="#f36e21"/>
+    <circle cx="100" cy="90" r="18" fill="#ffffff"/>
+    <text x="100" y="180" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle">Bandhan Bank</text>
+  </g>
+</svg>

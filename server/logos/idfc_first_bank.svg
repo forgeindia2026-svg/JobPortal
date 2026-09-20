@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect width="240" height="240" rx="36" fill="#990000"/>
+  <g transform="translate(12, 20)">
+    <text x="108" y="90" font-family="'Outfit', 'Arial Black', sans-serif" font-weight="900" font-size="30" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">IDFC FIRST</text>
+    <text x="108" y="140" font-family="'Outfit', 'Arial', sans-serif" font-weight="800" font-size="28" fill="#ffcc00" text-anchor="middle">Bank</text>
+    <rect x="48" y="155" width="120" height="4" rx="2" fill="#ffcc00"/>
+  </g>
+</svg>

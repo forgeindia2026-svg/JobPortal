@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect width="240" height="240" rx="36" fill="#800020"/>
+  <g transform="translate(20, 20)">
+    <!-- Axis Bank Chevron Pyramid Symbol -->
+    <path d="M40 135 L100 35 L125 135 Z" fill="#ffffff"/>
+    <path d="M100 35 L160 135 L125 135 Z" fill="#9e1b32"/>
+    <!-- Typography -->
+    <text x="100" y="175" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">AXIS BANK</text>
+  </g>
+</svg>
