@@ -8,7 +8,17 @@ router.get('/', async (req, res) => {
     const { categoryId } = req.query;
     const filter = categoryId ? { categoryId } : {};
     const companies = await CompanyModel.find(filter).lean();
-    res.json(companies || []);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const formatted = (companies || []).map(c => {
+      let logo = c.logo || '';
+      if (logo.startsWith('http://localhost:5000')) {
+        logo = logo.replace('http://localhost:5000', baseUrl);
+      } else if (logo.startsWith('/')) {
+        logo = `${baseUrl}${logo}`;
+      }
+      return { ...c, logo };
+    });
+    res.json(formatted);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch companies from MongoDB Atlas.' });
   }
@@ -26,7 +36,7 @@ router.post('/', async (req, res) => {
       id: 'comp_' + Date.now(),
       categoryId,
       name,
-      logo: logo || 'http://localhost:5000/logos/axis_bank.svg',
+      logo: logo || '/logos/axis_bank.svg',
       description: description || '',
       website: website || '',
       status,
