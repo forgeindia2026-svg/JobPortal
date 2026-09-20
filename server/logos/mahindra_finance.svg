@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect width="240" height="240" rx="36" fill="#cc0000"/>
+  <g transform="translate(20, 20)">
+    <!-- Mahindra Twin Apex Wings / M Symbol -->
+    <path d="M40 120 L80 50 L100 85 L120 50 L160 120 L135 120 L120 90 L100 120 L80 90 L65 120 Z" fill="#ffffff"/>
+    <path d="M70 125 H130 V132 H70 Z" fill="#ffffff"/>
+    <!-- Typography -->
+    <text x="100" y="165" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="1">MAHINDRA</text>
+    <text x="100" y="188" font-family="'Inter', 'Arial', sans-serif" font-weight="700" font-size="14" fill="#ffcccc" text-anchor="middle" letter-spacing="2">FINANCE</text>
+  </g>
+</svg>

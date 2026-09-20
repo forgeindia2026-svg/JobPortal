@@ -244,6 +244,16 @@ const initialData = {
       createdAt: new Date().toISOString()
     },
     {
+      id: 'comp_mahindra_fin',
+      categoryId: 'cat_banking',
+      name: 'Mahindra Finance',
+      logo: '/logos/mahindra_finance.svg',
+      description: 'Leading Non-Banking Financial Company (NBFC) in India specializing in rural and semi-urban financial services.',
+      website: 'https://www.mahindrafinance.com',
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    },
+    {
       id: 'comp_techm',
       categoryId: 'cat_it',
       name: 'Tech Mahindra',
