@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Send, CheckCircle } from 'lucide-react';
 
 export default function ApplicationModal({ job, candidate, isOpen, onClose, onSubmitSuccess, API_URL }) {
-  const [name, setName] = useState(candidate ? candidate.name : '');
-  const [email, setEmail] = useState(candidate ? candidate.email : '');
-  const [mobile, setMobile] = useState(candidate ? candidate.mobile : '');
-  const [location, setLocation] = useState(candidate ? candidate.location : '');
-  const [qualification, setQualification] = useState(candidate ? candidate.qualification : '');
-  const [experience, setExperience] = useState(candidate ? candidate.experience : '');
-  const [resumeUrl, setResumeUrl] = useState(candidate ? candidate.resumeUrl || '' : '');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [location, setLocation] = useState('');
+  const [qualification, setQualification] = useState('');
+  const [experience, setExperience] = useState('');
+  const [resumeUrl, setResumeUrl] = useState('');
   const [coverNotes, setCoverNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successApp, setSuccessApp] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(candidate?.name || '');
+      setEmail(candidate?.email || '');
+      setMobile(candidate?.mobile || '');
+      setLocation(candidate?.location || '');
+      setQualification(candidate?.qualification || '');
+      setExperience(candidate?.experience || '');
+      setResumeUrl(candidate?.resumeUrl || '');
+      setCoverNotes('');
+      setError('');
+      setSuccessApp(null);
+    }
+  }, [isOpen, candidate]);
 
   if (!isOpen || !job) return null;
 
@@ -113,6 +128,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                   type="text"
                   className="form-input"
                   required
+                  placeholder="Enter your full name"
                   value={name}
                   onChange={e => setName(e.target.value)}
                 />
@@ -125,6 +141,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                     type="email"
                     className="form-input"
                     required
+                    placeholder="name@example.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                   />
@@ -135,6 +152,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                     type="text"
                     className="form-input"
                     required
+                    placeholder="+91 98765 43210"
                     value={mobile}
                     onChange={e => setMobile(e.target.value)}
                   />
@@ -147,6 +165,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                   <input
                     type="text"
                     className="form-input"
+                    placeholder="e.g. Chennai / Bangalore"
                     value={location}
                     onChange={e => setLocation(e.target.value)}
                   />
@@ -156,6 +175,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                   <input
                     type="text"
                     className="form-input"
+                    placeholder="e.g. Fresher / 1-2 Years"
                     value={experience}
                     onChange={e => setExperience(e.target.value)}
                   />
@@ -167,31 +187,10 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                 <input
                   type="text"
                   className="form-input"
+                  placeholder="e.g. B.Com / Any Graduate"
                   value={qualification}
                   onChange={e => setQualification(e.target.value)}
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Resume Link / Attachment URL</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={resumeUrl}
-                  onChange={e => setResumeUrl(e.target.value)}
-                  placeholder="/uploads/my_resume.pdf or Google Drive link"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Additional Comments / Cover Note (Optional)</label>
-                <textarea
-                  className="form-textarea"
-                  rows="3"
-                  placeholder="Briefly state why you are a great fit for this role..."
-                  value={coverNotes}
-                  onChange={e => setCoverNotes(e.target.value)}
-                ></textarea>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.5rem' }}>

@@ -363,7 +363,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
                       <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#1e40af', background: '#dbeafe', padding: '3px 10px', borderRadius: '6px' }}>
-                        💳 CARD 1: Training Fee & Fee Refund Policy
+                        💳 CARD 1: Course / Training Fee & Refund Policy
                       </span>
                     </div>
 
@@ -617,14 +617,14 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
             <div style={{ marginBottom: '1.25rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <label className="form-label" style={{ margin: 0, fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>
-                  🎯 Interview Process & Selection Fee Terms
+                  🎯 Interview Process & Selection Guidelines
                 </label>
                 <button type="button" className="btn-secondary" onClick={handleAddInterviewStep} style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Plus size={14} /> Add Step
                 </button>
               </div>
 
-              {/* CARD 1: INTERVIEW CRACK / SELECTION FEE BOX */}
+              {/* CARD 1: INTERVIEW SELECTION BOX */}
               <div style={{
                 background: '#ffffff',
                 border: '1.5px solid #a855f7',
@@ -635,14 +635,14 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', padding: '3px 10px', borderRadius: '6px' }}>
-                    🏆 CARD 1: Interview Selection / Crack Fee & Guidelines
+                    🏆 CARD 1: Placement Training Fee Details & Guidelines
                   </span>
                 </div>
 
                 <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
-                      Interview Crack / Selection Fee
+                      Placement Training Fee
                     </label>
                     <input
                       type="text"

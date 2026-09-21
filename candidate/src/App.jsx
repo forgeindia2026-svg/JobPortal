@@ -6,17 +6,17 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function App() {
   const [currentUser] = useState({
-    id: 'usr_cand1',
-    candidateId: 'cand_1',
-    name: 'Rahul Sharma',
-    email: 'rahul@example.com',
+    id: 'usr_candidate',
+    candidateId: 'cand_guest',
+    name: '',
+    email: '',
     role: 'candidate',
-    mobile: '+91 98765 43210',
-    location: 'Chennai',
-    qualification: 'B.Com Graduate',
-    experience: '1 Year',
-    skills: ['Communication', 'Sales', 'Customer Service'],
-    resumeUrl: '/uploads/sample_resume_rahul.pdf'
+    mobile: '',
+    location: '',
+    qualification: '',
+    experience: '',
+    skills: [],
+    resumeUrl: ''
   });
 
   return (

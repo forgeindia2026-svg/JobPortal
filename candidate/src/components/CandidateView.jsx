@@ -67,74 +67,116 @@ export default function CandidateView({ API_URL, currentUser }) {
     fetchUserApplications();
   }, [currentUser]);
 
+  const formatTrainingSummaryTag = (trainingPeriod) => {
+    if (!trainingPeriod || typeof trainingPeriod !== 'string') return null;
+    const parts = trainingPeriod.split('|').map(p => p.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      const firstPhase = parts[0].replace(/^Phase\s*\d+\s*:\s*/i, '');
+      const durationMatch = firstPhase.match(/([\d\-\s]+(?:month|mon|m|year|yr|w|week|day|d)s?)/i);
+      if (durationMatch) {
+        return `🎓 Training: ${durationMatch[1].trim()} (${parts.length} Phases)`;
+      }
+      return `🎓 Training: ${parts.length} Structured Phases`;
+    }
+    const clean = trainingPeriod.replace(/^Phase\s*\d+\s*:\s*/i, '');
+    if (clean.length > 30) {
+      return `🎓 Training Program Included`;
+    }
+    return `🎓 Training: ${clean}`;
+  };
+
   const getCategoryStyle = (catId, catName) => {
     const nameLower = (catName || '').toLowerCase();
     const idLower = (catId || '').toLowerCase();
 
     if (idLower.includes('banking') || nameLower.includes('banking')) {
       return {
-        gradient: 'linear-gradient(135deg, #059669, #10b981)',
         shadow: '0 12px 28px -4px rgba(16, 185, 129, 0.45)',
-        badgeBg: '#ecfdf5',
-        badgeText: '#047857',
-        borderAccent: '#10b981',
-        cardBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, #ffffff 75%)',
-        icon: <Building2 size={28} color="#fff" />
+        badgeBg: 'rgba(255, 255, 255, 0.25)',
+        badgeText: '#ffffff',
+        borderAccent: '#059669',
+        cardBg: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+        textColor: '#ffffff',
+        mutedText: 'rgba(255, 255, 255, 0.9)',
+        btnBg: '#ffffff',
+        btnColor: '#047857',
+        icon: <Building2 size={28} color="#047857" />,
+        iconBg: '#ffffff'
       };
     }
     if (idLower.includes('it') || nameLower.includes('it') || nameLower.includes('software')) {
       return {
-        gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
         shadow: '0 12px 28px -4px rgba(139, 92, 246, 0.45)',
-        badgeBg: '#f5f3ff',
-        badgeText: '#6d28d9',
-        borderAccent: '#8b5cf6',
-        cardBg: 'linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, #ffffff 75%)',
-        icon: <Code size={28} color="#fff" />
+        badgeBg: 'rgba(255, 255, 255, 0.25)',
+        badgeText: '#ffffff',
+        borderAccent: '#7c3aed',
+        cardBg: 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)',
+        textColor: '#ffffff',
+        mutedText: 'rgba(255, 255, 255, 0.9)',
+        btnBg: '#ffffff',
+        btnColor: '#6d28d9',
+        icon: <Code size={28} color="#6d28d9" />,
+        iconBg: '#ffffff'
       };
     }
     if (idLower.includes('sales') || nameLower.includes('sales') || nameLower.includes('marketing')) {
       return {
-        gradient: 'linear-gradient(135deg, #ea580c, #f97316)',
         shadow: '0 12px 28px -4px rgba(249, 115, 22, 0.45)',
-        badgeBg: '#fff7ed',
-        badgeText: '#c2410c',
-        borderAccent: '#f97316',
-        cardBg: 'linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #ffffff 75%)',
-        icon: <TrendingUp size={28} color="#fff" />
+        badgeBg: 'rgba(255, 255, 255, 0.25)',
+        badgeText: '#ffffff',
+        borderAccent: '#ea580c',
+        cardBg: 'linear-gradient(135deg, #c2410c 0%, #f97316 100%)',
+        textColor: '#ffffff',
+        mutedText: 'rgba(255, 255, 255, 0.9)',
+        btnBg: '#ffffff',
+        btnColor: '#c2410c',
+        icon: <TrendingUp size={28} color="#c2410c" />,
+        iconBg: '#ffffff'
       };
     }
     if (idLower.includes('bpo') || nameLower.includes('bpo') || nameLower.includes('customer')) {
       return {
-        gradient: 'linear-gradient(135deg, #db2777, #ec4899)',
         shadow: '0 12px 28px -4px rgba(236, 72, 153, 0.45)',
-        badgeBg: '#fdf2f8',
-        badgeText: '#be185d',
-        borderAccent: '#ec4899',
-        cardBg: 'linear-gradient(135deg, rgba(236, 72, 153, 0.06) 0%, #ffffff 75%)',
-        icon: <Headphones size={28} color="#fff" />
+        badgeBg: 'rgba(255, 255, 255, 0.25)',
+        badgeText: '#ffffff',
+        borderAccent: '#db2777',
+        cardBg: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
+        textColor: '#ffffff',
+        mutedText: 'rgba(255, 255, 255, 0.9)',
+        btnBg: '#ffffff',
+        btnColor: '#be185d',
+        icon: <Headphones size={28} color="#be185d" />,
+        iconBg: '#ffffff'
       };
     }
     if (idLower.includes('nonit') || nameLower.includes('non-it') || nameLower.includes('operation')) {
       return {
-        gradient: 'linear-gradient(135deg, #d97706, #f59e0b)',
         shadow: '0 12px 28px -4px rgba(245, 158, 11, 0.45)',
-        badgeBg: '#fffbeb',
-        badgeText: '#b45309',
-        borderAccent: '#f59e0b',
-        cardBg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, #ffffff 75%)',
-        icon: <Briefcase size={28} color="#fff" />
+        badgeBg: 'rgba(255, 255, 255, 0.25)',
+        badgeText: '#ffffff',
+        borderAccent: '#d97706',
+        cardBg: 'linear-gradient(135deg, #b45309 0%, #f59e0b 100%)',
+        textColor: '#ffffff',
+        mutedText: 'rgba(255, 255, 255, 0.9)',
+        btnBg: '#ffffff',
+        btnColor: '#b45309',
+        icon: <Briefcase size={28} color="#b45309" />,
+        iconBg: '#ffffff'
       };
     }
 
     return {
-      gradient: 'linear-gradient(135deg, #0284c7, #06b6d4)',
       shadow: '0 12px 28px -4px rgba(6, 182, 212, 0.45)',
-      badgeBg: '#e0f2fe',
-      badgeText: '#0369a1',
-      borderAccent: '#06b6d4',
-      cardBg: 'linear-gradient(135deg, rgba(6, 182, 212, 0.06) 0%, #ffffff 75%)',
-      icon: <Award size={28} color="#fff" />
+      badgeBg: 'rgba(255, 255, 255, 0.25)',
+      badgeText: '#ffffff',
+      borderAccent: '#0284c7',
+      cardBg: 'linear-gradient(135deg, #0369a1 0%, #06b6d4 100%)',
+      textColor: '#ffffff',
+      mutedText: 'rgba(255, 255, 255, 0.9)',
+      btnBg: '#ffffff',
+      btnColor: '#0369a1',
+      icon: <Award size={28} color="#0369a1" />,
+      iconBg: '#ffffff'
     };
   };
 
@@ -201,17 +243,93 @@ export default function CandidateView({ API_URL, currentUser }) {
           {/* PAGE 1: CATEGORIES VIEW */}
           {!selectedCategory && !selectedCompany && (
             <div>
-
-
               {/* SECTION HEADER */}
               <div className="section-header">
                 <div>
-                  <h2 className="section-title">Select Job Category</h2>
-                  <p className="section-subtitle">Click on a domain category to view hiring companies and active job openings</p>
+                  <h2 className="section-title">
+                    {searchQuery ? `Search Results for "${searchQuery}"` : 'Select Job Category'}
+                  </h2>
+                  <p className="section-subtitle">
+                    {searchQuery
+                      ? `Found ${filteredJobs.length} matching job openings`
+                      : 'Click on a domain category to view hiring companies and active job openings'}
+                  </p>
                 </div>
               </div>
 
-              {loading ? (
+              {searchQuery ? (
+                <div className="job-grid" style={{ marginBottom: '2.5rem' }}>
+                  {filteredJobs.length === 0 ? (
+                    <div className="empty-state-card" style={{ gridColumn: '1 / -1' }}>
+                      <Briefcase size={44} color="#94a3b8" />
+                      <h4>No Matching Jobs Found</h4>
+                      <p>Try searching with a different job title, location, or company name.</p>
+                      <button className="btn-secondary" onClick={() => setSearchQuery('')} style={{ marginTop: '1rem' }}>
+                        Clear Search Filter
+                      </button>
+                    </div>
+                  ) : (
+                    filteredJobs.map(job => {
+                      const applied = isAlreadyApplied(job.id);
+                      return (
+                        <div key={job.id} className="job-card-vibrant">
+                          <div>
+                            <div className="job-card-header">
+                              {job.companyLogo ? (
+                                <img src={job.companyLogo} alt={job.companyName} className="job-comp-logo-vibrant" />
+                              ) : (
+                                <div className="job-comp-logo-vibrant logo-placeholder">
+                                  <Building2 size={24} color="var(--primary)" />
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="job-card-title">{job.title}</h4>
+                                <div className="job-comp-name">{job.companyName}</div>
+                              </div>
+                            </div>
+
+                            <div className="job-tags-container">
+                              <span className="tag-pill tag-location">
+                                <MapPin size={13} /> {job.location}
+                              </span>
+                              <span className="tag-pill tag-exp">
+                                <Briefcase size={13} /> {job.experience}
+                              </span>
+                              <span className="tag-pill tag-salary-vibrant">
+                                {job.salary}
+                              </span>
+                              {job.trainingPeriod && (
+                                <span className="tag-pill tag-training" title={job.trainingPeriod}>
+                                  {formatTrainingSummaryTag(job.trainingPeriod)}
+                                </span>
+                              )}
+                            </div>
+
+                            {job.description && (
+                              <p className="job-snippet">{job.description}</p>
+                            )}
+                          </div>
+
+                          <div className="job-card-footer">
+                            <button className="btn-secondary" onClick={() => setViewingJob(job)}>
+                              View Details
+                            </button>
+                            {applied ? (
+                              <span className="applied-pill">
+                                ✓ Applied
+                              </span>
+                            ) : (
+                              <button className="btn-primary-gradient" onClick={() => handleApplyClick(job)}>
+                                Apply Now
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              ) : loading ? (
                 <div className="portal-loading-card">
                   <div className="spinner"></div>
                   <span>Loading job categories...</span>
@@ -228,18 +346,13 @@ export default function CandidateView({ API_URL, currentUser }) {
                         key={cat.id}
                         className="category-card-vibrant"
                         onClick={() => setSelectedCategory(cat)}
-                        style={{ background: styleConfig.cardBg }}
+                        style={{ background: styleConfig.cardBg, color: styleConfig.textColor }}
                       >
-                        <div
-                          className="vibrant-cat-accent-bar"
-                          style={{ background: styleConfig.gradient }}
-                        />
-
                         <div className="vibrant-cat-header">
                           <div
                             className="vibrant-cat-icon"
                             style={{
-                              background: styleConfig.gradient,
+                              background: styleConfig.iconBg,
                               boxShadow: styleConfig.shadow
                             }}
                           >
@@ -249,24 +362,26 @@ export default function CandidateView({ API_URL, currentUser }) {
                             className="vibrant-pos-badge"
                             style={{
                               background: styleConfig.badgeBg,
-                              color: styleConfig.badgeText
+                              color: styleConfig.badgeText,
+                              backdropFilter: 'blur(8px)',
+                              border: '1px solid rgba(255, 255, 255, 0.3)'
                             }}
                           >
-                            {compCount} Companies
+                            <Building2 size={13} style={{ marginRight: '3px' }} /> {compCount} Companies
                           </span>
                         </div>
 
                         <div className="vibrant-cat-content">
-                          <h3 className="vibrant-cat-name">{cat.name}</h3>
+                          <h3 className="vibrant-cat-name" style={{ color: styleConfig.textColor }}>{cat.name}</h3>
                           {cat.description && (
-                            <p className="vibrant-cat-desc">{cat.description}</p>
+                            <p className="vibrant-cat-desc" style={{ color: styleConfig.mutedText }}>{cat.description}</p>
                           )}
-                          <div className="vibrant-cat-footer">
-                            <span className="vibrant-jobs-count">
-                              ⚡ {posCount} Active Openings
+                          <div className="vibrant-cat-footer" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.25)' }}>
+                            <span className="vibrant-jobs-count" style={{ background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.35)', whiteSpace: 'nowrap' }}>
+                              ⚡ {posCount} Openings
                             </span>
-                            <span className="vibrant-explore-btn" style={{ color: styleConfig.borderAccent }}>
-                              Explore <ChevronRight size={18} />
+                            <span className="vibrant-explore-btn" style={{ background: styleConfig.btnBg, color: styleConfig.btnColor, border: 'none', whiteSpace: 'nowrap' }}>
+                              Explore <ChevronRight size={16} />
                             </span>
                           </div>
                         </div>
@@ -411,11 +526,11 @@ export default function CandidateView({ API_URL, currentUser }) {
                             <span className="tag-pill tag-salary-vibrant">
                               {job.salary}
                             </span>
-                            {job.trainingPeriod && (
-                              <span className="tag-pill tag-training">
-                                Training: {job.trainingPeriod}
-                              </span>
-                            )}
+                             {job.trainingPeriod && (
+                               <span className="tag-pill tag-training" title={job.trainingPeriod}>
+                                 {formatTrainingSummaryTag(job.trainingPeriod)}
+                               </span>
+                             )}
                           </div>
 
                           {job.description && (
