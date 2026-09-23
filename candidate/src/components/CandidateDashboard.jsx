@@ -132,14 +132,26 @@ export default function CandidateDashboard({ candidate, API_URL, onBrowseJobs })
                   boxShadow: 'var(--shadow-sm)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      {app.companyLogo ? (
-                        <img src={app.companyLogo} alt={app.companyName} style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Briefcase size={20} color="#64748b" />
-                        </div>
-                      )}
+                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      {(() => {
+                        const fallbackMap = {
+                          'Axis Bank': '/logos/axis_bank.svg',
+                          'IDFC First Bank': '/logos/idfc_first_bank.svg',
+                          'Kotak Mahindra Bank': '/logos/kotak_bank.png',
+                          'Bandhan Bank': '/logos/bandhan_bank.png',
+                          'Aditya Birla Capital': '/logos/aditya_birla.jpg',
+                          'Mahindra Finance': '/logos/mahindra_finance.png',
+                          'Tech Mahindra': '/logos/tech_mahindra.svg'
+                        };
+                        const logoSrc = fallbackMap[app.companyName] || (app.companyLogo && app.companyLogo.includes('/logos/') ? `/logos/${app.companyLogo.split('/').pop()}` : app.companyLogo);
+                        return logoSrc ? (
+                          <img src={logoSrc} alt={app.companyName} style={{ width: '52px', height: '42px', borderRadius: '8px', objectFit: 'cover', overflow: 'hidden', border: '1.5px solid #e2e8f0' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Briefcase size={20} color="#64748b" />
+                          </div>
+                        );
+                      })()}
                       <div>
                         <h4 style={{ fontSize: '1.1rem', color: '#0f172a' }}>{app.jobTitle}</h4>
                         <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>

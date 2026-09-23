@@ -5,7 +5,7 @@
   --font-display: 'Outfit', system-ui, sans-serif;
 
   /* Theme Defaults (Soft Light Slate & Neutral Accent) */
-  --bg-main: #f4f6f8;
+  --bg-main: #fff0e3;
   --bg-card: #ffffff;
   --bg-dark: #0f172a;
   --text-main: #0f172a;
@@ -110,18 +110,19 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #fff0e3;
 }
 
 /* NAVBAR */
 .top-nav {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  color: #431407;
+  background: #0f172a;
+  color: #ffffff;
   padding: 0.85rem 1.75rem;
-  border-bottom: 1px solid #fed7aa;
+  border-bottom: 1px solid #1e293b;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .top-nav-container {
@@ -171,7 +172,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .brand-white {
-  color: #1e293b;
+  color: #ffffff;
 }
 
 .brand-accent {
@@ -181,7 +182,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .brand-badge {
   font-size: 0.725rem;
-  color: #9a3412;
+  color: #fdba74;
   font-weight: 600;
   letter-spacing: 0.03em;
   margin-top: 1px;
@@ -667,12 +668,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .company-logo-vibrant {
-  width: 58px;
-  height: 58px;
-  border-radius: 14px;
+  width: 60px;
+  height: 48px;
+  border-radius: 10px;
   object-fit: cover;
   border: 1.5px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .company-logo-vibrant.logo-placeholder {
@@ -774,10 +777,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .job-comp-logo-vibrant {
   width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  height: 42px;
+  border-radius: 8px;
   object-fit: cover;
-  border: 1px solid var(--border-color);
+  border: 1.5px solid #e2e8f0;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .job-comp-logo-vibrant.logo-placeholder {

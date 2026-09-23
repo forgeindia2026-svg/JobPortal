@@ -40,16 +40,29 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
 
   const trainingList = getTrainingPhasesList();
 
-  return (
+    const fallbackMap = {
+      'Axis Bank': '/logos/axis_bank.svg',
+      'IDFC First Bank': '/logos/idfc_first_bank.svg',
+      'Kotak Mahindra Bank': '/logos/kotak_bank.png',
+      'Bandhan Bank': '/logos/bandhan_bank.png',
+      'Aditya Birla Capital': '/logos/aditya_birla.jpg',
+      'Mahindra Finance': '/logos/mahindra_finance.png',
+      'Tech Mahindra': '/logos/tech_mahindra.svg'
+    };
+
+    const logoSrc = fallbackMap[job.companyName] || (job.companyLogo && job.companyLogo.includes('/logos/') ? `/logos/${job.companyLogo.split('/').pop()}` : job.companyLogo);
+
+    return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" style={{ maxWidth: '780px' }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {job.companyLogo ? (
+            {logoSrc ? (
               <img
-                src={job.companyLogo}
+                src={logoSrc}
                 alt={job.companyName}
-                style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover' }}
+                style={{ width: '60px', height: '48px', borderRadius: '10px', objectFit: 'cover', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}
+                onError={(e) => { e.target.style.display = 'none'; }}
               />
             ) : (
               <div style={{
@@ -124,7 +137,7 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
 
           {job.responsibilities && job.responsibilities.length > 0 && (
             <div>
-              <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>Key Responsibilities</h4>
+              <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>Roles & Responsibilities</h4>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {job.responsibilities.map((resp, idx) => (
                   <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>

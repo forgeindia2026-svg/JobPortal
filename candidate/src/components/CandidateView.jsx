@@ -26,6 +26,22 @@ export default function CandidateView({ API_URL, currentUser }) {
     fetchInitialData();
   }, []);
 
+  // Handle mobile hardware back button
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (selectedCompany) {
+        setSelectedCompany(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedCompany]);
+
+  const handleCompanyClick = (comp) => {
+    window.history.pushState({ page: 'company' }, '');
+    setSelectedCompany(comp);
+  };
+
   const fetchInitialData = async () => {
     setLoading(true);
     try {
@@ -39,9 +55,19 @@ export default function CandidateView({ API_URL, currentUser }) {
       const comps = await compRes.json();
       const jbs = await jobsRes.json();
 
-      setCategories(Array.isArray(cats) ? cats : []);
+      const catList = Array.isArray(cats) ? cats : [];
+      setCategories(catList);
       setCompanies(Array.isArray(comps) ? comps : []);
       setJobs(Array.isArray(jbs) ? jbs : []);
+
+      // Auto-select Banking & Financial Services category on load
+      const bankingCat = catList.find(c =>
+        c.id === 'cat_banking' ||
+        (c.name || '').toLowerCase().includes('banking')
+      );
+      if (bankingCat) {
+        setSelectedCategory(bankingCat);
+      }
     } catch (err) {
       console.error('Error loading candidate data:', err);
     } finally {
@@ -83,6 +109,28 @@ export default function CandidateView({ API_URL, currentUser }) {
       return `🎓 Training Program Included`;
     }
     return `🎓 Training: ${clean}`;
+  };
+
+  const getLogoUrl = (compName, compLogo) => {
+    const fallbackMap = {
+      'Axis Bank': '/logos/axis_bank.svg',
+      'IDFC First Bank': '/logos/idfc_first_bank.svg',
+      'Kotak Mahindra Bank': '/logos/kotak_bank.png',
+      'Bandhan Bank': '/logos/bandhan_bank.png',
+      'Aditya Birla Capital': '/logos/aditya_birla.jpg',
+      'Mahindra Finance': '/logos/mahindra_finance.png',
+      'Tech Mahindra': '/logos/tech_mahindra.svg'
+    };
+
+    if (compName && fallbackMap[compName]) {
+      return fallbackMap[compName];
+    }
+    if (!compLogo) return '';
+    if (typeof compLogo === 'string' && compLogo.includes('/logos/')) {
+      const filename = compLogo.split('/').pop();
+      return `/logos/${filename}`;
+    }
+    return compLogo;
   };
 
   const getCategoryStyle = (catId, catName) => {
@@ -213,28 +261,16 @@ export default function CandidateView({ API_URL, currentUser }) {
   };
 
   const goToCompaniesPage = () => {
-    setSelectedCompany(null);
+    if (window.history.state && window.history.state.page === 'company') {
+      window.history.back();
+    } else {
+      setSelectedCompany(null);
+    }
   };
 
   return (
     <div className="candidate-portal-wrapper">
-      {/* Navigation Sub-Header */}
-      <div className="sub-nav-bar">
-        <div className="sub-nav-container">
-          <button
-            className={`portal-tab-btn ${activeTab === 'browse' ? 'active' : ''}`}
-            onClick={() => setActiveTab('browse')}
-          >
-            <Sparkles size={16} /> Browse Jobs
-          </button>
-          <button
-            className={`portal-tab-btn ${activeTab === 'my_apps' ? 'active' : ''}`}
-            onClick={() => setActiveTab('my_apps')}
-          >
-            <Briefcase size={16} /> My Applications ({userApplications.length})
-          </button>
-        </div>
-      </div>
+      {/* Navigation Sub-Header Removed per user request */}
 
       {activeTab === 'my_apps' ? (
         <CandidateDashboard candidate={currentUser} API_URL={API_URL} onBrowseJobs={() => setActiveTab('browse')} />
@@ -275,8 +311,8 @@ export default function CandidateView({ API_URL, currentUser }) {
                         <div key={job.id} className="job-card-vibrant">
                           <div>
                             <div className="job-card-header">
-                              {job.companyLogo ? (
-                                <img src={job.companyLogo} alt={job.companyName} className="job-comp-logo-vibrant" />
+                              {getLogoUrl(job.companyName, job.companyLogo) ? (
+                                <img src={getLogoUrl(job.companyName, job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
                               ) : (
                                 <div className="job-comp-logo-vibrant logo-placeholder">
                                   <Building2 size={24} color="var(--primary)" />
@@ -397,16 +433,6 @@ export default function CandidateView({ API_URL, currentUser }) {
           {/* PAGE 2: COMPANIES VIEW (e.g., Banking Companies) */}
           {selectedCategory && !selectedCompany && (
             <div>
-              <div className="breadcrumb-wrapper">
-                <button className="btn-secondary back-btn-mobile" onClick={goToCategoriesPage}>
-                  <ArrowLeft size={16} /> Back
-                </button>
-                <div className="breadcrumb-nav">
-                  <span className="breadcrumb-item" onClick={goToCategoriesPage}>Categories</span>
-                  <ChevronRight size={14} />
-                  <span className="breadcrumb-item active">{selectedCategory.name}</span>
-                </div>
-              </div>
 
               <div className="section-header">
                 <div>
@@ -430,11 +456,18 @@ export default function CandidateView({ API_URL, currentUser }) {
                       <div
                         key={comp.id}
                         className="company-visual-card-vibrant"
-                        onClick={() => setSelectedCompany(comp)}
+                        onClick={() => handleCompanyClick(comp)}
                       >
                         <div className="comp-card-top">
-                          {comp.logo ? (
-                            <img src={comp.logo} alt={comp.name} className="company-logo-vibrant" />
+                          {getLogoUrl(comp.name, comp.logo) ? (
+                            <img 
+                              src={getLogoUrl(comp.name, comp.logo)} 
+                              alt={comp.name} 
+                              className="company-logo-vibrant" 
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
                           ) : (
                             <div className="company-logo-vibrant logo-placeholder">
                               <Building2 size={26} color="var(--primary)" />
@@ -465,18 +498,6 @@ export default function CandidateView({ API_URL, currentUser }) {
           {/* PAGE 3: JOB OPENINGS VIEW (e.g. Axis Bank Jobs) */}
           {selectedCategory && selectedCompany && (
             <div>
-              <div className="breadcrumb-wrapper">
-                <button className="btn-secondary back-btn-mobile" onClick={goToCompaniesPage}>
-                  <ArrowLeft size={16} /> Back
-                </button>
-                <div className="breadcrumb-nav">
-                  <span className="breadcrumb-item" onClick={goToCategoriesPage}>Categories</span>
-                  <ChevronRight size={14} />
-                  <span className="breadcrumb-item" onClick={goToCompaniesPage}>{selectedCategory.name}</span>
-                  <ChevronRight size={14} />
-                  <span className="breadcrumb-item active">{selectedCompany.name}</span>
-                </div>
-              </div>
 
               <div className="section-header">
                 <div>
@@ -503,8 +524,8 @@ export default function CandidateView({ API_URL, currentUser }) {
                       <div key={job.id} className="job-card-vibrant">
                         <div>
                           <div className="job-card-header">
-                            {job.companyLogo ? (
-                              <img src={job.companyLogo} alt={job.companyName} className="job-comp-logo-vibrant" />
+                            {getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo) ? (
+                              <img src={getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
                             ) : (
                               <div className="job-comp-logo-vibrant logo-placeholder">
                                 <Building2 size={24} color="var(--primary)" />

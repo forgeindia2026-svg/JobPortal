@@ -546,7 +546,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
 
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label className="form-label" style={{ margin: 0 }}>Key Responsibilities</label>
+                <label className="form-label" style={{ margin: 0 }}>Roles and Responsibilities</label>
                 <button type="button" className="btn-secondary" onClick={handleAddResponsibility} style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
                   <Plus size={14} /> Add Line
                 </button>
