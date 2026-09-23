@@ -1547,4 +1547,47 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+.bank-ticker-banner-container {
+  width: calc(100% + 3rem) !important;
+  margin-left: -1.5rem !important;
+  margin-right: -1.5rem !important;
+  margin-top: -1rem !important;
+  border-radius: 0 !important;
+  padding: 12px 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #064e3b 100%);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .bank-ticker-banner-container {
+    width: calc(100% + 2rem) !important;
+    margin-left: -1rem !important;
+    margin-right: -1rem !important;
+    margin-top: -0.5rem !important;
+    padding: 10px 1rem !important;
+  }
+  .bank-ticker-track {
+    animation: bankTicker 12s linear infinite !important;
+  }
+}
+
+@keyframes bankTicker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.bank-ticker-track:hover {
+  animation-play-state: paused !important;
+}
 

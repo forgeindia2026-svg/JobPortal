@@ -3,6 +3,8 @@ import { X, MapPin, Briefcase, GraduationCap, Clock, CheckCircle2, FileText, Sen
 
 export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyApplied, isFullPage = true }) {
   const [currentSubView, setCurrentSubView] = React.useState('main'); // 'main', 'afterSelection', or 'ficTraining'
+  const [expandedAfterSelection, setExpandedAfterSelection] = React.useState(false);
+  const [expandedFicTraining, setExpandedFicTraining] = React.useState(false);
 
   const navigateToSubView = (subViewName) => {
     window.history.pushState({ page: 'job_details', subView: subViewName }, '');
@@ -300,12 +302,9 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
           }}>
             <Award size={24} color="#16a34a" />
             <div>
-              <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#14532d', margin: 0 }}>
+              <h5 style={{ fontSize: '1rem', fontWeight: 800, color: '#14532d', margin: 0 }}>
                 100% Placement Guarantee or Full Refund
               </h5>
-              <p style={{ fontSize: '0.825rem', color: '#166534', margin: '2px 0 0 0', fontWeight: 600 }}>
-                {job.feeRefundDetails || 'If placement is not secured post training completion, 100% fee refund will be processed.'}
-              </p>
             </div>
           </div>
         </div>
@@ -565,8 +564,8 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
               </div>
 
               {job.feeRefundDetails && (
-                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', fontSize: '0.825rem', color: '#1e40af', fontWeight: 600 }}>
-                  ℹ️ <strong>Terms:</strong> {job.feeRefundDetails}
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 14px', fontSize: '0.875rem', color: '#1e40af', fontWeight: 600, lineHeight: 1.5 }}>
+                  ℹ️ <strong>Refund & Payment Terms:</strong> {job.feeRefundDetails}
                 </div>
               )}
             </div>
@@ -711,11 +710,11 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
               <div>
                 <MapPin size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
                 <p className="info-value" style={{ fontSize: '1.4rem', textTransform: 'uppercase' }}>
-                  {job.location || 'PAN INDIA'}
+                  PAN INDIA
                 </p>
               </div>
               <div className="info-subtext">
-                Interview Location<br />Posting across major branches
+                Job Location<br />Based on Aadhar card or your nearby
               </div>
             </div>
 
@@ -794,9 +793,9 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
           border: '1px solid var(--border-color)'
         }}>
           <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Interview Location</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Job Location</span>
             <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-              <MapPin size={14} color="#3b82f6" /> {job.location}
+              <MapPin size={14} color="#3b82f6" /> PAN INDIA (Nearby Branch)
             </p>
           </div>
           <div>
@@ -958,7 +957,7 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
                   <CheckCircle2 size={16} color="#ffffff" />
                 </div>
                 <button
-                  onClick={() => navigateToSubView('afterSelection')}
+                  onClick={() => setExpandedAfterSelection(prev => !prev)}
                   style={{
                     background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                     color: '#ffffff',
@@ -976,15 +975,299 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                   }}
                 >
-                  <Award size={18} color="#ffffff" /> After Selection →
+                  <Award size={18} color="#ffffff" /> After Selection {expandedAfterSelection ? '▲' : '→'}
                 </button>
               </div>
             </div>
-          </div>
-        )}
 
+            {/* EXPANDABLE INLINE AFTER SELECTION SECTION (FLAT CLEAN UI WITHOUT NESTED BOXES) */}
+            {expandedAfterSelection && (
+              <div 
+                className="animate-fade"
+                style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '2px dashed #e2e8f0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.5rem'
+                }}
+              >
+                {/* HEADING */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingBottom: '0.5rem', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #4f46e5, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.25)' }}>
+                      <Award size={20} color="#ffffff" />
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>
+                        After selected the Job Training Program
+                      </h4>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>
+                        Structured learning period & stipend progression plan
+                      </span>
+                    </div>
+                  </div>
+                  {trainingList.length > 0 && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#4338ca', background: '#e0e7ff', border: '1px solid #c7d2fe', padding: '4px 12px', borderRadius: '20px' }}>
+                      🎓 {trainingList.length} Training {trainingList.length === 1 ? 'Phase' : 'Phases'}
+                    </span>
+                  )}
+                </div>
 
+                {/* TRAINING PHASES CARDS (FLAT INLINE LAYOUT) */}
+                {trainingList.length > 0 && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: trainingList.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(240px, 1fr))',
+                    gap: '1rem',
+                    alignItems: 'stretch'
+                  }}>
+                    {trainingList.map((phase, idx) => {
+                      return (
+                        <div key={idx} style={{
+                          background: '#f8fafc',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '12px',
+                          padding: '1.1rem 1.25rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.85rem'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.725rem', fontWeight: 800, color: '#1e40af', background: '#dbeafe', border: '1px solid #bfdbfe', padding: '3px 10px', borderRadius: '6px' }}>
+                              PHASE {idx + 1}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>
+                              Stage {idx + 1} of {trainingList.length}
+                            </span>
+                          </div>
+                          
+                          <h5 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                            {phase.title || `Phase ${idx + 1} Training`}
+                          </h5>
 
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '10px', paddingTop: '4px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                                ⏱️ Duration
+                              </span>
+                              <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', display: 'block', marginTop: '2px' }}>
+                                {phase.duration || 'N/A'}
+                              </span>
+                            </div>
+
+                            {phase.mode && (
+                              <div>
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                                  🏫 Mode
+                                </span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', display: 'block', marginTop: '2px' }}>
+                                  {phase.mode}
+                                </span>
+                              </div>
+                            )}
+
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                                💵 Stipend / Salary
+                              </span>
+                              <span style={{ fontSize: '0.925rem', fontWeight: 800, color: '#047857', display: 'block', marginTop: '2px' }}>
+                                {phase.stipend || 'Performance Stipend'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* COURSE / TRAINING FEES CARD */}
+                <div style={{
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '1.1rem 1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.85rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Award size={18} color="#2563eb" />
+                      <h4 style={{ fontSize: '0.95rem', color: '#0f172a', fontWeight: 800, margin: 0 }}>
+                        Course / Training Fees
+                      </h4>
+                    </div>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: '#15803d',
+                      background: '#dcfce7',
+                      border: '1px solid #86efac',
+                      padding: '3px 10px',
+                      borderRadius: '20px'
+                    }}>
+                      🔄 {job.feeRefundType || '100% Placement Guarantee or Full Refund'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <div>
+                      <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                        Course / Training Fee Amount
+                      </span>
+                      <span style={{ fontSize: '1.05rem', fontWeight: 800, color: job.trainingFee && job.trainingFee.toLowerCase().includes('free') ? '#16a34a' : '#0f172a', display: 'block', marginTop: '2px' }}>
+                        {job.trainingFee || '2,90,000 (Including GST)'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                        Fee Refund Eligibility
+                      </span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2563eb', display: 'block', marginTop: '2px' }}>
+                        {job.feeRefundType || '100% Placement Guarantee or Full Refund'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* FIC TRAINING BUTTON TO TOGGLE FIC ROADMAP INLINE */}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => setExpandedFicTraining(prev => !prev)}
+                    style={{
+                      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                      color: '#ffffff',
+                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 14px rgba(30, 64, 175, 0.22)',
+                      border: 'none',
+                      letterSpacing: '0.01em',
+                      width: '100%',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <Award size={18} color="#ffffff" /> FIC Training 100% placement or Refund {expandedFicTraining ? '▲' : '▼'}
+                  </button>
+                </div>
+
+                {/* EXPANDABLE INLINE FIC TRAINING ROADMAP */}
+                {expandedFicTraining && (
+                  <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                      <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '1rem' }}>
+                        <span style={{ fontSize: '0.725rem', color: '#1e40af', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>
+                          💰 FIC Training Cost
+                        </span>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1d4ed8', display: 'block', marginTop: '2px' }}>
+                          {job.interviewCrackFee || '10,000'}
+                        </span>
+                      </div>
+
+                      <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '10px', padding: '1rem' }}>
+                        <span style={{ fontSize: '0.725rem', color: '#047857', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>
+                          ⏱️ FIC Training Period
+                        </span>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#047857', display: 'block', marginTop: '2px' }}>
+                          {job.ficTrainingPeriod || '7 Days'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        🗺️ 4-Step Payment Roadmap
+                      </span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb' }}>Step 1: 50% Advance Payment</span>
+                          <p style={{ fontSize: '0.825rem', color: '#475569', margin: '4px 0 0 0' }}>Starting the process 50% payment advance</p>
+                        </div>
+                        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb' }}>Step 2: Document Submission</span>
+                          <p style={{ fontSize: '0.825rem', color: '#475569', margin: '4px 0 0 0' }}>Document submission for verification</p>
+                        </div>
+                        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb' }}>Step 3: Training Program</span>
+                          <p style={{ fontSize: '0.825rem', color: '#475569', margin: '4px 0 0 0' }}>Training & preparation sessions</p>
+                        </div>
+                        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb' }}>Step 4: Balance Payment</span>
+                          <p style={{ fontSize: '0.825rem', color: '#475569', margin: '4px 0 0 0' }}>After selected 50% payment</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)', border: '1px solid #86efac', borderRadius: '10px', padding: '1rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Award size={22} color="#16a34a" />
+                      <div>
+                        <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#14532d', margin: 0 }}>
+                          100% Placement Guarantee or Full Refund
+                        </h5>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
+          )}
+
+        {/* BOTTOM APPLY NOW ACTION BAR */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid #e2e8f0',
+          marginTop: '1rem'
+        }}>
+          {isAlreadyApplied ? (
+            <div style={{
+              background: '#dcfce7',
+              color: '#15803d',
+              border: '1.5px solid #86efac',
+              padding: '12px 32px',
+              borderRadius: '12px',
+              fontWeight: 800,
+              fontSize: '1rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <CheckCircle2 size={20} color="#15803d" /> Applied Successfully
+            </div>
+          ) : (
+            <button
+              onClick={() => onApplyClick && onApplyClick(job)}
+              className="btn-primary-gradient"
+              style={{
+                padding: '14px 44px',
+                fontSize: '1.05rem',
+                fontWeight: 800,
+                borderRadius: '12px',
+                boxShadow: '0 8px 20px rgba(16, 185, 129, 0.35)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Send size={18} color="#ffffff" /> Apply Now
+            </button>
+          )}
+        </div>
 
       </div>
 

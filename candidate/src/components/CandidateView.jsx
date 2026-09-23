@@ -279,6 +279,23 @@ export default function CandidateView({ API_URL, currentUser }) {
       return matchTitle || matchLoc || matchComp;
     }
     return true;
+  }).sort((a, b) => {
+    const compA = a.companyName || (selectedCompany ? selectedCompany.name : '');
+    const compB = b.companyName || (selectedCompany ? selectedCompany.name : '');
+    const isAdityaA = compA.toLowerCase().includes('aditya birla');
+    const isAdityaB = compB.toLowerCase().includes('aditya birla');
+
+    if (isAdityaA && isAdityaB) {
+      const getPriority = (title) => {
+        const t = (title || '').toLowerCase();
+        if (t.includes('direct')) return 1;
+        if (t.includes('agency')) return 2;
+        if (t.includes('banca')) return 3;
+        return 99;
+      };
+      return getPriority(a.title) - getPriority(b.title);
+    }
+    return 0;
   });
 
   const handleApplyClick = (job) => {
@@ -353,7 +370,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                     filteredJobs.map(job => {
                       const applied = isAlreadyApplied(job.id);
                       return (
-                        <div key={job.id} className="job-card-vibrant">
+                        <div key={job.id} className="job-card-vibrant" style={{ cursor: 'pointer' }} onClick={() => handleViewJobDetails(job)}>
                           <div>
                             <div className="job-card-header">
                               {getLogoUrl(job.companyName, job.companyLogo) ? (
@@ -392,15 +409,15 @@ export default function CandidateView({ API_URL, currentUser }) {
                           </div>
 
                           <div className="job-card-footer">
-                            <button className="btn-secondary" onClick={() => handleViewJobDetails(job)}>
+                            <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); handleViewJobDetails(job); }}>
                               View Details
                             </button>
                             {applied ? (
-                              <span className="applied-pill">
+                              <span className="applied-pill" onClick={(e) => e.stopPropagation()}>
                                 ✓ Applied
                               </span>
                             ) : (
-                              <button className="btn-primary-gradient" onClick={() => handleApplyClick(job)}>
+                              <button className="btn-primary-gradient" onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}>
                                 Apply Now
                               </button>
                             )}
@@ -478,6 +495,64 @@ export default function CandidateView({ API_URL, currentUser }) {
           {/* PAGE 2: COMPANIES VIEW (e.g., Banking Companies) */}
           {selectedCategory && !selectedCompany && (
             <div>
+
+              {/* RUNNING BANK ADVERTISEMENT MARQUEE BANNER */}
+              <div className="bank-ticker-banner-container">
+
+
+                {/* MARQUEE RUNNING TICKER TRACK */}
+                <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
+                  <div className="bank-ticker-track" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.5rem',
+                    whiteSpace: 'nowrap',
+                    animation: 'bankTicker 14s linear infinite'
+                  }}>
+                    {[
+                      { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
+                      { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
+                      { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
+                      { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
+                      { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
+                    ].concat([
+                      { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
+                      { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
+                      { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
+                      { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
+                      { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
+                    ]).map((bank, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          const foundComp = filteredCompanies.find(c => c.name.toLowerCase().includes(bank.name.toLowerCase().split(' ')[0]));
+                          if (foundComp) handleCompanyClick(foundComp);
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          padding: '5px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'background 0.2s ease'
+                        }}
+                      >
+                        <Building2 size={15} color={bank.color} />
+                        <span>{bank.name}</span>
+                        <span style={{ fontSize: '0.725rem', color: bank.color, background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '12px' }}>
+                          {bank.tag}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
               <div className="section-header">
                 <div>
@@ -566,7 +641,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                     const applied = isAlreadyApplied(job.id);
 
                     return (
-                      <div key={job.id} className="job-card-vibrant">
+                      <div key={job.id} className="job-card-vibrant" style={{ cursor: 'pointer' }} onClick={() => handleViewJobDetails(job)}>
                         <div>
                           <div className="job-card-header">
                             {getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo) ? (
@@ -605,15 +680,15 @@ export default function CandidateView({ API_URL, currentUser }) {
                         </div>
 
                         <div className="job-card-footer">
-                          <button className="btn-secondary" onClick={() => handleViewJobDetails(job)}>
+                          <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); handleViewJobDetails(job); }}>
                             View Details
                           </button>
                           {applied ? (
-                            <span className="applied-pill">
+                            <span className="applied-pill" onClick={(e) => e.stopPropagation()}>
                               ✓ Applied
                             </span>
                           ) : (
-                            <button className="btn-primary-gradient" onClick={() => handleApplyClick(job)}>
+                            <button className="btn-primary-gradient" onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}>
                               Apply Now
                             </button>
                           )}
