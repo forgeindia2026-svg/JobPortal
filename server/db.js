@@ -59,6 +59,7 @@ const jobSchema = new mongoose.Schema({
   interviewCrackFee: String,
   interviewFeeStage: String,
   interviewFeeDetails: String,
+  ficTrainingPeriod: String,
   trainingDetails: mongoose.Schema.Types.Mixed,
   trainingPhases: [{
     duration: String,

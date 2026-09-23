@@ -25,6 +25,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [interviewCrackFee, setInterviewCrackFee] = useState('');
   const [interviewFeeStage, setInterviewFeeStage] = useState('After Clearing Interview');
   const [interviewFeeDetails, setInterviewFeeDetails] = useState('');
+  const [ficTrainingPeriod, setFicTrainingPeriod] = useState('');
 
   const [openings, setOpenings] = useState('');
   const [description, setDescription] = useState('');
@@ -59,6 +60,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setInterviewCrackFee(jobToEdit.interviewCrackFee || '');
       setInterviewFeeStage(jobToEdit.interviewFeeStage || 'After Clearing Interview');
       setInterviewFeeDetails(jobToEdit.interviewFeeDetails || '');
+      setFicTrainingPeriod(jobToEdit.ficTrainingPeriod || '');
       
       if (jobToEdit.trainingPhases && jobToEdit.trainingPhases.length > 0) {
         setHasTraining(jobToEdit.hasTraining !== undefined ? jobToEdit.hasTraining : 'Yes');
@@ -104,6 +106,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setInterviewCrackFee('');
       setInterviewFeeStage('After Clearing Interview');
       setInterviewFeeDetails('');
+      setFicTrainingPeriod('');
       
       setHasTraining('Yes');
       setTrainingPhases([{ duration: '', mode: '', stipend: '' }]);
@@ -176,6 +179,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         interviewCrackFee,
         interviewFeeStage,
         interviewFeeDetails,
+        ficTrainingPeriod,
         trainingPhases: validPhases,
         hasTraining,
         openings: Number(openings),
@@ -642,16 +646,30 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                 <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
-                      Placement Training Fee
+                      Placement / FIC Training Fee
                     </label>
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. ₹5,000 / No Fee (100% Free Selection)"
+                      placeholder="e.g. 30,000 / No Fee (100% Free Selection)"
                       value={interviewCrackFee}
                       onChange={e => setInterviewCrackFee(e.target.value)}
                     />
                   </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
+                      FIC Training Period
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. 45 Days / 1-4 Months"
+                      value={ficTrainingPeriod}
+                      onChange={e => setFicTrainingPeriod(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
                       Payment Stage / Timing
@@ -660,21 +678,21 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                       type="text"
                       className="form-input"
                       list="payment-stage-list"
-                      placeholder="Type manually or select (e.g. After Clearing Interview / Offer Letter)"
+                      placeholder="Type manually or select (e.g. Starting the process / After Clearing Interview)"
                       value={interviewFeeStage}
                       onChange={e => setInterviewFeeStage(e.target.value)}
                     />
                     <datalist id="payment-stage-list">
+                      <option value="Starting the process" />
                       <option value="After Clearing Interview" />
                       <option value="After Receiving Offer Letter" />
                       <option value="Deducted After Joining (First Salary)" />
-                      <option value="During Pre-Boarding Training" />
                       <option value="100% Free (No Selection Fee)" />
                     </datalist>
                   </div>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group" style={{ margin: 0, marginTop: '0.75rem' }}>
                   <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
                     Selection Fee Guidelines & Conditions
                   </label>

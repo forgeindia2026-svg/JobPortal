@@ -26,20 +26,40 @@ export default function CandidateView({ API_URL, currentUser }) {
     fetchInitialData();
   }, []);
 
-  // Handle mobile hardware back button
+  // Handle mobile hardware back button and page navigation
   useEffect(() => {
     const handlePopState = (e) => {
-      if (selectedCompany) {
-        setSelectedCompany(null);
+      const state = e.state;
+      if (viewingJob) {
+        if (!state || (state.page !== 'job_details' && !state.subView)) {
+          setViewingJob(null);
+        }
+      } else if (selectedCompany) {
+        if (!state || state.page !== 'company') {
+          setSelectedCompany(null);
+        }
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [selectedCompany]);
+  }, [viewingJob, selectedCompany]);
 
   const handleCompanyClick = (comp) => {
     window.history.pushState({ page: 'company' }, '');
     setSelectedCompany(comp);
+  };
+
+  const handleViewJobDetails = (job) => {
+    window.history.pushState({ page: 'job_details' }, '');
+    setViewingJob(job);
+  };
+
+  const handleBackFromJobDetails = () => {
+    if (window.history.state && window.history.state.page === 'job_details') {
+      window.history.back();
+    } else {
+      setViewingJob(null);
+    }
   };
 
   const fetchInitialData = async () => {
@@ -274,6 +294,16 @@ export default function CandidateView({ API_URL, currentUser }) {
 
       {activeTab === 'my_apps' ? (
         <CandidateDashboard candidate={currentUser} API_URL={API_URL} onBrowseJobs={() => setActiveTab('browse')} />
+      ) : viewingJob ? (
+        <div className="section-container animate-fade" style={{ paddingBottom: '3rem' }}>
+          <JobDetailModal
+            job={viewingJob}
+            onClose={handleBackFromJobDetails}
+            onApplyClick={handleApplyClick}
+            isAlreadyApplied={isAlreadyApplied(viewingJob.id)}
+            isFullPage={true}
+          />
+        </div>
       ) : (
         <div className="section-container animate-fade">
           {/* PAGE 1: CATEGORIES VIEW */}
@@ -347,7 +377,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                           </div>
 
                           <div className="job-card-footer">
-                            <button className="btn-secondary" onClick={() => setViewingJob(job)}>
+                            <button className="btn-secondary" onClick={() => handleViewJobDetails(job)}>
                               View Details
                             </button>
                             {applied ? (
@@ -560,7 +590,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                         </div>
 
                         <div className="job-card-footer">
-                          <button className="btn-secondary" onClick={() => setViewingJob(job)}>
+                          <button className="btn-secondary" onClick={() => handleViewJobDetails(job)}>
                             View Details
                           </button>
                           {applied ? (
@@ -583,13 +613,7 @@ export default function CandidateView({ API_URL, currentUser }) {
         </div>
       )}
 
-      {/* Modals */}
-      <JobDetailModal
-        job={viewingJob}
-        onClose={() => setViewingJob(null)}
-        onApplyClick={handleApplyClick}
-        isAlreadyApplied={viewingJob ? isAlreadyApplied(viewingJob.id) : false}
-      />
+      {/* Application Form Modal */}
 
       <ApplicationModal
         job={applyingJob}
