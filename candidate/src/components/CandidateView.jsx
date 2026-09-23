@@ -248,9 +248,24 @@ export default function CandidateView({ API_URL, currentUser }) {
     };
   };
 
-  const filteredCompanies = selectedCategory
+  const companyPriorityMap = {
+    'IDFC First Bank': 1,
+    'Bandhan Bank': 2,
+    'Aditya Birla Capital': 3,
+    'Kotak Mahindra Bank': 4,
+    'Mahindra Finance': 5,
+    'Axis Bank': 6
+  };
+
+  const rawCompanies = selectedCategory
     ? companies.filter(c => c.categoryId === selectedCategory.id)
     : companies;
+
+  const filteredCompanies = [...rawCompanies].sort((a, b) => {
+    const pA = companyPriorityMap[a.name] !== undefined ? companyPriorityMap[a.name] : 99;
+    const pB = companyPriorityMap[b.name] !== undefined ? companyPriorityMap[b.name] : 99;
+    return pA - pB;
+  });
 
   const filteredJobs = jobs.filter(job => {
     if (job.status && job.status.toLowerCase() !== 'active') return false;
