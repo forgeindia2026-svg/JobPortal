@@ -17,6 +17,9 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [trainingFee, setTrainingFee] = useState('');
   const [feeRefundType, setFeeRefundType] = useState('100% Refundable');
   const [feeRefundDetails, setFeeRefundDetails] = useState('');
+  const [trainingSubtext, setTrainingSubtext] = useState('');
+  const [stipendTitle, setStipendTitle] = useState('');
+  const [stipendSubtext, setStipendSubtext] = useState('');
   const [trainingPhases, setTrainingPhases] = useState([
     { duration: '', mode: '', stipend: '' }
   ]);
@@ -57,6 +60,9 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setTrainingFee(jobToEdit.trainingFee || '');
       setFeeRefundType(jobToEdit.feeRefundType || '100% Refundable');
       setFeeRefundDetails(jobToEdit.feeRefundDetails || '');
+      setTrainingSubtext(jobToEdit.trainingSubtext || '');
+      setStipendTitle(jobToEdit.stipendTitle || '');
+      setStipendSubtext(jobToEdit.stipendSubtext || '');
       setInterviewCrackFee(jobToEdit.interviewCrackFee || '');
       setInterviewFeeStage(jobToEdit.interviewFeeStage || 'After Clearing Interview');
       setInterviewFeeDetails(jobToEdit.interviewFeeDetails || '');
@@ -103,6 +109,9 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setTrainingFee('');
       setFeeRefundType('100% Refundable');
       setFeeRefundDetails('');
+      setTrainingSubtext('');
+      setStipendTitle('');
+      setStipendSubtext('');
       setInterviewCrackFee('');
       setInterviewFeeStage('After Clearing Interview');
       setInterviewFeeDetails('');
@@ -176,6 +185,9 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         trainingFee,
         feeRefundType,
         feeRefundDetails,
+        trainingSubtext,
+        stipendTitle,
+        stipendSubtext,
         interviewCrackFee,
         interviewFeeStage,
         interviewFeeDetails,
@@ -505,6 +517,57 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* CARD CUSTOMIZATION FOR CANDIDATE POSTER (Clock & Stipend Cards) */}
+            <div style={{ background: '#f0fdf4', padding: '1.25rem', borderRadius: '12px', border: '1.5px solid #86efac', marginBottom: '1.25rem' }}>
+              <label className="form-label" style={{ fontWeight: 800, color: '#166534', fontSize: '0.95rem', marginBottom: '0.75rem', display: 'block' }}>
+                📊 Candidate Infographic Card Customize (Clock & Stipend Cards)
+              </label>
+              
+              <div className="form-group" style={{ marginBottom: '0.85rem' }}>
+                <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                  ⏱️ Training Card Subtext Lines (Clock Icon)
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Use | for line breaks e.g. 2 months Campus Training | 1 On the job training"
+                  value={trainingSubtext}
+                  onChange={e => setTrainingSubtext(e.target.value)}
+                />
+                <span style={{ fontSize: '0.725rem', color: '#4b5563', marginTop: '2px', display: 'block' }}>
+                  Separate lines using vertical bar symbol | (e.g. "2 months Campus Training | 1 On the job training")
+                </span>
+              </div>
+
+              <div className="form-row" style={{ margin: 0 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    💵 Stipend Card Title / Main Value
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. STIPEND or 6,000 or ₹6,000 / month"
+                    value={stipendTitle}
+                    onChange={e => setStipendTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    💵 Stipend Card Subtext Lines
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Use | for line breaks e.g. ₹6,000 during Training"
+                    value={stipendSubtext}
+                    onChange={e => setStipendSubtext(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="form-row">

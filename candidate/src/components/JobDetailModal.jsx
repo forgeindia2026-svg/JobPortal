@@ -729,7 +729,16 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
                 </p>
               </div>
               <div className="info-subtext">
-                Campus Training & Internship OJT
+                {job.trainingSubtext ? (
+                  job.trainingSubtext.split('|').map((line, idx, arr) => (
+                    <React.Fragment key={idx}>
+                      {line.trim()}
+                      {idx < arr.length - 1 && <br />}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <>Campus Training & Internship OJT</>
+                )}
               </div>
             </div>
 
@@ -738,13 +747,24 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
               <div>
                 <Banknote size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
                 <p className="info-value" style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>
-                  {trainingList.length > 0 && trainingList[0].stipend 
-                    ? trainingList[0].stipend 
-                    : (job.stipend || 'STIPEND PROVIDED')}
+                  {job.stipendTitle 
+                    ? job.stipendTitle 
+                    : (trainingList.length > 0 && trainingList[0].stipend 
+                        ? trainingList[0].stipend 
+                        : (job.stipend || 'STIPEND PROVIDED'))}
                 </p>
               </div>
               <div className="info-subtext">
-                Stipend during training<br />Regular salary post-training
+                {job.stipendSubtext ? (
+                  job.stipendSubtext.split('|').map((line, idx, arr) => (
+                    <React.Fragment key={idx}>
+                      {line.trim()}
+                      {idx < arr.length - 1 && <br />}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <>Stipend during training<br />Regular salary post-training</>
+                )}
               </div>
             </div>
 
