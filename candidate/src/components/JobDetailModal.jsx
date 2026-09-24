@@ -571,33 +571,7 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
             </div>
           </div>
 
-          {/* FIC TRAINING 100% PLACEMENT OR REFUND BUTTON (PLACED BELOW PLACEMENT & COURSE TRAINING FEES SECTION) */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
-            <button
-              onClick={() => navigateToSubView('ficTraining')}
-              style={{
-                background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-                color: '#ffffff',
-                padding: '12px 20px',
-                borderRadius: '10px',
-                fontWeight: 800,
-                fontSize: '0.9rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(30, 64, 175, 0.22)',
-                border: '1px solid #60a5fa',
-                letterSpacing: '0.01em',
-                width: '100%',
-                justifyContent: 'center',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <Award size={18} color="#ffffff" /> FIC Training 100% placement or Refund →
-            </button>
-          </div>
+
 
         </div>
 
@@ -1156,33 +1130,7 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
                   </div>
                 </div>
 
-                {/* FIC TRAINING BUTTON TO TOGGLE FIC ROADMAP INLINE */}
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <button
-                    onClick={() => setExpandedFicTraining(prev => !prev)}
-                    style={{
-                      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-                      color: '#ffffff',
-                      padding: '12px 20px',
-                      borderRadius: '10px',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 14px rgba(30, 64, 175, 0.22)',
-                      border: 'none',
-                      letterSpacing: '0.01em',
-                      width: '100%',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <Award size={18} color="#ffffff" /> FIC Training 100% placement or Refund {expandedFicTraining ? '▲' : '▼'}
-                  </button>
-                </div>
+
 
                 {/* EXPANDABLE INLINE FIC TRAINING ROADMAP */}
                 {expandedFicTraining && (

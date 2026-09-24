@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   MapPin, Briefcase, Building2, ChevronRight, Sparkles, ArrowLeft, Search,
-  Code, TrendingUp, Headphones, Award
+  Code, TrendingUp, Headphones, Award, X
 } from 'lucide-react';
 import JobDetailModal from './JobDetailModal';
 import ApplicationModal from './ApplicationModal';
@@ -22,9 +22,18 @@ export default function CandidateView({ API_URL, currentUser }) {
   const [applyingJob, setApplyingJob] = useState(null);
   const [userApplications, setUserApplications] = useState([]);
 
+  // FIC Training dedicated view state ('bank_selection', 'fic_details', or null)
+  const [ficView, setFicView] = useState(null);
+  const [selectedFicBank, setSelectedFicBank] = useState(null);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  // Scroll to top when views change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [ficView, selectedCompany, viewingJob]);
 
   // Handle mobile hardware back button and page navigation
   useEffect(() => {
@@ -34,6 +43,10 @@ export default function CandidateView({ API_URL, currentUser }) {
         if (!state || (state.page !== 'job_details' && !state.subView)) {
           setViewingJob(null);
         }
+      } else if (ficView) {
+        if (!state || (state.page !== 'fic_banks' && state.page !== 'fic_details')) {
+          setFicView(null);
+        }
       } else if (selectedCompany) {
         if (!state || state.page !== 'company') {
           setSelectedCompany(null);
@@ -42,7 +55,18 @@ export default function CandidateView({ API_URL, currentUser }) {
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [viewingJob, selectedCompany]);
+  }, [viewingJob, selectedCompany, ficView]);
+
+  const handleOpenFicBankSelection = () => {
+    window.history.pushState({ page: 'fic_banks' }, '');
+    setFicView('bank_selection');
+  };
+
+  const handleOpenFicBankDetails = (comp) => {
+    window.history.pushState({ page: 'fic_details' }, '');
+    setSelectedFicBank(comp);
+    setFicView('fic_details');
+  };
 
   const handleCompanyClick = (comp) => {
     window.history.pushState({ page: 'company' }, '');
@@ -336,6 +360,302 @@ export default function CandidateView({ API_URL, currentUser }) {
             isFullPage={true}
           />
         </div>
+      ) : ficView === 'bank_selection' ? (
+        /* DEDICATED FULL PAGE 1: FIC TRAINING BANK SELECTION */
+        <div className="section-container animate-fade" style={{ paddingBottom: '3rem' }}>
+          <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)', maxWidth: '640px', margin: '0 auto' }}>
+            
+            {/* HEADER MATCHING USER REFERENCE */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #1e40af, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(30, 64, 175, 0.25)' }}>
+                  <Award size={24} color="#ffffff" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>
+                    FIC Training 100% Placement or Refund
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                    Select a bank below to view program roadmap & details
+                  </p>
+                </div>
+              </div>
+              <button className="btn-close" onClick={() => setFicView(null)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <X size={18} color="#64748b" />
+              </button>
+            </div>
+
+            {/* BANK LIST CARDS */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {(companies && companies.length > 0 ? companies : [
+                { id: 'b1', name: 'Axis Bank', description: 'Major Indian banking institution.' },
+                { id: 'b2', name: 'IDFC First Bank', description: 'Leading Indian private sector bank offering personal and business banking.' },
+                { id: 'b3', name: 'Kotak Mahindra Bank', description: 'Top Indian banking and financial services firm.' },
+                { id: 'b4', name: 'Bandhan Bank', description: 'Premier private bank with nationwide commercial network.' },
+                { id: 'b5', name: 'Aditya Birla Capital', description: 'Leading financial services provider across insurance, wealth and loans.' }
+              ]).map(comp => {
+                const cn = comp.name.toLowerCase();
+                const matchKey = cn.includes('mahindra finance') ? 'mahindra finance' : cn.includes('kotak') ? 'kotak' : cn.includes('aditya') ? 'aditya' : cn.includes('idfc') ? 'idfc' : cn.split(' ')[0];
+                const bankJobsCount = jobs.filter(j => j.companyId === comp.id || (j.companyName || '').toLowerCase().includes(matchKey)).length;
+                return (
+                  <div
+                    key={comp.id}
+                    onClick={() => handleOpenFicBankDetails(comp)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'space-between',
+                      padding: '1.1rem 1.25rem',
+                      borderRadius: '14px',
+                      border: '1.5px solid #cbd5e1',
+                      background: '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#3b82f6';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e40af' }}>
+                        <Building2 size={22} />
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                          {comp.name}
+                        </h4>
+                        <span style={{ fontSize: '0.825rem', color: '#15803d', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                          🔥 {bankJobsCount > 0 ? `${bankJobsCount} Open Positions` : '1 Open Positions'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      style={{
+                        background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '10px 18px',
+                        fontSize: '0.9rem',
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+                      }}
+                    >
+                      Click Now <ChevronRight size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : ficView === 'fic_details' && selectedFicBank ? (
+        /* DEDICATED FULL PAGE 2: FIC TRAINING ROADMAP DETAILS FOR SELECTED BANK */
+        <div className="section-container animate-fade" style={{ paddingBottom: '3rem' }}>
+          <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)', maxWidth: '640px', margin: '0 auto' }}>
+            
+            {/* TOP BLUE BUTTON MATCHING REFERENCE */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <button
+                style={{
+                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                  color: '#ffffff',
+                  padding: '12px 20px',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '0.95rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(30, 64, 175, 0.22)',
+                  border: 'none',
+                  width: '100%',
+                  justifyContent: 'center',
+                  textAlign: 'center'
+                }}
+              >
+                <Award size={18} color="#ffffff" /> FIC Training 100% placement or Refund ▲
+              </button>
+            </div>
+
+            {/* BANK TITLE HEADER */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  {selectedFicBank.name}
+                </h3>
+                <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
+                  FIC Placement & Training Guarantee Program
+                </span>
+              </div>
+              <button className="btn-close" onClick={() => {
+                if (window.history.state && window.history.state.page === 'fic_details') {
+                  window.history.back();
+                } else {
+                  setFicView('bank_selection');
+                }
+              }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <X size={18} color="#64748b" />
+              </button>
+            </div>
+
+            {/* DETAILS BODY */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              
+              {/* SUMMARY CARDS: COST & PERIOD (PER ROLE) */}
+              {(() => {
+                const cn = selectedFicBank.name.toLowerCase();
+                const matchKey = cn.includes('mahindra finance') ? 'mahindra finance' : cn.includes('kotak') ? 'kotak' : cn.includes('aditya') ? 'aditya' : cn.includes('idfc') ? 'idfc' : cn.split(' ')[0];
+                const bankJobs = jobs.filter(j => j.companyId === selectedFicBank.id || (j.companyName || '').toLowerCase().includes(matchKey));
+                if (bankJobs.length > 0) {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {bankJobs.map(job => (
+                        <div key={job.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{job.title}</h4>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                            <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#1e40af', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>
+                                💰 FIC TRAINING COST
+                              </span>
+                              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1d4ed8', display: 'block', marginTop: '4px' }}>
+                                {job.interviewCrackFee || job.trainingFee || selectedFicBank.trainingFee || '2,20,000'}
+                              </span>
+                            </div>
+                            <div style={{ background: '#ecfdf5', border: '1.5px solid #a7f3d0', borderRadius: '10px', padding: '0.85rem 1rem' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#047857', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>
+                                ⏱️ FIC TRAINING PERIOD
+                              </span>
+                              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#047857', display: 'block', marginTop: '4px' }}>
+                                {job.ficTrainingPeriod || selectedFicBank.trainingPeriod || '120 days'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                // Fallback if no specific jobs found
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                    <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '1.1rem 1.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#1e40af', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>
+                        💰 FIC TRAINING COST
+                      </span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1d4ed8', display: 'block', marginTop: '4px' }}>
+                        {selectedFicBank.trainingFee || selectedFicBank.interviewCrackFee || '2,20,000'}
+                      </span>
+                    </div>
+
+                    <div style={{ background: '#ecfdf5', border: '1.5px solid #a7f3d0', borderRadius: '12px', padding: '1.1rem 1.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#047857', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>
+                        ⏱️ FIC TRAINING PERIOD
+                      </span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#047857', display: 'block', marginTop: '4px' }}>
+                        {selectedFicBank.trainingPeriod || '120days'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 4-STEP PAYMENT ROADMAP */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  🗺️ 4-STEP PAYMENT ROADMAP
+                </span>
+                
+                <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#2563eb', display: 'block' }}>
+                      Step 1: 50% Advance Payment
+                    </span>
+                    <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
+                      Starting the process 50% payment advance
+                    </p>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#2563eb', display: 'block' }}>
+                      Step 2: Document Submission
+                    </span>
+                    <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
+                      Document submission for verification
+                    </p>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#2563eb', display: 'block' }}>
+                      Step 3: Training Program
+                    </span>
+                    <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
+                      Training & preparation sessions
+                    </p>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#2563eb', display: 'block' }}>
+                      Step 4: Balance Payment
+                    </span>
+                    <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
+                      After selected 50% payment
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* GUARANTEE BADGE */}
+              <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)', border: '1.5px solid #86efac', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Award size={24} color="#16a34a" />
+                <div>
+                  <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#14532d', margin: 0 }}>
+                    100% Placement Guarantee or Full Refund
+                  </h5>
+                  <p style={{ fontSize: '0.8rem', color: '#15803d', margin: '2px 0 0 0' }}>
+                    Complete job guarantee upon successful training completion or 100% money back.
+                  </p>
+                </div>
+              </div>
+
+              {/* FOOTER ACTION BUTTON */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '0.5rem' }}>
+                <button
+                  onClick={() => {
+                    handleCompanyClick(selectedFicBank);
+                    setFicView(null);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                    color: '#ffffff',
+                    padding: '12px 24px',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                >
+                  View {selectedFicBank.name} Jobs & Apply →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="section-container animate-fade">
           {/* PAGE 1: CATEGORIES VIEW */}
@@ -493,6 +813,8 @@ export default function CandidateView({ API_URL, currentUser }) {
           {selectedCategory && !selectedCompany && (
             <div>
 
+
+
               {/* RUNNING BANK ADVERTISEMENT MARQUEE BANNER */}
               <div className="bank-ticker-banner-container">
 
@@ -608,6 +930,60 @@ export default function CandidateView({ API_URL, currentUser }) {
                     );
                   })
                 )}
+              </div>
+
+              {/* FIC TRAINING KPI CARD (PLACED AT THE BOTTOM) */}
+              <div 
+                onClick={handleOpenFicBankSelection}
+                style={{ 
+                  background: '#ffffff', 
+                  border: '1px solid #e2e8f0', 
+                  borderRadius: '16px', 
+                  padding: '1.5rem', 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+                  transition: 'all 0.2s ease',
+                  marginTop: '0.5rem',
+                  marginBottom: '2.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.08)';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.04)';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ borderRadius: '50%', width: '54px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', border: '1.5px solid #e2e8f0', background: '#ffffff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                      FIC Training 100% placement or Refund
+                    </h3>
+                    <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 700, display: 'inline-block', marginTop: '4px' }}>
+                      🌟 Exclusive Program Guarantee
+                    </span>
+                  </div>
+                </div>
+                
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: '1.5' }}>
+                  Complete job guarantee upon successful training completion or get 100% of your training fees refunded. Click here to view participating banks and roles.
+                </p>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
+                    View FIC Training Details
+                  </span>
+                  <ChevronRight size={20} color="#0f172a" />
+                </div>
               </div>
             </div>
           )}

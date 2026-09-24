@@ -718,14 +718,14 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '0.825rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', padding: '3px 10px', borderRadius: '6px' }}>
-                    🏆 CARD 1: Placement Training Fee Details & Guidelines
+                    🏆 CARD 1: FIC Training Fee Details & Guidelines
                   </span>
                 </div>
 
                 <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
-                      Placement / FIC Training Fee
+                      FIC Training Fee
                     </label>
                     <input
                       type="text"
