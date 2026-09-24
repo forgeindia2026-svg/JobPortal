@@ -523,7 +523,12 @@ export default function CandidateView({ API_URL, currentUser }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       {bankJobs.map(job => (
                         <div key={job.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{job.title}</h4>
+                          {job.programName && (
+                            <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '0.75rem' }}>
+                              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{job.programName}</h3>
+                            </div>
+                          )}
+                          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#334155', margin: 0 }}>Role: {job.title}</h4>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                             <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '10px', padding: '0.85rem 1rem' }}>
                               <span style={{ fontSize: '0.7rem', color: '#1e40af', textTransform: 'uppercase', fontWeight: 800, display: 'block' }}>

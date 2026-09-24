@@ -47,6 +47,7 @@ const jobSchema = new mongoose.Schema({
   companyId: String,
   categoryId: String,
   title: String,
+  programName: String,
   jobType: String,
   location: String,
   experience: String,

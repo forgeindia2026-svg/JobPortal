@@ -655,6 +655,11 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* INFOGRAPHIC POSTER GRID (3 COLUMNS x 2 ROWS GUARANTEED ON ALL SCREENS INCLUDING MOBILE) */}
         <div className="infographic-poster-container">
+          {job.programName && (
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 1.25rem 0' }}>
+              {job.programName}
+            </h2>
+          )}
           <div className="infographic-poster-grid">
             {/* ITEM 1: CTC / SALARY */}
             <div className="infographic-poster-item">

@@ -5,6 +5,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [companyId, setCompanyId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [title, setTitle] = useState('');
+  const [programName, setProgramName] = useState('');
   const [jobType, setJobType] = useState('Full Time');
   const [location, setLocation] = useState('');
   const [experience, setExperience] = useState('');
@@ -52,6 +53,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setCompanyId(jobToEdit.companyId || '');
       setCategoryId(jobToEdit.categoryId || '');
       setTitle(jobToEdit.title || '');
+      setProgramName(jobToEdit.programName || '');
       setJobType(jobToEdit.jobType || 'Full Time');
       setLocation(jobToEdit.location || '');
       setExperience(jobToEdit.experience || '');
@@ -102,6 +104,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       if (categories.length > 0) setCategoryId(categories[0].id);
       if (companies.length > 0) setCompanyId(companies[0].id);
       setTitle('');
+      setProgramName('');
       setJobType('Full Time');
       setLocation('');
       setExperience('');
@@ -179,6 +182,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         companyId,
         categoryId,
         title,
+        programName,
         jobType,
         location,
         experience,
@@ -285,6 +289,19 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   required
                 />
               </div>
+              <div className="form-group">
+                <label className="form-label">Program Name (Optional)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Mahindra Finance Prarambh Program"
+                  value={programName}
+                  onChange={e => setProgramName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Job Type</label>
                 <select className="form-select" value={jobType} onChange={e => setJobType(e.target.value)}>
