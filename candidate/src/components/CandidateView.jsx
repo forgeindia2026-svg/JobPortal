@@ -387,9 +387,6 @@ export default function CandidateView({ API_URL, currentUser }) {
                             </div>
 
                             <div className="job-tags-container">
-                              <span className="tag-pill tag-location">
-                                <MapPin size={13} /> {job.location}
-                              </span>
                               <span className="tag-pill tag-exp">
                                 <Briefcase size={13} /> {job.experience}
                               </span>
@@ -658,9 +655,6 @@ export default function CandidateView({ API_URL, currentUser }) {
                           </div>
 
                           <div className="job-tags-container">
-                            <span className="tag-pill tag-location">
-                              <MapPin size={13} /> {job.location}
-                            </span>
                             <span className="tag-pill tag-exp">
                               <Briefcase size={13} /> {job.experience}
                             </span>
