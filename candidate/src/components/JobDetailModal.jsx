@@ -723,9 +723,11 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
               <div>
                 <Clock size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
                 <p className="info-value">
-                  {trainingList.length > 0 
-                    ? trainingList.map(t => t.duration).filter(Boolean).join(' + ') || 'Structured Plan'
-                    : (job.trainingPeriod || 'Structured Period')}
+                  {job.trainingTitle
+                    ? job.trainingTitle
+                    : (trainingList.length > 0 
+                        ? trainingList.map(t => t.duration).filter(Boolean).join(' + ') || 'Structured Plan'
+                        : (job.trainingPeriod || 'Structured Period'))}
                 </p>
               </div>
               <div className="info-subtext">

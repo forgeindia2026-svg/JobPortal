@@ -17,6 +17,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [trainingFee, setTrainingFee] = useState('');
   const [feeRefundType, setFeeRefundType] = useState('100% Refundable');
   const [feeRefundDetails, setFeeRefundDetails] = useState('');
+  const [trainingTitle, setTrainingTitle] = useState('');
   const [trainingSubtext, setTrainingSubtext] = useState('');
   const [stipendTitle, setStipendTitle] = useState('');
   const [stipendSubtext, setStipendSubtext] = useState('');
@@ -60,6 +61,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setTrainingFee(jobToEdit.trainingFee || '');
       setFeeRefundType(jobToEdit.feeRefundType || '100% Refundable');
       setFeeRefundDetails(jobToEdit.feeRefundDetails || '');
+      setTrainingTitle(jobToEdit.trainingTitle || '');
       setTrainingSubtext(jobToEdit.trainingSubtext || '');
       setStipendTitle(jobToEdit.stipendTitle || '');
       setStipendSubtext(jobToEdit.stipendSubtext || '');
@@ -109,6 +111,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setTrainingFee('');
       setFeeRefundType('100% Refundable');
       setFeeRefundDetails('');
+      setTrainingTitle('');
       setTrainingSubtext('');
       setStipendTitle('');
       setStipendSubtext('');
@@ -185,6 +188,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         trainingFee,
         feeRefundType,
         feeRefundDetails,
+        trainingTitle,
         trainingSubtext,
         stipendTitle,
         stipendSubtext,
@@ -525,20 +529,32 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                 📊 Candidate Infographic Card Customize (Clock & Stipend Cards)
               </label>
               
-              <div className="form-group" style={{ marginBottom: '0.85rem' }}>
-                <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
-                  ⏱️ Training Card Subtext Lines (Clock Icon)
-                </label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Use | for line breaks e.g. 2 months Campus Training | 1 On the job training"
-                  value={trainingSubtext}
-                  onChange={e => setTrainingSubtext(e.target.value)}
-                />
-                <span style={{ fontSize: '0.725rem', color: '#4b5563', marginTop: '2px', display: 'block' }}>
-                  Separate lines using vertical bar symbol | (e.g. "2 months Campus Training | 1 On the job training")
-                </span>
+              <div className="form-row" style={{ marginBottom: '0.85rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    ⏱️ Training Card Main Value / Title (Clock Icon)
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. 12 Months or 3 Months"
+                    value={trainingTitle}
+                    onChange={e => setTrainingTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    ⏱️ Training Card Subtext Lines
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Use | for line breaks e.g. 4 months Campus Training | 3 months Internship | 5 Months On the job Training"
+                    value={trainingSubtext}
+                    onChange={e => setTrainingSubtext(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="form-row" style={{ margin: 0 }}>
