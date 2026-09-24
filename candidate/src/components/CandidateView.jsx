@@ -276,10 +276,11 @@ export default function CandidateView({ API_URL, currentUser }) {
   const companyPriorityMap = {
     'IDFC First Bank': 1,
     'Bandhan Bank': 2,
-    'Aditya Birla Capital': 3,
-    'Kotak Mahindra Bank': 4,
-    'Mahindra Finance': 5,
-    'Axis Bank': 6
+    'HDFC Life': 3,
+    'Aditya Birla Capital': 4,
+    'Kotak Mahindra Bank': 5,
+    'Mahindra Finance': 6,
+    'Axis Bank': 7
   };
 
   const rawCompanies = selectedCategory
@@ -829,50 +830,47 @@ export default function CandidateView({ API_URL, currentUser }) {
                 <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
                   <div className="bank-ticker-track" style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '1.5rem',
                     whiteSpace: 'nowrap',
+                    width: 'max-content',
                     animation: 'bankTicker 14s linear infinite'
                   }}>
-                    {[
-                      { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
-                      { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
-                      { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
-                      { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
-                      { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
-                    ].concat([
-                      { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
-                      { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
-                      { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
-                      { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
-                      { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
-                    ]).map((bank, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => {
-                          const foundComp = filteredCompanies.find(c => c.name.toLowerCase().includes(bank.name.toLowerCase().split(' ')[0]));
-                          if (foundComp) handleCompanyClick(foundComp);
-                        }}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          cursor: 'pointer',
-                          fontSize: '0.85rem',
-                          color: '#ffffff',
-                          fontWeight: 700,
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          padding: '5px 14px',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          transition: 'background 0.2s ease'
-                        }}
-                      >
-                        <Building2 size={15} color={bank.color} />
-                        <span>{bank.name}</span>
-                        <span style={{ fontSize: '0.725rem', color: bank.color, background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '12px' }}>
-                          {bank.tag}
-                        </span>
+                    {[1, 2].map(group => (
+                      <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', paddingRight: '1.5rem' }}>
+                        {[
+                          { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
+                          { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
+                          { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
+                          { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
+                          { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
+                        ].map((bank, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => {
+                              const foundComp = filteredCompanies.find(c => c.name.toLowerCase().includes(bank.name.toLowerCase().split(' ')[0]));
+                              if (foundComp) handleCompanyClick(foundComp);
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              background: 'rgba(255, 255, 255, 0.08)',
+                              padding: '5px 14px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              transition: 'background 0.2s ease'
+                            }}
+                          >
+                            <Building2 size={15} color={bank.color} />
+                            <span>{bank.name}</span>
+                            <span style={{ fontSize: '0.725rem', color: bank.color, background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '12px' }}>
+                              {bank.tag}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
