@@ -112,7 +112,8 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
     'Bandhan Bank': '/logos/bandhan_bank.png',
     'Aditya Birla Capital': '/logos/aditya_birla.jpg',
     'Mahindra Finance': '/logos/mahindra_finance.png',
-    'Tech Mahindra': '/logos/tech_mahindra.svg'
+    'Tech Mahindra': '/logos/tech_mahindra.svg',
+    'HDFC Life': '/logos/Hdfc.jpg'
   };
 
   const logoSrc = fallbackMap[job.companyName] || (job.companyLogo && job.companyLogo.includes('/logos/') ? `/logos/${job.companyLogo.split('/').pop()}` : job.companyLogo);
@@ -692,9 +693,11 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
                   PAN INDIA
                 </p>
               </div>
-              <div className="info-subtext">
-                Job Location<br />Based on Aadhar card or your nearby
-              </div>
+              {!(job.companyName === 'IDFC First Bank' && job.title && job.title.toLowerCase().includes('debt manager')) && (
+                <div className="info-subtext">
+                  Job Location<br />Based on Aadhar card or your nearby
+                </div>
+              )}
             </div>
 
             {/* ITEM 4: TRAINING DURATION */}

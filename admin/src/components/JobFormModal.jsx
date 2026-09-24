@@ -765,41 +765,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                     />
                   </div>
                 </div>
-                <div className="form-row" style={{ margin: 0, marginBottom: '0.75rem' }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
-                      Payment Stage / Timing
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      list="payment-stage-list"
-                      placeholder="Type manually or select (e.g. Starting the process / After Clearing Interview)"
-                      value={interviewFeeStage}
-                      onChange={e => setInterviewFeeStage(e.target.value)}
-                    />
-                    <datalist id="payment-stage-list">
-                      <option value="Starting the process" />
-                      <option value="After Clearing Interview" />
-                      <option value="After Receiving Offer Letter" />
-                      <option value="Deducted After Joining (First Salary)" />
-                      <option value="100% Free (No Selection Fee)" />
-                    </datalist>
-                  </div>
-                </div>
 
-                <div className="form-group" style={{ margin: 0, marginTop: '0.75rem' }}>
-                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#1e293b', fontWeight: 700 }}>
-                    Selection Fee Guidelines & Conditions
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Amount is payable ONLY after passing final interview round and receiving official selection confirmation"
-                    value={interviewFeeDetails}
-                    onChange={e => setInterviewFeeDetails(e.target.value)}
-                  />
-                </div>
               </div>
 
               {/* CARD 2: VERTICAL STEPPER INTERVIEW ROUNDS */}

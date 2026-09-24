@@ -163,7 +163,8 @@ export default function CandidateView({ API_URL, currentUser }) {
       'Bandhan Bank': '/logos/bandhan_bank.png',
       'Aditya Birla Capital': '/logos/aditya_birla.jpg',
       'Mahindra Finance': '/logos/mahindra_finance.png',
-      'Tech Mahindra': '/logos/tech_mahindra.svg'
+      'Tech Mahindra': '/logos/tech_mahindra.svg',
+      'HDFC Life': '/logos/Hdfc.jpg'
     };
 
     if (compName && fallbackMap[compName]) {

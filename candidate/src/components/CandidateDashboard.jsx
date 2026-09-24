@@ -141,7 +141,8 @@ export default function CandidateDashboard({ candidate, API_URL, onBrowseJobs })
                           'Bandhan Bank': '/logos/bandhan_bank.png',
                           'Aditya Birla Capital': '/logos/aditya_birla.jpg',
                           'Mahindra Finance': '/logos/mahindra_finance.png',
-                          'Tech Mahindra': '/logos/tech_mahindra.svg'
+                          'Tech Mahindra': '/logos/tech_mahindra.svg',
+                          'HDFC Life': '/logos/Hdfc.jpg'
                         };
                         const logoSrc = fallbackMap[app.companyName] || (app.companyLogo && app.companyLogo.includes('/logos/') ? `/logos/${app.companyLogo.split('/').pop()}` : app.companyLogo);
                         return logoSrc ? (
