@@ -836,18 +836,27 @@ export default function CandidateView({ API_URL, currentUser }) {
                       return (
                         <div key={job.id} className="job-card-vibrant" style={{ cursor: 'pointer' }} onClick={() => handleViewJobDetails(job)}>
                           <div>
-                            <div className="job-card-header">
-                              {getLogoUrl(job.companyName, job.companyLogo) ? (
-                                <img src={getLogoUrl(job.companyName, job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
-                              ) : (
-                                <div className="job-comp-logo-vibrant logo-placeholder">
-                                  <Building2 size={24} color="var(--primary)" />
+                            <div className="job-card-header" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                {getLogoUrl(job.companyName, job.companyLogo) ? (
+                                  <img src={getLogoUrl(job.companyName, job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
+                                ) : (
+                                  <div className="job-comp-logo-vibrant logo-placeholder">
+                                    <Building2 size={24} color="var(--primary)" />
+                                  </div>
+                                )}
+                                <div>
+                                  <h4 className="job-card-title">{job.title}</h4>
+                                  <div className="job-comp-name">{job.companyName}</div>
                                 </div>
-                              )}
-                              <div>
-                                <h4 className="job-card-title">{job.title}</h4>
-                                <div className="job-comp-name">{job.companyName}</div>
                               </div>
+                              {(job.title || '').toLowerCase().includes('hdfc') && (
+                                <img
+                                  src="/logos/Hdfc.jpg"
+                                  alt="HDFC Bank"
+                                  style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}
+                                />
+                              )}
                             </div>
 
                             <div className="job-tags-container">
@@ -1157,18 +1166,27 @@ export default function CandidateView({ API_URL, currentUser }) {
                     return (
                       <div key={job.id} className="job-card-vibrant" style={{ cursor: 'pointer' }} onClick={() => handleViewJobDetails(job)}>
                         <div>
-                          <div className="job-card-header">
-                            {getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo) ? (
-                              <img src={getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
-                            ) : (
-                              <div className="job-comp-logo-vibrant logo-placeholder">
-                                <Building2 size={24} color="var(--primary)" />
+                          <div className="job-card-header" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              {getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo) ? (
+                                <img src={getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
+                              ) : (
+                                <div className="job-comp-logo-vibrant logo-placeholder">
+                                  <Building2 size={24} color="var(--primary)" />
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="job-card-title">{job.title}</h4>
+                                <div className="job-comp-name">{job.companyName || selectedCompany.name}</div>
                               </div>
-                            )}
-                            <div>
-                              <h4 className="job-card-title">{job.title}</h4>
-                              <div className="job-comp-name">{job.companyName || selectedCompany.name}</div>
                             </div>
+                            {(job.title || '').toLowerCase().includes('hdfc') && (
+                              <img
+                                src="/logos/Hdfc.jpg"
+                                alt="HDFC Bank"
+                                style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}
+                              />
+                            )}
                           </div>
 
                           <div className="job-tags-container">
