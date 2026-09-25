@@ -1,7 +1,15 @@
 import React from 'react';
-import { X, MapPin, Briefcase, GraduationCap, Clock, CheckCircle2, FileText, Send, Building2, Layers, Award, ChevronRight, ChevronDown, Wallet, User, Banknote, IndianRupee, ArrowLeft } from 'lucide-react';
+import { X, MapPin, Briefcase, GraduationCap, Clock, CheckCircle2, FileText, Send, Building2, Layers, Award, ChevronRight, ChevronDown, Wallet, User, Banknote, IndianRupee, ArrowLeft, ShieldCheck } from 'lucide-react';
 
-export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyApplied, isFullPage = true }) {
+export default function JobDetailModal({
+  job,
+  onClose,
+  onApplyClick,
+  isAlreadyApplied,
+  isFullPage = true,
+  itProcesses = [],
+  onSelectItProcess
+}) {
   const [currentSubView, setCurrentSubView] = React.useState('main'); // 'main', 'afterSelection', or 'ficTraining'
   const [expandedAfterSelection, setExpandedAfterSelection] = React.useState(false);
   const [expandedFicTraining, setExpandedFicTraining] = React.useState(false);
@@ -113,10 +121,17 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
     'Aditya Birla Capital': '/logos/aditya_birla.jpg',
     'Mahindra Finance': '/logos/mahindra_finance.svg',
     'Tech Mahindra': '/logos/tech_mahindra.svg',
-    'HDFC Life': '/logos/Hdfc.jpg'
+    'HDFC Life': '/logos/Hdfc.jpg',
+    'FIC IT Training & Placement': '/logo.png',
+    'FIC IT Training': '/logo.png',
+    'FIC': '/logo.png'
   };
 
   const logoSrc = fallbackMap[job.companyName] || (job.companyLogo && job.companyLogo.includes('/logos/') ? `/logos/${job.companyLogo.split('/').pop()}` : job.companyLogo);
+
+  // Detect IT job (only FIC IT Training jobs)
+  const isItJob = (job.categoryId === 'cat_it') ||
+    (job.companyName && (job.companyName.includes('FIC IT') || job.companyName.includes('IT Training')));
 
   // VIEW 3: FIC TRAINING 100% PLACEMENT OR REFUND DEDICATED PAGE
   if (currentSubView === 'ficTraining') {
@@ -556,7 +571,7 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
 
                 <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                   <span style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
-                    Fee Refund Eligibility
+                    {isItJob ? 'Placement Guarantee' : 'Fee Refund Eligibility'}
                   </span>
                   <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#2563eb' }}>
                     {job.feeRefundType || 'Subject to probation policy'}
@@ -654,6 +669,43 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
       </div>
 
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) */}
+        {itProcesses && itProcesses.length > 0 && (job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) && (
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1.5px solid #f1f5f9' }}>
+            {itProcesses.map((proc) => {
+              const isSelected = (job.id === proc.id) || (job.programName && job.programName.includes(proc.processName));
+              return (
+                <button
+                  key={proc.id}
+                  type="button"
+                  onClick={() => {
+                    if (onSelectItProcess) {
+                      onSelectItProcess(proc);
+                    }
+                  }}
+                  style={{
+                    flex: '1',
+                    minWidth: '130px',
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    border: isSelected ? '2px solid #2563eb' : '1.5px solid #cbd5e1',
+                    background: isSelected ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : '#f8fafc',
+                    color: isSelected ? '#ffffff' : '#334155',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    cursor: 'pointer',
+                    boxShadow: isSelected ? '0 4px 12px rgba(37,99,235,0.25)' : 'none',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'center'
+                  }}
+                >
+                  {proc.processName}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* INFOGRAPHIC POSTER GRID (3 COLUMNS x 2 ROWS GUARANTEED ON ALL SCREENS INCLUDING MOBILE) */}
         <div className="infographic-poster-container">
           {job.programName && (
@@ -685,15 +737,21 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
               </div>
             </div>
 
-            {/* ITEM 3: LOCATION */}
+            {/* ITEM 3: LOCATION (DYNAMIC FOR IT TRAINING, UNCHANGED FOR BANKING) */}
             <div className="infographic-poster-item">
               <div>
                 <MapPin size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                <p className="info-value" style={{ fontSize: '1.4rem', textTransform: 'uppercase' }}>
-                  PAN INDIA
+                <p className="info-value" style={{ fontSize: (job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) && job.location && job.location.length > 15 ? '1.15rem' : '1.4rem', textTransform: 'uppercase' }}>
+                  {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc')))
+                    ? (job.location || 'PAN INDIA')
+                    : 'PAN INDIA'}
                 </p>
               </div>
-              {!(job.companyName === 'IDFC First Bank' && job.title && job.title.toLowerCase().includes('debt manager')) && (
+              {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) ? (
+                <div className="info-subtext">
+                  Job Location<br />Placement Location as per track
+                </div>
+              ) : !(job.companyName === 'IDFC First Bank' && job.title && job.title.toLowerCase().includes('debt manager')) && (
                 <div className="info-subtext">
                   Job Location<br />Based on Aadhar card or your nearby
                 </div>
@@ -764,6 +822,36 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
                 Program Fees<br />{job.feeRefundType ? `(${job.feeRefundType})` : '(*Terms & Guidelines apply)'}
               </div>
             </div>
+
+            {/* ITEM 7: BOND PERIOD (IF CONFIGURED) */}
+            {job.bondPeriod && (
+              <div className="infographic-poster-item">
+                <div>
+                  <ShieldCheck size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
+                  <p className="info-value" style={{ fontSize: '1.35rem' }}>
+                    {job.bondPeriod}
+                  </p>
+                </div>
+                <div className="info-subtext">
+                  Service Agreement Duration
+                </div>
+              </div>
+            )}
+
+            {/* ITEM 8: ORIGINALS REQUIREMENT (IF CONFIGURED) */}
+            {job.originalsRequired && (
+              <div className="infographic-poster-item">
+                <div>
+                  <CheckCircle2 size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
+                  <h3 className="info-title-sm" style={{ color: '#b45309' }}>
+                    {job.originalsRequired}
+                  </h3>
+                </div>
+                <div className="info-subtext">
+                  Original Certificates<br />Verification & Submission
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -799,7 +887,9 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
           <div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Job Location</span>
             <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-              <MapPin size={14} color="#3b82f6" /> PAN INDIA (Nearby Branch)
+              <MapPin size={14} color="#3b82f6" /> {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc')))
+                ? (job.location || 'PAN INDIA')
+                : 'PAN INDIA (Nearby Branch)'}
             </p>
           </div>
           <div>
@@ -817,7 +907,7 @@ export default function JobDetailModal({ job, onClose, onApplyClick, isAlreadyAp
           <div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Qualification</span>
             <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-              <GraduationCap size={14} color="#f59e0b" /> {job.qualification}
+              <GraduationCap size={14} color="#f59e0b" /> {job.qualification || ((job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) ? 'Any Degree' : '')}
             </p>
           </div>
 

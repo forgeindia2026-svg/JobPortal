@@ -21,6 +21,11 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
     order: 1
   });
 
+  const [trainingPhases, setTrainingPhases] = useState([
+    { title: 'Phase 1 Training', duration: '3 Months', mode: 'Classroom Training', stipend: 'STIPEND ₹12,000' },
+    { title: 'Phase 2 Training', duration: '3 Months', mode: 'Real Project Training (OJT)', stipend: 'STIPEND ₹12,000' }
+  ]);
+
   const [selectionSteps, setSelectionSteps] = useState([
     { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
     { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },
@@ -48,6 +53,20 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
         status: processToEdit.status || 'Active',
         order: processToEdit.order || 1
       });
+      if (processToEdit.trainingPhases && Array.isArray(processToEdit.trainingPhases) && processToEdit.trainingPhases.length > 0) {
+        setTrainingPhases(processToEdit.trainingPhases);
+      } else if (processToEdit.trainingSubtext && processToEdit.trainingSubtext.includes('|')) {
+        const parts = processToEdit.trainingSubtext.split('|');
+        setTrainingPhases([
+          { title: 'Phase 1 Training', duration: parts[0]?.trim() || '3 Months', mode: 'Classroom Training', stipend: `STIPEND ₹${processToEdit.stipend || '12,000'}` },
+          { title: 'Phase 2 Training', duration: parts[1]?.trim() || '3 Months', mode: 'Real Project Training (OJT)', stipend: `STIPEND ₹${processToEdit.stipend || '12,000'}` }
+        ]);
+      } else {
+        setTrainingPhases([
+          { title: 'Phase 1 Training', duration: processToEdit.trainingPeriod || '3 Months', mode: 'Classroom Training', stipend: `STIPEND ₹${processToEdit.stipend || '12,000'}` },
+          { title: 'Phase 2 Training', duration: '3 Months', mode: 'Real Project Training (OJT)', stipend: `STIPEND ₹${processToEdit.stipend || '12,000'}` }
+        ]);
+      }
       if (processToEdit.selectionSteps && Array.isArray(processToEdit.selectionSteps)) {
         setSelectionSteps(processToEdit.selectionSteps);
       }
@@ -70,6 +89,10 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
         status: 'Active',
         order: 1
       });
+      setTrainingPhases([
+        { title: 'Phase 1 Training', duration: '3 Months', mode: 'Classroom Training', stipend: 'STIPEND ₹12,000' },
+        { title: 'Phase 2 Training', duration: '3 Months', mode: 'Real Project Training (OJT)', stipend: 'STIPEND ₹12,000' }
+      ]);
       setSelectionSteps([
         { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
         { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },
@@ -84,6 +107,23 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhaseChange = (index, field, value) => {
+    const updated = [...trainingPhases];
+    updated[index][field] = value;
+    setTrainingPhases(updated);
+  };
+
+  const addPhase = () => {
+    setTrainingPhases(prev => [
+      ...prev,
+      { title: `Phase ${prev.length + 1} Training`, duration: '3 Months', mode: 'Project Training (OJT)', stipend: `STIPEND ₹${formData.stipend || '12,000'}` }
+    ]);
+  };
+
+  const removePhase = (index) => {
+    setTrainingPhases(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleStepChange = (index, field, value) => {
@@ -113,6 +153,7 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
     }
     onSave({
       ...formData,
+      trainingPhases,
       selectionSteps
     });
   };
@@ -320,6 +361,99 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
                 placeholder="e.g. Originals Need to Submit"
                 style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem' }}
               />
+            </div>
+          </div>
+
+          {/* IT TRAINING PHASES (PHASE 1, PHASE 2, ETC.) */}
+          <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '10px', padding: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🎓 IT Training Phases (Phase 1, Phase 2, etc.)
+                </span>
+                <p style={{ fontSize: '0.75rem', color: '#15803d', margin: '2px 0 0 0' }}>
+                  Add multiple learning stages with custom duration, training mode, and stipend
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addPhase}
+                style={{ background: '#dcfce7', color: '#166534', border: '1px solid #86efac', borderRadius: '6px', padding: '6px 12px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <Plus size={14} /> Add Phase
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {trainingPhases.map((phase, idx) => (
+                <div key={idx} style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e40af', background: '#dbeafe', padding: '3px 10px', borderRadius: '4px' }}>
+                      PHASE {idx + 1} (Stage {idx + 1} of {trainingPhases.length})
+                    </span>
+                    {trainingPhases.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePhase(idx)}
+                        style={{ background: '#fee2e2', border: 'none', color: '#dc2626', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}
+                      >
+                        <Trash2 size={12} /> Remove Phase
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+                        Phase Title
+                      </label>
+                      <input
+                        type="text"
+                        value={phase.title || `Phase ${idx + 1} Training`}
+                        onChange={(e) => handlePhaseChange(idx, 'title', e.target.value)}
+                        placeholder={`Phase ${idx + 1} Training`}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.825rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+                        ⏱️ Duration
+                      </label>
+                      <input
+                        type="text"
+                        value={phase.duration || ''}
+                        onChange={(e) => handlePhaseChange(idx, 'duration', e.target.value)}
+                        placeholder="e.g. 3 Months"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.825rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+                        🏫 Mode
+                      </label>
+                      <input
+                        type="text"
+                        value={phase.mode || ''}
+                        onChange={(e) => handlePhaseChange(idx, 'mode', e.target.value)}
+                        placeholder="e.g. Classroom Training"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.825rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+                        💵 Stipend / Salary
+                      </label>
+                      <input
+                        type="text"
+                        value={phase.stipend || ''}
+                        onChange={(e) => handlePhaseChange(idx, 'stipend', e.target.value)}
+                        placeholder="e.g. STIPEND ₹12,000"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.825rem' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

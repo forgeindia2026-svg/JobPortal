@@ -40,6 +40,7 @@ router.post('/', async (req, res) => {
       bondPeriod,
       originalsRequired,
       description,
+      trainingPhases,
       selectionSteps,
       order,
       status = 'Active'
@@ -66,6 +67,7 @@ router.post('/', async (req, res) => {
       bondPeriod: bondPeriod || '1 Year Bond',
       originalsRequired: originalsRequired || 'Originals Need to Submit',
       description: description || '',
+      trainingPhases: trainingPhases || [],
       selectionSteps: selectionSteps || [
         { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
         { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },

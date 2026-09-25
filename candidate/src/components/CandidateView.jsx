@@ -277,6 +277,164 @@ export default function CandidateView({ API_URL, currentUser }) {
     }
   };
 
+  const convertItProcToJob = (proc, processList = null) => ({
+    id: proc.id,
+    title: proc.role || 'Software Engineer Trainee',
+    companyName: 'FIC IT Training & Placement',
+    companyLogo: '/logo.png',
+    categoryName: 'IT & Software Development',
+    categoryId: 'cat_it',
+    programName: `${proc.processName}: ${proc.programTitle || 'FIC IT Training & 100% Placement Programme'}`,
+    salary: proc.salary || '4.0 LPA + Incentives',
+    experience: 'Fresher & Experience',
+    location: proc.location || 'PAN INDIA',
+    trainingPeriod: proc.trainingPeriod || '6 Months',
+    trainingTitle: proc.trainingPeriod || '6 Months',
+    trainingSubtext: proc.trainingSubtext || '3 Months Classroom Training | 3 Months Real Project Training',
+    stipend: `STIPEND ₹${proc.stipend || '12,000'}`,
+    stipendTitle: `STIPEND ₹${proc.stipend || '12,000'}`,
+    stipendSubtext: proc.stipendSubtext || `₹${proc.stipend || '12,000'} per month during training`,
+    trainingFee: proc.trainingFee || '1.6 LPA',
+    feeRefundType: '100% Placement Guarantee',
+    feeRefundDetails: '100% money back guarantee upon successful training completion',
+    bondPeriod: proc.bondPeriod || '1 Year Bond',
+    originalsRequired: proc.originalsRequired || 'Originals Need to Submit',
+    description: proc.description || `ROLE: ${proc.role || 'Software Engineer Trainee'} | Program: ${proc.programTitle || 'FIC IT Training'} | Training Duration: ${proc.trainingPeriod || '6 Months'} | Stipend: ₹${proc.stipend || '12,000'} | Bond: ${proc.bondPeriod || '1 Year Bond'} | Originals: ${proc.originalsRequired || 'Originals Need to Submit'}.`,
+    responsibilities: [
+      'Complete comprehensive software development and full stack curriculum.',
+      'Work on live enterprise projects under guidance of senior technical leads.',
+      'Participate in mock technical interviews, system design sessions, and client presentations.',
+      'Clear evaluation rounds and get deployed to hiring partner tech firms.'
+    ],
+    requirements: [
+      'Any Degree (B.E, B.Tech, B.Sc, BCA, MCA, M.Tech) with interest in IT careers.',
+      'Basic logical thinking, computer fundamentals, and readiness to learn.',
+      `Agreement to program terms: ${proc.bondPeriod || '1 Year Bond'}.`,
+      `${proc.originalsRequired || 'Originals Need to Submit'} for document verification.`
+    ],
+    documentsRequired: [
+      '10th & 12th Marksheets',
+      'Degree Certificate / Consolidated Marksheet',
+      'Aadhar Card & PAN Card',
+      'Recent Passport Size Photos'
+    ],
+    interviewSteps: (proc.selectionSteps && proc.selectionSteps.length > 0) ? proc.selectionSteps : [
+      { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
+      { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },
+      { stepNumber: 3, title: 'Technical & HR Interview', description: 'Discussion with hiring manager & interview clearance' },
+      { stepNumber: 4, title: 'Batch Onboarding', description: 'Offer letter issuance, document submission, and training commencement' }
+    ],
+    trainingPhases: (proc.trainingPhases && proc.trainingPhases.length > 0) ? proc.trainingPhases : (
+      (proc.trainingSubtext && proc.trainingSubtext.includes('|')) ? [
+        { title: 'Phase 1 Training', duration: proc.trainingSubtext.split('|')[0].trim(), mode: 'Classroom Training', stipend: `STIPEND ₹${proc.stipend || '12,000'}` },
+        { title: 'Phase 2 Training', duration: proc.trainingSubtext.split('|')[1].trim(), mode: 'Real Project Training (OJT)', stipend: `STIPEND ₹${proc.stipend || '12,000'}` }
+      ] : [
+        { title: 'Phase 1 Training', duration: proc.trainingPeriod || '3 Months', mode: 'Classroom Training', stipend: `STIPEND ₹${proc.stipend || '12,000'}` },
+        { title: 'Phase 2 Training', duration: '3 Months', mode: 'Real Project Training (OJT)', stipend: `STIPEND ₹${proc.stipend || '12,000'}` }
+      ]
+    ),
+    itProcessList: (processList && processList.length > 0) ? processList : itProcesses
+  });
+
+  const getGroupedItRoles = () => {
+    const groups = [];
+    itProcesses.forEach(proc => {
+      const rawRole = (proc.role || 'Software Developer Trainee').trim();
+      const normKey = rawRole.toLowerCase()
+        .replace(/\btrainee\b/gi, '')
+        .replace(/\bengineer\b/gi, 'developer')
+        .replace(/[^a-z0-9]/g, '')
+        .trim() || 'softwaredeveloper';
+
+      let group = groups.find(g => g.normKey === normKey);
+      if (!group) {
+        group = {
+          role: rawRole,
+          normKey: normKey,
+          processes: [],
+          primaryProcess: proc
+        };
+        groups.push(group);
+      }
+      group.processes.push(proc);
+    });
+    return groups;
+  };
+
+  const renderItTickerBanner = () => {
+    const rolesList = getGroupedItRoles();
+    const tickerData = rolesList.length > 0 ? rolesList.map((g, idx) => ({
+      name: g.role,
+      tag: `${g.processes.length} Active Tracks`,
+      color: ['#60a5fa', '#4ade80', '#f472b6', '#fef08a', '#a78bfa', '#38bdf8'][idx % 6]
+    })) : [
+      { name: 'Software Developer Trainee', tag: '🔥 3 Tracks Active', color: '#60a5fa' },
+      { name: 'Full Stack Developer', tag: '⚡ High CTC 9 LPA', color: '#4ade80' },
+      { name: 'Java Developer', tag: '🎯 Spring & Microservices', color: '#fbcfe8' },
+      { name: 'Python Developer', tag: '🚀 AI & Data Pipelines', color: '#fef08a' },
+      { name: 'MERN Stack Developer', tag: '✨ React & Node.js', color: '#a78bfa' }
+    ];
+
+    return (
+      <div className="bank-ticker-banner-container" style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a8a 100%)',
+        boxShadow: '0 8px 20px rgba(37, 99, 235, 0.2)',
+        borderRadius: '14px',
+        padding: '10px 1.25rem',
+        marginTop: '1.5rem',
+        marginBottom: '0.75rem',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        border: '1px solid rgba(59, 130, 246, 0.35)',
+        width: '100% !important',
+        marginLeft: '0 !important',
+        marginRight: '0 !important'
+      }}>
+        <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
+          <div className="bank-ticker-track" style={{
+            display: 'flex',
+            whiteSpace: 'nowrap',
+            width: 'max-content',
+            animation: 'bankTicker 14s linear infinite'
+          }}>
+            {[1, 2].map(group => (
+              <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', paddingRight: '1.5rem' }}>
+                {tickerData.map((item, i) => (
+                  <div 
+                    key={i} 
+                    onClick={handleOpenItTraining}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      padding: '5px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      transition: 'background 0.2s ease'
+                    }}
+                  >
+                    <Code size={15} color={item.color} />
+                    <span>{item.name}</span>
+                    <span style={{ fontSize: '0.725rem', color: item.color, background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '12px' }}>
+                      {item.tag}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const fetchUserApplications = async () => {
     try {
       const candId = currentUser?.candidateId || currentUser?.id;
@@ -322,7 +480,10 @@ export default function CandidateView({ API_URL, currentUser }) {
       'Aditya Birla Capital': '/logos/aditya_birla.jpg',
       'Mahindra Finance': '/logos/mahindra_finance.svg',
       'Tech Mahindra': '/logos/tech_mahindra.svg',
-      'HDFC Life': '/logos/Hdfc.jpg'
+      'HDFC Life': '/logos/Hdfc.jpg',
+      'FIC IT Training & Placement': '/logo.png',
+      'FIC IT Training': '/logo.png',
+      'FIC': '/logo.png'
     };
 
     if (compName && fallbackMap[compName]) {
@@ -518,6 +679,8 @@ export default function CandidateView({ API_URL, currentUser }) {
             onApplyClick={handleApplyClick}
             isAlreadyApplied={isAlreadyApplied(viewingJob.id)}
             isFullPage={true}
+            itProcesses={viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : itProcesses}
+            onSelectItProcess={(proc) => handleViewJobDetails(convertItProcToJob(proc, viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : itProcesses))}
           />
         </div>
       ) : ficView === 'bank_selection' ? (
@@ -822,313 +985,134 @@ export default function CandidateView({ API_URL, currentUser }) {
           </div>
         </div>
       ) : ficView === 'it_training' ? (
-        /* DEDICATED FULL PAGE 3: FIC IT TRAINING & 100% PLACEMENT PROGRAMMES */
-        <div className="section-container animate-fade" style={{ paddingBottom: '3rem' }}>
-          <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)', maxWidth: '680px', margin: '0 auto' }}>
-            
-            {/* TOP HEADER BUTTON MATCHING REFERENCE */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <button
-                style={{
-                  background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
-                  color: '#ffffff',
-                  padding: '12px 20px',
-                  borderRadius: '10px',
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(30, 64, 175, 0.22)',
-                  border: 'none',
-                  width: '100%',
-                  justifyContent: 'center',
-                  textAlign: 'center'
-                }}
-              >
-                <Code size={18} color="#ffffff" /> FIC IT Training & 100% Placement ▲
-              </button>
-            </div>
-
-            {/* HEADER BAR WITH CLOSE */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  FIC IT Placement Programme
-                </h3>
-                <span style={{ fontSize: '0.825rem', color: '#64748b' }}>
-                  Selection & Interview Tracks with Monthly Stipend & Guarantee
-                </span>
-              </div>
-              <button className="btn-close" onClick={() => {
+        /* DEDICATED VIEW: IT TRAINING PROGRAM OPENINGS (EXACT SAME AS BANK OPENINGS PAGE IN IMAGE 3) */
+        <div className="section-container animate-fade">
+          <div style={{ marginBottom: '1.25rem' }}>
+            <button
+              className="btn-secondary"
+              onClick={() => {
                 if (window.history.state && window.history.state.page === 'it_training') {
                   window.history.back();
                 } else {
                   setFicView(null);
                 }
-              }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <X size={18} color="#64748b" />
-              </button>
+              }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}
+            >
+              <ArrowLeft size={16} /> Back to Browse
+            </button>
+          </div>
+
+          {/* RUNNING IT ADVERTISEMENT MARQUEE BANNER INSIDE IT OPENINGS */}
+          {renderItTickerBanner()}
+
+          <div className="section-header">
+            <div>
+              <h2 className="section-title">Openings at FIC IT Training & Placement</h2>
+              <p className="section-subtitle">
+                Showing {getGroupedItRoles().length} career training role{getGroupedItRoles().length > 1 ? 's' : ''} with 100% placement guarantee
+              </p>
             </div>
+          </div>
 
-            {/* PROCESS SELECTION TABS (PROCESS 1, PROCESS 2, ETC.) */}
-            {itProcesses && itProcesses.length > 0 && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', marginBottom: '8px' }}>
-                  Select Training Track / Process:
-                </div>
-                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
-                  {itProcesses.map((proc, idx) => {
-                    const isSelected = (selectedItProcessId === proc.id) || (!selectedItProcessId && idx === 0);
-                    return (
-                      <button
-                        key={proc.id}
-                        type="button"
-                        onClick={() => setSelectedItProcessId(proc.id)}
-                        style={{
-                          flex: 1,
-                          minWidth: '120px',
-                          padding: '12px 16px',
-                          borderRadius: '12px',
-                          border: isSelected ? '2px solid #2563eb' : '1.5px solid #cbd5e1',
-                          background: isSelected ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : '#f8fafc',
-                          color: isSelected ? '#ffffff' : '#334155',
-                          fontWeight: 800,
-                          fontSize: '0.95rem',
-                          cursor: 'pointer',
-                          boxShadow: isSelected ? '0 4px 14px rgba(37,99,235,0.25)' : 'none',
-                          transition: 'all 0.2s ease',
-                          textAlign: 'center'
-                        }}
-                      >
-                        {proc.processName}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+          <div className="job-grid" style={{ marginBottom: '2.5rem' }}>
+            {getGroupedItRoles().map(group => {
+              const primaryProc = group.primaryProcess || group.processes[0];
+              const jobObj = convertItProcToJob(primaryProc, group.processes);
+              const applied = isAlreadyApplied(jobObj.id);
 
-            {/* ACTIVE PROCESS INFOGRAPHIC VIEW */}
-            {(() => {
-              const activeProc = (itProcesses && itProcesses.find(p => p.id === selectedItProcessId)) || (itProcesses && itProcesses[0]) || {
-                processName: 'PROCESS 1',
-                programTitle: 'FIC IT Training & 100% Placement Programme',
-                role: 'Software Engineer Trainee',
-                salary: '3.5 - 4.5 LPA',
-                location: 'PAN INDIA / Chennai / Bangalore',
-                trainingPeriod: '6 Months',
-                trainingSubtext: '3 Months Classroom Training | 3 Months Real Project Training',
-                stipend: '12,000',
-                stipendSubtext: 'Stipend ₹12,000 per month during training',
-                trainingFee: '1.6 LPA',
-                feeSubtext: 'Training Program Cost',
-                bondPeriod: '1 Year Bond',
-                originalsRequired: 'Originals Need to Submit',
-                selectionSteps: [
-                  { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
-                  { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },
-                  { stepNumber: 3, title: 'Technical & HR Interview', description: 'Discussion with hiring manager & interview clearance' },
-                  { stepNumber: 4, title: 'Batch Onboarding', description: 'Offer letter issuance, document submission, and training commencement' }
-                ]
-              };
+              const processNames = group.processes.map(p => p.processName).join(', ');
+              // Deduplicate bond text case-insensitively (avoid "2 Year Bond / 2 Years Bond")
+              const bondText = (() => {
+                const seen = new Set();
+                const unique = group.processes.map(p => p.bondPeriod).filter(Boolean).filter(v => {
+                  const key = v.toLowerCase().replace(/\s+/g, '');
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
+                return unique.length > 0 ? unique[0] : (primaryProc.bondPeriod || '');
+              })();
+              const feeText = group.processes.map(p => p.trainingFee).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(' - ') || primaryProc.trainingFee;
 
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {/* PROGRAM TITLE */}
-                  {activeProc.programTitle && (
-                    <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
-                      <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                        {activeProc.programTitle}
-                      </h4>
-                      <span style={{ fontSize: '0.85rem', color: '#2563eb', fontWeight: 700 }}>
-                        Track: {activeProc.processName}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* INFOGRAPHIC POSTER GRID (EXACT SAME AS REFERENCE POSTER IN IMAGE 2) */}
-                  <div className="infographic-poster-grid">
-                    {/* ITEM 1: CTC / SALARY */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <Wallet size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <p className="info-value">
-                          {activeProc.salary || '4 LPA + Incentives'}
-                        </p>
-                      </div>
-                      <div className="info-subtext">
-                        Fixed CTC per Annum<br />Incentives over and above
-                      </div>
-                    </div>
-
-                    {/* ITEM 2: ROLE / DESIGNATION */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <User size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <h3 className="info-title-sm">
-                          {activeProc.role || 'Software Engineer Trainee'}
-                        </h3>
-                      </div>
-                      <div className="info-subtext">
-                        IT Engineering Role
-                      </div>
-                    </div>
-
-                    {/* ITEM 3: LOCATION */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <MapPin size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <p className="info-value" style={{ fontSize: '1.4rem', textTransform: 'uppercase' }}>
-                          {activeProc.location || 'PAN INDIA'}
-                        </p>
-                      </div>
-                      <div className="info-subtext">
-                        Job Location<br />Based on candidate or hub nearby
-                      </div>
-                    </div>
-
-                    {/* ITEM 4: TRAINING DURATION */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <Clock size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <p className="info-value">
-                          {activeProc.trainingPeriod || '6 Months'}
-                        </p>
-                      </div>
-                      <div className="info-subtext">
-                        {activeProc.trainingSubtext ? (
-                          activeProc.trainingSubtext.split('|').map((line, idx, arr) => (
-                            <React.Fragment key={idx}>
-                              {line.trim()}
-                              {idx < arr.length - 1 && <br />}
-                            </React.Fragment>
-                          ))
-                        ) : (
-                          <>3 Months Classroom Training<br />3 Months Real Project Training</>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* ITEM 5: STIPEND */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <Banknote size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <p className="info-value" style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>
-                          STIPEND ₹{activeProc.stipend || '12,000'}
-                        </p>
-                      </div>
-                      <div className="info-subtext">
-                        {activeProc.stipendSubtext || 'Monthly stipend provided during training'}
-                      </div>
-                    </div>
-
-                    {/* ITEM 6: PROGRAM FEES / TRAINING COST */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <IndianRupee size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <p className="info-value">
-                          {activeProc.trainingFee || '1.6 LPA'}
-                        </p>
-                      </div>
-                      <div className="info-subtext">
-                        {activeProc.feeSubtext || 'Program Fees'}<br />(100% Placement Guarantee)
-                      </div>
-                    </div>
-
-                    {/* ITEM 7: BOND PERIOD */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <ShieldCheck size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <p className="info-value" style={{ fontSize: '1.35rem' }}>
-                          {activeProc.bondPeriod || '1 Year Bond'}
-                        </p>
-                      </div>
-                      <div className="info-subtext">
-                        Service Agreement Duration
-                      </div>
-                    </div>
-
-                    {/* ITEM 8: ORIGINALS REQUIREMENT */}
-                    <div className="infographic-poster-item">
-                      <div>
-                        <CheckCircle2 size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                        <h3 className="info-title-sm" style={{ color: '#b45309' }}>
-                          {activeProc.originalsRequired || 'Originals Need to Submit'}
-                        </h3>
-                      </div>
-                      <div className="info-subtext">
-                        Document Verification<br />& Safe custody during bond
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* SELECTION & INTERVIEW ROADMAP */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Layers size={18} color="#2563eb" /> Selection & Interview Process
-                    </span>
-
-                    <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                      {((activeProc.selectionSteps && activeProc.selectionSteps.length > 0) ? activeProc.selectionSteps : [
-                        { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
-                        { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },
-                        { stepNumber: 3, title: 'Technical & HR Interview', description: 'Discussion with hiring manager & interview clearance' },
-                        { stepNumber: 4, title: 'Batch Onboarding', description: 'Offer letter issuance, document submission, and training commencement' }
-                      ]).map((step, sIdx) => (
-                        <div key={sIdx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#2563eb', display: 'block' }}>
-                            Step {step.stepNumber || sIdx + 1}: {step.title}
-                          </span>
-                          <p style={{ fontSize: '0.85rem', color: '#475569', margin: '4px 0 0 0' }}>
-                            {step.description}
-                          </p>
+                <div
+                  key={group.normKey}
+                  className="job-card-vibrant"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleViewJobDetails(jobObj)}
+                >
+                  <div>
+                    <div className="job-card-header" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid #e2e8f0', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                          <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
-                      ))}
+                        <div>
+                          <h4 className="job-card-title">{group.role || 'Software Developer Trainee'}</h4>
+                          <div className="job-comp-name">
+                            FIC IT Training &amp; Placement
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                    <div className="job-tags-container">
+                      <span className="tag-pill tag-exp">
+                        <Briefcase size={13} /> Fresher & Experience
+                      </span>
+                      <span className="tag-pill tag-salary">
+                        {primaryProc.salary || '3.5 - 6.0 LPA'}
+                      </span>
+                      <span className="tag-pill tag-training">
+                        🎓 Training: {primaryProc.trainingPeriod || '6 Months'}
+                      </span>
+                      {bondText && (
+                        <span className="tag-pill" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}>
+                          📜 {bondText}
+                        </span>
+                      )}
+                      {primaryProc.location && (
+                        <span className="tag-pill tag-location">
+                          <MapPin size={13} /> {primaryProc.location}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="job-snippet">
+                      ROLE: {group.role} | Location: {primaryProc.location || 'PAN INDIA'} | Stipend: ₹{primaryProc.stipend || '12,000'} | Program Fees: {feeText} | {primaryProc.originalsRequired || 'Originals Need to Submit'}.
+                    </p>
                   </div>
 
-                  {/* 100% PLACEMENT GUARANTEE BADGE */}
-                  <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)', border: '1.5px solid #86efac', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Award size={24} color="#16a34a" />
-                    <div>
-                      <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#14532d', margin: 0 }}>
-                        100% Placement Guarantee in IT Software Companies
-                      </h5>
-                      <p style={{ fontSize: '0.8rem', color: '#15803d', margin: '2px 0 0 0' }}>
-                        Guaranteed job offer upon successful training completion with full placement assistance.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* ACTION BUTTON */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '0.5rem' }}>
+                  <div className="job-card-footer">
                     <button
-                      onClick={() => {
-                        const itCat = categories.find(c => c.id === 'cat_it' || (c.name || '').toLowerCase().includes('it'));
-                        if (itCat) setSelectedCategory(itCat);
-                        setFicView(null);
-                      }}
-                      style={{
-                        background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
-                        color: '#ffffff',
-                        padding: '14px 24px',
-                        borderRadius: '10px',
-                        fontWeight: 800,
-                        fontSize: '0.95rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        width: '100%',
-                        textAlign: 'center',
-                        boxShadow: '0 4px 14px rgba(37,99,235,0.3)'
+                      className="btn-secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewJobDetails(jobObj);
                       }}
                     >
-                      Explore IT Job Openings & Apply Now →
+                      View Details
                     </button>
+                    {applied ? (
+                      <span className="applied-pill" onClick={(e) => e.stopPropagation()}>
+                        ✓ Applied
+                      </span>
+                    ) : (
+                      <button
+                        className="btn-primary-gradient"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApplyClick(jobObj);
+                        }}
+                      >
+                        Apply Now
+                      </button>
+                    )}
                   </div>
                 </div>
               );
-            })()}
+            })}
           </div>
         </div>
       ) : (
@@ -1299,60 +1283,61 @@ export default function CandidateView({ API_URL, currentUser }) {
 
 
 
-              {/* RUNNING BANK ADVERTISEMENT MARQUEE BANNER */}
-              <div className="bank-ticker-banner-container">
-
-
-                {/* MARQUEE RUNNING TICKER TRACK */}
-                <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
-                  <div className="bank-ticker-track" style={{
-                    display: 'flex',
-                    whiteSpace: 'nowrap',
-                    width: 'max-content',
-                    animation: 'bankTicker 14s linear infinite'
-                  }}>
-                    {[1, 2].map(group => (
-                      <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', paddingRight: '1.5rem' }}>
-                        {[
-                          { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
-                          { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
-                          { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
-                          { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
-                          { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
-                        ].map((bank, i) => (
-                          <div 
-                            key={i} 
-                            onClick={() => {
-                              const foundComp = filteredCompanies.find(c => c.name.toLowerCase().includes(bank.name.toLowerCase().split(' ')[0]));
-                              if (foundComp) handleCompanyClick(foundComp);
-                            }}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              cursor: 'pointer',
-                              fontSize: '0.85rem',
-                              color: '#ffffff',
-                              fontWeight: 700,
-                              background: 'rgba(255, 255, 255, 0.08)',
-                              padding: '5px 14px',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              transition: 'background 0.2s ease'
-                            }}
-                          >
-                            <Building2 size={15} color={bank.color} />
-                            <span>{bank.name}</span>
-                            <span style={{ fontSize: '0.725rem', color: bank.color, background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '12px' }}>
-                              {bank.tag}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+              {/* RUNNING ADVERTISEMENT MARQUEE BANNER (CATEGORY AWARE) */}
+              {selectedCategory.id === 'cat_it' ? (
+                renderItTickerBanner()
+              ) : selectedCategory.id === 'cat_banking' ? (
+                <div className="bank-ticker-banner-container">
+                  <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
+                    <div className="bank-ticker-track" style={{
+                      display: 'flex',
+                      whiteSpace: 'nowrap',
+                      width: 'max-content',
+                      animation: 'bankTicker 14s linear infinite'
+                    }}>
+                      {[1, 2].map(group => (
+                        <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', paddingRight: '1.5rem' }}>
+                          {[
+                            { name: 'IDFC First Bank', tag: '🔥 2 Openings', color: '#fda4af' },
+                            { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
+                            { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
+                            { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
+                            { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
+                          ].map((bank, i) => (
+                            <div 
+                              key={i} 
+                              onClick={() => {
+                                const foundComp = filteredCompanies.find(c => c.name.toLowerCase().includes(bank.name.toLowerCase().split(' ')[0]));
+                                if (foundComp) handleCompanyClick(foundComp);
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                color: '#ffffff',
+                                fontWeight: 700,
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                padding: '5px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                transition: 'background 0.2s ease'
+                              }}
+                            >
+                              <Building2 size={15} color={bank.color} />
+                              <span>{bank.name}</span>
+                              <span style={{ fontSize: '0.725rem', color: bank.color, background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '12px' }}>
+                                {bank.tag}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="section-header">
                 <div>
@@ -1467,58 +1452,103 @@ export default function CandidateView({ API_URL, currentUser }) {
                 </div>
               </div>
 
-              {/* NEW FIC IT TRAINING & 100% PLACEMENT KPI CARD */}
+              {/* RUNNING IT ADVERTISEMENT MARQUEE BANNER ABOVE IT CARD */}
+              {renderItTickerBanner()}
+
+              {/* NEW FIC IT TRAINING & 100% PLACEMENT KPI CARD - 3D PREMIUM */}
               <div 
                 onClick={handleOpenItTraining}
                 style={{ 
-                  background: '#ffffff', 
-                  border: '1px solid #e2e8f0', 
-                  borderRadius: '16px', 
-                  padding: '1.5rem', 
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 40%, #7c3aed 80%, #6d28d9 100%)',
+                  borderRadius: '20px', 
+                  padding: '1.5rem',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '12px',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-                  transition: 'all 0.2s ease',
+                  gap: '14px',
+                  boxShadow: '0 8px 32px rgba(37, 99, 235, 0.45), 0 2px 8px rgba(109, 40, 217, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
+                  transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   marginTop: '0.5rem',
-                  marginBottom: '2.5rem'
+                  marginBottom: '2.5rem',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  border: '1.5px solid rgba(255,255,255,0.18)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(37, 99, 235, 0.12)';
-                  e.currentTarget.style.borderColor = '#93c5fd';
+                  e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
+                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(37, 99, 235, 0.55), 0 8px 20px rgba(109, 40, 217, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.04)';
-                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(37, 99, 235, 0.45), 0 2px 8px rgba(109, 40, 217, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ borderRadius: '50%', width: '54px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', border: '1.5px solid #bfdbfe', background: '#eff6ff', boxShadow: '0 2px 8px rgba(37,99,235,0.1)' }}>
-                    <Code size={28} color="#2563eb" />
+                {/* Decorative glowing orbs */}
+                <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: '-20px', left: '30px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: '20px', right: '80px', width: '50px', height: '50px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+                {/* Header Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
+                  {/* 3D Logo Circle */}
+                  <div style={{ 
+                    borderRadius: '50%', width: '58px', height: '58px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    flexShrink: 0, overflow: 'hidden',
+                    background: '#ffffff',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(0,0,0,0.1)',
+                    border: '2.5px solid rgba(255,255,255,0.9)'
+                  }}>
+                    <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
-                      FIC IT Training & 100% placement
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', lineHeight: 1.2 }}>
+                      FIC IT Training &amp; 100% placement
                     </h3>
-                    <span style={{ fontSize: '0.85rem', color: '#2563eb', fontWeight: 700, display: 'inline-block', marginTop: '4px' }}>
+                    <span style={{ 
+                      fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      marginTop: '6px',
+                      background: 'rgba(255,255,255,0.18)',
+                      color: '#e0f2fe',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      backdropFilter: 'blur(4px)',
+                      letterSpacing: '0.02em'
+                    }}>
                       💻 Exclusive IT Placement Programs
                     </span>
                   </div>
                 </div>
-                
-                <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: '1.5' }}>
+
+                {/* Description */}
+                <p style={{ 
+                  margin: 0, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', 
+                  lineHeight: '1.55', position: 'relative', zIndex: 1,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                }}>
                   Complete IT Job Training with 100% placement guarantee in top IT companies. View multiple training processes, monthly stipend, bond terms, and selection roadmap.
                 </p>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e40af', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    Selection & Interview
+
+                {/* Footer Row */}
+                <div style={{ 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                  borderTop: '1px solid rgba(255,255,255,0.2)', 
+                  paddingTop: '12px', marginTop: '2px',
+                  position: 'relative', zIndex: 1
+                }}>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px', textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
+                    🎯 Selection &amp; Interview
                   </span>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ChevronRight size={18} color="#1d4ed8" />
+                  <div style={{ 
+                    width: '32px', height: '32px', borderRadius: '50%', 
+                    background: 'rgba(255,255,255,0.22)',
+                    border: '1.5px solid rgba(255,255,255,0.4)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}>
+                    <ChevronRight size={18} color="#ffffff" />
                   </div>
                 </div>
               </div>
