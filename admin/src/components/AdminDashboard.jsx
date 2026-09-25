@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText,
-  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle
+  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
 import CategoryFormModal from './CategoryFormModal';
 import CompanyFormModal from './CompanyFormModal';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
+import ItTrainingModal from './ItTrainingModal';
 
 export default function AdminDashboard({ API_URL, currentUser }) {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -18,6 +19,7 @@ export default function AdminDashboard({ API_URL, currentUser }) {
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [interviews, setInterviews] = useState([]);
+  const [itProcesses, setItProcesses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [jobModalOpen, setJobModalOpen] = useState(false);
@@ -28,6 +30,9 @@ export default function AdminDashboard({ API_URL, currentUser }) {
 
   const [companyModalOpen, setCompanyModalOpen] = useState(false);
   const [companyToEdit, setCompanyToEdit] = useState(null);
+
+  const [itModalOpen, setItModalOpen] = useState(false);
+  const [itProcessToEdit, setItProcessToEdit] = useState(null);
 
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [appToSchedule, setAppToSchedule] = useState(null);
@@ -43,13 +48,14 @@ export default function AdminDashboard({ API_URL, currentUser }) {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [kpiRes, catRes, compRes, jobsRes, appsRes, intRes] = await Promise.all([
+      const [kpiRes, catRes, compRes, jobsRes, appsRes, intRes, itRes] = await Promise.all([
         fetch(`${API_URL}/api/reports/dashboard`),
         fetch(`${API_URL}/api/categories`),
         fetch(`${API_URL}/api/companies`),
         fetch(`${API_URL}/api/jobs`),
         fetch(`${API_URL}/api/applications`),
-        fetch(`${API_URL}/api/interviews`)
+        fetch(`${API_URL}/api/interviews`),
+        fetch(`${API_URL}/api/it-training-processes/all`)
       ]);
 
       const kpiData = await kpiRes.json();
@@ -58,6 +64,7 @@ export default function AdminDashboard({ API_URL, currentUser }) {
       const jobsData = await jobsRes.json();
       const appsData = await appsRes.json();
       const intData = await intRes.json();
+      const itData = await itRes.json();
 
       setKpis(kpiData);
       setCategories(Array.isArray(catData) ? catData : []);
@@ -65,10 +72,51 @@ export default function AdminDashboard({ API_URL, currentUser }) {
       setJobs(Array.isArray(jobsData) ? jobsData : []);
       setApplications(Array.isArray(appsData) ? appsData : []);
       setInterviews(Array.isArray(intData) ? intData : []);
+      setItProcesses(Array.isArray(itData) ? itData : []);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveItProcess = async (processData) => {
+    try {
+      const isEditing = itProcessToEdit && itProcessToEdit.id;
+      const url = isEditing
+        ? `${API_URL}/api/it-training-processes/${itProcessToEdit.id}`
+        : `${API_URL}/api/it-training-processes`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(processData)
+      });
+
+      if (res.ok) {
+        setItModalOpen(false);
+        setItProcessToEdit(null);
+        fetchAllData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to save process');
+      }
+    } catch (err) {
+      console.error('Error saving IT process:', err);
+      alert('Error saving process');
+    }
+  };
+
+  const handleDeleteItProcess = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete ${name}?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/it-training-processes/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchAllData();
+      }
+    } catch (err) {
+      console.error('Error deleting IT process:', err);
     }
   };
 
@@ -176,6 +224,13 @@ export default function AdminDashboard({ API_URL, currentUser }) {
           onClick={() => setActiveTab('interviews')}
         >
           <Calendar size={18} /> Scheduled Interviews ({interviews.length})
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'it_training' ? 'active' : ''}`}
+          onClick={() => setActiveTab('it_training')}
+        >
+          <GraduationCap size={18} /> IT Training Programs ({itProcesses.length})
         </button>
 
         <button
@@ -647,6 +702,133 @@ export default function AdminDashboard({ API_URL, currentUser }) {
             </div>
           </div>
         )}
+
+        {activeTab === 'it_training' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>FIC IT Training & Placement Programs</h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                  Manage multiple training processes (Process 1, Process 2, etc.) displayed to candidates.
+                </p>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setItProcessToEdit(null);
+                  setItModalOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Plus size={16} /> Add New Process
+              </button>
+            </div>
+
+            {itProcesses.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', background: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <p style={{ color: '#64748b' }}>No IT Training Processes created yet.</p>
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    setItProcessToEdit(null);
+                    setItModalOpen(true);
+                  }}
+                  style={{ marginTop: '1rem' }}
+                >
+                  <Plus size={16} /> Add First Process
+                </button>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Process Name</th>
+                      <th>Program & Role</th>
+                      <th>Training Duration</th>
+                      <th>Stipend</th>
+                      <th>Bond & Originals</th>
+                      <th>Training Cost</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itProcesses.map(proc => (
+                      <tr key={proc.id}>
+                        <td>
+                          <span style={{
+                            fontWeight: 800,
+                            color: '#1e40af',
+                            background: '#dbeafe',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '0.85rem'
+                          }}>
+                            {proc.processName}
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{proc.role || 'Software Engineer Trainee'}</strong>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{proc.programTitle}</div>
+                        </td>
+                        <td>
+                          <strong>{proc.trainingPeriod || '6 Months'}</strong>
+                          {proc.trainingSubtext && (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{proc.trainingSubtext}</div>
+                          )}
+                        </td>
+                        <td>
+                          <strong style={{ color: '#047857' }}>₹{proc.stipend || '12,000'}</strong>
+                          {proc.stipendSubtext && (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{proc.stipendSubtext}</div>
+                          )}
+                        </td>
+                        <td>
+                          <div><strong>{proc.bondPeriod || '1 Year Bond'}</strong></div>
+                          <span style={{ fontSize: '0.75rem', color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                            {proc.originalsRequired || 'Originals Required'}
+                          </span>
+                        </td>
+                        <td>
+                          <strong style={{ color: '#1d4ed8', fontSize: '1rem' }}>{proc.trainingFee || '1.6 LPA'}</strong>
+                        </td>
+                        <td>
+                          {proc.status === 'Active' ? (
+                            <span className="badge badge-active">✓ Active</span>
+                          ) : (
+                            <span className="badge badge-rejected">✕ Inactive</span>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              className="btn-icon"
+                              title="Edit Process"
+                              onClick={() => {
+                                setItProcessToEdit(proc);
+                                setItModalOpen(true);
+                              }}
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              className="btn-icon text-danger"
+                              title="Delete Process"
+                              onClick={() => handleDeleteItProcess(proc.id, proc.processName)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <JobFormModal
@@ -657,6 +839,16 @@ export default function AdminDashboard({ API_URL, currentUser }) {
         companies={companies}
         API_URL={API_URL}
         onSaveSuccess={fetchAllData}
+      />
+
+      <ItTrainingModal
+        isOpen={itModalOpen}
+        onClose={() => {
+          setItModalOpen(false);
+          setItProcessToEdit(null);
+        }}
+        processToEdit={itProcessToEdit}
+        onSave={handleSaveItProcess}
       />
 
       <CategoryFormModal

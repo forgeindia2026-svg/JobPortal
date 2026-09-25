@@ -133,6 +133,33 @@ const interviewSchema = new mongoose.Schema({
   updatedAt: String
 });
 
+const itTrainingProcessSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  processName: { type: String, required: true }, // e.g. "PROCESS 1", "PROCESS 2"
+  programTitle: { type: String, default: 'FIC IT Training & Placement Programme' },
+  role: { type: String, default: 'Software Engineer Trainee' },
+  salary: { type: String, default: '3.5 - 5.0 LPA' },
+  location: { type: String, default: 'PAN INDIA / Chennai / Bangalore' },
+  trainingPeriod: { type: String, default: '6 Months' },
+  trainingSubtext: { type: String, default: '3 Months Classroom Training | 3 Months Project Training' },
+  stipend: { type: String, default: '12,000' },
+  stipendSubtext: { type: String, default: 'Stipend ₹12,000 per month during training' },
+  trainingFee: { type: String, default: '1.6 LPA' },
+  feeSubtext: { type: String, default: 'Training Program Cost' },
+  bondPeriod: { type: String, default: '1 Year Bond' },
+  originalsRequired: { type: String, default: 'Originals Need to Submit' },
+  description: { type: String, default: '' },
+  selectionSteps: [{
+    stepNumber: Number,
+    title: String,
+    description: String
+  }],
+  order: { type: Number, default: 1 },
+  status: { type: String, default: 'Active' },
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: String
+}, { strict: false });
+
 const UserModel = mongoose.model('User', userSchema);
 const CategoryModel = mongoose.model('Category', categorySchema);
 const CompanyModel = mongoose.model('Company', companySchema);
@@ -140,6 +167,8 @@ const JobModel = mongoose.model('Job', jobSchema);
 const CandidateModel = mongoose.model('Candidate', candidateSchema);
 const ApplicationModel = mongoose.model('Application', applicationSchema);
 const InterviewModel = mongoose.model('Interview', interviewSchema);
+const ItTrainingProcessModel = mongoose.model('ItTrainingProcess', itTrainingProcessSchema);
+
 
 const initialData = {
   users: [
@@ -265,6 +294,60 @@ const initialData = {
       status: 'Active',
       createdAt: new Date().toISOString()
     }
+  ],
+  itTrainingProcesses: [
+    {
+      id: 'it_proc_1',
+      processName: 'PROCESS 1',
+      programTitle: 'FIC IT Training & 100% Placement Programme',
+      role: 'Software Engineer Trainee',
+      salary: '3.5 - 4.5 LPA',
+      location: 'PAN INDIA / Chennai / Bangalore',
+      trainingPeriod: '6 Months',
+      trainingSubtext: '3 Months Classroom Training | 3 Months Real Project Training',
+      stipend: '12,000',
+      stipendSubtext: 'Stipend ₹12,000 per month during training',
+      trainingFee: '1.6 LPA',
+      feeSubtext: 'Training Program Cost',
+      bondPeriod: '1 Year Bond',
+      originalsRequired: 'Originals Need to Submit',
+      description: 'Comprehensive software development track covering Full Stack technologies, live customer projects, and guaranteed placement.',
+      selectionSteps: [
+        { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
+        { stepNumber: 2, title: 'Technical Assessment', description: 'Basic coding, problem solving and aptitude round' },
+        { stepNumber: 3, title: 'Technical & HR Interview', description: 'Discussion with hiring manager & interview clearance' },
+        { stepNumber: 4, title: 'Batch Onboarding', description: 'Offer letter issuance, document submission, and training commencement' }
+      ],
+      order: 1,
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'it_proc_2',
+      processName: 'PROCESS 2',
+      programTitle: 'FIC IT Training & Placement - Advanced Track',
+      role: 'Associate Software Developer',
+      salary: '4.5 - 6.0 LPA',
+      location: 'PAN INDIA / Chennai / Bangalore',
+      trainingPeriod: '6 Months',
+      trainingSubtext: '3 Months Classroom Training | 3 Months Enterprise Project OJT',
+      stipend: '12,000',
+      stipendSubtext: 'Stipend ₹12,000 per month during training',
+      trainingFee: '2.0 LPA',
+      feeSubtext: 'Training Program Cost',
+      bondPeriod: '2 Years Bond',
+      originalsRequired: 'Originals Need to Submit',
+      description: 'Advanced engineering track focusing on Cloud, Full Stack, and Enterprise solutions with high-tier placement.',
+      selectionSteps: [
+        { stepNumber: 1, title: 'Screening & Registration', description: 'Application review and initial profile shortlisting' },
+        { stepNumber: 2, title: 'Technical Assessment', description: 'Coding & core concepts evaluation' },
+        { stepNumber: 3, title: 'Technical & HR Interview', description: 'Technical panel interview and HR discussion' },
+        { stepNumber: 4, title: 'Batch Onboarding', description: 'Offer issuance, original documents handover, and training start' }
+      ],
+      order: 2,
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    }
   ]
 };
 
@@ -295,6 +378,13 @@ async function seedMongoIfEmpty() {
       for (const comp of initialData.companies) {
         await CompanyModel.updateOne({ id: comp.id }, { $set: { logo: comp.logo } });
       }
+    }
+
+    // Seed IT Training Processes if 0 exist
+    const itProcCount = await ItTrainingProcessModel.countDocuments();
+    if (itProcCount === 0) {
+      await ItTrainingProcessModel.insertMany(initialData.itTrainingProcesses);
+      console.log('✅ Seeded default IT Training Processes into MongoDB Atlas Cloud');
     }
 
     console.log('✨ MongoDB Atlas Cloud Database connected and ready!');
@@ -373,6 +463,7 @@ module.exports = {
   JobModel,
   CandidateModel,
   ApplicationModel,
-  InterviewModel
+  InterviewModel,
+  ItTrainingProcessModel
 };
 
