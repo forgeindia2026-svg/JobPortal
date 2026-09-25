@@ -377,7 +377,7 @@ export default function AdminDashboard({ API_URL, currentUser }) {
                       <tr key={comp.id}>
                         <td>
                           {comp.logo ? (
-                            <img src={comp.logo} alt={comp.name} style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
+                            <img src={comp.logo} alt={comp.name} style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#ffffff', padding: '2px', border: '1px solid #e2e8f0' }} />
                           ) : (
                             <Building2 size={24} color="#94a3b8" />
                           )}

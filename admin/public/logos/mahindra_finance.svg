@@ -1,12 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
-  <rect width="240" height="240" rx="36" fill="#e31837"/>
-  <g transform="translate(20, 20)">
-    <!-- Mahindra Twin Apex Wings / M Symbol -->
-    <path d="M35 115 L78 45 L98 82 L118 45 L161 115 L138 115 L124 88 L104 118 L92 118 L72 88 L58 115 Z" fill="#ffffff"/>
-    <rect x="52" y="122" width="96" height="5" rx="2.5" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Clean white background canvas -->
+  <rect width="400" height="400" rx="48" fill="#ffffff"/>
+  <rect x="4" y="4" width="392" height="392" rx="44" fill="none" stroke="#e2e8f0" stroke-width="4"/>
 
-    <!-- Typography -->
-    <text x="98" y="165" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="19" fill="#ffffff" text-anchor="middle" letter-spacing="1">MAHINDRA</text>
-    <text x="98" y="188" font-family="'Inter', 'Arial', sans-serif" font-weight="800" font-size="14" fill="#ffe5e5" text-anchor="middle" letter-spacing="2">FINANCE</text>
+  <g transform="translate(200, 200)">
+    <!-- Mahindra Twin Apex Wings Emblem -->
+    <g transform="translate(0, -50) scale(1.4)">
+      <!-- Left & Right Twin Apex Wings -->
+      <path d="M-60 30 L-22 -35 L-5 -5 L12 -35 L50 30 L30 30 L18 5 L-2 -22 L-11 -8 L-22 -22 L-33 5 L-44 30 Z" fill="#e31837"/>
+      <!-- Accent horizontal bar -->
+      <rect x="-38" y="36" width="76" height="5" rx="2.5" fill="#e31837"/>
+    </g>
+
+    <!-- Typography: MAHINDRA -->
+    <text x="0" y="52" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#e31837" text-anchor="middle" letter-spacing="2">MAHINDRA</text>
+
+    <!-- Typography: FINANCE -->
+    <text x="0" y="92" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="22" fill="#0f172a" text-anchor="middle" letter-spacing="8">FINANCE</text>
   </g>
 </svg>

@@ -7,14 +7,150 @@ import JobDetailModal from './JobDetailModal';
 import ApplicationModal from './ApplicationModal';
 import CandidateDashboard from './CandidateDashboard';
 
+const FALLBACK_CATEGORIES = [
+  {
+    id: 'cat_banking',
+    name: 'Banking & Financial Services',
+    description: 'Premier positions in retail banking, NBFCs, microfinance, wealth management, and insurance.',
+    icon: 'Building2',
+    status: 'Active'
+  },
+  {
+    id: 'cat_it',
+    name: 'IT & Software Development',
+    description: 'Software engineering, cloud infrastructure, QA testing, UI/UX, and data analytics.',
+    icon: 'Code',
+    status: 'Active'
+  },
+  {
+    id: 'cat_sales',
+    name: 'Sales & Marketing',
+    description: 'Business development, direct sales, field marketing, and digital marketing.',
+    icon: 'TrendingUp',
+    status: 'Active'
+  },
+  {
+    id: 'cat_bpo',
+    name: 'BPO & Customer Support',
+    description: 'Inbound/outbound customer support, telesales, and technical desk operations.',
+    icon: 'Headphones',
+    status: 'Active'
+  },
+  {
+    id: 'cat_nonit',
+    name: 'Non-IT & Operations',
+    description: 'Back-office administration, logistics, HR operations, and store management.',
+    icon: 'Briefcase',
+    status: 'Active'
+  }
+];
+
+const FALLBACK_COMPANIES = [
+  {
+    id: 'comp_axis',
+    categoryId: 'cat_banking',
+    name: 'Axis Bank',
+    logo: '/logos/axis_bank.svg',
+    description: 'Leading private sector bank in India offering retail, corporate, and international banking services.',
+    website: 'https://www.axisbank.com'
+  },
+  {
+    id: 'comp_idfc',
+    categoryId: 'cat_banking',
+    name: 'IDFC First Bank',
+    logo: '/logos/idfc_first_bank.svg',
+    description: 'Tech-first Indian bank providing innovative banking products and customer-centric financial solutions.',
+    website: 'https://www.idfcfirstbank.com'
+  },
+  {
+    id: 'comp_kotak',
+    categoryId: 'cat_banking',
+    name: 'Kotak Mahindra Bank',
+    logo: '/logos/kotak_bank.png',
+    description: 'Full-service commercial bank delivering personal, corporate, and investment banking solutions.',
+    website: 'https://www.kotak.com'
+  },
+  {
+    id: 'comp_bandhan',
+    categoryId: 'cat_banking',
+    name: 'Bandhan Bank',
+    logo: '/logos/bandhan_bank.png',
+    description: 'Fast-growing universal bank focused on inclusive banking and microfinance across India.',
+    website: 'https://www.bandhanbank.com'
+  },
+  {
+    id: 'comp_birla',
+    categoryId: 'cat_banking',
+    name: 'Aditya Birla Capital',
+    logo: '/logos/aditya_birla.jpg',
+    description: 'Financial services umbrella brand for Aditya Birla Group businesses.',
+    website: 'https://www.adityabirlacapital.com'
+  },
+  {
+    id: 'comp_mahindra_fin',
+    categoryId: 'cat_banking',
+    name: 'Mahindra Finance',
+    logo: '/logos/mahindra_finance.svg',
+    description: 'Leading Non-Banking Financial Company (NBFC) in India specializing in rural and semi-urban financial services.',
+    website: 'https://www.mahindrafinance.com'
+  },
+  {
+    id: 'comp_techm',
+    categoryId: 'cat_it',
+    name: 'Tech Mahindra',
+    logo: '/logos/tech_mahindra.svg',
+    description: 'Global IT services provider offering digital transformation and consulting.',
+    website: 'https://www.techmahindra.com'
+  }
+];
+
+const FALLBACK_JOBS = [
+  {
+    id: 'job_axis_am',
+    title: 'Assistance Manager',
+    companyId: 'comp_axis',
+    companyName: 'Axis Bank',
+    companyLogo: '/logos/axis_bank.svg',
+    categoryId: 'cat_banking',
+    categoryName: 'Banking & Financial Services',
+    location: 'Chennai / Coimbatore / Madurai',
+    salary: '₹3.5 LPA - ₹5.0 LPA',
+    jobType: 'Full Time',
+    qualification: 'Any Graduate / Postgraduate',
+    experience: '0 - 2 Years',
+    ageLimit: '18 - 28 Years',
+    trainingPeriod: 'Phase 1: 15 Days (Classroom Training) / Phase 2: 15 Days (On Job Training - OJT)',
+    description: 'Responsible for driving retail banking operations, customer onboarding, and branch financial services.',
+    status: 'Active'
+  },
+  {
+    id: 'job_mahindra_so',
+    title: 'Sales Officer - Rural Finance',
+    companyId: 'comp_mahindra_fin',
+    companyName: 'Mahindra Finance',
+    companyLogo: '/logos/mahindra_finance.svg',
+    categoryId: 'cat_banking',
+    categoryName: 'Banking & Financial Services',
+    location: 'Trichy / Salem / Vellore',
+    salary: '₹3.0 LPA - ₹4.5 LPA',
+    jobType: 'Full Time',
+    qualification: 'Graduate in any discipline',
+    experience: '0 - 3 Years',
+    ageLimit: '20 - 29 Years',
+    trainingPeriod: 'Phase 1: 10 Days Training / Phase 2: 10 Days Field Immersion',
+    description: 'Handle vehicle financing, tractor loans, and rural customer relationship management.',
+    status: 'Active'
+  }
+];
+
 export default function CandidateView({ API_URL, currentUser }) {
   const [activeTab, setActiveTab] = useState('browse'); // 'browse' or 'my_apps'
-  const [categories, setCategories] = useState([]);
-  const [companies, setCompanies] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
+  const [companies, setCompanies] = useState(FALLBACK_COMPANIES);
+  const [jobs, setJobs] = useState(FALLBACK_JOBS);
+  const [selectedCategory, setSelectedCategory] = useState(FALLBACK_CATEGORIES[0]);
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals state
@@ -87,7 +223,6 @@ export default function CandidateView({ API_URL, currentUser }) {
   };
 
   const fetchInitialData = async () => {
-    setLoading(true);
     try {
       const [catRes, compRes, jobsRes] = await Promise.all([
         fetch(`${API_URL}/api/categories`),
@@ -95,27 +230,29 @@ export default function CandidateView({ API_URL, currentUser }) {
         fetch(`${API_URL}/api/jobs`)
       ]);
 
-      const cats = await catRes.json();
-      const comps = await compRes.json();
-      const jbs = await jobsRes.json();
+      if (catRes.ok && compRes.ok && jobsRes.ok) {
+        const cats = await catRes.json();
+        const comps = await compRes.json();
+        const jbs = await jobsRes.json();
 
-      const catList = Array.isArray(cats) ? cats : [];
-      setCategories(catList);
-      setCompanies(Array.isArray(comps) ? comps : []);
-      setJobs(Array.isArray(jbs) ? jbs : []);
+        const catList = Array.isArray(cats) && cats.length > 0 ? cats : FALLBACK_CATEGORIES;
+        const compList = Array.isArray(comps) && comps.length > 0 ? comps : FALLBACK_COMPANIES;
+        const jobList = Array.isArray(jbs) && jbs.length > 0 ? jbs : FALLBACK_JOBS;
 
-      // Auto-select Banking & Financial Services category on load
-      const bankingCat = catList.find(c =>
-        c.id === 'cat_banking' ||
-        (c.name || '').toLowerCase().includes('banking')
-      );
-      if (bankingCat) {
-        setSelectedCategory(bankingCat);
+        setCategories(catList);
+        setCompanies(compList);
+        setJobs(jobList);
+
+        const bankingCat = catList.find(c =>
+          c.id === 'cat_banking' ||
+          (c.name || '').toLowerCase().includes('banking')
+        ) || catList[0];
+        if (bankingCat) {
+          setSelectedCategory(bankingCat);
+        }
       }
     } catch (err) {
       console.error('Error loading candidate data:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -162,7 +299,7 @@ export default function CandidateView({ API_URL, currentUser }) {
       'Kotak Mahindra Bank': '/logos/kotak_bank.png',
       'Bandhan Bank': '/logos/bandhan_bank.png',
       'Aditya Birla Capital': '/logos/aditya_birla.jpg',
-      'Mahindra Finance': '/logos/mahindra_finance.png',
+      'Mahindra Finance': '/logos/mahindra_finance.svg',
       'Tech Mahindra': '/logos/tech_mahindra.svg',
       'HDFC Life': '/logos/Hdfc.jpg'
     };

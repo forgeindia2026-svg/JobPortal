@@ -140,7 +140,7 @@ export default function CandidateDashboard({ candidate, API_URL, onBrowseJobs })
                           'Kotak Mahindra Bank': '/logos/kotak_bank.png',
                           'Bandhan Bank': '/logos/bandhan_bank.png',
                           'Aditya Birla Capital': '/logos/aditya_birla.jpg',
-                          'Mahindra Finance': '/logos/mahindra_finance.png',
+                          'Mahindra Finance': '/logos/mahindra_finance.svg',
                           'Tech Mahindra': '/logos/tech_mahindra.svg',
                           'HDFC Life': '/logos/Hdfc.jpg'
                         };
