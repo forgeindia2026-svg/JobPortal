@@ -1595,3 +1595,14 @@ h1, h2, h3, h4, h5, h6 {
   animation-play-state: paused !important;
 }
 
+
+.infographic-poster-grid.course-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+@media (max-width: 768px) {
+  .infographic-poster-grid.course-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+

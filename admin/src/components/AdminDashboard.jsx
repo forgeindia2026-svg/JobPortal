@@ -757,16 +757,29 @@ export default function AdminDashboard({ API_URL, currentUser }) {
                     {itProcesses.map(proc => (
                       <tr key={proc.id}>
                         <td>
-                          <span style={{
-                            fontWeight: 800,
-                            color: '#1e40af',
-                            background: '#dbeafe',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            fontSize: '0.85rem'
-                          }}>
-                            {proc.processName}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+                            <span style={{
+                              fontWeight: 800,
+                              color: '#1e40af',
+                              background: '#dbeafe',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              fontSize: '0.85rem'
+                            }}>
+                              {proc.processName}
+                            </span>
+                            <span style={{
+                              fontWeight: 700,
+                              color: proc.itCategory === 'Course' ? '#b45309' : proc.itCategory === 'Internship' ? '#047857' : '#6b21a8',
+                              background: proc.itCategory === 'Course' ? '#fef3c7' : proc.itCategory === 'Internship' ? '#d1fae5' : '#f3e8ff',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              border: `1px solid ${proc.itCategory === 'Course' ? '#f59e0b' : proc.itCategory === 'Internship' ? '#10b981' : '#d8b4fe'}`
+                            }}>
+                              {proc.itCategory || 'Placement'}
+                            </span>
+                          </div>
                         </td>
                         <td>
                           <strong>{proc.role || 'Software Engineer Trainee'}</strong>

@@ -136,6 +136,7 @@ const interviewSchema = new mongoose.Schema({
 const itTrainingProcessSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   processName: { type: String, required: true }, // e.g. "PROCESS 1", "PROCESS 2"
+  itCategory: { type: String, default: 'Placement' }, // e.g., "Placement", "Course", "Internship"
   programTitle: { type: String, default: 'FIC IT Training & Placement Programme' },
   role: { type: String, default: 'Software Engineer Trainee' },
   salary: { type: String, default: '3.5 - 5.0 LPA' },

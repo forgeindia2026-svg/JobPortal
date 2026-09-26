@@ -133,6 +133,25 @@ export default function JobDetailModal({
   const isItJob = (job.categoryId === 'cat_it') ||
     (job.companyName && (job.companyName.includes('FIC IT') || job.companyName.includes('IT Training')));
 
+  const itCategory = job.itCategory || 'Placement';
+  
+  let labelApply = 'Apply Now';
+  let labelResponsibilities = 'Roles & Responsibilities';
+  let labelOverview = 'Job Overview';
+  let labelSelection = 'INTERVIEW SELECTION';
+
+  if (isItJob && itCategory === 'Course') {
+    labelApply = 'Enroll Now';
+    labelResponsibilities = "Course Curriculum & What You'll Learn";
+    labelOverview = 'Program Overview';
+    labelSelection = 'ENROLLMENT PROCESS';
+  } else if (isItJob && itCategory === 'Internship') {
+    labelApply = 'Apply for Internship';
+    labelResponsibilities = 'Internship Responsibilities';
+    labelOverview = 'Internship Overview';
+    labelSelection = 'SELECTION PROCESS';
+  }
+
   // VIEW 3: FIC TRAINING 100% PLACEMENT OR REFUND DEDICATED PAGE
   if (currentSubView === 'ficTraining') {
     const ficTrainingContent = (
@@ -348,7 +367,7 @@ export default function JobDetailModal({
                 gap: '8px',
                 transition: 'all 0.2s ease'
               }} onClick={() => onApplyClick(job)}>
-                <Send size={18} color="#ffffff" /> Apply Now
+                <Send size={18} color="#ffffff" /> {labelApply}
               </button>
             )}
           </div>
@@ -614,7 +633,7 @@ export default function JobDetailModal({
                 gap: '8px',
                 transition: 'all 0.2s ease'
               }} onClick={() => onApplyClick(job)}>
-                <Send size={18} color="#ffffff" /> Apply Now
+                <Send size={18} color="#ffffff" /> {labelApply}
               </button>
             )}
           </div>
@@ -670,7 +689,7 @@ export default function JobDetailModal({
 
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) */}
-        {itProcesses && itProcesses.length > 0 && (job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) && (
+        {itProcesses && itProcesses.length > 0 && itCategory !== 'Internship' && (job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) && (
           <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1.5px solid #f1f5f9' }}>
             {itProcesses.map((proc) => {
               const isSelected = (job.id === proc.id) || (job.programName && job.programName.includes(proc.processName));
@@ -713,19 +732,21 @@ export default function JobDetailModal({
               {job.programName}
             </h2>
           )}
-          <div className="infographic-poster-grid">
-            {/* ITEM 1: CTC / SALARY */}
-            <div className="infographic-poster-item">
-              <div>
-                <Wallet size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                <p className="info-value">
-                  {job.salary || '3.5 LAKH'}
-                </p>
+          <div className={`infographic-poster-grid ${itCategory === 'Course' || itCategory === 'Internship' ? 'course-grid' : ''}`}>
+            {/* ITEM 1: CTC / SALARY - hidden for Course and Internship */}
+            {itCategory !== 'Course' && itCategory !== 'Internship' && (
+              <div className="infographic-poster-item">
+                <div>
+                  <Wallet size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
+                  <p className="info-value">
+                    {job.salary || '3.5 LAKH'}
+                  </p>
+                </div>
+                <div className="info-subtext">
+                  <>Fixed CTC per Annum<br />Incentives over and above</>
+                </div>
               </div>
-              <div className="info-subtext">
-                Fixed CTC per Annum<br />Incentives over and above
-              </div>
-            </div>
+            )}
 
             {/* ITEM 2: ROLE / DESIGNATION */}
             <div className="infographic-poster-item">
@@ -749,7 +770,13 @@ export default function JobDetailModal({
               </div>
               {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) ? (
                 <div className="info-subtext">
-                  Job Location<br />Placement Location as per track
+                  {itCategory === 'Course' ? (
+                    <>Course Location<br />Online / PAN INDIA</>
+                  ) : itCategory === 'Internship' ? (
+                    <>Internship Location<br />Online / PAN INDIA</>
+                  ) : (
+                    <>Job Location<br />Placement Location as per track</>
+                  )}
                 </div>
               ) : !(job.companyName === 'IDFC First Bank' && job.title && job.title.toLowerCase().includes('debt manager')) && (
                 <div className="info-subtext">
@@ -784,47 +811,55 @@ export default function JobDetailModal({
               </div>
             </div>
 
-            {/* ITEM 5: STIPEND / SALARY */}
-            <div className="infographic-poster-item">
-              <div>
-                <Banknote size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                <p className="info-value" style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>
-                  {job.stipendTitle 
-                    ? job.stipendTitle 
-                    : (trainingList.length > 0 && trainingList[0].stipend 
-                        ? trainingList[0].stipend 
-                        : (job.stipend || 'STIPEND PROVIDED'))}
-                </p>
+            {/* ITEM 5: STIPEND / SALARY - hidden for Courses */}
+            {itCategory !== 'Course' && (
+              <div className="infographic-poster-item">
+                <div>
+                  <Banknote size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
+                  <p className="info-value" style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>
+                    {job.stipendTitle 
+                      ? job.stipendTitle 
+                      : (trainingList.length > 0 && trainingList[0].stipend 
+                          ? trainingList[0].stipend 
+                          : (job.stipend || 'STIPEND PROVIDED'))}
+                  </p>
+                </div>
+                <div className="info-subtext">
+                  {job.stipendSubtext ? (
+                    job.stipendSubtext.split('|').map((line, idx, arr) => (
+                      <React.Fragment key={idx}>
+                        {line.trim()}
+                        {idx < arr.length - 1 && <br />}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <>Stipend during training<br />Regular salary post-training</>
+                  )}
+                </div>
               </div>
-              <div className="info-subtext">
-                {job.stipendSubtext ? (
-                  job.stipendSubtext.split('|').map((line, idx, arr) => (
-                    <React.Fragment key={idx}>
-                      {line.trim()}
-                      {idx < arr.length - 1 && <br />}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <>Stipend during training<br />Regular salary post-training</>
-                )}
-              </div>
-            </div>
+            )}
 
-            {/* ITEM 6: PROGRAM FEES */}
-            <div className="infographic-poster-item">
-              <div>
-                <IndianRupee size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                <p className="info-value">
-                  {job.trainingFee || job.interviewCrackFee || '100% FREE'}
-                </p>
+            {/* ITEM 6: PROGRAM FEES - hidden for Internship */}
+            {itCategory !== 'Internship' && (
+              <div className="infographic-poster-item">
+                <div>
+                  <IndianRupee size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
+                  <p className="info-value">
+                    {job.trainingFee || job.interviewCrackFee || '100% FREE'}
+                  </p>
+                </div>
+                <div className="info-subtext">
+                  {itCategory === 'Course' ? (
+                    <>Course Fees<br />(One-time payment)</>
+                  ) : (
+                    <>Program Fees<br />{job.feeRefundType ? `(${job.feeRefundType})` : '(*Terms & Guidelines apply)'}</>
+                  )}
+                </div>
               </div>
-              <div className="info-subtext">
-                Program Fees<br />{job.feeRefundType ? `(${job.feeRefundType})` : '(*Terms & Guidelines apply)'}
-              </div>
-            </div>
+            )}
 
-            {/* ITEM 7: BOND PERIOD (IF CONFIGURED) */}
-            {job.bondPeriod && (
+            {/* ITEM 7: BOND PERIOD - hidden for Course and Internship */}
+            {job.bondPeriod && itCategory !== 'Course' && itCategory !== 'Internship' && (
               <div className="infographic-poster-item">
                 <div>
                   <ShieldCheck size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
@@ -838,8 +873,8 @@ export default function JobDetailModal({
               </div>
             )}
 
-            {/* ITEM 8: ORIGINALS REQUIREMENT (IF CONFIGURED) */}
-            {job.originalsRequired && (
+            {/* ITEM 8: ORIGINALS REQUIREMENT - hidden for Course and Internship */}
+            {job.originalsRequired && itCategory !== 'Course' && itCategory !== 'Internship' && (
               <div className="infographic-poster-item">
                 <div>
                   <CheckCircle2 size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
@@ -857,7 +892,7 @@ export default function JobDetailModal({
 
         {job.responsibilities && job.responsibilities.length > 0 && (
           <div>
-            <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>Roles & Responsibilities</h4>
+            <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>{labelResponsibilities}</h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {job.responsibilities.map((resp, idx) => (
                 <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
@@ -870,7 +905,7 @@ export default function JobDetailModal({
         )}
 
         <div>
-          <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>Job Overview</h4>
+          <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>{labelOverview}</h4>
           <p style={{ color: '#475569', fontSize: '0.925rem', lineHeight: '1.6' }}>{job.description}</p>
         </div>
 
@@ -885,25 +920,29 @@ export default function JobDetailModal({
           border: '1px solid var(--border-color)'
         }}>
           <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Job Location</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{itCategory === 'Course' ? 'Course Location' : itCategory === 'Internship' ? 'Internship Location' : 'Job Location'}</span>
             <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
               <MapPin size={14} color="#3b82f6" /> {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc')))
                 ? (job.location || 'PAN INDIA')
                 : 'PAN INDIA (Nearby Branch)'}
             </p>
           </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Salary Range</span>
-            <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', color: '#047857', margin: 0 }}>
-              {job.salary}
-            </p>
-          </div>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Experience</span>
-            <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-              <Briefcase size={14} color="#6366f1" /> {job.experience}
-            </p>
-          </div>
+          {itCategory !== 'Course' && (
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Salary Range</span>
+              <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', color: '#047857', margin: 0 }}>
+                {job.salary}
+              </p>
+            </div>
+          )}
+          {itCategory !== 'Course' && (
+            <div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Experience</span>
+              <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
+                <Briefcase size={14} color="#6366f1" /> {job.experience}
+              </p>
+            </div>
+          )}
           <div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Qualification</span>
             <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
@@ -929,11 +968,11 @@ export default function JobDetailModal({
 
 
         {/* SEQUENTIAL INTERVIEW ROUNDS (MODERN TIMELINE ROADMAP MODEL) */}
-        {job.interviewSteps && job.interviewSteps.length > 0 && (
+        {job.interviewSteps && job.interviewSteps.length > 0 && itCategory !== 'Course' && itCategory !== 'Internship' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#6b21a8', background: '#f3e8ff', border: '1px solid #e9d5ff', padding: '4px 12px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-                🪜 INTERVIEW SELECTION
+                🪜 {labelSelection}
               </span>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6b21a8', background: '#faf5ff', border: '1px solid #e9d5ff', padding: '4px 12px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
                 🎯 Total Rounds: <strong>{job.interviewSteps.length}</strong>
@@ -1332,7 +1371,7 @@ export default function JobDetailModal({
                 gap: '8px'
               }}
             >
-              <Send size={18} color="#ffffff" /> Apply Now
+              <Send size={18} color="#ffffff" /> {labelApply}
             </button>
           )}
         </div>

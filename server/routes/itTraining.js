@@ -27,6 +27,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       processName,
+      itCategory,
       programTitle,
       role,
       salary,
@@ -54,6 +55,7 @@ router.post('/', async (req, res) => {
     const newProcess = {
       id: 'it_proc_' + Date.now(),
       processName: processName.trim(),
+      itCategory: itCategory || 'Placement',
       programTitle: programTitle || 'FIC IT Training & 100% Placement Programme',
       role: role || 'Software Engineer Trainee',
       salary: salary || '3.5 - 5.0 LPA',

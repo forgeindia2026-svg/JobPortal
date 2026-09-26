@@ -4,6 +4,7 @@ import { X, Save, Plus, Trash2 } from 'lucide-react';
 export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit }) {
   const [formData, setFormData] = useState({
     processName: '',
+    itCategory: 'Placement',
     programTitle: '',
     role: '',
     salary: '',
@@ -37,6 +38,7 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
     if (processToEdit) {
       setFormData({
         processName: processToEdit.processName || '',
+        itCategory: processToEdit.itCategory || 'Placement',
         programTitle: processToEdit.programTitle || '',
         role: processToEdit.role || '',
         salary: processToEdit.salary || '',
@@ -73,6 +75,7 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
     } else {
       setFormData({
         processName: '',
+        itCategory: 'Placement',
         programTitle: 'FIC IT Training & 100% Placement Programme',
         role: 'Software Engineer Trainee',
         salary: '4.0 LPA + Incentives',
@@ -177,8 +180,8 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem' }}>
           
-          {/* ROW 1: Process Name & Status */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+          {/* ROW 1: Process Name, Category & Status */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>
                 Process Name (Candidate Button Tab) *
@@ -192,6 +195,22 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
                 required
                 style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.95rem', fontWeight: 700 }}
               />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>
+                IT Category
+              </label>
+              <select
+                name="itCategory"
+                value={formData.itCategory}
+                onChange={handleChange}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.95rem' }}
+              >
+                <option value="Placement">Placement (100% Guarantee)</option>
+                <option value="Course">Course</option>
+                <option value="Internship">Free Internship</option>
+              </select>
             </div>
 
             <div>
@@ -364,7 +383,8 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
             </div>
           </div>
 
-          {/* IT TRAINING PHASES (PHASE 1, PHASE 2, ETC.) */}
+          {/* IT TRAINING PHASES - only for Placement */}
+          {formData.itCategory === 'Placement' && (
           <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '10px', padding: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
               <div>
@@ -456,8 +476,10 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
               ))}
             </div>
           </div>
+          )}
 
-          {/* SELECTION & INTERVIEW STEPS */}
+          {/* SELECTION & INTERVIEW STEPS - only for Placement */}
+          {formData.itCategory === 'Placement' && (
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
@@ -505,6 +527,7 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
               ))}
             </div>
           </div>
+          )}
 
           {/* FOOTER ACTIONS */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '0.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
