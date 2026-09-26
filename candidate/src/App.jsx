@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import CandidateNavbar from './components/CandidateNavbar';
 import CandidateView from './components/CandidateView';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://jobportal-oind.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'http://3.109.202.254';
 
 export default function App() {
   const [currentUser] = useState({
