@@ -104,6 +104,11 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         },
         theme: {
           color: "#2563eb"
+        },
+        modal: {
+          ondismiss: function() {
+            setSubmitting(false);
+          }
         }
       };
 
@@ -244,7 +249,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={submitting}>
-                  <Send size={16} /> {submitting ? 'Processing...' : 'Pay ₹49 Book Enquiry'}
+                  <Send size={16} /> {submitting ? 'Processing...' : 'Submit Application'}
                 </button>
               </div>
             </form>
