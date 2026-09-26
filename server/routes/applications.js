@@ -22,8 +22,21 @@ router.get('/', async (req, res) => {
     // Populate references
     const populated = apps.map(app => {
       const candidate = db.candidates.find(c => c.id === app.candidateId) || {};
-      const job = db.jobs.find(j => j.id === app.jobId) || {};
-      const company = db.companies.find(c => c.id === app.companyId || c.id === job.companyId) || {};
+      let job = db.jobs.find(j => j.id === app.jobId);
+      if (!job) {
+        const itProc = (db.itTrainingProcesses || []).find(p => p.id === app.jobId);
+        if (itProc) {
+          const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement';
+          job = {
+            id: itProc.id,
+            title: itProc.role || itProc.programTitle || 'IT Trainee',
+            location: itProc.location || 'PAN INDIA',
+            companyId: 'comp_fic_it',
+            companyName: compName
+          };
+        }
+      }
+      const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
 
       return {
         ...app,
@@ -34,10 +47,10 @@ router.get('/', async (req, res) => {
         candidateQualification: candidate.qualification || '',
         candidateExperience: candidate.experience || '',
         candidateResumeUrl: candidate.resumeUrl || '',
-        jobTitle: job.title || 'Untitled Job',
-        jobLocation: job.location || '',
-        companyName: company.name || 'Unknown Company',
-        companyLogo: company.logo || ''
+        jobTitle: job ? (job.title || job.companyName || 'IT Training Enquiry') : 'Untitled Job',
+        jobLocation: job ? (job.location || '') : '',
+        companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company'),
+        companyLogo: company.logo || '/logo.png'
       };
     });
 
@@ -57,7 +70,21 @@ router.post('/', async (req, res) => {
     }
 
     const db = await readDBAsync();
-    const job = db.jobs.find(j => j.id === jobId);
+    let job = db.jobs.find(j => j.id === jobId);
+
+    if (!job) {
+      const itProc = (db.itTrainingProcesses || []).find(p => p.id === jobId);
+      if (itProc) {
+        const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement';
+        job = {
+          id: itProc.id,
+          title: itProc.role || itProc.programTitle || 'IT Trainee',
+          companyId: 'comp_fic_it',
+          companyName: compName,
+          categoryId: 'cat_it'
+        };
+      }
+    }
 
     if (!job) {
       return res.status(404).json({ error: 'Job post not found.' });

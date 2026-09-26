@@ -282,7 +282,7 @@ export default function CandidateView({ API_URL, currentUser }) {
   const convertItProcToJob = (proc, processList = null) => ({
     id: proc.id,
     title: proc.role || 'Software Engineer Trainee',
-    companyName: 'FIC IT Training & Placement',
+    companyName: proc.itCategory === 'Course' ? 'FIC IT Courses' : proc.itCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement',
     companyLogo: '/logo.png',
     categoryName: 'IT & Software Development',
     categoryId: 'cat_it',
@@ -1067,7 +1067,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                         <div>
                           <h4 className="job-card-title">{group.role || 'Software Developer Trainee'}</h4>
                           <div className="job-comp-name">
-                            FIC IT Training &amp; Placement
+                            {selectedItCategory === 'Course' ? 'FIC IT Courses' : selectedItCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement'}
                           </div>
                         </div>
                       </div>
@@ -1077,18 +1077,20 @@ export default function CandidateView({ API_URL, currentUser }) {
                       <span className="tag-pill tag-exp">
                         <Briefcase size={13} /> Fresher & Experience
                       </span>
-                      <span className="tag-pill tag-salary">
-                        {primaryProc.salary || '3.5 - 6.0 LPA'}
-                      </span>
+                      {selectedItCategory !== 'Course' && selectedItCategory !== 'Internship' && (
+                        <span className="tag-pill tag-salary">
+                          {primaryProc.salary || '3.5 - 6.0 LPA'}
+                        </span>
+                      )}
                       <span className="tag-pill tag-training">
                         🎓 Training: {primaryProc.trainingPeriod || '6 Months'}
                       </span>
-                      {bondText && (
+                      {bondText && selectedItCategory !== 'Course' && selectedItCategory !== 'Internship' && (
                         <span className="tag-pill" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}>
                           📜 {bondText}
                         </span>
                       )}
-                      {primaryProc.location && (
+                      {primaryProc.location && selectedItCategory !== 'Course' && selectedItCategory !== 'Internship' && (
                         <span className="tag-pill tag-location">
                           <MapPin size={13} /> {primaryProc.location}
                         </span>
@@ -1418,71 +1420,14 @@ export default function CandidateView({ API_URL, currentUser }) {
               <div 
                 onClick={handleOpenFicBankSelection}
                 style={{ 
-                  background: '#ffffff', 
-                  border: '1px solid #e2e8f0', 
-                  borderRadius: '16px', 
-                  padding: '1.5rem', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-                  transition: 'all 0.2s ease',
-                  marginTop: '0.5rem',
-                  marginBottom: '2.5rem'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.08)';
-                  e.currentTarget.style.borderColor = '#cbd5e1';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.04)';
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ borderRadius: '50%', width: '54px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', border: '1.5px solid #e2e8f0', background: '#ffffff', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                    <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
-                      FIC Training 100% placement or Refund
-                    </h3>
-                    <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 700, display: 'inline-block', marginTop: '4px' }}>
-                      🌟 Exclusive Program Guarantee
-                    </span>
-                  </div>
-                </div>
-                
-                <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: '1.5' }}>
-                  Complete job guarantee upon successful training completion or get 100% of your training fees refunded. Click here to view participating banks and roles.
-                </p>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
-                    View FIC Training Details
-                  </span>
-                  <ChevronRight size={20} color="#0f172a" />
-                </div>
-              </div>
-
-              {/* RUNNING IT ADVERTISEMENT MARQUEE BANNER ABOVE IT CARD */}
-              {renderItTickerBanner()}
-
-              {/* NEW FIC IT TRAINING & 100% PLACEMENT KPI CARD - 3D PREMIUM */}
-              <div 
-                onClick={() => handleOpenItTraining('Placement')}
-                style={{ 
-                  background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 40%, #7c3aed 80%, #6d28d9 100%)',
+                  background: 'linear-gradient(135deg, #7f1d1d 0%, #e11d48 40%, #f43f5e 80%, #9f1239 100%)',
                   borderRadius: '20px', 
                   padding: '1.5rem',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '14px',
-                  boxShadow: '0 8px 32px rgba(37, 99, 235, 0.45), 0 2px 8px rgba(109, 40, 217, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
+                  boxShadow: '0 8px 32px rgba(225, 29, 72, 0.45), 0 2px 8px rgba(159, 18, 57, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
                   transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   marginTop: '0.5rem',
                   marginBottom: '2.5rem',
@@ -1492,11 +1437,11 @@ export default function CandidateView({ API_URL, currentUser }) {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
-                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(37, 99, 235, 0.55), 0 8px 20px rgba(109, 40, 217, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
+                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(225, 29, 72, 0.55), 0 8px 20px rgba(159, 18, 57, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(37, 99, 235, 0.45), 0 2px 8px rgba(109, 40, 217, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(225, 29, 72, 0.45), 0 2px 8px rgba(159, 18, 57, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
                 }}
               >
                 {/* Decorative glowing orbs */}
@@ -1504,7 +1449,6 @@ export default function CandidateView({ API_URL, currentUser }) {
                 <div style={{ position: 'absolute', bottom: '-20px', left: '30px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
                 <div style={{ position: 'absolute', top: '20px', right: '80px', width: '50px', height: '50px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                {/* Header Row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                   {/* 3D Logo Circle */}
                   <div style={{ 
@@ -1519,7 +1463,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', lineHeight: 1.2 }}>
-                      FIC IT Training &amp; 100% placement
+                      FIC Training 100% placement or Refund
                     </h3>
                     <span style={{ 
                       fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px',
@@ -1532,21 +1476,19 @@ export default function CandidateView({ API_URL, currentUser }) {
                       backdropFilter: 'blur(4px)',
                       letterSpacing: '0.02em'
                     }}>
-                      💻 Exclusive IT Placement Programs
+                      🌟 Exclusive Program Guarantee
                     </span>
                   </div>
                 </div>
-
-                {/* Description */}
+                
                 <p style={{ 
                   margin: 0, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', 
                   lineHeight: '1.55', position: 'relative', zIndex: 1,
                   textShadow: '0 1px 2px rgba(0,0,0,0.15)'
                 }}>
-                  Complete IT Job Training with 100% placement guarantee in top IT companies. View multiple training processes, monthly stipend, bond terms, and selection roadmap.
+                  Complete job guarantee upon successful training completion or get 100% of your training fees refunded. Click here to view participating banks and roles.
                 </p>
-
-                {/* Footer Row */}
+                
                 <div style={{ 
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
                   borderTop: '1px solid rgba(255,255,255,0.2)', 
@@ -1554,22 +1496,91 @@ export default function CandidateView({ API_URL, currentUser }) {
                   position: 'relative', zIndex: 1
                 }}>
                   <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px', textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
-                    🎯 Selection &amp; Interview
+                    View FIC Training Details
                   </span>
+                  <ChevronRight size={20} color="#ffffff" />
+                </div>
+              </div>
+
+              {/* RUNNING IT ADVERTISEMENT MARQUEE BANNER */}
+              {renderItTickerBanner()}
+
+              {/* 1. FIC FREE INTERNSHIP KPI CARD - FIRST */}
+              <div 
+                onClick={() => handleOpenItTraining('Internship')}
+                style={{ 
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 40%, #065f46 80%, #022c22 100%)',
+                  borderRadius: '20px', 
+                  padding: '1.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                  boxShadow: '0 8px 32px rgba(5, 150, 105, 0.45), 0 2px 8px rgba(4, 120, 87, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
+                  transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  marginTop: '0.5rem',
+                  marginBottom: '2.5rem',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  border: '1.5px solid rgba(255,255,255,0.18)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
+                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(5, 150, 105, 0.55), 0 8px 20px rgba(4, 120, 87, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(5, 150, 105, 0.45), 0 2px 8px rgba(4, 120, 87, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
+                }}
+              >
+                <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                   <div style={{ 
-                    width: '32px', height: '32px', borderRadius: '50%', 
-                    background: 'rgba(255,255,255,0.22)',
-                    border: '1.5px solid rgba(255,255,255,0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                    borderRadius: '50%', width: '58px', height: '58px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    flexShrink: 0, overflow: 'hidden',
+                    background: '#ffffff',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(0,0,0,0.1)',
+                    border: '2.5px solid rgba(255,255,255,0.9)'
                   }}>
+                    <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', lineHeight: 1.2 }}>
+                      FIC Free Internship
+                    </h3>
+                    <span style={{ 
+                      fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      marginTop: '6px',
+                      background: 'rgba(255,255,255,0.18)',
+                      color: '#d1fae5',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      backdropFilter: 'blur(4px)',
+                      letterSpacing: '0.02em'
+                    }}>
+                      💼 Zero Cost • Real Experience
+                    </span>
+                  </div>
+                </div>
+
+                <p style={{ margin: 0, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', lineHeight: '1.55', position: 'relative', zIndex: 1, textShadow: '0 1px 2px rgba(0,0,0,0.15)' }}>
+                  Join our exclusive 100% Free Internship program. Work on live industry projects alongside experienced developers without paying any fees.
+                </p>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '12px', marginTop: '2px', position: 'relative', zIndex: 1 }}>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px', textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
+                    🚀 View Internship Openings
+                  </span>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.22)', border: '1.5px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
                     <ChevronRight size={18} color="#ffffff" />
                   </div>
                 </div>
               </div>
 
-              {/* NEW FIC COURSES KPI CARD */}
+              {/* 2. FIC IT COURSES KPI CARD - SECOND */}
               <div 
                 onClick={() => handleOpenItTraining('Course')}
                 style={{ 
@@ -1643,18 +1654,18 @@ export default function CandidateView({ API_URL, currentUser }) {
                 </div>
               </div>
 
-              {/* NEW FIC FREE INTERNSHIP KPI CARD */}
+              {/* 3. FIC IT TRAINING & PLACEMENT KPI CARD - THIRD */}
               <div 
-                onClick={() => handleOpenItTraining('Internship')}
+                onClick={() => handleOpenItTraining('Placement')}
                 style={{ 
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 40%, #065f46 80%, #022c22 100%)',
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 40%, #7c3aed 80%, #6d28d9 100%)',
                   borderRadius: '20px', 
                   padding: '1.5rem',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '14px',
-                  boxShadow: '0 8px 32px rgba(5, 150, 105, 0.45), 0 2px 8px rgba(4, 120, 87, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
+                  boxShadow: '0 8px 32px rgba(37, 99, 235, 0.45), 0 2px 8px rgba(109, 40, 217, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
                   transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   marginBottom: '2.5rem',
                   position: 'relative',
@@ -1663,15 +1674,18 @@ export default function CandidateView({ API_URL, currentUser }) {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
-                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(5, 150, 105, 0.55), 0 8px 20px rgba(4, 120, 87, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
+                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(37, 99, 235, 0.55), 0 8px 20px rgba(109, 40, 217, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(5, 150, 105, 0.45), 0 2px 8px rgba(4, 120, 87, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(37, 99, 235, 0.45), 0 2px 8px rgba(109, 40, 217, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
                 }}
               >
+                {/* Decorative glowing orbs */}
                 <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-                
+                <div style={{ position: 'absolute', bottom: '-20px', left: '30px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: '20px', right: '80px', width: '50px', height: '50px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
                   <div style={{ 
                     borderRadius: '50%', width: '58px', height: '58px', 
@@ -1685,33 +1699,49 @@ export default function CandidateView({ API_URL, currentUser }) {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', lineHeight: 1.2 }}>
-                      FIC Free Internship
+                      FIC IT Training &amp; 100% placement
                     </h3>
                     <span style={{ 
                       fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px',
                       marginTop: '6px',
                       background: 'rgba(255,255,255,0.18)',
-                      color: '#d1fae5',
+                      color: '#e0f2fe',
                       padding: '3px 10px',
                       borderRadius: '20px',
                       border: '1px solid rgba(255,255,255,0.25)',
                       backdropFilter: 'blur(4px)',
                       letterSpacing: '0.02em'
                     }}>
-                      💼 Zero Cost • Real Experience
+                      💻 Exclusive IT Placement Programs
                     </span>
                   </div>
                 </div>
 
-                <p style={{ margin: 0, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', lineHeight: '1.55', position: 'relative', zIndex: 1, textShadow: '0 1px 2px rgba(0,0,0,0.15)' }}>
-                  Join our exclusive 100% Free Internship program. Work on live industry projects alongside experienced developers without paying any fees.
+                <p style={{ 
+                  margin: 0, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', 
+                  lineHeight: '1.55', position: 'relative', zIndex: 1,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                }}>
+                  Complete IT Job Training with 100% placement guarantee in top IT companies. View multiple training processes, monthly stipend, bond terms, and selection roadmap.
                 </p>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '12px', marginTop: '2px', position: 'relative', zIndex: 1 }}>
+                <div style={{ 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                  borderTop: '1px solid rgba(255,255,255,0.2)', 
+                  paddingTop: '12px', marginTop: '2px',
+                  position: 'relative', zIndex: 1
+                }}>
                   <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px', textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
-                    🚀 View Internship Openings
+                    🎯 Selection &amp; Interview
                   </span>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.22)', border: '1.5px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+                  <div style={{ 
+                    width: '32px', height: '32px', borderRadius: '50%', 
+                    background: 'rgba(255,255,255,0.22)',
+                    border: '1.5px solid rgba(255,255,255,0.4)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}>
                     <ChevronRight size={18} color="#ffffff" />
                   </div>
                 </div>

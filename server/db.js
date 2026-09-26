@@ -748,14 +748,15 @@ async function connectMongoDB() {
 // Read database directly from MongoDB Atlas Cloud collections
 async function readDBAsync() {
   try {
-    const [users, categories, companies, jobs, candidates, applications, interviews] = await Promise.all([
+    const [users, categories, companies, jobs, candidates, applications, interviews, itTrainingProcesses] = await Promise.all([
       UserModel.find({}).lean(),
       CategoryModel.find({}).lean(),
       CompanyModel.find({}).lean(),
       JobModel.find({}).lean(),
       CandidateModel.find({}).lean(),
       ApplicationModel.find({}).lean(),
-      InterviewModel.find({}).lean()
+      InterviewModel.find({}).lean(),
+      ItTrainingProcessModel.find({}).lean()
     ]);
     return {
       users: users || [],
@@ -764,7 +765,8 @@ async function readDBAsync() {
       jobs: jobs || [],
       candidates: candidates || [],
       applications: applications || [],
-      interviews: interviews || []
+      interviews: interviews || [],
+      itTrainingProcesses: (itTrainingProcesses && itTrainingProcesses.length > 0) ? itTrainingProcesses : initialData.itTrainingProcesses
     };
   } catch (err) {
     console.error('Error reading from MongoDB Atlas Cloud:', err.message);
@@ -775,7 +777,8 @@ async function readDBAsync() {
       jobs: [],
       candidates: [],
       applications: [],
-      interviews: []
+      interviews: [],
+      itTrainingProcesses: initialData.itTrainingProcesses
     };
   }
 }

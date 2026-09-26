@@ -198,7 +198,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={submitting}>
-                  <Send size={16} /> {submitting ? 'Submitting Application...' : 'Confirm & Submit Application'}
+                  <Send size={16} /> {submitting ? 'Booking Enquiry...' : 'Book for Enquiry'}
                 </button>
               </div>
             </form>

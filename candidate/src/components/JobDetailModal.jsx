@@ -771,9 +771,9 @@ export default function JobDetailModal({
               {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) ? (
                 <div className="info-subtext">
                   {itCategory === 'Course' ? (
-                    <>Course Location<br />Online / PAN INDIA</>
+                    <>Course Location<br />Online</>
                   ) : itCategory === 'Internship' ? (
-                    <>Internship Location<br />Online / PAN INDIA</>
+                    <>Internship Location<br />Online</>
                   ) : (
                     <>Job Location<br />Placement Location as per track</>
                   )}
