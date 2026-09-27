@@ -31,13 +31,14 @@ router.get('/', async (req, res) => {
     }
 
     // Populate company and category details for easy UI rendering
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
     const populated = jobs.map(job => {
       const company = db.companies.find(c => c.id === job.companyId);
       const category = db.categories.find(cat => cat.id === job.categoryId);
       let companyLogo = company ? (company.logo || '') : '';
-      if (companyLogo.startsWith('http://localhost:5000')) {
-        companyLogo = companyLogo.replace('http://localhost:5000', baseUrl);
+      // Strip any localhost URLs stored in the DB (old/dev data)
+      if (companyLogo.match(/^https?:\/\/localhost(:\d+)?/)) {
+        companyLogo = companyLogo.replace(/^https?:\/\/localhost(:\d+)?/, baseUrl);
       } else if (companyLogo.startsWith('/')) {
         companyLogo = `${baseUrl}${companyLogo}`;
       }
@@ -70,8 +71,9 @@ router.get('/:id', async (req, res) => {
     const category = db.categories.find(cat => cat.id === job.categoryId);
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     let companyLogo = company ? (company.logo || '') : '';
-    if (companyLogo.startsWith('http://localhost:5000')) {
-      companyLogo = companyLogo.replace('http://localhost:5000', baseUrl);
+    // Strip any localhost URLs stored in the DB (old/dev data)
+    if (companyLogo.match(/^https?:\/\/localhost(:\d+)?/)) {
+      companyLogo = companyLogo.replace(/^https?:\/\/localhost(:\d+)?/, baseUrl);
     } else if (companyLogo.startsWith('/')) {
       companyLogo = `${baseUrl}${companyLogo}`;
     }
