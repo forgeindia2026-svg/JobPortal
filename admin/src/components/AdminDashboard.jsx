@@ -20,6 +20,7 @@ export default function AdminDashboard({ API_URL, currentUser }) {
   const [applications, setApplications] = useState([]);
   const [interviews, setInterviews] = useState([]);
   const [itProcesses, setItProcesses] = useState([]);
+  const [hrs, setHrs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [jobModalOpen, setJobModalOpen] = useState(false);
@@ -41,6 +42,11 @@ export default function AdminDashboard({ API_URL, currentUser }) {
   const [newAppStatus, setNewAppStatus] = useState('');
   const [adminNoteInput, setAdminNoteInput] = useState('');
 
+  const [hrModalOpen, setHrModalOpen] = useState(false);
+  const [hrForm, setHrForm] = useState({ name: '', email: '', password: '' });
+  const [hrSaving, setHrSaving] = useState(false);
+  const [hrError, setHrError] = useState('');
+
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -48,6 +54,7 @@ export default function AdminDashboard({ API_URL, currentUser }) {
   const fetchAllData = async () => {
     setLoading(true);
     try {
+      // Main data fetches - critical for dashboard
       const [kpiRes, catRes, compRes, jobsRes, appsRes, intRes, itRes] = await Promise.all([
         fetch(`${API_URL}/api/reports/dashboard`),
         fetch(`${API_URL}/api/categories`),
@@ -77,6 +84,17 @@ export default function AdminDashboard({ API_URL, currentUser }) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+
+    // HR fetch - separate so it doesn't break main dashboard if endpoint is missing
+    try {
+      const hrRes = await fetch(`${API_URL}/api/users/hr`);
+      if (hrRes.ok) {
+        const hrData = await hrRes.json();
+        setHrs(Array.isArray(hrData) ? hrData : []);
+      }
+    } catch (err) {
+      console.warn('HR endpoint not available yet:', err.message);
     }
   };
 
@@ -234,6 +252,13 @@ export default function AdminDashboard({ API_URL, currentUser }) {
         </button>
 
         <button
+          className={`nav-item ${activeTab === 'employees' ? 'active' : ''}`}
+          onClick={() => setActiveTab('employees')}
+        >
+          <Users size={18} /> Employees / HRs ({hrs.length})
+        </button>
+
+        <button
           className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => setActiveTab('reports')}
         >
@@ -306,7 +331,7 @@ export default function AdminDashboard({ API_URL, currentUser }) {
                 <thead>
                   <tr>
                     <th>App No</th>
-                    <th>Candidate</th>
+                    <th>Candidate Details</th>
                     <th>Job Title</th>
                     <th>Company</th>
                     <th>Date</th>
@@ -319,8 +344,24 @@ export default function AdminDashboard({ API_URL, currentUser }) {
                     <tr key={app.id}>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber}</td>
                       <td>
-                        <strong>{app.candidateName}</strong>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.candidateEmail}</div>
+                        <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.05rem', marginBottom: '6px' }}>{app.candidateName}</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.85rem' }}>
+                          <div style={{ color: '#047857', background: '#d1fae5', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            📱 {app.candidateMobile}
+                          </div>
+                          <div style={{ color: '#1d4ed8', background: '#dbeafe', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            ✉️ {app.candidateEmail}
+                          </div>
+                          <div style={{ color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            🎂 DOB: {app.candidateQualification || 'N/A'}
+                          </div>
+                          <div style={{ color: '#6d28d9', background: '#f3e8ff', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            🏙️ City: {app.candidateLocation || 'N/A'}
+                          </div>
+                          <div style={{ color: '#be185d', background: '#fce7f3', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, gridColumn: 'span 2' }}>
+                            💼 Experience: {app.candidateExperience || 'N/A'}
+                          </div>
+                        </div>
                       </td>
                       <td>{app.jobTitle}</td>
                       <td>{app.companyName}</td>
@@ -565,12 +606,27 @@ export default function AdminDashboard({ API_URL, currentUser }) {
                     <tr key={app.id}>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber}</td>
                       <td>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{app.candidateName}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.candidateEmail} • {app.candidateMobile}</div>
-                        <div style={{ fontSize: '0.775rem', color: '#475569' }}>{app.candidateQualification} ({app.candidateExperience})</div>
+                        <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.05rem', marginBottom: '6px' }}>{app.candidateName}</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.85rem' }}>
+                          <div style={{ color: '#047857', background: '#d1fae5', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            📱 {app.candidateMobile}
+                          </div>
+                          <div style={{ color: '#1d4ed8', background: '#dbeafe', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            ✉️ {app.candidateEmail}
+                          </div>
+                          <div style={{ color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            🎂 DOB: {app.candidateQualification || 'N/A'}
+                          </div>
+                          <div style={{ color: '#6d28d9', background: '#f3e8ff', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            🏙️ City: {app.candidateLocation || 'N/A'}
+                          </div>
+                          <div style={{ color: '#be185d', background: '#fce7f3', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, gridColumn: 'span 2' }}>
+                            💼 Experience: {app.candidateExperience || 'N/A'}
+                          </div>
+                        </div>
                         {app.candidateResumeUrl && (
-                          <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.775rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
-                            <FileText size={12} /> View Resume
+                          <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '8px', fontWeight: 600, padding: '4px 8px', background: '#eff6ff', borderRadius: '6px' }}>
+                            <FileText size={14} /> View Resume
                           </a>
                         )}
                       </td>
@@ -659,6 +715,70 @@ export default function AdminDashboard({ API_URL, currentUser }) {
                       <td>{int.interviewer || 'HR Team'}</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'employees' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>HR / Employees Management</h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Manage HR accounts and view their referral links.</p>
+              </div>
+              <button className="btn-primary" onClick={() => {
+                setHrForm({ name: '', email: '', password: '' });
+                setHrError('');
+                setHrModalOpen(true);
+              }}>
+                <Plus size={16} /> Add HR
+              </button>
+            </div>
+
+            <div className="table-container">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Referral Code</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hrs.map(hr => (
+                    <tr key={hr.id}>
+                      <td style={{ fontWeight: 700 }}>{hr.name}</td>
+                      <td>{hr.email}</td>
+                      <td>
+                        <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          {hr.referralCode}
+                        </span>
+                      </td>
+                      <td><span className="badge badge-active">Active</span></td>
+                      <td>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '4px 8px', color: '#ef4444' }}
+                          onClick={() => {
+                            if (!window.confirm(`Delete HR ${hr.name}?`)) return;
+                            fetch(`${API_URL}/api/users/hr/${hr.id}`, { method: 'DELETE' })
+                            .then(() => fetchAllData());
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {hrs.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No HRs found. Add one to get started.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -934,6 +1054,116 @@ export default function AdminDashboard({ API_URL, currentUser }) {
           </div>
         </div>
       )}
+
+      {/* ===== ADD HR MODAL ===== */}
+      {hrModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '460px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Add New HR Employee</h3>
+                <p style={{ color: '#c4b5fd', fontSize: '0.85rem', margin: '4px 0 0 0' }}>Create login credentials for the HR</p>
+              </div>
+              <button onClick={() => setHrModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'white', display: 'flex' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <div style={{ padding: '2rem' }}>
+              {hrError && (
+                <div style={{ background: '#fef2f2', color: '#ef4444', padding: '10px 14px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem', border: '1px solid #fecaca' }}>
+                  ⚠️ {hrError}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Priya Sharma"
+                  value={hrForm.name}
+                  onChange={e => setHrForm(f => ({ ...f, name: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Email Address *</label>
+                <input
+                  type="email"
+                  placeholder="e.g. priya@company.com"
+                  value={hrForm.email}
+                  onChange={e => setHrForm(f => ({ ...f, email: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Login Password *</label>
+                <input
+                  type="password"
+                  placeholder="Set a password for this HR"
+                  value={hrForm.password}
+                  onChange={e => setHrForm(f => ({ ...f, password: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+                <p style={{ color: '#9ca3af', fontSize: '0.78rem', marginTop: '5px' }}>💡 Itha password use panni HR this portal-la login panuvaanga. A unique referral link will be auto-generated for them.</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => setHrModalOpen(false)}
+                  style={{ flex: 1, padding: '11px', borderRadius: '8px', border: '1.5px solid #e5e7eb', background: 'white', color: '#374151', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={hrSaving}
+                  onClick={async () => {
+                    if (!hrForm.name || !hrForm.email || !hrForm.password) {
+                      setHrError('All fields are required!');
+                      return;
+                    }
+                    setHrSaving(true);
+                    setHrError('');
+                    try {
+                      const res = await fetch(`${API_URL}/api/users/hr`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(hrForm)
+                      });
+                      let data;
+                      try {
+                        data = await res.json();
+                      } catch {
+                        setHrError(`Server endpoint not found (${res.status}). Please deploy the latest server code to production first.`);
+                        setHrSaving(false);
+                        return;
+                      }
+                      if (!res.ok || data.error) {
+                        setHrError(data.error || `Error ${res.status}: Could not create HR account.`);
+                      } else {
+                        setHrModalOpen(false);
+                        fetchAllData();
+                      }
+                    } catch (err) {
+                      setHrError('Network error - Server reach aagala. Check your connection or run local server.');
+                    } finally {
+                      setHrSaving(false);
+                    }
+                  }}
+                  style={{ flex: 1, padding: '11px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  {hrSaving ? 'Creating...' : '✅ Create HR Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

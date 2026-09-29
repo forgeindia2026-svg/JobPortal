@@ -75,7 +75,8 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                 location,
                 qualification,
                 experience
-              }
+              },
+              referredBy: localStorage.getItem('hr_referral') || null
             };
 
             const res = await fetch(`${API_URL}/api/applications`, {
@@ -127,17 +128,24 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" style={{ maxWidth: '560px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+        <div className="modal-header" style={{
+          background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+          color: 'white',
+          borderTopLeftRadius: '8px',
+          borderTopRightRadius: '8px',
+          padding: '1.5rem',
+          borderBottom: 'none'
+        }}>
           <div>
-            <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>Apply for {job.title}</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{job.companyName} • {job.location}</p>
+            <h3 style={{ fontSize: '1.35rem', color: 'white', fontWeight: 'bold' }}>Apply for {job.title}</h3>
+            <p style={{ fontSize: '0.9rem', color: '#e0e7ff', marginTop: '4px' }}>{job.companyName} • {job.location}</p>
           </div>
-          <button className="btn-close" onClick={onClose}>
+          <button className="btn-close" onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '50%', padding: '6px' }}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body" style={{ padding: '1.5rem' }}>
           {successApp ? (
             <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
               <div style={{
@@ -173,11 +181,12 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                 </div>
               )}
 
-              <div className="form-group">
-                <label className="form-label">Full Name *</label>
+              <div className="form-group" style={{ background: '#eff6ff', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #3b82f6', marginBottom: '1rem' }}>
+                <label className="form-label" style={{ color: '#1e3a8a', fontWeight: 'bold' }}>Full Name *</label>
                 <input
                   type="text"
                   className="form-input"
+                  style={{ border: '1px solid #bfdbfe', background: '#fff' }}
                   required
                   placeholder="Enter your full name"
                   value={name}
@@ -185,66 +194,75 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Email Address *</label>
-                  <input
-                    type="email"
-                    className="form-input"
-                    required
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Mobile Number *</label>
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ background: '#ecfdf5', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #10b981', margin: 0 }}>
+                  <label className="form-label" style={{ color: '#064e3b', fontWeight: 'bold' }}>Mobile Number *</label>
                   <input
                     type="text"
                     className="form-input"
+                    style={{ border: '1px solid #a7f3d0', background: '#fff' }}
                     required
                     placeholder="+91 98765 43210"
                     value={mobile}
                     onChange={e => setMobile(e.target.value)}
                   />
                 </div>
+                <div className="form-group" style={{ background: '#fef3c7', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #f59e0b', margin: 0 }}>
+                  <label className="form-label" style={{ color: '#78350f', fontWeight: 'bold' }}>Date of Birth *</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    style={{ border: '1px solid #fde68a', background: '#fff' }}
+                    required
+                    value={qualification}
+                    onChange={e => setQualification(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Location / City</label>
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ background: '#f3e8ff', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #a855f7', margin: 0 }}>
+                  <label className="form-label" style={{ color: '#581c87', fontWeight: 'bold' }}>City *</label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. Chennai / Bangalore"
+                    style={{ border: '1px solid #e9d5ff', background: '#fff' }}
+                    required
+                    placeholder="e.g. Chennai"
                     value={location}
                     onChange={e => setLocation(e.target.value)}
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Experience</label>
-                  <input
-                    type="text"
+                <div className="form-group" style={{ background: '#fdf2f8', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #ec4899', margin: 0 }}>
+                  <label className="form-label" style={{ color: '#831843', fontWeight: 'bold' }}>Experience *</label>
+                  <select
                     className="form-input"
-                    placeholder="e.g. Fresher / 1-2 Years"
+                    style={{ border: '1px solid #fbcfe8', background: '#fff' }}
+                    required
                     value={experience}
                     onChange={e => setExperience(e.target.value)}
-                  />
+                  >
+                    <option value="">Select Experience</option>
+                    <option value="Fresher">Fresher</option>
+                    <option value="Experienced">Experienced</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Qualification</label>
+              <div className="form-group" style={{ background: '#fff7ed', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #f97316', marginBottom: '1rem' }}>
+                <label className="form-label" style={{ color: '#7c2d12', fontWeight: 'bold' }}>Email Address *</label>
                 <input
-                  type="text"
+                  type="email"
                   className="form-input"
-                  placeholder="e.g. B.Com / Any Graduate"
-                  value={qualification}
-                  onChange={e => setQualification(e.target.value)}
+                  style={{ border: '1px solid #ffedd5', background: '#fff' }}
+                  required
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
                 <button type="button" className="btn-secondary" onClick={onClose}>
                   Cancel
                 </button>

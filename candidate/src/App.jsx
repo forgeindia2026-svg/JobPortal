@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CandidateNavbar from './components/CandidateNavbar';
 import CandidateView from './components/CandidateView';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://3.109.202.254';
+const envApiUrl = import.meta.env.VITE_API_URL;
+const API_URL = (envApiUrl && !envApiUrl.includes('3.109.202.254')) ? envApiUrl : 'https://api.jobs.forgeindiaconnect.in';
 
 export default function App() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('hr_referral', ref);
+    }
+  }, []);
+
   const [currentUser] = useState({
     id: 'usr_candidate',
     candidateId: 'cand_guest',
