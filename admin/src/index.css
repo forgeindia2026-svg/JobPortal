@@ -128,6 +128,7 @@ h1, h2, h3, h4, h5, h6 {
 .admin-layout {
   display: flex;
   min-height: calc(100vh - 61px);
+  align-items: flex-start;
 }
 
 .admin-sidebar {
