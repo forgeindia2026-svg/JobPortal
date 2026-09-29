@@ -756,6 +756,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Name</th>
                     <th>Email</th>
                     <th>Referral Code</th>
+                    <th>Link Clicks</th>
+                    <th>Candidates Applied</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -769,6 +771,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
                           {hr.referralCode}
                         </span>
+                      </td>
+                      <td style={{ fontWeight: 600, color: '#3b82f6' }}>{hr.linkClicks || 0}</td>
+                      <td style={{ fontWeight: 600, color: '#10b981' }}>
+                        {applications.filter(app => app.referredBy === hr.referralCode).length}
                       </td>
                       <td><span className="badge badge-active">Active</span></td>
                       <td>
@@ -788,7 +794,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   ))}
                   {hrs.length === 0 && (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No HRs found. Add one to get started.</td>
+                      <td colSpan="7" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No HRs found. Add one to get started.</td>
                     </tr>
                   )}
                 </tbody>
