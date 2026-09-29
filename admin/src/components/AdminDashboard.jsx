@@ -597,6 +597,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Applied Job</th>
                     <th>Company</th>
                     <th>Applied On</th>
+                    <th>HR Reference</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -633,6 +634,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td style={{ fontWeight: 600 }}>{app.jobTitle}</td>
                       <td>{app.companyName}</td>
                       <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                      <td>
+                        {app.referredBy ? (() => {
+                          const hr = hrs.find(h => h.referralCode === app.referredBy);
+                          return (
+                            <div>
+                              <div style={{ fontWeight: 600, color: '#3b82f6', fontSize: '0.85rem' }}>{hr ? hr.name : 'Unknown HR'}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
+                            </div>
+                          );
+                        })() : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>}
+                      </td>
                       <td>{getStatusBadge(app.status)}</td>
                       <td>
                         <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
