@@ -31,6 +31,9 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
 
   if (!isOpen || !job) return null;
 
+  const today = new Date();
+  const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -148,13 +151,16 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                 <div className="form-group" style={{ background: '#ecfdf5', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #10b981', margin: 0 }}>
                   <label className="form-label" style={{ color: '#064e3b', fontWeight: 'bold' }}>Mobile Number *</label>
                   <input
-                    type="text"
+                    type="tel"
                     className="form-input"
                     style={{ border: '1px solid #a7f3d0', background: '#fff' }}
                     required
-                    placeholder="+91 98765 43210"
+                    pattern="[0-9]{10}"
+                    maxLength="10"
+                    title="Mobile number must be exactly 10 digits"
+                    placeholder="e.g. 9876543210"
                     value={mobile}
-                    onChange={e => setMobile(e.target.value)}
+                    onChange={e => setMobile(e.target.value.replace(/\D/g, ''))}
                   />
                 </div>
                 <div className="form-group" style={{ background: '#fef3c7', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #f59e0b', margin: 0 }}>
@@ -164,6 +170,8 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                     className="form-input"
                     style={{ border: '1px solid #fde68a', background: '#fff' }}
                     required
+                    max={maxDate}
+                    title="You must be at least 18 years old"
                     value={qualification}
                     onChange={e => setQualification(e.target.value)}
                   />
