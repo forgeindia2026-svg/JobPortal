@@ -58,8 +58,8 @@ router.delete('/hr/:id', async (req, res) => {
   }
 });
 
-// POST track link click - candidate referral link open panna auto call aagum
-router.post('/hr/:referralCode/track-click', async (req, res) => {
+// POST track link click - candidate referral link open panna auto call aagum (renamed to visit to avoid adblockers)
+router.post('/hr/:referralCode/visit', async (req, res) => {
   try {
     const { referralCode } = req.params;
     await UserModel.updateOne(
@@ -68,7 +68,7 @@ router.post('/hr/:referralCode/track-click', async (req, res) => {
     );
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to track click.' });
+    res.status(500).json({ error: 'Failed to record visit.' });
   }
 });
 

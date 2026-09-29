@@ -11,8 +11,8 @@ export default function App() {
     const ref = params.get('ref');
     if (ref) {
       localStorage.setItem('hr_referral', ref);
-      // Track this click on the backend - HR dashboard-la count update aagum
-      fetch(`${API_URL}/api/users/hr/${ref}/track-click`, { method: 'POST' })
+      // Track this click on the backend (renamed to visit to bypass adblockers)
+      fetch(`${API_URL}/api/users/hr/${ref}/visit`, { method: 'POST' })
         .catch(() => {}); // Silently fail if error
     }
   }, []);
