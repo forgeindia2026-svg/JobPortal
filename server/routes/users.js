@@ -12,11 +12,11 @@ router.get('/hr', async (req, res) => {
   }
 });
 
-// POST to create HR (Admin only, but omitting auth middleware for simplicity)
+// POST to create HR
 router.post('/hr', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    
+
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
     }
@@ -27,7 +27,6 @@ router.post('/hr', async (req, res) => {
     }
 
     const userId = 'usr_' + Date.now();
-    // Create a referral code like HR-12345
     const referralCode = 'HR-' + Math.floor(10000 + Math.random() * 90000);
 
     const newUser = {
@@ -37,6 +36,7 @@ router.post('/hr', async (req, res) => {
       passwordHash: 'dummy_hash_' + password,
       role: 'hr',
       referralCode,
+      linkClicks: 0,
       createdAt: new Date().toISOString()
     };
 
@@ -58,15 +58,32 @@ router.delete('/hr/:id', async (req, res) => {
   }
 });
 
-// GET HR Dashboard Stats (for a specific HR)
+// POST track link click - candidate referral link open panna auto call aagum
+router.post('/hr/:referralCode/track-click', async (req, res) => {
+  try {
+    const { referralCode } = req.params;
+    await UserModel.updateOne(
+      { referralCode, role: 'hr' },
+      { $inc: { linkClicks: 1 } }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to track click.' });
+  }
+});
+
+// GET HR Dashboard Stats
 router.get('/hr/:referralCode/dashboard', async (req, res) => {
   try {
     const { referralCode } = req.params;
-    
+
+    // Get HR user for click count
+    const hrUser = await UserModel.findOne({ referralCode, role: 'hr' }).lean();
+
     // Find applications referred by this HR
     const applications = await ApplicationModel.find({ referredBy: referralCode }).lean();
     const db = await readDBAsync();
-    
+
     const populated = applications.map(app => {
       const candidate = db.candidates.find(c => c.id === app.candidateId) || {};
       let job = db.jobs.find(j => j.id === app.jobId);
@@ -90,9 +107,10 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
 
     const stats = {
       totalApplications: applications.length,
+      linkClicks: hrUser ? (hrUser.linkClicks || 0) : 0,
       applications: populated
     };
-    
+
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch HR dashboard stats.' });

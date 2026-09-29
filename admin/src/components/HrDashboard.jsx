@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Users, FileText, CheckCircle, Copy } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy } from 'lucide-react';
 
 export default function HrDashboard({ API_URL, currentUser }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-  // The unique link the HR can share
-  // Assume the candidate portal is running on port 5173 locally, or production URL
-  const candidatePortalBaseUrl = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5173' 
+  const candidatePortalBaseUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:5173'
     : 'https://jobs.forgeindiaconnect.in';
-    
+
   const referralLink = `${candidatePortalBaseUrl}?ref=${currentUser.referralCode}`;
 
-  useEffect(() => {
+  const fetchStats = () => {
     fetch(`${API_URL}/api/users/hr/${currentUser.referralCode}/dashboard`)
       .then(res => res.json())
       .then(data => {
@@ -24,11 +23,19 @@ export default function HrDashboard({ API_URL, currentUser }) {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchStats();
+    // Auto refresh every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, [API_URL, currentUser]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
-    alert('Link copied to clipboard!');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const shareOnWhatsApp = () => {
@@ -47,18 +54,18 @@ export default function HrDashboard({ API_URL, currentUser }) {
         <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Your Unique Referral Link</h3>
-            <p style={{ color: '#e0e7ff', fontSize: '0.95rem' }}>Share this link with candidates. Anyone who applies using this link will be tracked under your account.</p>
+            <p style={{ color: '#e0e7ff', fontSize: '0.95rem' }}>Share this link with candidates. Anyone who opens or applies using this link will be tracked under your account.</p>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <input 
-              type="text" 
-              readOnly 
-              value={referralLink} 
+            <input
+              type="text"
+              readOnly
+              value={referralLink}
               style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', color: '#0f172a', fontWeight: 'bold', minWidth: '250px' }}
             />
-            <button className="btn-primary" onClick={copyToClipboard} style={{ background: '#10b981', border: 'none' }}>
-              <Copy size={16} /> Copy
+            <button className="btn-primary" onClick={copyToClipboard} style={{ background: copied ? '#059669' : '#10b981', border: 'none', transition: 'background 0.3s' }}>
+              <Copy size={16} /> {copied ? '✓ Copied!' : 'Copy'}
             </button>
             <button className="btn-primary" onClick={shareOnWhatsApp} style={{ background: '#25D366', border: 'none', color: 'white' }}>
               <Share2 size={16} /> WhatsApp
@@ -67,13 +74,31 @@ export default function HrDashboard({ API_URL, currentUser }) {
         </div>
 
         <div className="kpi-grid">
+          {/* Link Clicks KPI */}
+          <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
+            <div className="kpi-icon" style={{ background: '#eef2ff', color: '#6366f1' }}>
+              <MousePointerClick size={22} />
+            </div>
+            <div>
+              <div className="kpi-val">{stats ? stats.linkClicks : 0}</div>
+              <div className="kpi-label">Total Link Clicks</div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>People who opened your link</div>
+            </div>
+          </div>
+
+          {/* Applications KPI */}
           <div className="kpi-card" style={{ borderLeft: '4px solid #10b981' }}>
             <div className="kpi-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
               <Users size={22} />
             </div>
             <div>
               <div className="kpi-val">{stats ? stats.totalApplications : 0}</div>
-              <div className="kpi-label">Total Candidates Referred</div>
+              <div className="kpi-label">Total Candidates Applied</div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                {stats && stats.linkClicks > 0
+                  ? `${Math.round((stats.totalApplications / stats.linkClicks) * 100)}% conversion rate`
+                  : 'Share your link to get started'}
+              </div>
             </div>
           </div>
         </div>
