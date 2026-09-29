@@ -23,7 +23,7 @@ export default function AdminNavbar({ currentUser, onLogout }) {
               <span style={{ color: '#ffffff' }}>FIC</span>
               <span style={{ color: '#f59e0b' }}>RecruitPro</span>
             </div>
-            <span style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span className="brand-subtitle" style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Admin Management Portal
             </span>
           </div>

@@ -78,29 +78,23 @@ export default function HrDashboard({ API_URL, currentUser }) {
         </div>
 
         <div className="kpi-grid">
-          <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
-            <div className="kpi-icon" style={{ background: '#eef2ff', color: '#6366f1' }}>
-              <MousePointerClick size={22} />
+          <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1', background: '#eef2ff' }}>
+            <div className="kpi-icon" style={{ background: '#c7d2fe', color: '#4f46e5' }}>
+              <MousePointerClick size={20} />
             </div>
             <div>
               <div className="kpi-val">{stats ? stats.linkClicks : 0}</div>
               <div className="kpi-label">Total Link Clicks</div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>People who opened your link</div>
             </div>
           </div>
 
-          <div className="kpi-card" style={{ borderLeft: '4px solid #10b981' }}>
-            <div className="kpi-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
-              <Users size={22} />
+          <div className="kpi-card" style={{ borderLeft: '4px solid #10b981', background: '#ecfdf5' }}>
+            <div className="kpi-icon" style={{ background: '#a7f3d0', color: '#059669' }}>
+              <Users size={20} />
             </div>
             <div>
               <div className="kpi-val">{stats ? stats.totalApplications : 0}</div>
               <div className="kpi-label">Total Candidates Applied</div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                {stats && stats.linkClicks > 0
-                  ? `${Math.round((stats.totalApplications / stats.linkClicks) * 100)}% conversion rate`
-                  : 'Share your link to get started'}
-              </div>
             </div>
           </div>
         </div>
