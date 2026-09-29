@@ -100,6 +100,9 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
         candidateName: candidate.name || 'Anonymous',
         candidateEmail: candidate.email || '',
         candidateMobile: candidate.mobile || '',
+        candidateLocation: candidate.location || '',
+        candidateDOB: candidate.qualification || '',
+        candidateExperience: candidate.experience || '',
         jobTitle: job ? (job.title || job.companyName) : 'Untitled Job',
         companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company')
       };

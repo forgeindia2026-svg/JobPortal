@@ -37,90 +37,40 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     setError('');
 
     try {
-      // 1. Create Payment Order
-      const orderRes = await fetch(`${API_URL}/api/payment/create-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 49 }) // Rs 49
-      });
-      
-      const orderData = await orderRes.json();
-      if (!orderData.success) {
-        throw new Error(orderData.error || 'Failed to initialize payment.');
-      }
-
-      // 2. Open Razorpay Checkout
-      const options = {
-        key: orderData.key_id, 
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
-        name: "Forge India Connect",
-        description: "Job Enquiry Fee",
-        order_id: orderData.order.id,
-        handler: async function (response) {
-          // 3. Submit application on payment success
-          try {
-            setSubmitting(true);
-            const payload = {
-              candidateId: candidate ? candidate.candidateId || candidate.id : null,
-              jobId: job.id,
-              resumeUrl,
-              coverNotes,
-              paymentId: response.razorpay_payment_id,
-              candidateDetails: {
-                userId: candidate ? candidate.id : null,
-                name,
-                email,
-                mobile,
-                location,
-                qualification,
-                experience
-              },
-              referredBy: localStorage.getItem('hr_referral') || null
-            };
-
-            const res = await fetch(`${API_URL}/api/applications`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-            if (!res.ok) {
-              throw new Error(data.error || 'Failed to submit application.');
-            }
-
-            setSuccessApp(data);
-            if (onSubmitSuccess) onSubmitSuccess(data);
-          } catch (err) {
-            setError(err.message);
-          } finally {
-            setSubmitting(false);
-          }
+      const payload = {
+        candidateId: candidate ? candidate.candidateId || candidate.id : null,
+        jobId: job.id,
+        resumeUrl,
+        coverNotes,
+        paymentId: 'FREE_TEST_' + Date.now(),
+        candidateDetails: {
+          userId: candidate ? candidate.id : null,
+          name,
+          email,
+          mobile,
+          location,
+          qualification,
+          experience
         },
-        prefill: {
-          name: name,
-          email: email,
-          contact: mobile
-        },
-        theme: {
-          color: "#2563eb"
-        },
-        modal: {
-          ondismiss: function() {
-            setSubmitting(false);
-          }
-        }
+        referredBy: localStorage.getItem('hr_referral') || null
       };
 
-      const rzp1 = new window.Razorpay(options);
-      rzp1.on('payment.failed', function (response){
-         setError('Payment failed or cancelled. Please try again.');
-         setSubmitting(false);
+      const res = await fetch(`${API_URL}/api/applications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      rzp1.open();
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit application.');
+      }
+
+      setSuccessApp(data);
+      if (onSubmitSuccess) onSubmitSuccess(data);
     } catch (err) {
       setError(err.message);
+    } finally {
       setSubmitting(false);
     }
   };

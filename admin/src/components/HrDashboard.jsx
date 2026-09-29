@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Users, MousePointerClick, Copy } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase } from 'lucide-react';
 
 export default function HrDashboard({ API_URL, currentUser }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [expandedApp, setExpandedApp] = useState(null);
 
   const candidatePortalBaseUrl = window.location.hostname === 'localhost'
     ? 'http://localhost:5173'
@@ -27,7 +28,6 @@ export default function HrDashboard({ API_URL, currentUser }) {
 
   useEffect(() => {
     fetchStats();
-    // Auto refresh every 30 seconds
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, [API_URL, currentUser]);
@@ -41,6 +41,10 @@ export default function HrDashboard({ API_URL, currentUser }) {
   const shareOnWhatsApp = () => {
     const text = `Hey! Check out these amazing job openings at Forge India Connect: ${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const toggleExpand = (appId) => {
+    setExpandedApp(expandedApp === appId ? null : appId);
   };
 
   return (
@@ -74,7 +78,6 @@ export default function HrDashboard({ API_URL, currentUser }) {
         </div>
 
         <div className="kpi-grid">
-          {/* Link Clicks KPI */}
           <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
             <div className="kpi-icon" style={{ background: '#eef2ff', color: '#6366f1' }}>
               <MousePointerClick size={22} />
@@ -86,7 +89,6 @@ export default function HrDashboard({ API_URL, currentUser }) {
             </div>
           </div>
 
-          {/* Applications KPI */}
           <div className="kpi-card" style={{ borderLeft: '4px solid #10b981' }}>
             <div className="kpi-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
               <Users size={22} />
@@ -107,39 +109,145 @@ export default function HrDashboard({ API_URL, currentUser }) {
           <h3 className="section-title">Your Candidates</h3>
         </div>
 
-        <div className="table-container">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Candidate Details</th>
-                <th>Applied Job</th>
-                <th>Status</th>
-                <th>Date Applied</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats?.applications?.map(app => (
-                <tr key={app.id}>
-                  <td>
-                    <div style={{ fontWeight: 800, color: '#1e293b' }}>{app.candidateName}</div>
-                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{app.candidateMobile} | {app.candidateEmail}</div>
-                  </td>
-                  <td style={{ fontWeight: 600 }}>{app.jobTitle} <br/> <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.companyName}</span></td>
-                  <td>
-                    <span className="badge badge-active">{app.status}</span>
-                  </td>
-                  <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {stats?.applications?.length === 0 && (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                    No candidates have applied using your link yet.
-                  </td>
-                </tr>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {stats?.applications?.map(app => (
+            <div key={app.id} style={{
+              background: '#fff',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+              transition: 'box-shadow 0.2s',
+              boxShadow: expandedApp === app.id ? '0 4px 15px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)'
+            }}>
+              {/* Clickable header row */}
+              <div
+                onClick={() => toggleExpand(app.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  cursor: 'pointer',
+                  flexWrap: 'wrap',
+                  gap: '10px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '200px' }}>
+                  <div style={{
+                    width: '42px', height: '42px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                    color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 'bold', fontSize: '1rem', flexShrink: 0
+                  }}>
+                    {app.candidateName?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>{app.candidateName}</div>
+                    <div style={{ fontSize: '0.82rem', color: '#64748b' }}>{app.candidateMobile}</div>
+                  </div>
+                </div>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <div style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>{app.jobTitle}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{app.companyName}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{
+                    background: '#ecfdf5', color: '#059669', padding: '4px 12px',
+                    borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600
+                  }}>{app.status}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                    {new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                  {expandedApp === app.id ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
+                </div>
+              </div>
+
+              {/* Expanded details */}
+              {expandedApp === app.id && (
+                <div style={{
+                  borderTop: '1px solid #e2e8f0',
+                  padding: '20px',
+                  background: '#f8fafc',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+                      <Users size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Full Name</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateName}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+                      <Phone size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mobile Number</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateMobile || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+                      <Calendar size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date of Birth</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>
+                        {app.candidateDOB ? new Date(app.candidateDOB).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a855f7' }}>
+                      <MapPin size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>City</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateLocation || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ec4899' }}>
+                      <Briefcase size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Experience</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateExperience || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f97316' }}>
+                      <Mail size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email Address</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateEmail || 'N/A'}</div>
+                    </div>
+                  </div>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+          ))}
+
+          {stats?.applications?.length === 0 && (
+            <div style={{
+              textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8',
+              background: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0'
+            }}>
+              <Users size={40} style={{ marginBottom: '12px', opacity: 0.4 }} />
+              <p style={{ fontSize: '1rem', fontWeight: 500 }}>No candidates have applied using your link yet.</p>
+              <p style={{ fontSize: '0.85rem' }}>Share your referral link to start tracking!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
