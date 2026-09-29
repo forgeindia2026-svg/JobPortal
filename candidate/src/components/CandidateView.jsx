@@ -776,9 +776,13 @@ export default function CandidateView({ API_URL, currentUser }) {
                   >
                     <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', zIndex: 1 }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', backdropFilter: 'blur(4px)' }}>
-                        <Building2 size={22} />
-                      </div>
+                      {getLogoUrl(comp.name, comp.logo) ? (
+                        <img src={getLogoUrl(comp.name, comp.logo)} alt={comp.name} style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'contain', background: '#fff', border: '2px solid rgba(255,255,255,0.5)' }} />
+                      ) : (
+                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', backdropFilter: 'blur(4px)', border: '2px solid rgba(255,255,255,0.5)' }}>
+                          <Building2 size={22} />
+                        </div>
+                      )}
                       <div>
                         <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                           {comp.name}
