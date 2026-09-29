@@ -5,7 +5,7 @@
   --font-display: 'Outfit', system-ui, sans-serif;
 
   /* Colors */
-  --bg-main: #f8fafc;
+  --bg-main: #fdfbf7;
   --bg-card: #ffffff;
   --bg-sidebar: #0f172a;
   --text-main: #0f172a;
@@ -173,7 +173,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .admin-main {
   flex: 1;
-  background: #f8fafc;
+  background: var(--bg-main);
   padding: 2rem;
   overflow-y: auto;
 }
@@ -223,7 +223,7 @@ h1, h2, h3, h4, h5, h6 {
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: var(--shadow-sm);
 }
 
@@ -484,4 +484,42 @@ h1, h2, h3, h4, h5, h6 {
   .kpi-label {
     font-size: 0.75rem;
   }
+  
+  .admin-layout {
+    flex-direction: column;
+  }
+  
+  .desktop-text {
+    display: none;
+  }
+  
+  .mobile-menu-btn {
+    display: block !important;
+  }
+
+  .admin-sidebar {
+    display: none;
+    position: absolute;
+    top: 61px;
+    right: 0;
+    width: 250px;
+    background: var(--bg-sidebar);
+    z-index: 1000;
+    border-radius: 0 0 0 12px;
+    box-shadow: -4px 4px 15px rgba(0,0,0,0.1);
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .admin-sidebar.mobile-open {
+    display: flex;
+  }
+  
+  .sidebar-nav {
+    flex-direction: column !important;
+    gap: 0.5rem;
+    overflow-x: hidden;
+  }
 }
+

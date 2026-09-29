@@ -121,18 +121,7 @@ export default function ScheduleInterviewModal({ isOpen, onClose, application, A
               </select>
             </div>
 
-            {mode === 'Online' ? (
-              <div className="form-group">
-                <label className="form-label">Meeting Link (Google Meet / Zoom / Teams)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="https://meet.google.com/..."
-                  value={meetingLink}
-                  onChange={e => setMeetingLink(e.target.value)}
-                />
-              </div>
-            ) : (
+            {mode === 'Online' ? null : (
               <div className="form-group">
                 <label className="form-label">Interview Location</label>
                 <input
@@ -145,27 +134,9 @@ export default function ScheduleInterviewModal({ isOpen, onClose, application, A
               </div>
             )}
 
-            <div className="form-group">
-              <label className="form-label">Interviewer Name / Panel</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Mr. Suresh Kumar (Branch Head)"
-                value={interviewer}
-                onChange={e => setInterviewer(e.target.value)}
-              />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Notes for Candidate</label>
-              <textarea
-                className="form-textarea"
-                rows="2"
-                placeholder="What to bring or prepare for..."
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-              ></textarea>
-            </div>
+
+
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.5rem' }}>
               <button type="button" className="btn-secondary" onClick={onClose}>

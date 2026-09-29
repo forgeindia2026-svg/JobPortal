@@ -1,7 +1,7 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
-export default function AdminNavbar({ currentUser, onLogout }) {
+export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
   return (
     <nav className="top-nav" style={{ background: '#0f172a' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -51,7 +51,10 @@ export default function AdminNavbar({ currentUser, onLogout }) {
               }}
               title="Logout"
             >
-              <LogOut size={16} /> Logout
+              <LogOut size={16} /> <span className="desktop-text">Logout</span>
+            </button>
+            <button className="mobile-menu-btn" onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: '4px', display: 'none' }}>
+              <Menu size={20} />
             </button>
           </div>
         )}

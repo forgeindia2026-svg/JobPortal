@@ -20,6 +20,7 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_user');
@@ -100,14 +101,15 @@ export default function App() {
       <AdminNavbar
         currentUser={currentUser}
         onLogout={handleLogout}
+        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
 
       <main style={{ flex: 1 }}>
         {currentUser.role === 'admin' && (
-          <AdminDashboard API_URL={API_URL} currentUser={currentUser} />
+          <AdminDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         )}
         {currentUser.role === 'hr' && (
-          <HrDashboard API_URL={API_URL} currentUser={currentUser} />
+          <HrDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         )}
       </main>
     </div>
