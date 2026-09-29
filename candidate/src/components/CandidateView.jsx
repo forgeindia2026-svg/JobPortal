@@ -7,6 +7,20 @@ import JobDetailModal from './JobDetailModal';
 import ApplicationModal from './ApplicationModal';
 import CandidateDashboard from './CandidateDashboard';
 
+const getCompanyColor = (name) => {
+  const lowerName = (name || '').toLowerCase();
+  if (lowerName.includes('idfc')) return '#991b1b';
+  if (lowerName.includes('bandhan')) return '#0369a1';
+  if (lowerName.includes('hdfc')) return '#1d4ed8';
+  if (lowerName.includes('aditya birla')) return '#b91c1c';
+  if (lowerName.includes('kotak')) return '#003366';
+  if (lowerName.includes('mahindra finance')) return '#e11d48';
+  if (lowerName.includes('axis')) return '#831843';
+  if (lowerName.includes('icici')) return '#ea580c';
+  if (lowerName.includes('yes bank')) return '#0284c7';
+  return '#475569';
+};
+
 const FALLBACK_CATEGORIES = [
   {
     id: 'cat_banking',
@@ -739,33 +753,37 @@ export default function CandidateView({ API_URL, currentUser }) {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justify: 'space-between',
+                      justifyContent: 'space-between',
                       padding: '1.1rem 1.25rem',
                       borderRadius: '14px',
-                      border: '1.5px solid #cbd5e1',
-                      background: '#ffffff',
+                      border: `1.5px solid rgba(255,255,255,0.18)`,
+                      background: `linear-gradient(135deg, ${getCompanyColor(comp.name)} 0%, ${getCompanyColor(comp.name)}dd 100%)`,
+                      color: '#ffffff',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                      transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      boxShadow: `0 8px 32px ${getCompanyColor(comp.name)}66, 0 2px 8px ${getCompanyColor(comp.name)}4d, inset 0 1px 0 rgba(255,255,255,0.18)`,
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#3b82f6';
-                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(-3px) scale(1.015)';
+                      e.currentTarget.style.boxShadow = `0 14px 25px ${getCompanyColor(comp.name)}80, 0 4px 10px ${getCompanyColor(comp.name)}66, inset 0 1px 0 rgba(255,255,255,0.22)`;
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#cbd5e1';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = `0 8px 32px ${getCompanyColor(comp.name)}66, 0 2px 8px ${getCompanyColor(comp.name)}4d, inset 0 1px 0 rgba(255,255,255,0.18)`;
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e40af' }}>
+                    <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', zIndex: 1 }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', backdropFilter: 'blur(4px)' }}>
                         <Building2 size={22} />
                       </div>
                       <div>
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                           {comp.name}
                         </h4>
-                        <span style={{ fontSize: '0.825rem', color: '#15803d', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                        <span style={{ fontSize: '0.825rem', color: 'rgba(255,255,255,0.9)', fontWeight: 700, display: 'block', marginTop: '2px' }}>
                           🔥 {bankJobsCount > 0 ? `${bankJobsCount} Open Positions` : '1 Open Positions'}
                         </span>
                       </div>
@@ -773,9 +791,10 @@ export default function CandidateView({ API_URL, currentUser }) {
 
                     <button
                       style={{
-                        background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
+                        background: 'rgba(255,255,255,0.2)',
+                        backdropFilter: 'blur(4px)',
                         color: '#ffffff',
-                        border: 'none',
+                        border: '1px solid rgba(255,255,255,0.4)',
                         borderRadius: '10px',
                         padding: '10px 18px',
                         fontSize: '0.9rem',
@@ -784,7 +803,8 @@ export default function CandidateView({ API_URL, currentUser }) {
                         alignItems: 'center',
                         gap: '6px',
                         cursor: 'pointer',
-                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        zIndex: 1
                       }}
                     >
                       Click Now <ChevronRight size={16} />
@@ -1380,7 +1400,26 @@ export default function CandidateView({ API_URL, currentUser }) {
                         key={comp.id}
                         className="company-visual-card-vibrant"
                         onClick={() => handleCompanyClick(comp)}
+                        style={{ 
+                          background: `linear-gradient(135deg, ${getCompanyColor(comp.name)} 0%, ${getCompanyColor(comp.name)}dd 100%)`,
+                          border: `1.5px solid rgba(255,255,255,0.18)`,
+                          borderRadius: '20px',
+                          boxShadow: `0 8px 32px ${getCompanyColor(comp.name)}66, 0 2px 8px ${getCompanyColor(comp.name)}4d, inset 0 1px 0 rgba(255,255,255,0.18)`,
+                          transform: 'translateY(0) scale(1)',
+                          transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          position: 'relative'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
+                          e.currentTarget.style.boxShadow = `0 20px 48px ${getCompanyColor(comp.name)}80, 0 8px 20px ${getCompanyColor(comp.name)}66, inset 0 1px 0 rgba(255,255,255,0.22)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                          e.currentTarget.style.boxShadow = `0 8px 32px ${getCompanyColor(comp.name)}66, 0 2px 8px ${getCompanyColor(comp.name)}4d, inset 0 1px 0 rgba(255,255,255,0.18)`;
+                        }}
                       >
+                        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', bottom: '-20px', left: '30px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
                         <div className="comp-card-top">
                           {getLogoUrl(comp.name, comp.logo) ? (
                             <img 
@@ -1397,18 +1436,18 @@ export default function CandidateView({ API_URL, currentUser }) {
                             </div>
                           )}
                           <div className="comp-info">
-                            <h4 className="comp-title">{comp.name}</h4>
-                            <span className="comp-count-tag">{compJobs.length} Open Positions</span>
+                            <h4 className="comp-title" style={{ color: '#ffffff' }}>{comp.name}</h4>
+                            <span className="comp-count-tag" style={{ color: 'rgba(255,255,255,0.9)' }}>{compJobs.length} Open Positions</span>
                           </div>
                         </div>
 
                         {comp.description && (
-                          <p className="comp-desc">{comp.description}</p>
+                          <p className="comp-desc" style={{ color: 'rgba(255,255,255,0.85)' }}>{comp.description}</p>
                         )}
 
-                        <div className="comp-card-bottom">
+                        <div className="comp-card-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', color: '#ffffff' }}>
                           <span>View {comp.name} Jobs</span>
-                          <ChevronRight size={18} />
+                          <ChevronRight size={18} color="#ffffff" />
                         </div>
                       </div>
                     );
@@ -1774,62 +1813,82 @@ export default function CandidateView({ API_URL, currentUser }) {
                 <div className="job-grid">
                   {filteredJobs.map(job => {
                     const applied = isAlreadyApplied(job.id);
+                    const compName = job.companyName || selectedCompany.name;
+                    const compColor = getCompanyColor(compName);
 
                     return (
-                      <div key={job.id} className="job-card-vibrant" style={{ cursor: 'pointer' }} onClick={() => handleViewJobDetails(job)}>
-                        <div>
+                      <div key={job.id} className="job-card-vibrant" style={{ 
+                        cursor: 'pointer',
+                        background: `linear-gradient(135deg, ${compColor} 0%, ${compColor}dd 100%)`,
+                        border: `1.5px solid rgba(255,255,255,0.18)`,
+                        color: '#ffffff',
+                        boxShadow: `0 8px 32px ${compColor}66, 0 2px 8px ${compColor}4d, inset 0 1px 0 rgba(255,255,255,0.18)`,
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }} onClick={() => handleViewJobDetails(job)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
+                        e.currentTarget.style.boxShadow = `0 14px 25px ${compColor}80, 0 4px 10px ${compColor}66, inset 0 1px 0 rgba(255,255,255,0.22)`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                        e.currentTarget.style.boxShadow = `0 8px 32px ${compColor}66, 0 2px 8px ${compColor}4d, inset 0 1px 0 rgba(255,255,255,0.18)`;
+                      }}
+                      >
+                        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                        <div style={{ position: 'relative', zIndex: 1 }}>
                           <div className="job-card-header" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              {getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo) ? (
-                                <img src={getLogoUrl(job.companyName || (selectedCompany && selectedCompany.name), job.companyLogo)} alt={job.companyName} className="job-comp-logo-vibrant" />
+                              {getLogoUrl(compName, job.companyLogo) ? (
+                                <img src={getLogoUrl(compName, job.companyLogo)} alt={compName} className="job-comp-logo-vibrant" style={{ border: '2px solid rgba(255,255,255,0.5)', background: '#fff' }} />
                               ) : (
-                                <div className="job-comp-logo-vibrant logo-placeholder">
-                                  <Building2 size={24} color="var(--primary)" />
+                                <div className="job-comp-logo-vibrant logo-placeholder" style={{ border: '2px solid rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.2)', color: '#fff', backdropFilter: 'blur(4px)' }}>
+                                  <Building2 size={24} />
                                 </div>
                               )}
                               <div>
-                                <h4 className="job-card-title">{job.title}</h4>
-                                <div className="job-comp-name">{job.companyName || selectedCompany.name}</div>
+                                <h4 className="job-card-title" style={{ color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>{job.title}</h4>
+                                <div className="job-comp-name" style={{ color: 'rgba(255,255,255,0.9)' }}>{compName}</div>
                               </div>
                             </div>
                             {(job.title || '').toLowerCase().includes('hdfc') && (
                               <img
                                 src="/logos/Hdfc.jpg"
                                 alt="HDFC Bank"
-                                style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}
+                                style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.5)', background: '#fff', flexShrink: 0 }}
                               />
                             )}
                           </div>
 
                           <div className="job-tags-container">
-                            <span className="tag-pill tag-exp">
+                            <span className="tag-pill tag-exp" style={{ background: 'rgba(255,255,255,0.15)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)' }}>
                               <Briefcase size={13} /> {job.experience}
                             </span>
-                            <span className="tag-pill tag-salary-vibrant">
+                            <span className="tag-pill tag-salary-vibrant" style={{ background: 'rgba(167, 243, 208, 0.2)', color: '#a7f3d0', border: '1px solid rgba(167, 243, 208, 0.3)' }}>
                               {job.salary}
                             </span>
                              {job.trainingPeriod && (
-                               <span className="tag-pill tag-training" title={job.trainingPeriod}>
+                               <span className="tag-pill tag-training" title={job.trainingPeriod} style={{ background: 'rgba(253, 230, 138, 0.2)', color: '#fde047', border: '1px solid rgba(253, 230, 138, 0.3)' }}>
                                  {formatTrainingSummaryTag(job.trainingPeriod)}
                                </span>
                              )}
                           </div>
 
                           {job.description && (
-                            <p className="job-snippet">{job.description}</p>
+                            <p className="job-snippet" style={{ color: 'rgba(255,255,255,0.85)' }}>{job.description}</p>
                           )}
                         </div>
 
-                        <div className="job-card-footer">
-                          <button className="btn-secondary" onClick={(e) => { e.stopPropagation(); handleViewJobDetails(job); }}>
+                        <div className="job-card-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>
+                          <button className="btn-secondary" style={{ background: 'rgba(255,255,255,0.15)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(4px)' }} onClick={(e) => { e.stopPropagation(); handleViewJobDetails(job); }}>
                             View Details
                           </button>
                           {applied ? (
-                            <span className="applied-pill" onClick={(e) => e.stopPropagation()}>
+                            <span className="applied-pill" style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)' }} onClick={(e) => e.stopPropagation()}>
                               ✓ Applied
                             </span>
                           ) : (
-                            <button className="btn-primary-gradient" onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}>
+                            <button className="btn-primary-gradient" style={{ background: '#ffffff', color: compColor, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}>
                               Apply Now
                             </button>
                           )}

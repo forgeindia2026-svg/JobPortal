@@ -13,6 +13,21 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successApp, setSuccessApp] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const isInternship = job?.title?.toLowerCase().includes('free') || job?.title?.toLowerCase().includes('internship') || job?.companyName?.toLowerCase().includes('free') || job?.companyName?.toLowerCase().includes('internship');
+  const feeAmount = isInternship ? 49 : 1499;
+
+  useEffect(() => {
+    // Load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,6 +41,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
       setCoverNotes('');
       setError('');
       setSuccessApp(null);
+      setShowPayment(false);
     }
   }, [isOpen, candidate]);
 
@@ -34,10 +50,71 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   const today = new Date();
   const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    if (!showPayment) {
+      setShowPayment(true);
+      return;
+    }
+  };
+
+  const handleRazorpayPayment = async () => {
     setSubmitting(true);
     setError('');
+
+    try {
+      // 1. Create order on server
+      const orderRes = await fetch(`${API_URL}/api/payment/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: feeAmount })
+      });
+      const orderData = await orderRes.json();
+      
+      if (!orderData.success) {
+        throw new Error(orderData.error || 'Failed to create payment order');
+      }
+
+      // 2. Initialize Razorpay Checkout
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.order.amount,
+        currency: "INR",
+        name: "FIC RecruitPro",
+        description: `Application Fee - ${job.title}`,
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          // 3. Payment Success - Submit Application
+          await submitApplicationToDb(response.razorpay_payment_id);
+        },
+        prefill: {
+          name: name,
+          email: email,
+          contact: mobile
+        },
+        theme: {
+          color: "#2563eb"
+        },
+        modal: {
+          ondismiss: function() {
+            setSubmitting(false);
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        setError(response.error.description || 'Payment Failed');
+        setSubmitting(false);
+      });
+      rzp.open();
+    } catch (err) {
+      setError(err.message);
+      setSubmitting(false);
+    }
+  };
+
+  const submitApplicationToDb = async (paymentId) => {
 
     try {
       const payload = {
@@ -45,7 +122,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         jobId: job.id,
         resumeUrl,
         coverNotes,
-        paymentId: 'FREE_TEST_' + Date.now(),
+        paymentId: paymentId || 'FREE_TEST_' + Date.now(),
         candidateDetails: {
           userId: candidate ? candidate.id : null,
           name,
@@ -120,6 +197,31 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
               <div style={{ marginTop: '2rem' }}>
                 <button className="btn-primary" onClick={onClose} style={{ padding: '10px 24px' }}>
                   Back to Job Listings
+                </button>
+              </div>
+            </div>
+          ) : showPayment ? (
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px' }}>Application Fee Payment</h4>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '2.5rem' }}>
+                Please pay the application fee of <strong style={{ color: '#0f172a', fontSize: '1.1rem' }}>₹{feeAmount}</strong> securely via Razorpay to complete your submission.
+              </p>
+              
+              {error && (
+                <div style={{
+                  background: '#fef2f2', color: '#dc2626', padding: '10px 14px',
+                  borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid #fecaca'
+                }}>
+                  {error}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '1rem', paddingBottom: '1rem' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowPayment(false)} disabled={submitting} style={{ padding: '12px 24px', fontSize: '1rem' }}>
+                  Back
+                </button>
+                <button type="button" className="btn-primary" onClick={handleRazorpayPayment} disabled={submitting} style={{ padding: '12px 24px', fontSize: '1rem' }}>
+                  {submitting ? 'Processing...' : `Pay ₹${feeAmount} via Razorpay`}
                 </button>
               </div>
             </div>
@@ -224,8 +326,8 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
                 <button type="button" className="btn-secondary" onClick={onClose}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  <Send size={16} /> {submitting ? 'Processing...' : 'Submit Application'}
+                <button type="submit" className="btn-primary">
+                  <Send size={16} /> Continue to Payment
                 </button>
               </div>
             </form>
