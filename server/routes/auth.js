@@ -103,7 +103,8 @@ router.post('/login', async (req, res) => {
         qualification: user.qualification || (candProfile ? candProfile.qualification : ''),
         experience: user.experience || (candProfile ? candProfile.experience : ''),
         skills: user.skills || (candProfile ? candProfile.skills : []),
-        resumeUrl: candProfile ? candProfile.resumeUrl : ''
+        resumeUrl: candProfile ? candProfile.resumeUrl : '',
+        referralCode: user.referralCode || ''
       }
     });
   } catch (err) {

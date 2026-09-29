@@ -41,6 +41,8 @@ if (!fs.existsSync(sampleResumePath)) {
   fs.writeFileSync(sampleResumePath, 'Sample Resume Content for Rahul Sharma - B.Com Graduate');
 }
 
+const userRoutes = require('./routes/users');
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -51,6 +53,7 @@ app.use('/api/interviews', interviewRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/it-training-processes', itTrainingRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

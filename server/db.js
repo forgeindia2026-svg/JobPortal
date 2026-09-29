@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
   experience: String,
   skills: [String],
   resumeUrl: String,
+  referralCode: { type: String, unique: true, sparse: true },
   createdAt: { type: String, default: () => new Date().toISOString() }
 });
 
@@ -109,6 +110,7 @@ const applicationSchema = new mongoose.Schema({
   resumeUrl: String,
   coverNotes: String,
   status: String,
+  referredBy: String,
   appliedAt: { type: String, default: () => new Date().toISOString() },
   adminNotes: String,
   updatedAt: String
