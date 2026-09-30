@@ -15,7 +15,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   const [successApp, setSuccessApp] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const isInternship = job?.title?.toLowerCase().includes('free') || job?.title?.toLowerCase().includes('internship') || job?.companyName?.toLowerCase().includes('free') || job?.companyName?.toLowerCase().includes('internship');
-  const feeAmount = isInternship ? 49 : 1499;
+  const feeAmount = job?.isFicFlow && !isInternship ? 1499 : 49;
 
   useEffect(() => {
     // Load Razorpay script

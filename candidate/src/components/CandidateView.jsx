@@ -671,7 +671,7 @@ export default function CandidateView({ API_URL, currentUser }) {
 
   const handleApplyClick = (job) => {
     setViewingJob(null);
-    setApplyingJob(job);
+    setApplyingJob({ ...job, isFicFlow: !!ficView || !!selectedCompany?.isFicFlow });
   };
 
   const isAlreadyApplied = (jobId) => {
@@ -998,7 +998,7 @@ export default function CandidateView({ API_URL, currentUser }) {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '0.5rem' }}>
                 <button
                   onClick={() => {
-                    handleCompanyClick(selectedFicBank);
+                    handleCompanyClick({ ...selectedFicBank, isFicFlow: true });
                     setFicView(null);
                   }}
                   style={{
@@ -1350,7 +1350,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                               key={i} 
                               onClick={() => {
                                 const foundComp = filteredCompanies.find(c => c.name.toLowerCase().includes(bank.name.toLowerCase().split(' ')[0]));
-                                if (foundComp) handleCompanyClick(foundComp);
+                                if (foundComp) handleCompanyClick({ ...foundComp, isFicFlow: true });
                               }}
                               style={{
                                 display: 'inline-flex',
