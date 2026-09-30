@@ -33,8 +33,8 @@ export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {currentUser && (
           <div className="user-pill">
-            <span style={{ fontWeight: 600 }}>{currentUser.name}</span>
-            <span style={{ fontSize: '0.75rem', color: '#f59e0b', textTransform: 'capitalize' }}>
+            <span className="desktop-text" style={{ fontWeight: 600 }}>{currentUser.name}</span>
+            <span className="desktop-text" style={{ fontSize: '0.75rem', color: '#f59e0b', textTransform: 'capitalize' }}>
               ({currentUser.role})
             </span>
             <button
