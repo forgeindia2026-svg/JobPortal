@@ -78,7 +78,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       setCategories(Array.isArray(catData) ? catData : []);
       setCompanies(Array.isArray(compData) ? compData : []);
       setJobs(Array.isArray(jobsData) ? jobsData : []);
-      setApplications(Array.isArray(appsData) ? appsData : []);
+      setApplications(Array.isArray(appsData) ? appsData.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)) : []);
       setInterviews(Array.isArray(intData) ? intData : []);
       setItProcesses(Array.isArray(itData) ? itData : []);
     } catch (err) {
