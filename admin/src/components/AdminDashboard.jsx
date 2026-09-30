@@ -281,7 +281,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
 
             <div className="kpi-grid">
-              <div className="kpi-card">
+              <div className="kpi-card" onClick={() => setActiveTab('jobs')}>
                 <div className="kpi-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
                   <Briefcase size={22} />
                 </div>
@@ -291,7 +291,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
               </div>
 
-              <div className="kpi-card">
+              <div className="kpi-card" onClick={() => setActiveTab('applications')}>
                 <div className="kpi-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
                   <Users size={22} />
                 </div>
@@ -301,7 +301,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
               </div>
 
-              <div className="kpi-card">
+              <div className="kpi-card" onClick={() => setActiveTab('applications')}>
                 <div className="kpi-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
                   <FileText size={22} />
                 </div>
@@ -311,7 +311,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
               </div>
 
-              <div className="kpi-card">
+              <div className="kpi-card" onClick={() => setActiveTab('interviews')}>
                 <div className="kpi-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
                   <Calendar size={22} />
                 </div>

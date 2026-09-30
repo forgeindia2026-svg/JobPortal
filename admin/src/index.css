@@ -199,6 +199,13 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 1rem;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
 }
 
 .kpi-icon {
