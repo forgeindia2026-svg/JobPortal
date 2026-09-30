@@ -520,9 +520,10 @@ h1, h2, h3, h4, h5, h6 {
 
   .admin-sidebar {
     display: none;
-    position: absolute;
+    position: fixed;
     top: 61px;
     right: 0;
+    bottom: 0;
     width: 250px;
     background: var(--bg-sidebar);
     z-index: 1000;

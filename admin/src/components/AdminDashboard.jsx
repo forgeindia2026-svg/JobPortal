@@ -11,7 +11,30 @@ import ScheduleInterviewModal from './ScheduleInterviewModal';
 import ItTrainingModal from './ItTrainingModal';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return hash || 'dashboard';
+  });
+
+  useEffect(() => {
+    if (window.location.hash.replace('#', '') !== activeTab) {
+      window.history.pushState(null, '', `#${activeTab}`);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash.replace('#', '');
+      setActiveTab(hash || 'dashboard');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+  };
 
   const [kpis, setKpis] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -205,49 +228,49 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         <button
           className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => handleTabChange('dashboard')}
         >
           <LayoutDashboard size={18} /> Dashboard
         </button>
 
         <button
           className={`nav-item ${activeTab === 'applications' ? 'active' : ''}`}
-          onClick={() => setActiveTab('applications')}
+          onClick={() => handleTabChange('applications')}
         >
           <FileText size={18} /> Applied ({applications.length})
         </button>
 
         <button
           className={`nav-item ${activeTab === 'employees' ? 'active' : ''}`}
-          onClick={() => setActiveTab('employees')}
+          onClick={() => handleTabChange('employees')}
         >
           <Users size={18} /> HR ({hrs.length})
         </button>
 
         <button
           className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`}
-          onClick={() => setActiveTab('jobs')}
+          onClick={() => handleTabChange('jobs')}
         >
           <Briefcase size={18} /> Job Openings ({jobs.length})
         </button>
 
         <button
           className={`nav-item ${activeTab === 'it_training' ? 'active' : ''}`}
-          onClick={() => setActiveTab('it_training')}
+          onClick={() => handleTabChange('it_training')}
         >
           <GraduationCap size={18} /> IT Programs ({itProcesses.length})
         </button>
 
         <button
           className={`nav-item ${activeTab === 'companies' ? 'active' : ''}`}
-          onClick={() => setActiveTab('companies')}
+          onClick={() => handleTabChange('companies')}
         >
           <Building2 size={18} /> Hiring Companies ({companies.length})
         </button>
 
         <button
           className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`}
-          onClick={() => setActiveTab('reports')}
+          onClick={() => handleTabChange('reports')}
         >
           <BarChart3 size={18} /> Analytics & Reports
         </button>
