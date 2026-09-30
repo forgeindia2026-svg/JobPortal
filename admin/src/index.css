@@ -131,6 +131,10 @@ h1, h2, h3, h4, h5, h6 {
   align-items: flex-start;
 }
 
+
+.sidebar-overlay {
+  display: none;
+}
 .admin-sidebar {
   width: 260px;
   background: var(--bg-sidebar);

@@ -219,6 +219,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   return (
     <div className="admin-layout animate-fade">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className={`admin-sidebar ${sidebarOpen ? 'mobile-open' : ''}`}>
         <div style={{ padding: '0 8px 1rem 8px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '0.5rem' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700 }}>
