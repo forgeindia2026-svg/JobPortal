@@ -207,21 +207,21 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
           onClick={() => setActiveTab('dashboard')}
         >
-          <LayoutDashboard size={18} /> Dashboard & KPIs
+          <LayoutDashboard size={18} /> Dashboard
         </button>
 
         <button
-          className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`}
-          onClick={() => setActiveTab('categories')}
+          className={`nav-item ${activeTab === 'applications' ? 'active' : ''}`}
+          onClick={() => setActiveTab('applications')}
         >
-          <FolderTree size={18} /> Job Categories ({categories.length})
+          <FileText size={18} /> Applied ({applications.length})
         </button>
 
         <button
-          className={`nav-item ${activeTab === 'companies' ? 'active' : ''}`}
-          onClick={() => setActiveTab('companies')}
+          className={`nav-item ${activeTab === 'employees' ? 'active' : ''}`}
+          onClick={() => setActiveTab('employees')}
         >
-          <Building2 size={18} /> Hiring Companies ({companies.length})
+          <Users size={18} /> HR ({hrs.length})
         </button>
 
         <button
@@ -232,31 +232,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </button>
 
         <button
-          className={`nav-item ${activeTab === 'applications' ? 'active' : ''}`}
-          onClick={() => setActiveTab('applications')}
-        >
-          <FileText size={18} /> Applications Pipeline ({applications.length})
-        </button>
-
-        <button
-          className={`nav-item ${activeTab === 'interviews' ? 'active' : ''}`}
-          onClick={() => setActiveTab('interviews')}
-        >
-          <Calendar size={18} /> Scheduled Interviews ({interviews.length})
-        </button>
-
-        <button
           className={`nav-item ${activeTab === 'it_training' ? 'active' : ''}`}
           onClick={() => setActiveTab('it_training')}
         >
-          <GraduationCap size={18} /> IT Training Programs ({itProcesses.length})
+          <GraduationCap size={18} /> IT Programs ({itProcesses.length})
         </button>
 
         <button
-          className={`nav-item ${activeTab === 'employees' ? 'active' : ''}`}
-          onClick={() => setActiveTab('employees')}
+          className={`nav-item ${activeTab === 'companies' ? 'active' : ''}`}
+          onClick={() => setActiveTab('companies')}
         >
-          <Users size={18} /> Employees / HRs ({hrs.length})
+          <Building2 size={18} /> Hiring Companies ({companies.length})
         </button>
 
         <button
