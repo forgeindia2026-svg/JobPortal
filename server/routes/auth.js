@@ -80,9 +80,31 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
+    // Fixed Admin Credentials
+    if (email.toLowerCase() === 'admin@forgeindiaconnect.in' && password === 'Admin@123') {
+      return res.json({
+        message: 'Login successful',
+        user: {
+          id: 'admin_fixed',
+          candidateId: null,
+          name: 'Super Admin',
+          email: 'admin@forgeindiaconnect.in',
+          role: 'admin',
+          mobile: '',
+          location: '',
+          qualification: '',
+          experience: '',
+          skills: [],
+          resumeUrl: '',
+          referralCode: 'ADMIN'
+        }
+      });
+    }
+
     const user = await UserModel.findOne({ email: email.toLowerCase() }).lean();
 
-    if (!user) {
+    // Check if user exists and password matches
+    if (!user || user.passwordHash !== 'dummy_hash_' + password) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
