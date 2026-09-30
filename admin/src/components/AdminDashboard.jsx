@@ -46,6 +46,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [hrForm, setHrForm] = useState({ name: '', email: '', password: '' });
   const [hrSaving, setHrSaving] = useState(false);
   const [hrError, setHrError] = useState('');
+  const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
 
   useEffect(() => {
     fetchAllData();
@@ -269,7 +270,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       <div className="admin-main">
         {activeTab === 'dashboard' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Recruitment Dashboard Overview</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Live candidate applications, job metrics, and interview tracking.</p>
@@ -390,7 +391,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'categories' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Category Management</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Add, edit, and organize candidate job category domains.</p>
@@ -444,7 +445,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'companies' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Company Management</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Add hiring partner companies and upload logos.</p>
@@ -517,7 +518,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'jobs' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Dynamic Job Openings</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Create, publish, and configure requirements for recruitment posts.</p>
@@ -581,7 +582,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'applications' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Applications Pipeline</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Review candidate profiles, change status, and schedule interview rounds.</p>
@@ -681,7 +682,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'interviews' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Scheduled Interviews</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Upcoming HR, Technical, and Branch interviews.</p>
@@ -735,7 +736,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'employees' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>HR / Employees Management</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Manage HR accounts and view their referral links.</p>
@@ -877,7 +878,29 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </button>
               </div>
             ) : (
-              <div className="table-container">
+              <div>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  {['Placement', 'Course', 'Internship'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveItCategoryTab(cat)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: '0.5rem 1rem',
+                        fontSize: '1rem',
+                        fontWeight: activeItCategoryTab === cat ? 'bold' : 'normal',
+                        color: activeItCategoryTab === cat ? 'var(--primary-color)' : '#64748b',
+                        borderBottom: activeItCategoryTab === cat ? '2px solid var(--primary-color)' : '2px solid transparent',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {cat} Programs
+                    </button>
+                  ))}
+                </div>
+                <div className="table-container">
                 <table className="custom-table">
                   <thead>
                     <tr>
@@ -892,7 +915,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     </tr>
                   </thead>
                   <tbody>
-                    {itProcesses.map(proc => (
+                    {itProcesses.filter(proc => (proc.itCategory || 'Placement') === activeItCategoryTab).map(proc => (
                       <tr key={proc.id}>
                         <td>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
@@ -976,6 +999,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     ))}
                   </tbody>
                 </table>
+              </div>
               </div>
             )}
           </div>

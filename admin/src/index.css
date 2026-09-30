@@ -492,6 +492,15 @@ h1, h2, h3, h4, h5, h6 {
   
   .admin-layout {
     flex-direction: column;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .admin-main {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   
   .desktop-text {
