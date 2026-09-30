@@ -173,7 +173,31 @@ export default function CandidateView({ API_URL, currentUser }) {
   const [userApplications, setUserApplications] = useState([]);
 
   // FIC Training dedicated view state ('bank_selection', 'fic_details', 'it_training', or null)
-  const [ficView, setFicView] = useState(null); // 'bank_selection', 'it_training'
+  const [ficView, setFicView] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return hash || null;
+  });
+
+  useEffect(() => {
+    const currentHash = window.location.hash.replace('#', '');
+    const newHash = ficView || '';
+    if (currentHash !== newHash) {
+      if (newHash) {
+        window.history.pushState(null, '', `#${newHash}`);
+      } else {
+        window.history.pushState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+  }, [ficView]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash.replace('#', '');
+      setFicView(hash || null);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [selectedFicBank, setSelectedFicBank] = useState(null);
   const [itProcesses, setItProcesses] = useState([]);
   const [selectedItProcessId, setSelectedItProcessId] = useState(null);
