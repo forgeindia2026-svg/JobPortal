@@ -22,6 +22,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [trainingSubtext, setTrainingSubtext] = useState('');
   const [stipendTitle, setStipendTitle] = useState('');
   const [stipendSubtext, setStipendSubtext] = useState('');
+  const [salarySubtext, setSalarySubtext] = useState('');
+  const [locationSubtext, setLocationSubtext] = useState('');
   const [trainingPhases, setTrainingPhases] = useState([
     { duration: '', mode: '', stipend: '' }
   ]);
@@ -67,6 +69,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setTrainingSubtext(jobToEdit.trainingSubtext || '');
       setStipendTitle(jobToEdit.stipendTitle || '');
       setStipendSubtext(jobToEdit.stipendSubtext || '');
+      setSalarySubtext(jobToEdit.salarySubtext || '');
+      setLocationSubtext(jobToEdit.locationSubtext || '');
       setInterviewCrackFee(jobToEdit.interviewCrackFee || '');
       setInterviewFeeStage(jobToEdit.interviewFeeStage || 'After Clearing Interview');
       setInterviewFeeDetails(jobToEdit.interviewFeeDetails || '');
@@ -118,6 +122,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setTrainingSubtext('');
       setStipendTitle('');
       setStipendSubtext('');
+      setSalarySubtext('');
+      setLocationSubtext('');
       setInterviewCrackFee('');
       setInterviewFeeStage('After Clearing Interview');
       setInterviewFeeDetails('');
@@ -196,6 +202,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         trainingSubtext,
         stipendTitle,
         stipendSubtext,
+        salarySubtext,
+        locationSubtext,
         interviewCrackFee,
         interviewFeeStage,
         interviewFeeDetails,
@@ -540,12 +548,82 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
               )}
             </div>
 
-            {/* CARD CUSTOMIZATION FOR CANDIDATE POSTER (Clock & Stipend Cards) */}
+            {/* CARD CUSTOMIZATION FOR CANDIDATE POSTER (All 6 Infographic Cards) */}
             <div style={{ background: '#f0fdf4', padding: '1.25rem', borderRadius: '12px', border: '1.5px solid #86efac', marginBottom: '1.25rem' }}>
               <label className="form-label" style={{ fontWeight: 800, color: '#166534', fontSize: '0.95rem', marginBottom: '0.75rem', display: 'block' }}>
-                📊 Candidate Infographic Card Customize (Clock & Stipend Cards)
+                📊 Candidate Infographic Card Customize (All 6 Cards)
               </label>
-              
+
+              {/* CTC Card */}
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '3px 10px', borderRadius: '6px', width: 'fit-content', border: '1px solid #86efac', marginBottom: '0.6rem' }}>
+                💼 CARD 1: CTC / Salary Card
+              </div>
+              <div className="form-row" style={{ marginBottom: '0.85rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    💼 CTC Main Value
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. 5,00,000 CTC or 3.5 LAKH"
+                    value={salary}
+                    onChange={e => setSalary(e.target.value)}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>This also updates the "Salary Range" field above</span>
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    💼 CTC Card Subtext Lines
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Fixed CTC per Annum|Incentives over and above"
+                    value={salarySubtext}
+                    onChange={e => setSalarySubtext(e.target.value)}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Use | for line breaks. Default: "Fixed CTC per Annum"</span>
+                </div>
+              </div>
+
+              {/* Location Card */}
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '3px 10px', borderRadius: '6px', width: 'fit-content', border: '1px solid #86efac', marginBottom: '0.6rem' }}>
+                📍 CARD 3: Location Card
+              </div>
+              <div className="form-row" style={{ marginBottom: '0.85rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    📍 Location Main Value
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Chennai / PAN INDIA"
+                    value={location}
+                    onChange={e => setLocation(e.target.value)}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>This also updates the "Interview Location" field above</span>
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
+                    📍 Location Card Subtext Lines
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Job Location|Based on Aadhar card or your nearby"
+                    value={locationSubtext}
+                    onChange={e => setLocationSubtext(e.target.value)}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Use | for line breaks. Default: "Based on Aadhar card..."</span>
+                </div>
+              </div>
+
+              {/* Training Card */}
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '3px 10px', borderRadius: '6px', width: 'fit-content', border: '1px solid #86efac', marginBottom: '0.6rem' }}>
+                ⏱️ CARD 4: Training Duration Card
+              </div>
               <div className="form-row" style={{ marginBottom: '0.85rem' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
@@ -554,12 +632,11 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. 12 Months or 3 Months"
+                    placeholder="e.g. 2 Week + 12 Month"
                     value={trainingTitle}
                     onChange={e => setTrainingTitle(e.target.value)}
                   />
                 </div>
-
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
                     ⏱️ Training Card Subtext Lines
@@ -567,13 +644,17 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Use | for line breaks e.g. 4 months Campus Training | 3 months Internship | 5 Months On the job Training"
+                    placeholder="Use | for line breaks e.g. Campus Training|Internship OJT"
                     value={trainingSubtext}
                     onChange={e => setTrainingSubtext(e.target.value)}
                   />
                 </div>
               </div>
 
+              {/* Stipend Card */}
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '3px 10px', borderRadius: '6px', width: 'fit-content', border: '1px solid #86efac', marginBottom: '0.6rem' }}>
+                💵 CARD 5: Stipend Card
+              </div>
               <div className="form-row" style={{ margin: 0 }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
@@ -582,12 +663,11 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. STIPEND or 6,000 or ₹6,000 / month"
+                    placeholder="e.g. NO STIPEND or ₹6,000 / month"
                     value={stipendTitle}
                     onChange={e => setStipendTitle(e.target.value)}
                   />
                 </div>
-
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label" style={{ fontSize: '0.825rem', color: '#166534', fontWeight: 700 }}>
                     💵 Stipend Card Subtext Lines
@@ -595,7 +675,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Use | for line breaks e.g. ₹6,000 during Training"
+                    placeholder="Use | for line breaks e.g. Stipend during training|Regular salary post-training"
                     value={stipendSubtext}
                     onChange={e => setStipendSubtext(e.target.value)}
                   />

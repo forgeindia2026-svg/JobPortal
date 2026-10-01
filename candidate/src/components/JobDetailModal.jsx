@@ -744,7 +744,13 @@ export default function JobDetailModal({
                   </p>
                 </div>
                 <div className="info-subtext">
-                  <>Fixed CTC per Annum<br />Incentives over and above</>
+                  {job.salarySubtext ? (
+                    job.salarySubtext.split('|').map((line, idx) => (
+                      <div key={idx} style={{ display: 'block', lineHeight: '1.5' }}>{line.trim()}</div>
+                    ))
+                  ) : (
+                    <><div>Fixed CTC per Annum</div><div>Incentives over and above</div></>
+                  )}
                 </div>
               </div>
             )}
@@ -779,7 +785,13 @@ export default function JobDetailModal({
                 </div>
               ) : !(job.companyName === 'IDFC First Bank' && job.title && job.title.toLowerCase().includes('debt manager')) && (
                 <div className="info-subtext">
-                  Job Location<br />Based on Aadhar card or your nearby
+                  {job.locationSubtext ? (
+                    job.locationSubtext.split('|').map((line, idx) => (
+                      <div key={idx} style={{ display: 'block', lineHeight: '1.5' }}>{line.trim()}</div>
+                    ))
+                  ) : (
+                    <><div>Job Location</div><div>Based on Aadhar card or your nearby</div></>
+                  )}
                 </div>
               )}
             </div>
@@ -798,14 +810,11 @@ export default function JobDetailModal({
               </div>
               <div className="info-subtext">
                 {job.trainingSubtext ? (
-                  job.trainingSubtext.split('|').map((line, idx, arr) => (
-                    <React.Fragment key={idx}>
-                      {line.trim()}
-                      {idx < arr.length - 1 && <br />}
-                    </React.Fragment>
+                  job.trainingSubtext.split('|').map((line, idx) => (
+                    <div key={idx} style={{ display: 'block', lineHeight: '1.6' }}>{line.trim()}</div>
                   ))
                 ) : (
-                  <>Campus Training & Internship OJT</>
+                  <div>Campus Training &amp; Internship OJT</div>
                 )}
               </div>
             </div>
@@ -825,14 +834,11 @@ export default function JobDetailModal({
                 </div>
                 <div className="info-subtext">
                   {job.stipendSubtext ? (
-                    job.stipendSubtext.split('|').map((line, idx, arr) => (
-                      <React.Fragment key={idx}>
-                        {line.trim()}
-                        {idx < arr.length - 1 && <br />}
-                      </React.Fragment>
+                    job.stipendSubtext.split('|').map((line, idx) => (
+                      <div key={idx} style={{ display: 'block', lineHeight: '1.6' }}>{line.trim()}</div>
                     ))
                   ) : (
-                    <>Stipend during training<br />Regular salary post-training</>
+                    <><div>Stipend during training</div><div>Regular salary post-training</div></>
                   )}
                 </div>
               </div>
