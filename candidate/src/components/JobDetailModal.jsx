@@ -662,7 +662,7 @@ export default function JobDetailModal({
             <img
               src={logoSrc}
               alt={job.companyName}
-              style={{ width: '56px', height: '44px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid #e2e8f0' }}
+              style={{ width: '56px', height: '44px', borderRadius: '10px', objectFit: 'contain', padding: '4px', background: '#fff', border: '1.5px solid #e2e8f0' }}
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
