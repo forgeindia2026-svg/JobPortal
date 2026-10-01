@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <!-- YES Bank brand colors: deep blue and sky blue -->
+  <rect width="200" height="60" fill="#003F87" rx="6"/>
+  <!-- YES text in white -->
+  <text x="18" y="42" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="32" fill="#FFFFFF" letter-spacing="1">YES</text>
+  <!-- BANK text -->
+  <text x="98" y="42" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="32" fill="#00AEEF" letter-spacing="1">BANK</text>
+  <!-- underline accent -->
+  <rect x="18" y="48" width="164" height="3" fill="#00AEEF" rx="1.5"/>
+</svg>

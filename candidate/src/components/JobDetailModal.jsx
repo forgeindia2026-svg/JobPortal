@@ -758,14 +758,12 @@ export default function JobDetailModal({
               </div>
             </div>
 
-            {/* ITEM 3: LOCATION (DYNAMIC FOR IT TRAINING, UNCHANGED FOR BANKING) */}
+            {/* ITEM 3: LOCATION (DYNAMIC FOR ALL JOB TYPES) */}
             <div className="infographic-poster-item">
               <div>
                 <MapPin size={32} color="#334155" strokeWidth={1.75} style={{ marginBottom: '8px' }} />
-                <p className="info-value" style={{ fontSize: (job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) && job.location && job.location.length > 15 ? '1.15rem' : '1.4rem', textTransform: 'uppercase' }}>
-                  {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc')))
-                    ? (job.location || 'PAN INDIA')
-                    : 'PAN INDIA'}
+                <p className="info-value" style={{ fontSize: job.location && job.location.length > 15 ? '1.15rem' : '1.4rem', textTransform: 'uppercase' }}>
+                  {job.location || 'PAN INDIA'}
                 </p>
               </div>
               {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) ? (
@@ -922,9 +920,7 @@ export default function JobDetailModal({
           <div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{itCategory === 'Course' ? 'Course Location' : itCategory === 'Internship' ? 'Internship Location' : 'Job Location'}</span>
             <p style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-              <MapPin size={14} color="#3b82f6" /> {(job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc')))
-                ? (job.location || 'PAN INDIA')
-                : 'PAN INDIA (Nearby Branch)'}
+              <MapPin size={14} color="#3b82f6" /> {job.location || 'PAN INDIA (Nearby Branch)'}
             </p>
           </div>
           {itCategory !== 'Course' && (

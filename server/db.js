@@ -294,6 +294,16 @@ const initialData = {
       createdAt: new Date().toISOString()
     },
     {
+      id: 'comp_yes_bank',
+      categoryId: 'cat_banking',
+      name: 'YES Bank',
+      logo: '/logos/yes_bank.svg',
+      description: 'Full-service commercial bank offering retail, MSME, and corporate banking with a strong digital focus across India.',
+      website: 'https://www.yesbank.in',
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    },
+    {
       id: 'comp_techm',
       categoryId: 'cat_it',
       name: 'Tech Mahindra',
