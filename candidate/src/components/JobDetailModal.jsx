@@ -122,6 +122,7 @@ export default function JobDetailModal({
     'Mahindra Finance': '/logos/mahindra_finance.svg',
     'Tech Mahindra': '/logos/tech_mahindra.svg',
     'HDFC Life': '/logos/Hdfc.jpg',
+    'YES Bank': '/logos/Yes_Bank_Logo.jpg',
     'FIC IT Training & Placement': '/logo.png',
     'FIC IT Training': '/logo.png',
     'FIC': '/logo.png'
