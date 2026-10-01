@@ -643,6 +643,7 @@ export default function CandidateView({ API_URL, currentUser }) {
   };
 
   const companyPriorityMap = {
+    'YES Bank': 0,
     'IDFC First Bank': 1,
     'Bandhan Bank': 2,
     'HDFC Life': 3,

@@ -303,7 +303,7 @@ const initialData = {
       id: 'comp_yes_bank',
       categoryId: 'cat_banking',
       name: 'YES Bank',
-      logo: '/logos/yes_bank.svg',
+      logo: '/logos/Yes_Bank_Logo.jpg',
       description: 'Full-service commercial bank offering retail, MSME, and corporate banking with a strong digital focus across India.',
       website: 'https://www.yesbank.in',
       status: 'Active',
