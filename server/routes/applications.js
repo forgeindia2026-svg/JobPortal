@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
 
     // Populate references
     const populated = apps.map(app => {
-      const candidate = db.candidates.find(c => c.id === app.candidateId) || {};
+      const candidate = db.candidates.find(c => c.id === app.candidateId) || app.candidateDetails || {};
       let job = db.jobs.find(j => j.id === app.jobId);
       if (!job) {
         const itProc = (db.itTrainingProcesses || []).find(p => p.id === app.jobId);
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
       const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
 
       let computedPaymentAmount = app.paymentAmount;
-      if (!computedPaymentAmount) {
+      if (computedPaymentAmount === undefined || computedPaymentAmount === null) {
         const title = (job && job.title) ? String(job.title).toLowerCase() : '';
         const companyName = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
         if (title.includes('casa')) {
@@ -53,20 +53,22 @@ router.get('/', async (req, res) => {
         }
       }
 
+      const cDet = app.candidateDetails || {};
+
       return {
         ...app,
-        candidateName: candidate.name || 'Anonymous',
-        candidateEmail: candidate.email || '',
-        candidateMobile: candidate.mobile || '',
-        candidateLocation: candidate.location || '',
-        candidateQualification: candidate.qualification || '',
-        candidateExperience: candidate.experience || '',
-        candidateResumeUrl: candidate.resumeUrl || '',
+        candidateName: candidate.name || cDet.name || 'Anonymous',
+        candidateEmail: candidate.email || cDet.email || '',
+        candidateMobile: candidate.mobile || cDet.mobile || '',
+        candidateLocation: candidate.location || cDet.location || '',
+        candidateQualification: candidate.qualification || cDet.qualification || '',
+        candidateExperience: candidate.experience || cDet.experience || '',
+        candidateResumeUrl: candidate.resumeUrl || cDet.resumeUrl || '',
         jobTitle: job ? (job.title || job.companyName || 'IT Training Enquiry') : 'Untitled Job',
         jobLocation: job ? (job.location || '') : '',
         companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company'),
         companyLogo: company.logo || '/logo.png',
-        paymentAmount: computedPaymentAmount
+        paymentAmount: Number(computedPaymentAmount)
       };
     });
 
@@ -76,10 +78,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/applications (Candidate applies for job)
+// POST /api/applications (Candidate applies for job or Admin manually adds application)
 router.post('/', async (req, res) => {
   try {
-    const { candidateId, jobId, resumeUrl, coverNotes, referredBy, paymentId, paymentAmount } = req.body;
+    const { candidateId, jobId, resumeUrl, coverNotes, referredBy, paymentId, paymentAmount, status, appliedAt, adminNotes, isAdminManual } = req.body;
 
     if (!jobId) {
       return res.status(400).json({ error: 'Job ID is required.' });
@@ -106,14 +108,19 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Job post not found.' });
     }
 
-    let cand = db.candidates.find(c => c.id === candidateId);
+    let cand = candidateId ? db.candidates.find(c => c.id === candidateId) : null;
+    const cDet = req.body.candidateDetails || {};
+
+    if (!cand && (cDet.mobile || cDet.email)) {
+      cand = db.candidates.find(c => (cDet.mobile && c.mobile === cDet.mobile) || (cDet.email && c.email === cDet.email));
+    }
+
     if (!cand && req.body.candidateDetails) {
-      const cDet = req.body.candidateDetails;
       const newCandData = {
         id: 'cand_' + Date.now(),
         userId: cDet.userId || 'usr_guest',
         name: cDet.name || 'Guest Candidate',
-        email: cDet.email || 'guest@example.com',
+        email: cDet.email || '',
         mobile: cDet.mobile || '',
         location: cDet.location || '',
         qualification: cDet.qualification || '',
@@ -123,19 +130,32 @@ router.post('/', async (req, res) => {
         createdAt: new Date().toISOString()
       };
       cand = await CandidateModel.create(newCandData);
+    } else if (cand && req.body.candidateDetails) {
+      // Update any empty or newly provided fields for the candidate
+      const updateData = {};
+      if (cDet.name && !cand.name) updateData.name = cDet.name;
+      if (cDet.location) updateData.location = cDet.location;
+      if (cDet.qualification) updateData.qualification = cDet.qualification;
+      if (cDet.experience) updateData.experience = cDet.experience;
+      if (resumeUrl || cDet.resumeUrl) updateData.resumeUrl = resumeUrl || cDet.resumeUrl;
+      if (Object.keys(updateData).length > 0) {
+        await CandidateModel.updateOne({ id: cand.id }, { $set: updateData });
+      }
     }
 
-    const effectiveCandId = cand ? cand.id : (candidateId || 'cand_1');
+    const effectiveCandId = cand ? cand.id : (candidateId || 'cand_' + Date.now());
 
-    // Check if candidate already applied to this job
-    const existingApp = await ApplicationModel.findOne({ candidateId: effectiveCandId, jobId });
-    if (existingApp) {
-      return res.status(400).json({ error: 'You have already applied for this position.', application: existingApp.toObject() });
+    // Check if candidate already applied to this job (only block if not manual admin override)
+    if (!isAdminManual) {
+      const existingApp = await ApplicationModel.findOne({ candidateId: effectiveCandId, jobId });
+      if (existingApp) {
+        return res.status(400).json({ error: 'You have already applied for this position.', application: existingApp.toObject() });
+      }
     }
 
     const appNumber = 'JOB-' + Math.floor(100000 + Math.random() * 900000);
     let finalPaymentAmount = paymentAmount;
-    if (!finalPaymentAmount) {
+    if (finalPaymentAmount === undefined || finalPaymentAmount === null) {
       const title = (job && job.title) ? String(job.title).toLowerCase() : '';
       const companyName = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
       if (title.includes('casa')) {
@@ -156,12 +176,13 @@ router.post('/', async (req, res) => {
       jobId,
       companyId: job.companyId,
       categoryId: job.categoryId,
-      status: 'Applied',
-      appliedAt: new Date().toISOString(),
-      adminNotes: coverNotes ? `Candidate Notes: ${coverNotes}` : '',
+      candidateDetails: cDet,
+      status: status || 'Applied',
+      appliedAt: appliedAt || new Date().toISOString(),
+      adminNotes: adminNotes || (coverNotes ? `Candidate Notes: ${coverNotes}` : (isAdminManual ? 'Manually added by Admin' : '')),
       referredBy: referredBy || null,
-      paymentId: paymentId || null,
-      paymentAmount: finalPaymentAmount,
+      paymentId: paymentId || (isAdminManual ? `MANUAL_ADMIN_${Date.now()}` : null),
+      paymentAmount: Number(finalPaymentAmount),
       updatedAt: new Date().toISOString()
     };
 
@@ -219,5 +240,21 @@ router.put('/:id/reference', async (req, res) => {
   }
 });
 
+// DELETE /api/applications/:id (Admin deletes application)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await ApplicationModel.findOneAndDelete({ id });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Application not found.' });
+    }
+    res.json({ message: 'Application deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting application:', err);
+    res.status(500).json({ error: 'Failed to delete application.' });
+  }
+});
+
 module.exports = router;
+
 

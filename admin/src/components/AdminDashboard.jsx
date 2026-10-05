@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift,
-  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap
+  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -9,6 +9,7 @@ import CategoryFormModal from './CategoryFormModal';
 import CompanyFormModal from './CompanyFormModal';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import ItTrainingModal from './ItTrainingModal';
+import ManualApplicationModal from './ManualApplicationModal';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
   const [activeTab, setActiveTab] = useState(() => {
@@ -97,6 +98,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [appSearchQuery, setAppSearchQuery] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
   const [appHrFilter, setAppHrFilter] = useState('all');
+
+  const [manualAppModalOpen, setManualAppModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAllData();
@@ -212,6 +215,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       }
     } catch (err) {
       console.error('Error updating status:', err);
+    }
+  };
+
+  const handleDeleteApplication = async (app) => {
+    const confirmMsg = `Are you sure you want to permanently delete the application of "${app.candidateName}" (${app.applicationNumber})? This action cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/applications/${app.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchAllData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete application');
+      }
+    } catch (err) {
+      console.error('Error deleting application:', err);
+      alert('Network error deleting application');
     }
   };
 
@@ -769,6 +789,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Applications Pipeline</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Review candidate profiles, change status, and schedule interview rounds.</p>
               </div>
+              {currentUser?.role === 'admin' && (
+                <button
+                  className="btn-primary"
+                  onClick={() => setManualAppModalOpen(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
+                    background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                    border: '1px solid #3b82f6',
+                    padding: '9px 18px',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <UserPlus size={16} /> Add Application (Manual)
+                </button>
+              )}
             </div>
 
             {/* Quick Date Filter Pills */}
@@ -1037,6 +1074,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                           >
                             <Calendar size={12} /> Schedule Interview
                           </button>
+                          {currentUser?.role === 'admin' && (
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 10px', fontSize: '0.775rem', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}
+                              onClick={() => handleDeleteApplication(app)}
+                              title="Delete this application permanently"
+                            >
+                              <Trash2 size={12} /> Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1745,6 +1792,22 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
           </div>
         </div>
+      )}
+
+      {/* Manual Application Modal - Admin Only */}
+      {manualAppModalOpen && (
+        <ManualApplicationModal
+          isOpen={manualAppModalOpen}
+          onClose={() => setManualAppModalOpen(false)}
+          jobs={jobs.filter(j => j.status === 'Active' || !j.status)}
+          itProcesses={itProcesses}
+          hrs={hrs}
+          API_URL={API_URL}
+          onSuccess={() => {
+            setManualAppModalOpen(false);
+            fetchAllData();
+          }}
+        />
       )}
 
     </div>
