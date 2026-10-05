@@ -40,8 +40,8 @@ router.get('/', async (req, res) => {
 
       let computedPaymentAmount = app.paymentAmount;
       if (!computedPaymentAmount) {
-        const title = (job ? job.title : '').toLowerCase();
-        const companyName = (job ? job.companyName : '').toLowerCase();
+        const title = (job && job.title) ? String(job.title).toLowerCase() : '';
+        const companyName = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
         if (title.includes('casa')) {
           computedPaymentAmount = 149;
         } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
@@ -136,8 +136,8 @@ router.post('/', async (req, res) => {
     const appNumber = 'JOB-' + Math.floor(100000 + Math.random() * 900000);
     let finalPaymentAmount = paymentAmount;
     if (!finalPaymentAmount) {
-      const title = (job ? job.title : '').toLowerCase();
-      const companyName = (job ? job.companyName : '').toLowerCase();
+      const title = (job && job.title) ? String(job.title).toLowerCase() : '';
+      const companyName = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
       if (title.includes('casa')) {
         finalPaymentAmount = 149;
       } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
