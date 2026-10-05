@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
   resumeUrl: String,
   referralCode: { type: String, unique: true, sparse: true },
   linkClicks: { type: Number, default: 0 },
+  incentives: { type: Number, default: 0 },
   createdAt: { type: String, default: () => new Date().toISOString() }
 });
 

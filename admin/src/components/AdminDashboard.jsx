@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText,
+  LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift,
   Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap
 } from 'lucide-react';
 
@@ -81,6 +81,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [hrForm, setHrForm] = useState({ name: '', email: '', password: '' });
   const [hrSaving, setHrSaving] = useState(false);
   const [hrError, setHrError] = useState('');
+
+  const [incentiveModalOpen, setIncentiveModalOpen] = useState(false);
+  const [selectedHrForIncentive, setSelectedHrForIncentive] = useState(null);
+  const [incentiveInput, setIncentiveInput] = useState(0);
+  const [incentiveSaving, setIncentiveSaving] = useState(false);
+  const [incentiveError, setIncentiveError] = useState('');
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
 
   useEffect(() => {
@@ -802,6 +808,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Referral Code</th>
                     <th>Link Clicks</th>
                     <th>Candidates Applied</th>
+                    <th>Incentives Earned</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -820,25 +827,43 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td style={{ fontWeight: 600, color: '#10b981' }}>
                         {applications.filter(app => app.referredBy === hr.referralCode).length}
                       </td>
+                      <td style={{ fontWeight: 700, color: '#059669' }}>
+                        ₹{(hr.incentives || 0).toLocaleString()}
+                      </td>
                       <td><span className="badge badge-active">Active</span></td>
                       <td>
-                        <button
-                          className="btn-secondary"
-                          style={{ padding: '4px 8px', color: '#ef4444' }}
-                          onClick={() => {
-                            if (!window.confirm(`Delete HR ${hr.name}?`)) return;
-                            fetch(`${API_URL}/api/users/hr/${hr.id}`, { method: 'DELETE' })
-                            .then(() => fetchAllData());
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: '0.775rem', color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            title="Edit HR Incentives"
+                            onClick={() => {
+                              setSelectedHrForIncentive(hr);
+                              setIncentiveInput(hr.incentives || 0);
+                              setIncentiveError('');
+                              setIncentiveModalOpen(true);
+                            }}
+                          >
+                            <Gift size={12} /> Edit Incentive
+                          </button>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '4px 8px', color: '#ef4444' }}
+                            onClick={() => {
+                              if (!window.confirm(`Delete HR ${hr.name}?`)) return;
+                              fetch(`${API_URL}/api/users/hr/${hr.id}`, { method: 'DELETE' })
+                              .then(() => fetchAllData());
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {hrs.length === 0 && (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No HRs found. Add one to get started.</td>
+                      <td colSpan="8" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No HRs found. Add one to get started.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1242,6 +1267,86 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   style={{ flex: 1, padding: '11px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}
                 >
                   {hrSaving ? 'Creating...' : '✅ Create HR Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Incentive Modal */}
+      {incentiveModalOpen && selectedHrForIncentive && (
+        <div className="modal-overlay" onClick={() => setIncentiveModalOpen(false)}>
+          <div className="modal-content animate-fade" style={{ maxWidth: '440px', borderRadius: '14px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', borderTopLeftRadius: '14px', borderTopRightRadius: '14px', padding: '1.25rem 1.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', color: 'white', fontWeight: 800 }}>🎁 Update HR Incentives</h3>
+                <p style={{ fontSize: '0.825rem', color: '#d1fae5', marginTop: '2px' }}>{selectedHrForIncentive.name} ({selectedHrForIncentive.referralCode})</p>
+              </div>
+              <button onClick={() => setIncentiveModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem' }}>
+              {incentiveError && (
+                <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid #fecaca' }}>
+                  {incentiveError}
+                </div>
+              )}
+
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label" style={{ fontWeight: 'bold', color: '#0f172a' }}>Total Incentives Earned (₹) *</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  style={{ fontSize: '1.1rem', fontWeight: 700, padding: '10px 14px' }}
+                  value={incentiveInput}
+                  onChange={e => setIncentiveInput(e.target.value)}
+                  placeholder="e.g. 5000"
+                  min="0"
+                  required
+                />
+                <small style={{ color: '#64748b', fontSize: '0.775rem', marginTop: '6px', display: 'block' }}>
+                  This amount will be displayed in {selectedHrForIncentive.name}'s HR Workspace under Total Incentives Earned.
+                </small>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setIncentiveModalOpen(false)}
+                  style={{ flex: 1, padding: '10px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={incentiveSaving}
+                  onClick={async () => {
+                    setIncentiveSaving(true);
+                    setIncentiveError('');
+                    try {
+                      const res = await fetch(`${API_URL}/api/users/hr/${selectedHrForIncentive.id}/incentives`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ incentives: Number(incentiveInput) })
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error || 'Failed to update incentives');
+                      setIncentiveModalOpen(false);
+                      fetchAllData();
+                    } catch (err) {
+                      setIncentiveError(err.message);
+                    } finally {
+                      setIncentiveSaving(false);
+                    }
+                  }}
+                  style={{ flex: 1, padding: '10px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: 'white', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {incentiveSaving ? 'Saving...' : '✅ Save Incentive'}
                 </button>
               </div>
             </div>

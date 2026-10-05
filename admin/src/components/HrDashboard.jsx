@@ -567,7 +567,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <div className="kpi-grid">
               <div className="kpi-card" style={{ borderLeft: '4px solid #10b981', background: '#ffffff', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.25rem' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}><Gift size={24} /></div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#0f172a' }}>₹0</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#0f172a' }}>₹{(stats?.totalIncentives || 0).toLocaleString()}</div>
                 <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>Total Incentives Earned</div>
               </div>
               <div className="kpi-card" style={{ borderLeft: '4px solid #f59e0b', background: '#ffffff', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.25rem' }}>

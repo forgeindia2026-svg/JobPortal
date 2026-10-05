@@ -72,6 +72,29 @@ router.post('/hr/:referralCode/visit', async (req, res) => {
   }
 });
 
+// PUT update HR incentives (Admin update)
+router.put('/hr/:id/incentives', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { incentives } = req.body;
+    const amount = Number(incentives) || 0;
+
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { id, role: 'hr' },
+      { $set: { incentives: amount } },
+      { returnDocument: 'after' }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'HR user not found' });
+    }
+
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update HR incentives.' });
+  }
+});
+
 // GET HR Dashboard Stats
 router.get('/hr/:referralCode/dashboard', async (req, res) => {
   try {
@@ -111,6 +134,7 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
     const stats = {
       totalApplications: applications.length,
       linkClicks: hrUser ? (hrUser.linkClicks || 0) : 0,
+      totalIncentives: hrUser ? (hrUser.incentives || 0) : 0,
       applications: populated
     };
 
