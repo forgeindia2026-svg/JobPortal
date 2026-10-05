@@ -123,6 +123,7 @@ export default function JobDetailModal({
     'Tech Mahindra': '/logos/tech_mahindra.svg',
     'HDFC Life': '/logos/Hdfc.jpg',
     'YES Bank': '/logos/Yes_Bank_Logo.jpg',
+    'TATA AIG': '/logos/tata_aig.png',
     'FIC IT Training & Placement': '/logo.png',
     'FIC IT Training': '/logo.png',
     'FIC': '/logo.png'

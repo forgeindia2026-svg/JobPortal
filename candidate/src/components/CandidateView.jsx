@@ -18,6 +18,7 @@ const getCompanyColor = (name) => {
   if (lowerName.includes('axis')) return '#831843';
   if (lowerName.includes('icici')) return '#ea580c';
   if (lowerName.includes('yes bank')) return '#0284c7';
+  if (lowerName.includes('tata aig')) return '#1e3a8a';
   return '#475569';
 };
 
@@ -531,6 +532,7 @@ export default function CandidateView({ API_URL, currentUser }) {
       'Mahindra Finance': '/logos/mahindra_finance.svg',
       'Tech Mahindra': '/logos/tech_mahindra.svg',
       'HDFC Life': '/logos/Hdfc.jpg',
+      'TATA AIG': '/logos/tata_aig.png',
       'FIC IT Training & Placement': '/logo.png',
       'FIC IT Training': '/logo.png',
       'FIC': '/logo.png'
@@ -650,7 +652,8 @@ export default function CandidateView({ API_URL, currentUser }) {
     'Aditya Birla Capital': 4,
     'Kotak Mahindra Bank': 5,
     'Mahindra Finance': 6,
-    'Axis Bank': 7
+    'Axis Bank': 7,
+    'TATA AIG': 8
   };
 
   const rawCompanies = selectedCategory
