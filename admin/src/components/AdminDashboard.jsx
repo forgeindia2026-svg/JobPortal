@@ -352,6 +352,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Job Title</th>
                     <th>Company</th>
                     <th>Date</th>
+                    <th>Payment</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -383,6 +384,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td>{app.jobTitle}</td>
                       <td>{app.companyName}</td>
                       <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                      <td style={{ fontWeight: 600, color: app.paymentAmount > 100 ? '#10b981' : '#f59e0b' }}>
+                        ₹{app.paymentAmount || 0}
+                      </td>
                       <td>{getStatusBadge(app.status)}</td>
                       <td>
                         <button
@@ -615,6 +619,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Company</th>
                     <th>Applied On</th>
                     <th>HR Reference</th>
+                    <th>Payment</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -661,6 +666,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                             </div>
                           );
                         })() : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: app.paymentAmount > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
+                          ₹{app.paymentAmount || 0}
+                        </div>
+                        {app.paymentId && (
+                          <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', wordBreak: 'break-all', maxWidth: '100px' }}>
+                            {app.paymentId.replace('FREE_TEST_', 'Free-')}
+                          </div>
+                        )}
                       </td>
                       <td>{getStatusBadge(app.status)}</td>
                       <td>

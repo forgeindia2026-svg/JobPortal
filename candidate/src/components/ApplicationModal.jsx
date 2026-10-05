@@ -15,7 +15,8 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   const [successApp, setSuccessApp] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const isInternship = job?.title?.toLowerCase().includes('free') || job?.title?.toLowerCase().includes('internship') || job?.companyName?.toLowerCase().includes('free') || job?.companyName?.toLowerCase().includes('internship');
-  const feeAmount = job?.isFicFlow && !isInternship ? 1499 : 49;
+  const isCasaProcess = job?.title?.toLowerCase().includes('casa') || job?.programName?.toLowerCase().includes('casa') || job?.role?.toLowerCase().includes('casa') || job?.description?.toLowerCase().includes('casa process');
+  const feeAmount = isCasaProcess ? 149 : (job?.isFicFlow && !isInternship ? 1499 : 49);
 
   useEffect(() => {
     // Load Razorpay script
@@ -123,6 +124,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         resumeUrl,
         coverNotes,
         paymentId: paymentId || 'FREE_TEST_' + Date.now(),
+        paymentAmount: feeAmount,
         candidateDetails: {
           userId: candidate ? candidate.id : null,
           name,

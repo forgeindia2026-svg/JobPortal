@@ -118,6 +118,8 @@ const applicationSchema = new mongoose.Schema({
   coverNotes: String,
   status: String,
   referredBy: String,
+  paymentId: String,
+  paymentAmount: Number,
   appliedAt: { type: String, default: () => new Date().toISOString() },
   adminNotes: String,
   updatedAt: String

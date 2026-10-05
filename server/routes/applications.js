@@ -63,7 +63,7 @@ router.get('/', async (req, res) => {
 // POST /api/applications (Candidate applies for job)
 router.post('/', async (req, res) => {
   try {
-    const { candidateId, jobId, resumeUrl, coverNotes, referredBy } = req.body;
+    const { candidateId, jobId, resumeUrl, coverNotes, referredBy, paymentId, paymentAmount } = req.body;
 
     if (!jobId) {
       return res.status(400).json({ error: 'Job ID is required.' });
@@ -129,6 +129,8 @@ router.post('/', async (req, res) => {
       appliedAt: new Date().toISOString(),
       adminNotes: coverNotes ? `Candidate Notes: ${coverNotes}` : '',
       referredBy: referredBy || null,
+      paymentId: paymentId || null,
+      paymentAmount: paymentAmount || 0,
       updatedAt: new Date().toISOString()
     };
 
