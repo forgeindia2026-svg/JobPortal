@@ -134,7 +134,11 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
           qualification,
           experience
         },
-        referredBy: localStorage.getItem('hr_referral') || null
+        referredBy: (
+          localStorage.getItem('hr_referral') ||
+          sessionStorage.getItem('hr_referral') ||
+          (window.location.href.match(/[?&]ref=([A-Za-z0-9-]+)/i) ? window.location.href.match(/[?&]ref=([A-Za-z0-9-]+)/i)[1].toUpperCase() : null)
+        )
       };
 
       const res = await fetch(`${API_URL}/api/applications`, {

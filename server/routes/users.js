@@ -63,7 +63,7 @@ router.post('/hr/:referralCode/visit', async (req, res) => {
   try {
     const { referralCode } = req.params;
     await UserModel.updateOne(
-      { referralCode, role: 'hr' },
+      { referralCode: new RegExp('^' + referralCode + '$', 'i'), role: 'hr' },
       { $inc: { linkClicks: 1 } }
     );
     res.json({ success: true });
@@ -78,10 +78,10 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
     const { referralCode } = req.params;
 
     // Get HR user for click count
-    const hrUser = await UserModel.findOne({ referralCode, role: 'hr' }).lean();
+    const hrUser = await UserModel.findOne({ referralCode: new RegExp('^' + referralCode + '$', 'i'), role: 'hr' }).lean();
 
     // Find applications referred by this HR
-    const applications = await ApplicationModel.find({ referredBy: referralCode }).lean();
+    const applications = await ApplicationModel.find({ referredBy: new RegExp('^' + referralCode + '$', 'i') }).lean();
     const db = await readDBAsync();
 
     const populated = applications.map(app => {

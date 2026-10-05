@@ -7,11 +7,14 @@ const API_URL = (envApiUrl && !envApiUrl.includes('3.109.202.254')) ? envApiUrl 
 
 export default function App() {
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref');
+    // Extract referral code from URL search, hash, or full href
+    const href = window.location.href;
+    const match = href.match(/[?&]ref=([A-Za-z0-9-]+)/i);
+    const ref = match ? match[1].toUpperCase() : null;
     if (ref) {
       localStorage.setItem('hr_referral', ref);
-      // Track this click on the backend (renamed to visit to bypass adblockers)
+      sessionStorage.setItem('hr_referral', ref);
+      // Track this click on the backend
       fetch(`${API_URL}/api/users/hr/${ref}/visit`, { method: 'POST' })
         .catch(() => {}); // Silently fail if error
     }
