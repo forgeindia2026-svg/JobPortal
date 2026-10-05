@@ -11,7 +11,18 @@ router.get('/dashboard', async (req, res) => {
     const activeJobs = db.jobs.filter(j => j.status === 'Active').length;
     const totalCandidates = db.candidates.length;
     const totalApplications = db.applications.length;
-    const scheduledInterviews = db.interviews.filter(i => i.status === 'Scheduled').length;
+
+    // Deduplicate scheduled interviews count
+    const uniqueIntMap = new Map();
+    (db.interviews || []).forEach(item => {
+      if (!item.status || item.status === 'Scheduled') {
+        const key = `${item.applicationId || item.candidateId}_${item.round || 'HR Screening'}`;
+        if (!uniqueIntMap.has(key)) {
+          uniqueIntMap.set(key, item);
+        }
+      }
+    });
+    const scheduledInterviews = uniqueIntMap.size;
     const selectedCandidates = db.applications.filter(a => a.status === 'Selected').length;
 
     // Group applications by category

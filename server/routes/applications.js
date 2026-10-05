@@ -174,15 +174,16 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/applications/:id/status (Admin updates candidate application status)
+// PUT /api/applications/:id/status (Admin updates candidate application status or HR reference)
 router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, adminNotes } = req.body;
+    const { status, adminNotes, referredBy } = req.body;
 
     const updateObj = { updatedAt: new Date().toISOString() };
     if (status) updateObj.status = status;
     if (adminNotes !== undefined) updateObj.adminNotes = adminNotes;
+    if (referredBy !== undefined) updateObj.referredBy = referredBy || null;
 
     const updated = await ApplicationModel.findOneAndUpdate({ id }, { $set: updateObj }, { new: true }).lean();
 
@@ -193,6 +194,28 @@ router.put('/:id/status', async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update application status in MongoDB Atlas.' });
+  }
+});
+
+// PUT /api/applications/:id/reference (Admin updates HR reference for an application)
+router.put('/:id/reference', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { referredBy } = req.body;
+
+    const updated = await ApplicationModel.findOneAndUpdate(
+      { id },
+      { $set: { referredBy: referredBy || null, updatedAt: new Date().toISOString() } },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Application not found.' });
+    }
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update HR reference in MongoDB Atlas.' });
   }
 });
 

@@ -89,6 +89,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [incentiveError, setIncentiveError] = useState('');
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
 
+  const [hrRefModalApp, setHrRefModalApp] = useState(null);
+  const [selectedHrRef, setSelectedHrRef] = useState('');
+  const [savingHrRef, setSavingHrRef] = useState(false);
+
+  const [appDateFilter, setAppDateFilter] = useState('all');
+  const [appSearchQuery, setAppSearchQuery] = useState('');
+  const [appStatusFilter, setAppStatusFilter] = useState('all');
+  const [appHrFilter, setAppHrFilter] = useState('all');
+
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -120,7 +129,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       setCompanies(Array.isArray(compData) ? compData : []);
       setJobs(Array.isArray(jobsData) ? jobsData : []);
       setApplications(Array.isArray(appsData) ? appsData.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)) : []);
-      setInterviews(Array.isArray(intData) ? intData : []);
+
+      const rawInterviews = Array.isArray(intData) ? intData : [];
+      const uniqueInterviewsMap = new Map();
+      for (const item of rawInterviews) {
+        const key = `${item.applicationId || item.candidateId || item.candidateName}_${item.round || 'round'}`;
+        if (!uniqueInterviewsMap.has(key)) {
+          uniqueInterviewsMap.set(key, item);
+        }
+      }
+      setInterviews(Array.from(uniqueInterviewsMap.values()));
       setItProcesses(Array.isArray(itData) ? itData : []);
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -186,7 +204,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       const res = await fetch(`${API_URL}/api/applications/${statusModalApp.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newAppStatus, adminNotes: adminNoteInput })
+        body: JSON.stringify({ status: newAppStatus, adminNotes: adminNoteInput, referredBy: selectedHrRef })
       });
       if (res.ok) {
         setStatusModalApp(null);
@@ -196,6 +214,132 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       console.error('Error updating status:', err);
     }
   };
+
+  const handleUpdateHrReference = async () => {
+    if (!hrRefModalApp) return;
+    setSavingHrRef(true);
+    try {
+      const res = await fetch(`${API_URL}/api/applications/${hrRefModalApp.id}/reference`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referredBy: selectedHrRef || null })
+      });
+      if (res.ok) {
+        setHrRefModalApp(null);
+        fetchAllData();
+      } else {
+        alert('Failed to update HR reference');
+      }
+    } catch (err) {
+      console.error('Error updating HR reference:', err);
+      alert('Error updating HR reference');
+    } finally {
+      setSavingHrRef(false);
+    }
+  };
+
+  const handleDeleteInterview = async (intObj) => {
+    if (!intObj) return;
+    const id = intObj.id || intObj._id;
+    const mongoId = intObj._id || intObj.id;
+    const candidateName = intObj.candidateName;
+
+    if (!window.confirm(`Are you sure you want to delete the interview schedule for ${candidateName || 'this candidate'}?`)) return;
+
+    // Optimistically remove from state in UI immediately
+    setInterviews(prev => prev.filter(i => (
+      i.id !== id && i._id !== id && i._id !== mongoId &&
+      !(i.applicationId && i.applicationId === intObj.applicationId && i.round === intObj.round)
+    )));
+
+    try {
+      if (id) {
+        await fetch(`${API_URL}/api/interviews/${id}`, { method: 'DELETE' });
+      }
+      if (mongoId && mongoId !== id) {
+        await fetch(`${API_URL}/api/interviews/${mongoId}`, { method: 'DELETE' });
+      }
+    } catch (err) {
+      console.error('Error deleting interview:', err);
+    }
+  };
+
+  const isToday = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth() &&
+           d.getDate() === now.getDate();
+  };
+
+  const isYesterday = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return d.getFullYear() === yesterday.getFullYear() &&
+           d.getMonth() === yesterday.getMonth() &&
+           d.getDate() === yesterday.getDate();
+  };
+
+  const isLast7Days = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return d >= sevenDaysAgo;
+  };
+
+  const isThisMonth = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth();
+  };
+
+  const todayAppCount = applications.filter(a => isToday(a.appliedAt)).length;
+  const yesterdayAppCount = applications.filter(a => isYesterday(a.appliedAt)).length;
+  const last7DaysAppCount = applications.filter(a => isLast7Days(a.appliedAt)).length;
+  const thisMonthAppCount = applications.filter(a => isThisMonth(a.appliedAt)).length;
+
+  const filteredApplications = applications.filter(app => {
+    if (appDateFilter === 'today' && !isToday(app.appliedAt)) return false;
+    if (appDateFilter === 'yesterday' && !isYesterday(app.appliedAt)) return false;
+    if (appDateFilter === 'last7' && !isLast7Days(app.appliedAt)) return false;
+    if (appDateFilter === 'thisMonth' && !isThisMonth(app.appliedAt)) return false;
+
+    if (appStatusFilter !== 'all') {
+      if ((app.status || '').toLowerCase() !== appStatusFilter.toLowerCase()) return false;
+    }
+
+    if (appHrFilter !== 'all') {
+      if (appHrFilter === 'direct') {
+        if (app.referredBy) return false;
+      } else {
+        if (app.referredBy !== appHrFilter) return false;
+      }
+    }
+
+    if (appSearchQuery.trim()) {
+      const q = appSearchQuery.toLowerCase();
+      const matchName = (app.candidateName || '').toLowerCase().includes(q);
+      const matchEmail = (app.candidateEmail || '').toLowerCase().includes(q);
+      const matchMobile = (app.candidateMobile || '').toLowerCase().includes(q);
+      const matchAppNo = (app.applicationNumber || '').toLowerCase().includes(q);
+      const matchJob = (app.jobTitle || '').toLowerCase().includes(q);
+      const matchCompany = (app.companyName || '').toLowerCase().includes(q);
+      const matchRef = (app.referredBy || '').toLowerCase().includes(q);
+
+      if (!matchName && !matchEmail && !matchMobile && !matchAppNo && !matchJob && !matchCompany && !matchRef) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   const handleDeleteJob = async (id) => {
     if (!window.confirm('Are you sure you want to delete this job opening?')) return;
@@ -350,7 +494,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <Calendar size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{kpis ? kpis.kpis.scheduledInterviews : interviews.length}</div>
+                  <div className="kpi-val">{interviews.length}</div>
                   <div className="kpi-label">Interviews Scheduled</div>
                 </div>
               </div>
@@ -620,10 +764,149 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'applications' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Applications Pipeline</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Review candidate profiles, change status, and schedule interview rounds.</p>
+              </div>
+            </div>
+
+            {/* Quick Date Filter Pills */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                onClick={() => setAppDateFilter('all')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'all' ? '#2563eb' : '#f1f5f9',
+                  color: appDateFilter === 'all' ? 'white' : '#475569',
+                  transition: 'all 0.2s'
+                }}
+              >
+                All Applications ({applications.length})
+              </button>
+
+              <button
+                onClick={() => setAppDateFilter('today')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'today' ? '#059669' : '#ecfdf5',
+                  color: appDateFilter === 'today' ? 'white' : '#047857',
+                  transition: 'all 0.2s',
+                  boxShadow: appDateFilter === 'today' ? '0 4px 6px -1px rgba(5,150,105,0.3)' : 'none'
+                }}
+              >
+                📅 Today ({todayAppCount})
+              </button>
+
+              <button
+                onClick={() => setAppDateFilter('yesterday')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'yesterday' ? '#d97706' : '#fffbeb',
+                  color: appDateFilter === 'yesterday' ? 'white' : '#b45309',
+                  transition: 'all 0.2s',
+                  boxShadow: appDateFilter === 'yesterday' ? '0 4px 6px -1px rgba(217,119,6,0.3)' : 'none'
+                }}
+              >
+                📅 Yesterday ({yesterdayAppCount})
+              </button>
+
+              <button
+                onClick={() => setAppDateFilter('last7')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'last7' ? '#7c3aed' : '#f5f3ff',
+                  color: appDateFilter === 'last7' ? 'white' : '#6d28d9',
+                  transition: 'all 0.2s'
+                }}
+              >
+                🗓️ Last 7 Days ({last7DaysAppCount})
+              </button>
+
+              <button
+                onClick={() => setAppDateFilter('thisMonth')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'thisMonth' ? '#0891b2' : '#ecfeff',
+                  color: appDateFilter === 'thisMonth' ? 'white' : '#0e7490',
+                  transition: 'all 0.2s'
+                }}
+              >
+                📆 This Month ({thisMonthAppCount})
+              </button>
+            </div>
+
+            {/* Search and Dropdown Filters Bar */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '1.25rem', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Search Candidate / App</label>
+                <input
+                  type="text"
+                  placeholder="Search by Name, Phone, App ID..."
+                  value={appSearchQuery}
+                  onChange={e => setAppSearchQuery(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', outline: 'none', background: 'white' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Filter By Status</label>
+                <select
+                  value={appStatusFilter}
+                  onChange={e => setAppStatusFilter(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', outline: 'none', background: 'white' }}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="Applied">Applied</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Shortlisted">Shortlisted</option>
+                  <option value="HR Screening">HR Screening</option>
+                  <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Selected">Selected</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Filter By HR Reference</label>
+                <select
+                  value={appHrFilter}
+                  onChange={e => setAppHrFilter(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', outline: 'none', background: 'white' }}
+                >
+                  <option value="all">All HR References</option>
+                  <option value="direct">Direct (No HR)</option>
+                  {hrs.map(h => (
+                    <option key={h.id} value={h.referralCode}>
+                      👤 {h.name} ({h.referralCode})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -643,7 +926,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.map(app => (
+                  {filteredApplications.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                        No applications matching the selected filter criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredApplications.map(app => (
                     <tr key={app.id}>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber}</td>
                       <td>
@@ -675,15 +965,42 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td>{app.companyName}</td>
                       <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
                       <td>
-                        {app.referredBy ? (() => {
-                          const hr = hrs.find(h => h.referralCode === app.referredBy);
-                          return (
-                            <div>
-                              <div style={{ fontWeight: 600, color: '#3b82f6', fontSize: '0.85rem' }}>{hr ? hr.name : 'Unknown HR'}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
-                            </div>
-                          );
-                        })() : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minWidth: '135px' }}>
+                          <div>
+                            {app.referredBy ? (() => {
+                              const hr = hrs.find(h => h.referralCode === app.referredBy);
+                              return (
+                                <div>
+                                  <div style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.85rem' }}>{hr ? hr.name : 'Unknown HR'}</div>
+                                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
+                                </div>
+                              );
+                            })() : <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic' }}>Direct</span>}
+                          </div>
+                          <button
+                            onClick={() => {
+                              setHrRefModalApp(app);
+                              setSelectedHrRef(app.referredBy || '');
+                            }}
+                            title="Edit or Assign HR Reference"
+                            style={{
+                              background: app.referredBy ? '#eff6ff' : '#f0fdf4',
+                              color: app.referredBy ? '#2563eb' : '#16a34a',
+                              border: `1px solid ${app.referredBy ? '#bfdbfe' : '#bbf7d0'}`,
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '0.725rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              fontWeight: 700,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <Edit size={11} /> {app.referredBy ? 'Edit' : '+ Add'}
+                          </button>
+                        </div>
                       </td>
                       <td>
                         <div style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
@@ -705,6 +1022,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                               setStatusModalApp(app);
                               setNewAppStatus(app.status);
                               setAdminNoteInput(app.adminNotes || '');
+                              setSelectedHrRef(app.referredBy || '');
                             }}
                           >
                             Update Status
@@ -722,7 +1040,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             </div>
@@ -749,6 +1068,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Date & Time</th>
                     <th>Mode & Link / Address</th>
                     <th>Interviewer</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -775,6 +1095,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         )}
                       </td>
                       <td>{int.interviewer || 'HR Team'}</td>
+                      <td>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '4px 8px', color: '#ef4444' }}
+                          title="Delete Interview Schedule"
+                          onClick={() => handleDeleteInterview(int)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1156,9 +1486,72 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 ></textarea>
               </div>
 
+              <div className="form-group">
+                <label className="form-label">HR Reference (Optional)</label>
+                <select className="form-select" value={selectedHrRef} onChange={e => setSelectedHrRef(e.target.value)}>
+                  <option value="">-- Direct (No HR Reference) --</option>
+                  {hrs.map(h => (
+                    <option key={h.id} value={h.referralCode}>
+                      👤 {h.name} ({h.referralCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1rem' }}>
                 <button className="btn-secondary" onClick={() => setStatusModalApp(null)}>Cancel</button>
                 <button className="btn-primary" onClick={handleUpdateApplicationStatus}>Save Status</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== EDIT HR REFERENCE MODAL ===== */}
+      {hrRefModalApp && (
+        <div className="modal-overlay" onClick={() => setHrRefModalApp(null)}>
+          <div className="modal-content" style={{ maxWidth: '460px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: 'white' }}>
+              <h3 style={{ color: 'white', margin: 0, fontSize: '1.15rem' }}>Assign / Change HR Reference</h3>
+              <button className="btn-close" style={{ color: 'white' }} onClick={() => setHrRefModalApp(null)}><XCircle size={20} /></button>
+            </div>
+            <div className="modal-body" style={{ padding: '1.5rem' }}>
+              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', marginBottom: '1.25rem', border: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                <div style={{ color: '#64748b', fontSize: '0.775rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>Candidate Application</div>
+                <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1rem' }}>{hrRefModalApp.candidateName}</div>
+                <div style={{ color: '#475569', fontSize: '0.85rem' }}>Job: <strong>{hrRefModalApp.jobTitle}</strong> ({hrRefModalApp.companyName})</div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700, color: '#334155' }}>Select HR Reference</label>
+                <select
+                  className="form-select"
+                  value={selectedHrRef}
+                  onChange={e => setSelectedHrRef(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem', fontWeight: 600 }}
+                >
+                  <option value="">-- Direct (No HR Reference) --</option>
+                  {hrs.map(h => (
+                    <option key={h.id} value={h.referralCode}>
+                      👤 {h.name} ({h.referralCode}) - {h.email}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '6px' }}>
+                  💡 Assigning an HR reference will link this candidate application to the selected HR's referral dashboard.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1.5rem' }}>
+                <button className="btn-secondary" onClick={() => setHrRefModalApp(null)}>Cancel</button>
+                <button
+                  className="btn-primary"
+                  disabled={savingHrRef}
+                  onClick={handleUpdateHrReference}
+                  style={{ background: '#2563eb' }}
+                >
+                  {savingHrRef ? 'Saving...' : 'Save HR Reference'}
+                </button>
               </div>
             </div>
           </div>
