@@ -49,6 +49,18 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
 
+  const getAppPaymentAmount = (app) => {
+    if (app.paymentAmount && Number(app.paymentAmount) > 0) {
+      return Number(app.paymentAmount);
+    }
+    const title = (app.jobTitle || app.title || '').toLowerCase();
+    const company = (app.companyName || '').toLowerCase();
+    if (title.includes('casa')) return 149;
+    if (title.includes('free') || title.includes('internship') || company.includes('free') || company.includes('internship')) return 0;
+    if (app.isFicFlow) return 1499;
+    return 49;
+  };
+
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
 
@@ -384,8 +396,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td>{app.jobTitle}</td>
                       <td>{app.companyName}</td>
                       <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
-                      <td style={{ fontWeight: 600, color: app.paymentAmount > 100 ? '#10b981' : '#f59e0b' }}>
-                        ₹{app.paymentAmount || 0}
+                      <td style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b' }}>
+                        ₹{getAppPaymentAmount(app)}
                       </td>
                       <td>{getStatusBadge(app.status)}</td>
                       <td>
@@ -668,8 +680,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         })() : <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: app.paymentAmount > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
-                          ₹{app.paymentAmount || 0}
+                        <div style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
+                          ₹{getAppPaymentAmount(app)}
                         </div>
                         {app.paymentId && (
                           <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', wordBreak: 'break-all', maxWidth: '100px' }}>

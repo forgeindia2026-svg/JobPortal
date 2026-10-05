@@ -38,6 +38,21 @@ router.get('/', async (req, res) => {
       }
       const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
 
+      let computedPaymentAmount = app.paymentAmount;
+      if (!computedPaymentAmount) {
+        const title = (job ? job.title : '').toLowerCase();
+        const companyName = (job ? job.companyName : '').toLowerCase();
+        if (title.includes('casa')) {
+          computedPaymentAmount = 149;
+        } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
+          computedPaymentAmount = 0;
+        } else if (job && job.isFicFlow) {
+          computedPaymentAmount = 1499;
+        } else {
+          computedPaymentAmount = 49;
+        }
+      }
+
       return {
         ...app,
         candidateName: candidate.name || 'Anonymous',
@@ -50,7 +65,8 @@ router.get('/', async (req, res) => {
         jobTitle: job ? (job.title || job.companyName || 'IT Training Enquiry') : 'Untitled Job',
         jobLocation: job ? (job.location || '') : '',
         companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company'),
-        companyLogo: company.logo || '/logo.png'
+        companyLogo: company.logo || '/logo.png',
+        paymentAmount: computedPaymentAmount
       };
     });
 
@@ -118,6 +134,21 @@ router.post('/', async (req, res) => {
     }
 
     const appNumber = 'JOB-' + Math.floor(100000 + Math.random() * 900000);
+    let finalPaymentAmount = paymentAmount;
+    if (!finalPaymentAmount) {
+      const title = (job ? job.title : '').toLowerCase();
+      const companyName = (job ? job.companyName : '').toLowerCase();
+      if (title.includes('casa')) {
+        finalPaymentAmount = 149;
+      } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
+        finalPaymentAmount = 0;
+      } else if (job && job.isFicFlow) {
+        finalPaymentAmount = 1499;
+      } else {
+        finalPaymentAmount = 49;
+      }
+    }
+
     const newApp = {
       id: 'app_' + Date.now(),
       applicationNumber: appNumber,
@@ -130,7 +161,7 @@ router.post('/', async (req, res) => {
       adminNotes: coverNotes ? `Candidate Notes: ${coverNotes}` : '',
       referredBy: referredBy || null,
       paymentId: paymentId || null,
-      paymentAmount: paymentAmount || 0,
+      paymentAmount: finalPaymentAmount,
       updatedAt: new Date().toISOString()
     };
 
