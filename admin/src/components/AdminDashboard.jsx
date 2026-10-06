@@ -94,10 +94,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const getHrClosedApps = (hr) => {
     if (!hr) return [];
     const code = String(hr.referralCode || '').toLowerCase();
-    return applications.filter(app =>
-      String(app.referredBy || '').toLowerCase() === code &&
-      (CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || Number(app.incentiveAmount) > 0)
-    );
+    const agentCodes = Array.isArray(hr.agentCodes) ? hr.agentCodes : [];
+    const allCodes = [code, ...agentCodes];
+    
+    return applications.filter(app => {
+      const ref = String(app.referredBy || '').toLowerCase();
+      return allCodes.includes(ref) && 
+        (CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || Number(app.incentiveAmount) > 0);
+    });
   };
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
 

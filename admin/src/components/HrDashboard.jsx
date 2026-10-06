@@ -32,6 +32,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [appToSchedule, setAppToSchedule] = useState(null);
 
+  const [agentIncentiveModalApp, setAgentIncentiveModalApp] = useState(null);
+  const [agentIncentiveInput, setAgentIncentiveInput] = useState('');
+  const [savingAgentIncentive, setSavingAgentIncentive] = useState(false);
+
   const candidatePortalBaseUrl = window.location.hostname === 'localhost'
     ? 'http://localhost:5173'
     : 'https://jobs.forgeindiaconnect.in';
@@ -110,6 +114,36 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     } catch (err) {
       console.error(err);
       showToast('Error updating status', 'error');
+    }
+  };
+
+  const handleAssignAgentIncentive = async (e) => {
+    e.preventDefault();
+    if (!agentIncentiveModalApp) return;
+    setSavingAgentIncentive(true);
+    try {
+      // HR assigns incentive for an agent's application
+      const res = await fetch(`${API_URL}/api/users/hr/${currentUser.id}/agent-incentives`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{ applicationId: agentIncentiveModalApp.id, amount: Number(agentIncentiveInput) || 0 }],
+          referralCode: agentIncentiveModalApp.referredBy
+        })
+      });
+      if (res.ok) {
+        showToast('Agent incentive assigned');
+        setAgentIncentiveModalApp(null);
+        setAgentIncentiveInput('');
+        fetchStats();
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to assign incentive', 'error');
+      }
+    } catch (err) {
+      showToast('Error assigning incentive', 'error');
+    } finally {
+      setSavingAgentIncentive(false);
     }
   };
 
@@ -611,29 +645,65 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <th>Candidate</th>
                         <th>Company / Job</th>
                         <th>Status</th>
-                        <th style={{ textAlign: 'right' }}>Incentive</th>
+                        {!isAgent && <th>Referrer</th>}
+                        <th style={{ textAlign: 'right' }}>{isAgent ? 'Your Incentive' : 'Admin Incentive (To HR)'}</th>
+                        {!isAgent && <th style={{ textAlign: 'right' }}>Agent Incentive</th>}
                       </tr>
                     </thead>
                     <tbody>
-                      {closedApps.map(app => (
-                        <tr key={app.id}>
-                          <td style={{ fontWeight: 700 }}>
-                            {app.candidateName}
-                            {app.candidateMobile && <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{app.candidateMobile}</div>}
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{app.companyName}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.jobTitle}</div>
-                          </td>
-                          <td>{getStatusBadge(app.status)}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 800, color: Number(app.incentiveAmount) > 0 ? '#059669' : '#94a3b8' }}>
-                            {Number(app.incentiveAmount) > 0 ? `₹${Number(app.incentiveAmount).toLocaleString()}` : 'Pending'}
-                          </td>
-                        </tr>
-                      ))}
+                      {closedApps.map(app => {
+                        const isReferredByAgent = String(app.referredBy || '').toLowerCase() !== String(currentUser.referralCode || '').toLowerCase();
+                        
+                        return (
+                          <tr key={app.id}>
+                            <td style={{ fontWeight: 700 }}>
+                              {app.candidateName}
+                              {app.candidateMobile && <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{app.candidateMobile}</div>}
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{app.companyName}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.jobTitle}</div>
+                            </td>
+                            <td>{getStatusBadge(app.status)}</td>
+                            {!isAgent && (
+                              <td>
+                                {isReferredByAgent ? (
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: '#e0e7ff', color: '#4f46e5', padding: '2px 6px', borderRadius: '4px' }}>
+                                    Agent ({app.referredBy})
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: '#f1f5f9', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>
+                                    Self
+                                  </span>
+                                )}
+                              </td>
+                            )}
+                            <td style={{ textAlign: 'right', fontWeight: 800, color: (isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)) > 0 ? '#059669' : '#94a3b8' }}>
+                              {(isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)) > 0 
+                                ? `₹${(isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)).toLocaleString()}` 
+                                : 'Pending'}
+                            </td>
+                            {!isAgent && (
+                              <td style={{ textAlign: 'right' }}>
+                                {isReferredByAgent ? (
+                                  <button
+                                    className="btn-secondary"
+                                    style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                                    onClick={() => setAgentIncentiveModalApp(app)}
+                                  >
+                                    {Number(app.agentIncentiveAmount) > 0 ? `₹${Number(app.agentIncentiveAmount).toLocaleString()}` : 'Assign'}
+                                  </button>
+                                ) : (
+                                  <span style={{ color: '#cbd5e1', fontSize: '0.75rem' }}>N/A</span>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
                       {closedApps.length === 0 && (
                         <tr>
-                          <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
+                          <td colSpan={isAgent ? 4 : 6} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
                             No closed candidates yet. Incentives appear here once your candidates are Selected / Converted.
                           </td>
                         </tr>
@@ -691,6 +761,50 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           fetchInterviews();
         }}
       />
+
+      {/* Agent Incentive Modal */}
+      {agentIncentiveModalApp && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Assign Agent Incentive</h3>
+              <button onClick={() => setAgentIncentiveModalApp(null)} className="btn-icon"><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAssignAgentIncentive} style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '15px', padding: '10px', background: '#f8fafc', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Candidate: <b>{agentIncentiveModalApp.candidateName}</b></div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Referred By: <b>{agentIncentiveModalApp.referredBy}</b></div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Admin Incentive (Yours): <b>₹{(Number(agentIncentiveModalApp.incentiveAmount) || 0).toLocaleString()}</b></div>
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Amount for Agent (₹)</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  value={agentIncentiveInput} 
+                  onChange={e => setAgentIncentiveInput(e.target.value)} 
+                  required 
+                  min="0"
+                  max={Number(agentIncentiveModalApp.incentiveAmount) || 0}
+                  placeholder={`Max: ₹${Number(agentIncentiveModalApp.incentiveAmount) || 0}`}
+                />
+                <small style={{ color: '#64748b', display: 'block', marginTop: '4px' }}>
+                  Cannot exceed the incentive given to you by the Admin.
+                </small>
+              </div>
+
+              <div className="modal-actions" style={{ padding: 0, marginTop: '20px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setAgentIncentiveModalApp(null)}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={savingAgentIncentive}>
+                  {savingAgentIncentive ? 'Saving...' : 'Assign Amount'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toast && (
         <div className="animate-fade" style={{

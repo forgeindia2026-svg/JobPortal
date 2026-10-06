@@ -6,7 +6,23 @@ const { UserModel, ApplicationModel, readDBAsync } = require('../db');
 router.get('/hr', async (req, res) => {
   try {
     const hrs = await UserModel.find({ role: 'hr' }).lean();
-    res.json(hrs);
+    const agents = await UserModel.find({ role: 'agent' }).lean();
+    
+    // Map HR ID -> Array of agent referral codes
+    const hrAgentsMap = {};
+    agents.forEach(agent => {
+      if (!hrAgentsMap[agent.parentHrId]) hrAgentsMap[agent.parentHrId] = [];
+      if (agent.referralCode) {
+        hrAgentsMap[agent.parentHrId].push(agent.referralCode.toLowerCase());
+      }
+    });
+
+    const populatedHrs = hrs.map(hr => ({
+      ...hr,
+      agentCodes: hrAgentsMap[hr.id] || []
+    }));
+
+    res.json(populatedHrs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch HR users' });
   }
@@ -198,18 +214,21 @@ router.put('/hr/:id/candidate-incentives', async (req, res) => {
       return res.status(400).json({ error: 'items array is required.' });
     }
 
-    const refRegex = new RegExp('^' + hrUser.referralCode + '$', 'i');
+    const agents = await UserModel.find({ parentHrId: id, role: 'agent' }).lean();
+    const codes = [hrUser.referralCode, ...agents.map(a => a.referralCode)].filter(Boolean);
+    const codesRegex = codes.map(c => new RegExp('^' + c + '$', 'i'));
+
     const now = new Date().toISOString();
 
     for (const item of items) {
       const amount = Math.max(0, Number(item.amount) || 0);
       await ApplicationModel.updateOne(
-        { id: item.applicationId, referredBy: refRegex },
+        { id: item.applicationId, referredBy: { $in: codesRegex } },
         { $set: { incentiveAmount: amount, incentiveUpdatedAt: now } }
       );
     }
 
-    const apps = await ApplicationModel.find({ referredBy: refRegex }, { incentiveAmount: 1 }).lean();
+    const apps = await ApplicationModel.find({ referredBy: { $in: codesRegex } }, { incentiveAmount: 1 }).lean();
     const total = apps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
 
     const updatedUser = await UserModel.findOneAndUpdate(
@@ -225,6 +244,47 @@ router.put('/hr/:id/candidate-incentives', async (req, res) => {
   }
 });
 
+// PUT per-candidate incentives for an Agent (Set by HR)
+// body: { items: [{ applicationId, amount }], referralCode }
+router.put('/hr/:hrId/agent-incentives', async (req, res) => {
+  try {
+    const { hrId } = req.params;
+    const { items, referralCode } = req.body;
+
+    const agentUser = await UserModel.findOne({ referralCode: new RegExp('^' + referralCode + '$', 'i'), parentHrId: hrId, role: 'agent' }).lean();
+    if (!agentUser) {
+      return res.status(404).json({ error: 'Agent not found or does not belong to you.' });
+    }
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: 'items array is required.' });
+    }
+
+    const refRegex = new RegExp('^' + agentUser.referralCode + '$', 'i');
+
+    for (const item of items) {
+      const amount = Math.max(0, Number(item.amount) || 0);
+      await ApplicationModel.updateOne(
+        { id: item.applicationId, referredBy: refRegex },
+        { $set: { agentIncentiveAmount: amount } }
+      );
+    }
+
+    const apps = await ApplicationModel.find({ referredBy: refRegex }, { agentIncentiveAmount: 1 }).lean();
+    const total = apps.reduce((sum, a) => sum + (Number(a.agentIncentiveAmount) || 0), 0);
+
+    const updatedAgent = await UserModel.findOneAndUpdate(
+      { id: agentUser.id, role: 'agent' },
+      { $set: { incentives: total } },
+      { returnDocument: 'after' }
+    );
+
+    res.json({ total, user: updatedAgent });
+  } catch (error) {
+    console.error('Error updating agent incentives:', error);
+    res.status(500).json({ error: 'Failed to update agent incentives.' });
+  }
+});
+
 // GET HR Dashboard Stats
 router.get('/hr/:referralCode/dashboard', async (req, res) => {
   try {
@@ -232,9 +292,16 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
 
     // Get HR user for click count
     const hrUser = await UserModel.findOne({ referralCode: new RegExp('^' + referralCode + '$', 'i'), role: { $in: ['hr', 'agent'] } }).lean();
+    
+    let codesRegex = [new RegExp('^' + referralCode + '$', 'i')];
+    if (hrUser && hrUser.role === 'hr') {
+      const agents = await UserModel.find({ parentHrId: hrUser.id, role: 'agent' }).lean();
+      const agentCodes = agents.map(a => a.referralCode).filter(Boolean);
+      agentCodes.forEach(c => codesRegex.push(new RegExp('^' + c + '$', 'i')));
+    }
 
-    // Find applications referred by this HR
-    const applications = await ApplicationModel.find({ referredBy: new RegExp('^' + referralCode + '$', 'i') }).lean();
+    // Find applications referred by this HR or their agents
+    const applications = await ApplicationModel.find({ referredBy: { $in: codesRegex } }).lean();
     const db = await readDBAsync();
 
     const populated = applications.map(app => {
