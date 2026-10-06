@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true },
   linkClicks: { type: Number, default: 0 },
   incentives: { type: Number, default: 0 },
+  parentHrId: String, // for role 'agent' — the HR who owns this agent
   createdAt: { type: String, default: () => new Date().toISOString() }
 });
 

@@ -126,7 +126,8 @@ router.post('/login', async (req, res) => {
         experience: user.experience || (candProfile ? candProfile.experience : ''),
         skills: user.skills || (candProfile ? candProfile.skills : []),
         resumeUrl: candProfile ? candProfile.resumeUrl : '',
-        referralCode: user.referralCode || ''
+        referralCode: user.referralCode || '',
+        parentHrId: user.parentHrId || null
       }
     });
   } catch (err) {

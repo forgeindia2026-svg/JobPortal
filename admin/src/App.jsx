@@ -39,11 +39,11 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.user.role === 'admin' || data.user.role === 'hr') {
+        if (data.user.role === 'admin' || data.user.role === 'hr' || data.user.role === 'agent') {
           localStorage.setItem('admin_user', JSON.stringify(data.user));
           setCurrentUser(data.user);
         } else {
-          setError('Access denied. Only Admins and HRs can access this portal.');
+          setError('Access denied. Only Admins, HRs and Agents can access this portal.');
         }
       } else {
         setError(data.error || 'Login failed');
@@ -62,7 +62,7 @@ export default function App() {
         <div style={{ background: 'white', padding: '2.5rem', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.8rem', color: '#0f172a', fontWeight: 'bold' }}>Portal Login</h2>
-            <p style={{ color: '#64748b', marginTop: '4px' }}>Sign in to Admin / HR Dashboard</p>
+            <p style={{ color: '#64748b', marginTop: '4px' }}>Sign in to Admin / HR / Agent Dashboard</p>
           </div>
           
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -110,6 +110,9 @@ export default function App() {
         )}
         {currentUser.role === 'hr' && (
           <HrDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        )}
+        {currentUser.role === 'agent' && (
+          <HrDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isAgent />
         )}
       </main>
     </div>

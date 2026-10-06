@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
+import AgentsManager from './AgentsManager';
 
-export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
+export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false }) {
+  const roleLabel = isAgent ? 'Agent' : 'HR';
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -187,7 +189,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       {/* Sidebar */}
       <div className={`admin-sidebar ${sidebarOpen ? 'mobile-open' : ''}`} style={{ padding: '1.5rem 1rem' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '4px' }}>HR Workspace</h3>
+          <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '4px' }}>{roleLabel} Workspace</h3>
           <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Manage your referrals</p>
         </div>
 
@@ -199,6 +201,12 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           <button className={`nav-item ${activeTab === 'interviews' ? 'active' : ''}`} onClick={() => { setActiveTab('interviews'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <CalendarDays size={18} /><span>Interviews</span>
           </button>
+
+          {!isAgent && (
+            <button id="hr-agents-tab" className={`nav-item ${activeTab === 'agents' ? 'active' : ''}`} onClick={() => { setActiveTab('agents'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+              <UserCog size={18} /><span>Agents</span>
+            </button>
+          )}
 
           <button className={`nav-item ${activeTab === 'incentives' ? 'active' : ''}`} onClick={() => { setActiveTab('incentives'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Gift size={18} /><span>Incentives</span>
@@ -217,7 +225,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
           <div>
             <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>{activeTab === 'overview' ? `Welcome, ${currentUser.name}!` : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
-            <p style={{ color: '#64748b' }}>Here is your personal HR Dashboard.</p>
+            <p style={{ color: '#64748b' }}>Here is your personal {roleLabel} Dashboard.</p>
           </div>
           
           <div style={{ position: 'relative' }}>
@@ -260,6 +268,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             )}
           </div>
         </div>
+
+        {activeTab === 'agents' && !isAgent && (
+          <AgentsManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+            candidatePortalBaseUrl={candidatePortalBaseUrl}
+            showToast={showToast}
+          />
+        )}
 
         {activeTab === 'overview' && (
           <div className="animate-fade">
