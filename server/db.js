@@ -123,6 +123,8 @@ const applicationSchema = new mongoose.Schema({
   paymentAmount: Number,
   appliedAt: { type: String, default: () => new Date().toISOString() },
   adminNotes: String,
+  incentiveAmount: { type: Number, default: 0 },
+  incentiveUpdatedAt: String,
   updatedAt: String
 });
 

@@ -95,6 +95,49 @@ router.put('/hr/:id/incentives', async (req, res) => {
   }
 });
 
+// PUT per-candidate incentives for an HR (Admin only)
+// body: { items: [{ applicationId, amount }] }
+// HR total incentives = sum of incentiveAmount across all applications referred by that HR
+router.put('/hr/:id/candidate-incentives', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { items } = req.body;
+
+    const hrUser = await UserModel.findOne({ id, role: 'hr' }).lean();
+    if (!hrUser) {
+      return res.status(404).json({ error: 'HR user not found' });
+    }
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: 'items array is required.' });
+    }
+
+    const refRegex = new RegExp('^' + hrUser.referralCode + '$', 'i');
+    const now = new Date().toISOString();
+
+    for (const item of items) {
+      const amount = Math.max(0, Number(item.amount) || 0);
+      await ApplicationModel.updateOne(
+        { id: item.applicationId, referredBy: refRegex },
+        { $set: { incentiveAmount: amount, incentiveUpdatedAt: now } }
+      );
+    }
+
+    const apps = await ApplicationModel.find({ referredBy: refRegex }, { incentiveAmount: 1 }).lean();
+    const total = apps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
+
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { id, role: 'hr' },
+      { $set: { incentives: total } },
+      { returnDocument: 'after' }
+    );
+
+    res.json({ total, user: updatedUser });
+  } catch (error) {
+    console.error('Error updating candidate incentives:', error);
+    res.status(500).json({ error: 'Failed to update candidate incentives.' });
+  }
+});
+
 // GET HR Dashboard Stats
 router.get('/hr/:referralCode/dashboard', async (req, res) => {
   try {

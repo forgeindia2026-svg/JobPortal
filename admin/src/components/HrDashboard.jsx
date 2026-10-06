@@ -576,6 +576,56 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>Pending Referrals</div>
               </div>
             </div>
+
+            {(() => {
+              const closedStatuses = ['selected', 'converted', 'joined'];
+              const closedApps = (stats?.applications || []).filter(a =>
+                closedStatuses.includes(String(a.status || '').toLowerCase()) || Number(a.incentiveAmount) > 0
+              );
+              return (
+                <div className="table-container" style={{ marginTop: '1.5rem' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1.05rem', color: '#0f172a', margin: 0 }}>Candidate-wise Incentives</h3>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{closedApps.length} closed candidate{closedApps.length === 1 ? '' : 's'}</span>
+                  </div>
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Candidate</th>
+                        <th>Company / Job</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'right' }}>Incentive</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {closedApps.map(app => (
+                        <tr key={app.id}>
+                          <td style={{ fontWeight: 700 }}>
+                            {app.candidateName}
+                            {app.candidateMobile && <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{app.candidateMobile}</div>}
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{app.companyName}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.jobTitle}</div>
+                          </td>
+                          <td>{getStatusBadge(app.status)}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 800, color: Number(app.incentiveAmount) > 0 ? '#059669' : '#94a3b8' }}>
+                            {Number(app.incentiveAmount) > 0 ? `₹${Number(app.incentiveAmount).toLocaleString()}` : 'Pending'}
+                          </td>
+                        </tr>
+                      ))}
+                      {closedApps.length === 0 && (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
+                            No closed candidates yet. Incentives appear here once your candidates are Selected / Converted.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

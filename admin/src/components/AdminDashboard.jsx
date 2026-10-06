@@ -85,9 +85,20 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const [incentiveModalOpen, setIncentiveModalOpen] = useState(false);
   const [selectedHrForIncentive, setSelectedHrForIncentive] = useState(null);
-  const [incentiveInput, setIncentiveInput] = useState(0);
+  const [incentiveInput, setIncentiveInput] = useState({}); // { [applicationId]: amount }
   const [incentiveSaving, setIncentiveSaving] = useState(false);
   const [incentiveError, setIncentiveError] = useState('');
+
+  // Closed candidates (Selected / Converted) referred by an HR — incentive is given per candidate
+  const CLOSED_STATUSES = ['selected', 'converted', 'joined'];
+  const getHrClosedApps = (hr) => {
+    if (!hr) return [];
+    const code = String(hr.referralCode || '').toLowerCase();
+    return applications.filter(app =>
+      String(app.referredBy || '').toLowerCase() === code &&
+      (CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || Number(app.incentiveAmount) > 0)
+    );
+  };
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
 
   const [hrRefModalApp, setHrRefModalApp] = useState(null);
@@ -1202,7 +1213,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       </td>
                       <td style={{ fontWeight: 600, color: '#3b82f6' }}>{hr.linkClicks || 0}</td>
                       <td style={{ fontWeight: 600, color: '#10b981' }}>
-                        {applications.filter(app => app.referredBy === hr.referralCode).length}
+                        {applications.filter(app => String(app.referredBy || '').toLowerCase() === String(hr.referralCode || '').toLowerCase()).length}
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>
+                          {getHrClosedApps(hr).filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length} closed
+                        </div>
                       </td>
                       <td style={{ fontWeight: 700, color: '#059669' }}>
                         ₹{(hr.incentives || 0).toLocaleString()}
@@ -1216,12 +1230,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                             title="Edit HR Incentives"
                             onClick={() => {
                               setSelectedHrForIncentive(hr);
-                              setIncentiveInput(hr.incentives || 0);
+                              const initial = {};
+                              getHrClosedApps(hr).forEach(app => { initial[app.id] = Number(app.incentiveAmount) || 0; });
+                              setIncentiveInput(initial);
                               setIncentiveError('');
                               setIncentiveModalOpen(true);
                             }}
                           >
-                            <Gift size={12} /> Edit Incentive
+                            <Gift size={12} /> Candidate Incentives
                           </button>
                           <button
                             className="btn-secondary"
@@ -1717,7 +1733,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       {/* Update Incentive Modal */}
       {incentiveModalOpen && selectedHrForIncentive && (
         <div className="modal-overlay" onClick={() => setIncentiveModalOpen(false)}>
-          <div className="modal-content animate-fade" style={{ maxWidth: '440px', borderRadius: '14px' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content animate-fade" style={{ maxWidth: '640px', borderRadius: '14px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', borderTopLeftRadius: '14px', borderTopRightRadius: '14px', padding: '1.25rem 1.5rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.2rem', color: 'white', fontWeight: 800 }}>🎁 Update HR Incentives</h3>
@@ -1735,22 +1751,60 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
               )}
 
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label className="form-label" style={{ fontWeight: 'bold', color: '#0f172a' }}>Total Incentives Earned (₹) *</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  style={{ fontSize: '1.1rem', fontWeight: 700, padding: '10px 14px' }}
-                  value={incentiveInput}
-                  onChange={e => setIncentiveInput(e.target.value)}
-                  placeholder="e.g. 5000"
-                  min="0"
-                  required
-                />
-                <small style={{ color: '#64748b', fontSize: '0.775rem', marginTop: '6px', display: 'block' }}>
-                  This amount will be displayed in {selectedHrForIncentive.name}'s HR Workspace under Total Incentives Earned.
-                </small>
-              </div>
+              {(() => {
+                const closedApps = getHrClosedApps(selectedHrForIncentive);
+                const total = Object.values(incentiveInput).reduce((s, v) => s + (Number(v) || 0), 0);
+                return (
+                  <>
+                    <label className="form-label" style={{ fontWeight: 'bold', color: '#0f172a', marginBottom: '8px', display: 'block' }}>
+                      Closed Candidates ({closedApps.length})
+                    </label>
+
+                    {closedApps.length === 0 ? (
+                      <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', padding: '1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>
+                        No closed candidates yet for {selectedHrForIncentive.name}.<br />
+                        Mark an application as <b>Selected</b> / <b>Converted</b> to add an incentive.
+                      </div>
+                    ) : (
+                      <div style={{ maxHeight: '340px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                        {closedApps.map((app, idx) => (
+                          <div key={app.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderTop: idx === 0 ? 'none' : '1px solid #f1f5f9' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{app.candidateName}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {app.companyName} · {app.jobTitle} {app.candidateMobile ? `· ${app.candidateMobile}` : ''}
+                              </div>
+                              <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '0.7rem', fontWeight: 700, color: '#047857', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '1px 8px', borderRadius: '999px' }}>
+                                {app.status}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontWeight: 700, color: '#059669' }}>₹</span>
+                              <input
+                                type="number"
+                                className="form-input"
+                                style={{ width: '120px', fontWeight: 700, padding: '8px 10px' }}
+                                value={incentiveInput[app.id] ?? 0}
+                                onChange={e => setIncentiveInput(prev => ({ ...prev, [app.id]: e.target.value }))}
+                                min="0"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '10px', padding: '12px 16px' }}>
+                      <span style={{ fontWeight: 700, color: '#065f46' }}>Total Incentives</span>
+                      <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#047857' }}>₹{total.toLocaleString()}</span>
+                    </div>
+                    <small style={{ color: '#64748b', fontSize: '0.775rem', marginTop: '6px', display: 'block' }}>
+                      Each candidate's incentive and the total will be shown in {selectedHrForIncentive.name}'s HR Workspace.
+                    </small>
+                  </>
+                );
+              })()}
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
                 <button
@@ -1769,10 +1823,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     setIncentiveSaving(true);
                     setIncentiveError('');
                     try {
-                      const res = await fetch(`${API_URL}/api/users/hr/${selectedHrForIncentive.id}/incentives`, {
+                      const items = Object.entries(incentiveInput).map(([applicationId, amount]) => ({ applicationId, amount: Number(amount) || 0 }));
+                      const res = await fetch(`${API_URL}/api/users/hr/${selectedHrForIncentive.id}/candidate-incentives`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ incentives: Number(incentiveInput) })
+                        body: JSON.stringify({ items })
                       });
                       const data = await res.json();
                       if (!res.ok) throw new Error(data.error || 'Failed to update incentives');
