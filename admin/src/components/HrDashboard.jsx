@@ -5,7 +5,7 @@ import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
 
 export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false }) {
-  const roleLabel = isAgent ? 'Agent' : 'HR';
+  const roleLabel = isAgent ? 'Partner' : 'HR';
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -266,7 +266,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
           {!isAgent && (
             <button id="hr-agents-tab" className={`nav-item ${activeTab === 'agents' ? 'active' : ''}`} onClick={() => { setActiveTab('agents'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
-              <UserCog size={18} /><span>Agents</span>
+              <UserCog size={18} /><span>Partners</span>
             </button>
           )}
 
@@ -655,25 +655,72 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {/* Incentives Tab */}
         {activeTab === 'incentives' && (
           <div className="animate-fade">
-            <div className="kpi-grid">
-              <div className="kpi-card" style={{ borderLeft: '4px solid #10b981', background: '#ffffff', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.25rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}><Gift size={24} /></div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#0f172a' }}>₹{(stats?.totalIncentives || 0).toLocaleString()}</div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>Total Incentives Earned</div>
-              </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #f59e0b', background: '#ffffff', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.25rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fffbeb', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}><Briefcase size={24} /></div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#0f172a' }}>{stats?.applications?.length || 0}</div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>Pending Referrals</div>
-              </div>
-            </div>
-
             {(() => {
               const closedStatuses = ['selected', 'converted', 'joined'];
               const closedApps = (stats?.applications || []).filter(a =>
                 closedStatuses.includes(String(a.status || '').toLowerCase()) || Number(a.incentiveAmount) > 0
               );
+              
+              const totalEarned = closedApps.reduce((sum, app) => sum + (Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0), 0);
+              const totalAvailable = closedApps.reduce((sum, app) => {
+                 const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
+                 return sum + ((!app.incentiveStatus || app.incentiveStatus === 'Pending') && amt > 0 ? amt : 0);
+              }, 0);
+              
+              const withdrawableApps = closedApps.filter(app => {
+                 const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
+                 return (!app.incentiveStatus || app.incentiveStatus === 'Pending') && amt > 0;
+              });
+
+              const handleWithdraw = async () => {
+                 if(withdrawableApps.length === 0) return;
+                 if(!window.confirm(`Request withdrawal for ₹${totalAvailable.toLocaleString()}?`)) return;
+                 
+                 setLoading(true);
+                 try {
+                    await Promise.all(withdrawableApps.map(app => 
+                       fetch(`${API_URL}/api/applications/${app.id}/incentive-status`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: 'Withdraw Requested' })
+                       })
+                    ));
+                    fetchStats();
+                    alert('Withdrawal request sent successfully!');
+                 } catch(e) {
+                    console.error(e);
+                    alert('Failed to request withdrawal');
+                 } finally {
+                    setLoading(false);
+                 }
+              };
+
               return (
+                <>
+                  <div className="kpi-grid">
+                    <div className="kpi-card" style={{ borderLeft: '4px solid #10b981', background: '#ffffff', display: 'flex', alignItems: 'center', padding: '1rem', gap: '1rem' }}>
+                      <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Gift size={20} /></div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 500 }}>Available Wallet Balance</div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#0f172a' }}>₹{totalAvailable.toLocaleString()}</div>
+                      </div>
+                      <button 
+                        onClick={handleWithdraw}
+                        disabled={totalAvailable === 0}
+                        style={{ background: totalAvailable > 0 ? '#10b981' : '#cbd5e1', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: totalAvailable > 0 ? 'pointer' : 'not-allowed', fontSize: '0.8rem' }}
+                      >
+                        Withdraw
+                      </button>
+                    </div>
+                    <div className="kpi-card" style={{ borderLeft: '4px solid #3b82f6', background: '#ffffff', display: 'flex', alignItems: 'center', padding: '1rem', gap: '1rem' }}>
+                      <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Briefcase size={20} /></div>
+                      <div>
+                        <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 500 }}>Total Incentives Earned</div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#0f172a' }}>₹{totalEarned.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+
                 <div className="table-container" style={{ marginTop: '1.5rem' }}>
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: '1.05rem', color: '#0f172a', margin: 0 }}>Candidate-wise Incentives</h3>
@@ -687,7 +734,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <th>Status</th>
                         {!isAgent && <th>Referrer</th>}
                         <th style={{ textAlign: 'right' }}>{isAgent ? 'Your Incentive' : 'Admin Incentive (To HR)'}</th>
-                        {!isAgent && <th style={{ textAlign: 'right' }}>Agent Incentive</th>}
+                        {!isAgent && <th style={{ textAlign: 'right' }}>Partner Incentive</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -709,7 +756,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                               <td>
                                 {isReferredByAgent ? (
                                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: '#e0e7ff', color: '#4f46e5', padding: '2px 6px', borderRadius: '4px' }}>
-                                    Agent ({app.referredBy})
+                                    Partner ({app.referredBy})
                                   </span>
                                 ) : (
                                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: '#f1f5f9', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>
@@ -751,6 +798,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     </tbody>
                   </table>
                 </div>
+              </>
               );
             })()}
           </div>
@@ -802,12 +850,12 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         }}
       />
 
-      {/* Agent Incentive Modal */}
+      {/* Partner Incentive Modal */}
       {agentIncentiveModalApp && (
         <div className="modal-overlay">
           <div className="modal-content animate-fade" style={{ maxWidth: '400px' }}>
             <div className="modal-header">
-              <h3>Assign Agent Incentive</h3>
+              <h3>Assign Partner Incentive</h3>
               <button onClick={() => setAgentIncentiveModalApp(null)} className="btn-icon"><X size={20} /></button>
             </div>
             <form onSubmit={handleAssignAgentIncentive} style={{ padding: '20px' }}>
@@ -818,7 +866,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               </div>
               
               <div className="form-group">
-                <label className="form-label">Amount for Agent (₹)</label>
+                <label className="form-label">Amount for Partner (₹)</label>
                 <input 
                   type="number" 
                   className="form-input" 

@@ -255,6 +255,32 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PUT /api/applications/:id/incentive-status (Update incentive payout status)
+router.put('/:id/incentive-status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const db = await readDBAsync();
+    
+    const appIndex = db.applications.findIndex(a => a.id === req.params.id);
+    if (appIndex === -1) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    db.applications[appIndex].incentiveStatus = status;
+    db.applications[appIndex].updatedAt = new Date().toISOString();
+
+    await ApplicationModel.findOneAndUpdate(
+      { id: req.params.id },
+      { incentiveStatus: status, updatedAt: db.applications[appIndex].updatedAt }
+    );
+
+    res.json({ message: 'Incentive status updated successfully', application: db.applications[appIndex] });
+  } catch (err) {
+    console.error('Error updating incentive status:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
 
 

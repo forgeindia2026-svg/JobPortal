@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift,
-  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download
+  LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
+  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -10,6 +10,7 @@ import CompanyFormModal from './CompanyFormModal';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import ItTrainingModal from './ItTrainingModal';
 import ManualApplicationModal from './ManualApplicationModal';
+import AgentsManager from './AgentsManager';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
   const [activeTab, setActiveTab] = useState(() => {
@@ -115,6 +116,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [appHrFilter, setAppHrFilter] = useState('all');
 
   const [manualAppModalOpen, setManualAppModalOpen] = useState(false);
+  const [selectedHrForPartners, setSelectedHrForPartners] = useState(null);
 
   useEffect(() => {
     fetchAllData();
@@ -250,6 +252,65 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     }
   };
 
+  const handleToggleIncentiveStatus = async (app) => {
+    if (!app.incentiveAmount || app.incentiveAmount === 0) return;
+    const newStatus = app.incentiveStatus === 'Paid' ? 'Pending' : 'Paid';
+    if (!window.confirm(`Mark incentive payout of ₹${app.incentiveAmount} as ${newStatus}?`)) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/applications/${app.id}/incentive-status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        fetchAllData();
+      } else {
+        alert('Failed to update incentive status');
+      }
+    } catch (err) {
+      console.error('Error updating incentive:', err);
+      alert('Error updating incentive status');
+    }
+  };
+
+  const handleBatchPayout = async (appIds, totalAmount, hrName) => {
+    if (!window.confirm(`Mark ₹${totalAmount} as Paid for ${hrName}?`)) return;
+    try {
+      await Promise.all(appIds.map(id => 
+        fetch(`${API_URL}/api/applications/${id}/incentive-status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Paid' })
+        })
+      ));
+      fetchAllData();
+    } catch (err) {
+      console.error('Error in batch payout:', err);
+      alert('Error updating payout status');
+    }
+  };
+
+  const handleBatchCancel = async (hrId, appIds, totalAmount, hrName) => {
+    if (!window.confirm(`Cancel/Remove pending ₹${totalAmount} for ${hrName}?`)) return;
+    try {
+      const incentives = appIds.map(id => ({ appId: id, amount: 0 }));
+      const res = await fetch(`${API_URL}/api/users/hr/${hrId}/candidate-incentives`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incentives })
+      });
+      if (res.ok) {
+        fetchAllData();
+      } else {
+        alert('Failed to cancel incentives');
+      }
+    } catch (err) {
+      console.error('Error canceling incentives:', err);
+      alert('Error canceling incentives');
+    }
+  };
+
   const handleUpdateHrReference = async () => {
     if (!hrRefModalApp) return;
     setSavingHrRef(true);
@@ -347,7 +408,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     if (appDateFilter === 'thisMonth' && !isThisMonth(app.appliedAt)) return false;
 
     if (appStatusFilter !== 'all') {
-      if ((app.status || '').toLowerCase() !== appStatusFilter.toLowerCase()) return false;
+      if (appStatusFilter.toLowerCase() === 'processing') {
+        const procStatuses = ['applied', 'shortlisted', 'interview scheduled', 'follow up'];
+        if (!procStatuses.includes((app.status || '').toLowerCase())) return false;
+      } else if (appStatusFilter.toLowerCase() === 'selected') {
+        const selStatuses = ['selected', 'converted'];
+        if (!selStatuses.includes((app.status || '').toLowerCase())) return false;
+      } else {
+        if ((app.status || '').toLowerCase() !== appStatusFilter.toLowerCase()) return false;
+      }
     }
 
     if (appHrFilter !== 'all') {
@@ -484,6 +553,20 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </button>
 
         <button
+          className={`nav-item ${activeTab === 'partners_admin' ? 'active' : ''}`}
+          onClick={() => { handleTabChange('partners_admin'); setSelectedHrForPartners(null); }}
+        >
+          <UserPlus size={18} /> Partners
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'payouts' ? 'active' : ''}`}
+          onClick={() => handleTabChange('payouts')}
+        >
+          <Gift size={18} /> Incentives & Payouts
+        </button>
+
+        <button
           className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`}
           onClick={() => handleTabChange('jobs')}
         >
@@ -565,6 +648,36 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <div className="kpi-label">Interviews Scheduled</div>
                 </div>
               </div>
+
+              <div className="kpi-card" onClick={() => { setActiveTab('applications'); setAppStatusFilter('Processing'); }}>
+                <div className="kpi-icon" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                  <RefreshCw size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val">{applications.filter(a => ['Applied', 'Shortlisted', 'Interview Scheduled', 'Follow up'].includes(a.status)).length}</div>
+                  <div className="kpi-label">Processing</div>
+                </div>
+              </div>
+
+              <div className="kpi-card" onClick={() => { setActiveTab('applications'); setAppStatusFilter('Selected'); }}>
+                <div className="kpi-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                  <CheckCircle size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val">{applications.filter(a => ['Selected', 'Converted'].includes(a.status)).length}</div>
+                  <div className="kpi-label">Selected</div>
+                </div>
+              </div>
+
+              <div className="kpi-card" onClick={() => { setActiveTab('applications'); setAppStatusFilter('Rejected'); }}>
+                <div className="kpi-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
+                  <X size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val">{applications.filter(a => a.status === 'Rejected').length}</div>
+                  <div className="kpi-label">Rejected</div>
+                </div>
+              </div>
             </div>
 
             <div className="section-header" style={{ marginTop: '2rem' }}>
@@ -581,6 +694,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Job Title</th>
                     <th>Company</th>
                     <th>Date</th>
+                    <th>HR Reference</th>
                     <th>Payment</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -613,6 +727,18 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td>{app.jobTitle}</td>
                       <td>{app.companyName}</td>
                       <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                      <td>
+                        {app.referredBy ? (
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#2563eb', fontSize: '0.85rem' }}>
+                              {hrs.find(h => h.referralCode === app.referredBy)?.name || 'Unknown HR'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
+                          </div>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic' }}>Direct</span>
+                        )}
+                      </td>
                       <td style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b' }}>
                         ₹{getAppPaymentAmount(app)}
                       </td>
@@ -966,6 +1092,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', outline: 'none', background: 'white' }}
                 >
                   <option value="all">All Statuses</option>
+                  <option value="Processing">Processing</option>
                   <option value="Applied">Applied</option>
                   <option value="Under Review">Under Review</option>
                   <option value="Shortlisted">Shortlisted</option>
@@ -1015,6 +1142,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Applied On</th>
                     <th>HR Reference</th>
                     <th>Payment</th>
+                    <th>HR Incentive</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -1106,6 +1234,38 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                           </div>
                         )}
                       </td>
+                      <td>
+                        {app.referredBy ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ fontWeight: 700, color: app.incentiveAmount > 0 ? '#10b981' : '#64748b', fontSize: '0.9rem' }}>
+                              ₹{app.incentiveAmount || 0}
+                            </div>
+                            {app.incentiveAmount > 0 && (
+                              <button
+                                onClick={() => handleToggleIncentiveStatus(app)}
+                                style={{
+                                  background: app.incentiveStatus === 'Paid' ? '#10b981' : '#fef08a',
+                                  color: app.incentiveStatus === 'Paid' ? '#fff' : '#854d0e',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '4px 8px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  width: 'fit-content'
+                                }}
+                              >
+                                {app.incentiveStatus === 'Paid' ? 'Paid ✓' : 'Pay Now'}
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>-</span>
+                        )}
+                      </td>
                       <td>{getStatusBadge(app.status)}</td>
                       <td>
                         <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
@@ -1172,6 +1332,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Date & Time</th>
                     <th>Mode & Link / Address</th>
                     <th>Interviewer</th>
+                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -1199,6 +1360,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         )}
                       </td>
                       <td>{int.interviewer || 'HR Team'}</td>
+                      <td>
+                        <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {int.status || 'Scheduled'}
+                        </span>
+                      </td>
                       <td>
                         <button
                           className="btn-secondary"
@@ -1509,6 +1675,244 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
               </div>
             )}
+          </div>
+        )}
+        {activeTab === 'partners_admin' && (
+          <div>
+            {selectedHrForPartners ? (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
+                  <button 
+                    onClick={() => setSelectedHrForPartners(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', fontWeight: 600 }}
+                  >
+                    ← Back to HR List
+                  </button>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Partners for {selectedHrForPartners.name}</h2>
+                </div>
+                <div style={{ background: '#fff', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)' }}>
+                  <AgentsManager 
+                    API_URL={API_URL} 
+                    currentUser={{ id: selectedHrForPartners.id, role: 'hr' }} 
+                    candidatePortalBaseUrl={window.location.origin} 
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Partner Management</h2>
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                    Select an HR to view and manage their partners.
+                  </p>
+                </div>
+                
+                <div className="kpi-grid">
+                  {hrs.map(hr => (
+                    <div 
+                      key={hr.id} 
+                      className="kpi-card" 
+                      onClick={() => setSelectedHrForPartners(hr)}
+                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
+                    >
+                      <div className="kpi-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                        <Users size={22} />
+                      </div>
+                      <div>
+                        <div className="kpi-val" style={{ fontSize: '1.25rem', marginBottom: '4px' }}>{hr.name}</div>
+                        <div className="kpi-label">HR Ref: {hr.referralCode}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {hrs.length === 0 && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                      No HR accounts found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'payouts' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>HR Incentives & Payouts</h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                  Track and manage incentive payments for HR referrals across all applications.
+                </p>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>HR Details</th>
+                    <th>Referral Code</th>
+                    <th>Closed Candidates</th>
+                    <th>Total Incentive Earned</th>
+                    <th>Payout Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const hrPayoutsList = hrs.map(hr => {
+                      const hrApps = applications.filter(app => app.referredBy === hr.referralCode && (app.status === 'Selected' || app.status === 'Converted'));
+                      let totalIncentiveEarned = 0;
+                      let totalPending = 0;
+                      let totalRequested = 0;
+                      let totalPaid = 0;
+                      const pendingAppIds = [];
+
+                      hrApps.forEach(app => {
+                        const amt = app.incentiveAmount || 0;
+                        totalIncentiveEarned += amt;
+                        if (app.incentiveStatus === 'Paid') {
+                          totalPaid += amt;
+                        } else if (app.incentiveStatus === 'Withdraw Requested') {
+                          totalRequested += amt;
+                          if (amt > 0) pendingAppIds.push(app.id);
+                        } else {
+                          totalPending += amt;
+                          if (amt > 0) pendingAppIds.push(app.id);
+                        }
+                      });
+
+                      return {
+                        referralCode: hr.referralCode,
+                        hrName: hr.name,
+                        hrEmail: hr.email,
+                        closedCandidates: hrApps.length,
+                        totalIncentiveEarned,
+                        totalPending,
+                        totalRequested,
+                        totalPaid,
+                        appIds: pendingAppIds
+                      };
+                    }); // Removed filter so ALL HRs show up
+                    
+                    if (hrPayoutsList.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                            No incentives assigned yet. Assign incentives to HRs when candidates are Selected/Converted.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return hrPayoutsList.map(hr => {
+                      const totalToPay = hr.totalPending + hr.totalRequested;
+                      return (
+                      <tr key={hr.referralCode}>
+                        <td>
+                          <div style={{ fontWeight: 700, color: '#1e293b' }}>{hr.hrName}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{hr.hrEmail}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#2563eb' }}>{hr.referralCode}</div>
+                        </td>
+                        <td style={{ fontWeight: 700, textAlign: 'center' }}>
+                          <span style={{ background: '#f1f5f9', padding: '4px 12px', borderRadius: '12px', color: '#334155' }}>
+                            {hr.closedCandidates}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 700, color: '#059669', fontSize: '1rem' }}>₹{hr.totalIncentiveEarned}</td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              Paid: <span style={{ color: '#10b981', fontWeight: 600 }}>₹{hr.totalPaid}</span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              Pending: <span style={{ color: '#94a3b8', fontWeight: 600 }}>₹{hr.totalPending}</span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              Requested: <span style={{ color: hr.totalRequested > 0 ? '#f59e0b' : '#94a3b8', fontWeight: 600 }}>₹{hr.totalRequested}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  title={`Pay (₹${totalToPay})`}
+                                  disabled={totalToPay === 0}
+                                  onClick={() => handleBatchPayout(hr.appIds, totalToPay, hr.hrName)}
+                                  style={{
+                                    background: totalToPay > 0 ? '#d1fae5' : '#f1f5f9',
+                                    color: totalToPay > 0 ? '#059669' : '#94a3b8',
+                                    border: totalToPay > 0 ? '1px solid #34d399' : '1px solid #cbd5e1',
+                                    borderRadius: '6px',
+                                    padding: '6px',
+                                    cursor: totalToPay > 0 ? 'pointer' : 'not-allowed',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  <Check size={16} strokeWidth={3} />
+                                </button>
+                                <button
+                                  title={`Cancel (₹${totalToPay})`}
+                                  disabled={totalToPay === 0}
+                                  onClick={() => handleBatchCancel(hrs.find(h => h.referralCode === hr.referralCode)?.id, hr.appIds, totalToPay, hr.hrName)}
+                                  style={{
+                                    background: totalToPay > 0 ? '#fee2e2' : '#f1f5f9',
+                                    color: totalToPay > 0 ? '#dc2626' : '#94a3b8',
+                                    border: totalToPay > 0 ? '1px solid #f87171' : '1px solid #cbd5e1',
+                                    borderRadius: '6px',
+                                    padding: '6px',
+                                    cursor: totalToPay > 0 ? 'pointer' : 'not-allowed',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  <X size={16} strokeWidth={3} />
+                                </button>
+                              </div>
+                            <button
+                              onClick={() => {
+                                const originalHr = hrs.find(h => h.referralCode === hr.referralCode);
+                                if (originalHr) {
+                                  setSelectedHrForIncentive(originalHr);
+                                  const initial = {};
+                                  const hrApps = applications.filter(app => app.referredBy === originalHr.referralCode && (app.status === 'Selected' || app.status === 'Converted'));
+                                  hrApps.forEach(app => { initial[app.id] = Number(app.incentiveAmount) || 0; });
+                                  setIncentiveInput(initial);
+                                  setIncentiveError('');
+                                  setIncentiveModalOpen(true);
+                                }
+                              }}
+                              style={{
+                                background: 'transparent',
+                                color: '#2563eb',
+                                border: '1px solid #bfdbfe',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <Gift size={12} /> Manage Incentives
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -1824,17 +2228,41 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                 {app.status}
                               </span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontWeight: 700, color: '#059669' }}>₹</span>
-                              <input
-                                type="number"
-                                className="form-input"
-                                style={{ width: '120px', fontWeight: 700, padding: '8px 10px' }}
-                                value={incentiveInput[app.id] ?? 0}
-                                onChange={e => setIncentiveInput(prev => ({ ...prev, [app.id]: e.target.value }))}
-                                min="0"
-                                placeholder="0"
-                              />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontWeight: 700, color: '#059669' }}>₹</span>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  style={{ width: '90px', fontWeight: 700, padding: '8px 10px' }}
+                                  value={incentiveInput[app.id] ?? 0}
+                                  onChange={e => setIncentiveInput(prev => ({ ...prev, [app.id]: e.target.value }))}
+                                  min="0"
+                                  placeholder="0"
+                                />
+                              </div>
+                              {app.incentiveAmount > 0 && Number(incentiveInput[app.id] || 0) === app.incentiveAmount && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); handleToggleIncentiveStatus(app); }}
+                                  style={{
+                                    background: app.incentiveStatus === 'Paid' ? '#10b981' : '#fef08a',
+                                    color: app.incentiveStatus === 'Paid' ? '#fff' : '#854d0e',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '6px 10px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '75px'
+                                  }}
+                                >
+                                  {app.incentiveStatus === 'Paid' ? 'Paid ✓' : 'Pay Now'}
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}

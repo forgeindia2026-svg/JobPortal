@@ -126,6 +126,7 @@ const applicationSchema = new mongoose.Schema({
   adminNotes: String,
   incentiveAmount: { type: Number, default: 0 },
   agentIncentiveAmount: { type: Number, default: 0 },
+  incentiveStatus: { type: String, default: 'Pending' },
   incentiveUpdatedAt: String,
   updatedAt: String
 });

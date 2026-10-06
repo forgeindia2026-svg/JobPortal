@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { UserPlus, Users, Copy, Share2, Trash2, X, MousePointerClick, Link2, CheckCircle } from 'lucide-react';
 
 /**
- * Agents tab inside the HR Workspace.
- * Each HR can create any number of agents. Every agent gets their own login
- * and unique referral link (?ref=AG-xxxxx) tracked under that agent.
+ * Partners tab inside the HR Workspace.
+ * Each HR can create any number of partners. Every partner gets their own login
+ * and unique referral link (?ref=AG-xxxxx) tracked under that partner.
  */
 export default function AgentsManager({ API_URL, currentUser, candidatePortalBaseUrl, showToast }) {
   const [agents, setAgents] = useState([]);
@@ -52,10 +52,10 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
         body: JSON.stringify(form)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create agent');
+      if (!res.ok) throw new Error(data.error || 'Failed to create partner');
       setModalOpen(false);
       setForm({ name: '', email: '', mobile: '', password: '' });
-      showToast && showToast(`Agent ${data.name} added (${data.referralCode})`);
+      showToast && showToast(`Partner ${data.name} added (${data.referralCode})`);
       fetchAgents();
     } catch (err) {
       setError(err.message);
@@ -65,14 +65,14 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
   };
 
   const handleDelete = async (agent) => {
-    if (!window.confirm(`Delete agent ${agent.name}? Their referral link will stop tracking.`)) return;
+    if (!window.confirm(`Delete partner ${agent.name}? Their referral link will stop tracking.`)) return;
     try {
       const res = await fetch(`${API_URL}/api/users/hr/${currentUser.id}/agents/${agent.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
-      showToast && showToast('Agent deleted');
+      showToast && showToast('Partner deleted');
       fetchAgents();
     } catch {
-      showToast && showToast('Failed to delete agent', 'error');
+      showToast && showToast('Failed to delete partner', 'error');
     }
   };
 
@@ -84,13 +84,13 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h3 style={{ fontSize: '1.25rem', color: '#0f172a', margin: 0 }}>My Agents</h3>
+          <h3 style={{ fontSize: '1.25rem', color: '#0f172a', margin: 0 }}>My Partners</h3>
           <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '2px' }}>
-            Add agents under you. Each agent gets their own login and referral link.
+            Add partners under you. Each partner gets their own login and referral link.
           </p>
         </div>
         <button id="add-agent-btn" className="btn-primary" onClick={() => { setError(''); setModalOpen(true); }}>
-          <UserPlus size={16} /> Add Agent
+          <UserPlus size={16} /> Add Partner
         </button>
       </div>
 
@@ -98,24 +98,24 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
       <div className="kpi-grid">
         <div className="kpi-card" style={{ borderLeft: '4px solid #8b5cf6', background: '#f5f3ff' }}>
           <div className="kpi-icon" style={{ background: '#ddd6fe', color: '#7c3aed' }}><Users size={20} /></div>
-          <div><div className="kpi-val">{agents.length}</div><div className="kpi-label">Total Agents</div></div>
+          <div><div className="kpi-val">{agents.length}</div><div className="kpi-label">Total Partners</div></div>
         </div>
         <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1', background: '#eef2ff' }}>
           <div className="kpi-icon" style={{ background: '#c7d2fe', color: '#4f46e5' }}><MousePointerClick size={20} /></div>
-          <div><div className="kpi-val">{totalClicks}</div><div className="kpi-label">Agents' Link Clicks</div></div>
+          <div><div className="kpi-val">{totalClicks}</div><div className="kpi-label">Partners' Link Clicks</div></div>
         </div>
         <div className="kpi-card" style={{ borderLeft: '4px solid #10b981', background: '#ecfdf5' }}>
           <div className="kpi-icon" style={{ background: '#a7f3d0', color: '#059669' }}><CheckCircle size={20} /></div>
-          <div><div className="kpi-val">{totalApplied}</div><div className="kpi-label">Candidates via Agents</div></div>
+          <div><div className="kpi-val">{totalApplied}</div><div className="kpi-label">Candidates via Partners</div></div>
         </div>
       </div>
 
-      {/* Agents Table */}
+      {/* Partners Table */}
       <div className="table-container" style={{ marginTop: '1.5rem' }}>
         <table className="custom-table">
           <thead>
             <tr>
-              <th>Agent</th>
+              <th>Partner</th>
               <th>Referral Code</th>
               <th>Referral Link</th>
               <th>Clicks</th>
@@ -153,7 +153,7 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
                       style={{ padding: '4px 8px', color: '#16a34a' }}>
                       <Share2 size={14} />
                     </button>
-                    <button className="btn-secondary" title="Delete agent" onClick={() => handleDelete(agent)}
+                    <button className="btn-secondary" title="Delete partner" onClick={() => handleDelete(agent)}
                       style={{ padding: '4px 8px', color: '#ef4444' }}>
                       <Trash2 size={14} />
                     </button>
@@ -164,25 +164,25 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
             {!loading && agents.length === 0 && (
               <tr>
                 <td colSpan="6" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
-                  No agents yet. Click <b>Add Agent</b> to create your first agent.
+                  No partners yet. Click <b>Add Partner</b> to create your first partner.
                 </td>
               </tr>
             )}
             {loading && (
-              <tr><td colSpan="6" style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>Loading agents...</td></tr>
+              <tr><td colSpan="6" style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>Loading partners...</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Add Agent Modal */}
+      {/* Add Partner Modal */}
       {modalOpen && (
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>
           <div className="modal-content animate-fade" style={{ maxWidth: '440px', borderRadius: '14px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)', color: 'white', borderTopLeftRadius: '14px', borderTopRightRadius: '14px', padding: '1.25rem 1.5rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', color: 'white', fontWeight: 800 }}>Add New Agent</h3>
-                <p style={{ fontSize: '0.8rem', color: '#e0e7ff', marginTop: '2px' }}>Agent will be linked to you ({currentUser.referralCode})</p>
+                <h3 style={{ fontSize: '1.2rem', color: 'white', fontWeight: 800 }}>Add New Partner</h3>
+                <p style={{ fontSize: '0.8rem', color: '#e0e7ff', marginTop: '2px' }}>Partner will be linked to you ({currentUser.referralCode})</p>
               </div>
               <button onClick={() => setModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer' }}>
                 <X size={18} />
@@ -212,7 +212,7 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
                 <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)} style={{ flex: 1, padding: '10px' }}>Cancel</button>
                 <button id="agent-save-btn" type="submit" className="btn-primary" disabled={saving}
                   style={{ flex: 1, padding: '10px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', border: 'none' }}>
-                  {saving ? 'Creating...' : 'Create Agent'}
+                  {saving ? 'Creating...' : 'Create Partner'}
                 </button>
               </div>
             </form>
