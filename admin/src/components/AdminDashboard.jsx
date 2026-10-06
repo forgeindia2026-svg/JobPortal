@@ -609,73 +609,136 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
 
             <div className="kpi-grid">
-              <div className="kpi-card" onClick={() => setActiveTab('jobs')}>
-                <div className="kpi-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('jobs')}
+                style={{
+                  background: '#eff6ff', border: '1px solid #93c5fd', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#dbeafe', color: '#2563eb' }}>
                   <Briefcase size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{kpis ? kpis.kpis.totalJobs : jobs.length}</div>
-                  <div className="kpi-label">Total Jobs ({kpis ? kpis.kpis.activeJobs : 0} Active)</div>
+                  <div className="kpi-val" style={{ color: '#1e3a8a' }}>{kpis ? kpis.kpis.totalJobs : jobs.length}</div>
+                  <div className="kpi-label" style={{ color: '#1e3a8a', opacity: 0.8, fontWeight: 600 }}>Total Jobs ({kpis ? kpis.kpis.activeJobs : 0} Active)</div>
                 </div>
               </div>
 
-              <div className="kpi-card" onClick={() => setActiveTab('applications')}>
-                <div className="kpi-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('applications')}
+                style={{
+                  background: '#f0fdfa', border: '1px solid #5eead4', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#ccfbf1', color: '#0d9488' }}>
                   <Users size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{kpis ? kpis.kpis.totalCandidates : 1}</div>
-                  <div className="kpi-label">Total Candidates</div>
+                  <div className="kpi-val" style={{ color: '#134e4a' }}>{kpis ? kpis.kpis.totalCandidates : 1}</div>
+                  <div className="kpi-label" style={{ color: '#134e4a', opacity: 0.8, fontWeight: 600 }}>Total Candidates</div>
                 </div>
               </div>
 
-              <div className="kpi-card" onClick={() => setActiveTab('applications')}>
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('applications')}
+                style={{
+                  background: '#fffbeb', border: '1px solid #fcd34d', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
                 <div className="kpi-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
                   <FileText size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{kpis ? kpis.kpis.totalApplications : applications.length}</div>
-                  <div className="kpi-label">Applications Received</div>
+                  <div className="kpi-val" style={{ color: '#78350f' }}>{kpis ? kpis.kpis.totalApplications : applications.length}</div>
+                  <div className="kpi-label" style={{ color: '#78350f', opacity: 0.8, fontWeight: 600 }}>Applications Received</div>
                 </div>
               </div>
 
-              <div className="kpi-card" onClick={() => setActiveTab('interviews')}>
-                <div className="kpi-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('interviews')}
+                style={{
+                  background: '#fdf4ff', border: '1px solid #f0abfc', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#fae8ff', color: '#c026d3' }}>
                   <Calendar size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{interviews.length}</div>
-                  <div className="kpi-label">Interviews Scheduled</div>
+                  <div className="kpi-val" style={{ color: '#701a75' }}>{interviews.length}</div>
+                  <div className="kpi-label" style={{ color: '#701a75', opacity: 0.8, fontWeight: 600 }}>Interviews Scheduled</div>
                 </div>
               </div>
 
-              <div className="kpi-card" onClick={() => { setActiveTab('applications'); setAppStatusFilter('Processing'); }}>
-                <div className="kpi-icon" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+              <div 
+                className="kpi-card" 
+                onClick={() => { setActiveTab('applications'); setAppStatusFilter('Processing'); }}
+                style={{
+                  background: '#e0e7ff', border: '1px solid #a5b4fc', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#c7d2fe', color: '#4f46e5' }}>
                   <RefreshCw size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{applications.filter(a => ['Applied', 'Shortlisted', 'Interview Scheduled', 'Follow up'].includes(a.status)).length}</div>
-                  <div className="kpi-label">Processing</div>
+                  <div className="kpi-val" style={{ color: '#312e81' }}>{applications.filter(a => ['Applied', 'Shortlisted', 'Interview Scheduled', 'Follow up'].includes(a.status)).length}</div>
+                  <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
                 </div>
               </div>
 
-              <div className="kpi-card" onClick={() => { setActiveTab('applications'); setAppStatusFilter('Selected'); }}>
-                <div className="kpi-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
+              <div 
+                className="kpi-card" 
+                onClick={() => { setActiveTab('applications'); setAppStatusFilter('Selected'); }}
+                style={{
+                  background: '#ecfdf5', border: '1px solid #6ee7b7', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#d1fae5', color: '#059669' }}>
                   <CheckCircle size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{applications.filter(a => ['Selected', 'Converted'].includes(a.status)).length}</div>
-                  <div className="kpi-label">Selected</div>
+                  <div className="kpi-val" style={{ color: '#064e3b' }}>{applications.filter(a => ['Selected', 'Converted'].includes(a.status)).length}</div>
+                  <div className="kpi-label" style={{ color: '#064e3b', opacity: 0.8, fontWeight: 600 }}>Selected</div>
                 </div>
               </div>
 
-              <div className="kpi-card" onClick={() => { setActiveTab('applications'); setAppStatusFilter('Rejected'); }}>
+              <div 
+                className="kpi-card" 
+                onClick={() => { setActiveTab('applications'); setAppStatusFilter('Rejected'); }}
+                style={{
+                  background: '#fef2f2', border: '1px solid #fca5a5', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
                 <div className="kpi-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
                   <X size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val">{applications.filter(a => a.status === 'Rejected').length}</div>
-                  <div className="kpi-label">Rejected</div>
+                  <div className="kpi-val" style={{ color: '#7f1d1d' }}>{applications.filter(a => a.status === 'Rejected').length}</div>
+                  <div className="kpi-label" style={{ color: '#7f1d1d', opacity: 0.8, fontWeight: 600 }}>Rejected</div>
                 </div>
               </div>
             </div>
