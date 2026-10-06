@@ -1708,22 +1708,45 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
                 
                 <div className="kpi-grid">
-                  {hrs.map(hr => (
+                  {hrs.map((hr, i) => {
+                    const colors = [
+                      { bg: '#fef2f2', iconBg: '#fee2e2', iconColor: '#ef4444', text: '#7f1d1d', border: '#fca5a5' },
+                      { bg: '#eff6ff', iconBg: '#dbeafe', iconColor: '#3b82f6', text: '#1e3a8a', border: '#93c5fd' },
+                      { bg: '#ecfdf5', iconBg: '#d1fae5', iconColor: '#10b981', text: '#064e3b', border: '#6ee7b7' },
+                      { bg: '#fdf4ff', iconBg: '#fae8ff', iconColor: '#d946ef', text: '#701a75', border: '#f0abfc' },
+                      { bg: '#fffbeb', iconBg: '#fef3c7', iconColor: '#f59e0b', text: '#78350f', border: '#fcd34d' },
+                      { bg: '#f5f3ff', iconBg: '#ede9fe', iconColor: '#8b5cf6', text: '#4c1d95', border: '#c4b5fd' },
+                      { bg: '#f0fdfa', iconBg: '#ccfbf1', iconColor: '#14b8a6', text: '#134e4a', border: '#5eead4' },
+                      { bg: '#fff1f2', iconBg: '#ffe4e6', iconColor: '#f43f5e', text: '#881337', border: '#fda4af' }
+                    ];
+                    const color = colors[i % colors.length];
+
+                    return (
                     <div 
                       key={hr.id} 
                       className="kpi-card" 
                       onClick={() => setSelectedHrForPartners(hr)}
-                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
+                      style={{ 
+                        cursor: 'pointer', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '16px',
+                        background: color.bg,
+                        border: `1px solid ${color.border}`,
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
                     >
-                      <div className="kpi-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                      <div className="kpi-icon" style={{ background: color.iconBg, color: color.iconColor }}>
                         <Users size={22} />
                       </div>
                       <div>
-                        <div className="kpi-val" style={{ fontSize: '1.25rem', marginBottom: '4px' }}>{hr.name}</div>
-                        <div className="kpi-label">HR Ref: {hr.referralCode}</div>
+                        <div className="kpi-val" style={{ fontSize: '1.25rem', marginBottom: '4px', color: color.text }}>{hr.name}</div>
+                        <div className="kpi-label" style={{ color: color.text, opacity: 0.8, fontWeight: 600 }}>HR Ref: {hr.referralCode}</div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                   {hrs.length === 0 && (
                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                       No HR accounts found.
