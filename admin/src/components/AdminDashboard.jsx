@@ -406,6 +406,38 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     }
   };
 
+  const exportToCSV = () => {
+    if (!filteredApplications || !filteredApplications.length) return;
+    const headers = ['App ID', 'Name', 'Mobile', 'Email', 'City', 'Experience', 'Job Title', 'Company', 'HR Reference', 'Status', 'Applied At'];
+    const rows = filteredApplications.map(app => {
+      let hrRef = 'Direct';
+      if (app.referredBy) {
+        const hr = hrs.find(h => h.referralCode === app.referredBy);
+        hrRef = hr ? `${hr.name} (${hr.referralCode})` : `Agent (${app.referredBy})`;
+      }
+      return [
+        app.applicationNumber,
+        app.candidateName,
+        app.candidateMobile || 'N/A',
+        app.candidateEmail || 'N/A',
+        app.candidateLocation || 'N/A',
+        app.candidateExperience || 'N/A',
+        app.jobTitle,
+        app.companyName,
+        hrRef,
+        app.status,
+        new Date(app.appliedAt).toLocaleDateString('en-IN')
+      ];
+    });
+
+    const csvContent = [headers, ...rows].map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Admin_Candidates_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   const getStatusBadge = (status) => {
     const s = (status || '').toLowerCase();
     if (s === 'active' || s === 'selected') return <span className="badge badge-active">✓ {status}</span>;
@@ -959,6 +991,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <button 
+                  onClick={exportToCSV} 
+                  className="btn-primary" 
+                  style={{ width: '100%', background: '#0f172a', border: 'none', padding: '9px 16px', display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}
+                >
+                  <Download size={16} /> Export CSV
+                </button>
               </div>
             </div>
 

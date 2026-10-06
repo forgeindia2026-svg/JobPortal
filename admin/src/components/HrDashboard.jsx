@@ -20,6 +20,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All');
   const [showNotifications, setShowNotifications] = useState(false);
 
   const [interviews, setInterviews] = useState([]);
@@ -150,13 +151,36 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   // Filter Data
   const filteredApps = useMemo(() => {
     if (!stats?.applications) return [];
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
     return stats.applications.filter(app => {
       const matchesSearch = app.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             (app.candidateMobile && app.candidateMobile.includes(searchTerm));
       const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      let matchesDate = true;
+      if (dateFilter !== 'All' && app.appliedAt) {
+        const appDate = new Date(app.appliedAt);
+        const appDateMidnight = new Date(appDate.getFullYear(), appDate.getMonth(), appDate.getDate()).getTime();
+        
+        if (dateFilter === 'Today') {
+          matchesDate = appDateMidnight === today;
+        } else if (dateFilter === 'Yesterday') {
+          const yesterday = today - 86400000;
+          matchesDate = appDateMidnight === yesterday;
+        } else if (dateFilter === 'Last 7 Days') {
+          const sevenDaysAgo = today - (7 * 86400000);
+          matchesDate = appDateMidnight >= sevenDaysAgo;
+        } else if (dateFilter === 'This Month') {
+          matchesDate = appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear();
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [stats, searchTerm, statusFilter]);
+  }, [stats, searchTerm, statusFilter, dateFilter]);
 
   // Analytics Data
   const chartData = useMemo(() => {
@@ -230,6 +254,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         <div className="sidebar-nav" style={{ display: 'flex', flexDirection: window.innerWidth > 768 ? 'column' : 'row', gap: '0.5rem', overflowX: 'auto', paddingBottom: window.innerWidth > 768 ? '0' : '0.5rem' }}>
           <button className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => { setActiveTab('overview'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <LayoutDashboard size={18} /><span>Overview</span>
+          </button>
+
+          <button className={`nav-item ${activeTab === 'applied' ? 'active' : ''}`} onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <Users size={18} /><span>Applied</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'interviews' ? 'active' : ''}`} onClick={() => { setActiveTab('interviews'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
@@ -358,7 +386,12 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </div>
               </div>
             )}
+          </div>
+        )}
 
+        {/* Applied Candidates Tab */}
+        {activeTab === 'applied' && (
+          <div className="animate-fade">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
               <h3 className="section-title" style={{ margin: 0 }}>Your Candidates</h3>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -372,6 +405,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Selected">Selected</option>
                   <option value="Rejected">Rejected</option>
+                </select>
+                <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', background: 'white' }}>
+                  <option value="All">All Time</option>
+                  <option value="Today">Today</option>
+                  <option value="Yesterday">Yesterday</option>
+                  <option value="Last 7 Days">Last 7 Days</option>
+                  <option value="This Month">This Month</option>
                 </select>
                 <button onClick={exportToCSV} className="btn-primary" style={{ background: '#0f172a', border: 'none', padding: '8px 16px', display: 'flex', gap: '6px', alignItems: 'center', fontSize: '0.85rem' }}>
                   <Download size={16} /> Export CSV
