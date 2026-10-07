@@ -727,7 +727,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <RefreshCw size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#312e81' }}>{applications.filter(a => ['Applied', 'Shortlisted', 'Interview Scheduled', 'Follow up'].includes(a.status)).length}</div>
+                  <div className="kpi-val" style={{ color: '#312e81' }}>{applications.filter(a => !['Selected', 'Converted', 'Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
                 </div>
               </div>
@@ -765,7 +765,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <X size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#7f1d1d' }}>{applications.filter(a => a.status === 'Rejected').length}</div>
+                  <div className="kpi-val" style={{ color: '#7f1d1d' }}>{applications.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#7f1d1d', opacity: 0.8, fontWeight: 600 }}>Rejected</div>
                 </div>
               </div>
