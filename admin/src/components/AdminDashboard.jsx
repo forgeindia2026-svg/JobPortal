@@ -1463,7 +1463,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
