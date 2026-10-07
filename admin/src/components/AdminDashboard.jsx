@@ -344,6 +344,24 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     }
   };
 
+  const handleInterviewStatusChange = async (interviewId, newStatus) => {
+    try {
+      const res = await fetch(`${API_URL}/api/interviews/${interviewId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        fetchAllData();
+      } else {
+        alert('Failed to update interview status');
+      }
+    } catch (err) {
+      console.error('Error updating interview status:', err);
+      alert('Error updating interview status');
+    }
+  };
+
   const handleDeleteInterview = async (intObj) => {
     if (!intObj) return;
     const id = intObj.id || intObj._id;
@@ -1446,9 +1464,30 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         )}
                       </td>
                       <td>
-                        <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
-                          {int.status || 'Scheduled'}
-                        </span>
+                        <select
+                          className="status-dropdown"
+                          value={int.status || 'Scheduled'}
+                          onChange={(e) => handleInterviewStatusChange(int.id || int._id, e.target.value)}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            backgroundColor: '#f8fafc',
+                            color: '#0f172a',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="Scheduled">Scheduled</option>
+                          <option value="Selected">Selected</option>
+                          <option value="Rejected">Rejected</option>
+                          <option value="Document Submitted">Document Submitted</option>
+                          <option value="L1 Selected">L1 Selected</option>
+                          <option value="L2 Selected">L2 Selected</option>
+                          <option value="2 Times Attended Interview">2 Times Attended Interview</option>
+                          <option value="Enrollment">Enrollment</option>
+                        </select>
                       </td>
                       <td>
                         <button
