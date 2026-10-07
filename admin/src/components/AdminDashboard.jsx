@@ -1464,30 +1464,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         )}
                       </td>
                       <td>
-                        <select
-                          className="status-dropdown"
-                          value={int.status || 'Scheduled'}
-                          onChange={(e) => handleInterviewStatusChange(int.id || int._id, e.target.value)}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            backgroundColor: '#f8fafc',
-                            color: '#0f172a',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <option value="Scheduled">Scheduled</option>
-                          <option value="Selected">Selected</option>
-                          <option value="Rejected">Rejected</option>
-                          <option value="Document Submitted">Document Submitted</option>
-                          <option value="L1 Selected">L1 Selected</option>
-                          <option value="L2 Selected">L2 Selected</option>
-                          <option value="2 Times re-scheduled interview">2 Times re-scheduled interview</option>
-                          <option value="Enrollment">Enrollment</option>
-                        </select>
+                        <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {int.status || 'Scheduled'}
+                        </span>
                       </td>
                       <td>
                         <button
