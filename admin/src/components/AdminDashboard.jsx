@@ -50,6 +50,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
+  
+  const [bankInfoModal, setBankInfoModal] = useState(null);
 
   const getAppPaymentAmount = (app) => {
     if (app.paymentAmount && Number(app.paymentAmount) > 0) {
@@ -1481,15 +1483,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <tr key={hr.id}>
                       <td>
                         <div style={{ fontWeight: 700 }}>{hr.name}</div>
-                        {hr.bankAccountNumber && hr.bankIfscCode ? (
-                          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '4px', background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
-                            <span style={{ fontWeight: 600 }}>A/c:</span> {hr.bankAccountNumber} | <span style={{ fontWeight: 600 }}>IFSC:</span> {hr.bankIfscCode}
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: '0.65rem', color: '#ef4444', marginTop: '4px', background: '#fef2f2', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #fee2e2' }}>
-                            Bank Info Pending
-                          </div>
-                        )}
                       </td>
                       <td>{hr.email}</td>
                       <td>
@@ -1888,7 +1881,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         totalPending,
                         totalRequested,
                         totalPaid,
-                        appIds: pendingAppIds
+                        appIds: pendingAppIds,
+                        bankAccountNumber: hr.bankAccountNumber,
+                        bankIfscCode: hr.bankIfscCode
                       };
                     }); // Removed filter so ALL HRs show up
                     
@@ -1907,7 +1902,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       return (
                       <tr key={hr.referralCode}>
                         <td>
-                          <div style={{ fontWeight: 700, color: '#1e293b' }}>{hr.hrName}</div>
+                          <div style={{ fontWeight: 700, color: '#1e293b', cursor: 'pointer', display: 'inline-block', borderBottom: '1px dashed #94a3b8' }} onClick={() => setBankInfoModal(hr)} title="Click to view Bank Details">
+                            {hr.hrName}
+                          </div>
                           <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{hr.hrEmail}</div>
                         </td>
                         <td>
@@ -2434,6 +2431,47 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             fetchAllData();
           }}
         />
+      )}
+
+      {/* Bank Info Modal */}
+      {bankInfoModal && (
+        <div className="modal-overlay" onClick={() => setBankInfoModal(null)}>
+          <div className="modal-content animate-fade" style={{ maxWidth: '400px', borderRadius: '16px', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '1.5rem', color: 'white' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={20} /> Bank Details
+                </h3>
+                <button onClick={() => setBankInfoModal(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer' }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <p style={{ margin: '8px 0 0 0', opacity: 0.9, fontSize: '0.9rem' }}>{bankInfoModal.hrName} ({bankInfoModal.referralCode})</p>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              {bankInfoModal.bankAccountNumber && bankInfoModal.bankIfscCode ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Account Number</div>
+                    <div style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 700, letterSpacing: '1px' }}>{bankInfoModal.bankAccountNumber}</div>
+                  </div>
+                  <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>IFSC Code</div>
+                    <div style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 700, letterSpacing: '1px' }}>{bankInfoModal.bankIfscCode}</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <div style={{ background: '#fef2f2', color: '#ef4444', display: 'inline-flex', padding: '12px', borderRadius: '50%', marginBottom: '1rem' }}>
+                    <XCircle size={32} />
+                  </div>
+                  <h4 style={{ color: '#0f172a', margin: '0 0 8px 0', fontSize: '1.1rem' }}>No Bank Details</h4>
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.9rem' }}>This user has not updated their bank details in their Profile Settings yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
