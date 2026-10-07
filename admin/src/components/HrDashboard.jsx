@@ -3,6 +3,7 @@ import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
+import SubAgentsManager from './SubAgentsManager';
 
 export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false }) {
   const roleLabel = isAgent ? 'Partner' : 'HR';
@@ -308,11 +309,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <CalendarDays size={18} /><span>Interviews</span>
           </button>
 
-          {!isAgent && (
-            <button id="hr-agents-tab" className={`nav-item ${activeTab === 'agents' ? 'active' : ''}`} onClick={() => { setActiveTab('agents'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
-              <UserCog size={18} /><span>Partners</span>
-            </button>
-          )}
+          <button id="hr-agents-tab" className={`nav-item ${activeTab === 'agents' ? 'active' : ''}`} onClick={() => { setActiveTab('agents'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <UserCog size={18} /><span>{isAgent ? 'My Partners' : 'Partners'}</span>
+          </button>
 
           <button className={`nav-item ${activeTab === 'incentives' ? 'active' : ''}`} onClick={() => { setActiveTab('incentives'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Gift size={18} /><span>Incentives</span>
@@ -377,6 +376,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
         {activeTab === 'agents' && !isAgent && (
           <AgentsManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+            candidatePortalBaseUrl={candidatePortalBaseUrl}
+            showToast={showToast}
+          />
+        )}
+
+        {activeTab === 'agents' && isAgent && (
+          <SubAgentsManager
             API_URL={API_URL}
             currentUser={currentUser}
             candidatePortalBaseUrl={candidatePortalBaseUrl}

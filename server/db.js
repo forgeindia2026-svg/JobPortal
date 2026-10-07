@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true },
   linkClicks: { type: Number, default: 0 },
   incentives: { type: Number, default: 0 },
-  parentHrId: String, // for role 'agent' — the HR who owns this agent
+  parentHrId: String, // for role 'agent' — the HR who owns this agent's network
+  parentAgentId: String, // for role 'agent' — the immediate Partner who referred them (for MLM)
   bankAccountNumber: String,
   bankIfscCode: String,
   createdAt: { type: String, default: () => new Date().toISOString() }

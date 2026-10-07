@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { UserPlus, Users, Copy, Share2, Trash2, X, MousePointerClick, Link2, CheckCircle } from 'lucide-react';
-import SubAgentsManager from './SubAgentsManager';
 
 /**
  * Partners tab inside the HR Workspace.
  * Each HR can create any number of partners. Every partner gets their own login
  * and unique referral link (?ref=AG-xxxxx) tracked under that partner.
  */
-export default function AgentsManager({ API_URL, currentUser, candidatePortalBaseUrl, showToast }) {
+export default function SubAgentsManager({ API_URL, currentUser, candidatePortalBaseUrl, showToast }) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,7 +18,7 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
   const [viewingSubAgent, setViewingSubAgent] = useState(null);
 
   const fetchAgents = () => {
-    fetch(`${API_URL}/api/users/hr/${currentUser.id}/agents`)
+    fetch(`${API_URL}/api/users/agents/${currentUser.id}/subagents`)
       .then(res => res.json())
       .then(data => { setAgents(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
@@ -49,7 +48,7 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
     setSaving(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/api/users/hr/${currentUser.id}/agents`, {
+      const res = await fetch(`${API_URL}/api/users/agents/${currentUser.id}/subagents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -70,7 +69,7 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
   const handleDelete = async (agent) => {
     if (!window.confirm(`Delete partner ${agent.name}? Their referral link will stop tracking.`)) return;
     try {
-      const res = await fetch(`${API_URL}/api/users/hr/${currentUser.id}/agents/${agent.id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/api/users/agents/${currentUser.id}/subagents/${agent.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       showToast && showToast('Partner deleted');
       fetchAgents();

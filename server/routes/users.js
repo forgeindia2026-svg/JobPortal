@@ -187,6 +187,93 @@ router.delete('/hr/:hrId/agents/:agentId', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete agent.' });
   }
 });
+// ================= SUB-AGENTS (MLM) =================
+
+// GET all sub-agents of an Agent (with applied count)
+router.get('/agents/:agentId/subagents', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const subagents = await UserModel.find({ role: 'agent', parentAgentId: agentId }).sort({ createdAt: -1 }).lean();
+    const codes = subagents.map(a => a.referralCode).filter(Boolean);
+    const counts = codes.length
+      ? await ApplicationModel.aggregate([
+          { $match: { referredBy: { $in: codes } } },
+          { $group: { _id: '$referredBy', count: { $sum: 1 } } }
+        ])
+      : [];
+    const countMap = Object.fromEntries(counts.map(c => [String(c._id).toUpperCase(), c.count]));
+    res.json(subagents.map(a => {
+      const { passwordHash, ...rest } = a;
+      return { ...rest, candidatesApplied: countMap[String(a.referralCode).toUpperCase()] || 0 };
+    }));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch sub-agents.' });
+  }
+});
+
+// POST create sub-agent under an Agent
+router.post('/agents/:agentId/subagents', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const { name, email, mobile, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    }
+
+    const parentAgent = await UserModel.findOne({ id: agentId, role: 'agent' }).lean();
+    if (!parentAgent) {
+      return res.status(404).json({ error: 'Parent Agent not found.' });
+    }
+
+    const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Account with this email already exists.' });
+    }
+
+    // Generate unique sub-agent referral code
+    let referralCode;
+    for (let i = 0; i < 5; i++) {
+      referralCode = 'AG-' + Math.floor(10000 + Math.random() * 90000);
+      const clash = await UserModel.findOne({ referralCode }).lean();
+      if (!clash) break;
+    }
+
+    const newSubAgent = await UserModel.create({
+      id: 'agt_' + Date.now(),
+      name,
+      email: email.toLowerCase(),
+      mobile: mobile || '',
+      passwordHash: 'dummy_hash_' + password,
+      role: 'agent',
+      parentHrId: parentAgent.parentHrId, // inherit the top HR owner
+      parentAgentId: agentId, // the immediate parent
+      referralCode,
+      linkClicks: 0,
+      createdAt: new Date().toISOString()
+    });
+
+    const { passwordHash, ...safe } = newSubAgent.toObject();
+    res.status(201).json(safe);
+  } catch (error) {
+    console.error('Error creating sub-agent:', error);
+    res.status(500).json({ error: 'Failed to create sub-agent.' });
+  }
+});
+
+// DELETE a sub-agent
+router.delete('/agents/:agentId/subagents/:subAgentId', async (req, res) => {
+  try {
+    const { agentId, subAgentId } = req.params;
+    const result = await UserModel.deleteOne({ id: subAgentId, role: 'agent', parentAgentId: agentId });
+    if (!result.deletedCount) {
+      return res.status(404).json({ error: 'Sub-agent not found.' });
+    }
+    res.json({ message: 'Sub-agent deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete sub-agent.' });
+  }
+});
 
 // PUT update HR incentives (Admin update)
 router.put('/hr/:id/incentives', async (req, res) => {
