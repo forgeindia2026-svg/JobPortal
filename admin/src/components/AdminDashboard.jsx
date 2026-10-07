@@ -1405,7 +1405,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Round</th>
                     <th>Date & Time</th>
                     <th>Mode & Link / Address</th>
-                    <th>Interviewer</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -1446,7 +1445,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                           </div>
                         )}
                       </td>
-                      <td>{int.interviewer || 'HR Team'}</td>
                       <td>
                         <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
                           {int.status || 'Scheduled'}
