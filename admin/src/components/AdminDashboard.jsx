@@ -1479,7 +1479,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <tbody>
                   {hrs.map(hr => (
                     <tr key={hr.id}>
-                      <td style={{ fontWeight: 700 }}>{hr.name}</td>
+                      <td>
+                        <div style={{ fontWeight: 700 }}>{hr.name}</div>
+                        {hr.bankAccountNumber && hr.bankIfscCode && (
+                          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '4px', background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
+                            <span style={{ fontWeight: 600 }}>A/c:</span> {hr.bankAccountNumber} | <span style={{ fontWeight: 600 }}>IFSC:</span> {hr.bankIfscCode}
+                          </div>
+                        )}
+                      </td>
                       <td>{hr.email}</td>
                       <td>
                         <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>

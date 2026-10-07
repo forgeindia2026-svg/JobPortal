@@ -37,6 +37,31 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [agentIncentiveInput, setAgentIncentiveInput] = useState('');
   const [savingAgentIncentive, setSavingAgentIncentive] = useState(false);
 
+  const [profileData, setProfileData] = useState({
+    name: currentUser.name || '',
+    bankAccountNumber: currentUser.bankAccountNumber || '',
+    bankIfscCode: currentUser.bankIfscCode || ''
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  const handleProfileSave = async () => {
+    setProfileSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/${currentUser.id}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData)
+      });
+      if (!res.ok) throw new Error('Failed to update profile');
+      showToast('Profile updated successfully!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update profile', 'error');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   const candidatePortalBaseUrl = window.location.hostname === 'localhost'
     ? 'http://localhost:5173'
     : 'https://jobs.forgeindiaconnect.in';
@@ -626,30 +651,62 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               <Settings size={22} color="#3b82f6" /> Profile Settings
             </h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Full Name</label>
-                <input type="text" defaultValue={currentUser.name} className="form-input" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Full Name</label>
+                  <input 
+                    type="text" 
+                    value={profileData.name} 
+                    onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                    className="form-input" 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Email Address</label>
+                  <input 
+                    type="email" 
+                    defaultValue={currentUser.email} 
+                    readOnly
+                    disabled 
+                    style={{ background: '#f8fafc', width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px dashed #cbd5e1', color: '#64748b', cursor: 'not-allowed', outline: 'none' }} 
+                    title="Email address cannot be changed"
+                  />
+                  <small style={{ color: '#ef4444', display: 'block', marginTop: '4px' }}>* Login email cannot be changed.</small>
+                </div>
+                <div style={{ borderTop: '1px solid #e2e8f0', margin: '1rem 0' }}></div>
+                <h4 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0' }}>Bank Account Details</h4>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>Required for incentive payouts</p>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Account Number</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter account number" 
+                    value={profileData.bankAccountNumber}
+                    onChange={e => setProfileData({ ...profileData, bankAccountNumber: e.target.value })}
+                    className="form-input" 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>IFSC Code</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter IFSC code" 
+                    value={profileData.bankIfscCode}
+                    onChange={e => setProfileData({ ...profileData, bankIfscCode: e.target.value })}
+                    className="form-input" 
+                  />
+                </div>
+                
+                <button 
+                  className="btn-primary" 
+                  onClick={handleProfileSave}
+                  disabled={profileSaving}
+                  style={{ alignSelf: 'flex-start', padding: '10px 24px', marginTop: '1rem', opacity: profileSaving ? 0.7 : 1 }}
+                >
+                  {profileSaving ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Email Address</label>
-                <input type="email" defaultValue={currentUser.email} disabled style={{ background: '#f1f5f9', width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#94a3b8' }} />
-              </div>
-              <div style={{ borderTop: '1px solid #e2e8f0', margin: '1rem 0' }}></div>
-              <h4 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0' }}>Bank Account Details</h4>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>Required for incentive payouts</p>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Account Number</label>
-                <input type="text" placeholder="Enter account number" className="form-input" />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>IFSC Code</label>
-                <input type="text" placeholder="Enter IFSC code" className="form-input" />
-              </div>
-              
-              <button className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 24px', marginTop: '1rem' }}>Save Changes</button>
             </div>
-          </div>
         )}
 
         {/* Incentives Tab */}

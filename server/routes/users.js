@@ -198,6 +198,31 @@ router.put('/hr/:id/incentives', async (req, res) => {
   }
 });
 
+// PUT update user profile (Name, Bank Details)
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, bankAccountNumber, bankIfscCode } = req.body;
+    
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { id },
+      { $set: { name, bankAccountNumber, bankIfscCode } },
+      { returnDocument: 'after' }
+    ).lean();
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const { passwordHash, ...safeUser } = updatedUser;
+    res.json(safeUser);
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+});
+
+
 // PUT per-candidate incentives for an HR (Admin only)
 // body: { items: [{ applicationId, amount }] }
 // HR total incentives = sum of incentiveAmount across all applications referred by that HR

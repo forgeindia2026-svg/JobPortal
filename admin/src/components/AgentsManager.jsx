@@ -130,6 +130,11 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
                   <div style={{ fontWeight: 700, color: '#0f172a' }}>{agent.name}</div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{agent.email}</div>
                   {agent.mobile && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{agent.mobile}</div>}
+                  {agent.bankAccountNumber && agent.bankIfscCode && (
+                    <div style={{ fontSize: '0.7rem', color: '#059669', marginTop: '4px', background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
+                      <span style={{ fontWeight: 600 }}>A/c:</span> {agent.bankAccountNumber} | <span style={{ fontWeight: 600 }}>IFSC:</span> {agent.bankIfscCode}
+                    </div>
+                  )}
                 </td>
                 <td>
                   <span style={{ background: '#ede9fe', color: '#6d28d9', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.8rem' }}>
