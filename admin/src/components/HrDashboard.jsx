@@ -62,8 +62,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [profileData, setProfileData] = useState({
     name: currentUser.name || '',
     bankAccountNumber: currentUser.bankAccountNumber || '',
-    bankIfscCode: currentUser.bankIfscCode || ''
+    bankIfscCode: currentUser.bankIfscCode || '',
+    bankName: currentUser.bankName || '',
+    bankBranch: currentUser.bankBranch || '',
+    accountHolderName: currentUser.accountHolderName || ''
   });
+  const hasBankDetails = Boolean(currentUser.bankAccountNumber && currentUser.bankIfscCode);
+  const [isEditingBankDetails, setIsEditingBankDetails] = useState(!hasBankDetails);
   const [profileSaving, setProfileSaving] = useState(false);
 
   const handleProfileSave = async () => {
@@ -75,6 +80,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         body: JSON.stringify(profileData)
       });
       if (!res.ok) throw new Error('Failed to update profile');
+      const data = await res.json();
+      localStorage.setItem('admin_user', JSON.stringify(data.user));
+      setIsEditingBankDetails(false);
       showToast('Profile updated successfully!', 'success');
     } catch (err) {
       console.error(err);
@@ -961,6 +969,30 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <h4 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0' }}>Bank Account Details</h4>
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>Required for incentive payouts</p>
                 <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Account Holder Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter account holder name" 
+                    value={profileData.accountHolderName}
+                    onChange={e => setProfileData({ ...profileData, accountHolderName: e.target.value })}
+                    className="form-input" 
+                    disabled={!isEditingBankDetails}
+                    style={{ background: !isEditingBankDetails ? '#f8fafc' : '#fff', cursor: !isEditingBankDetails ? 'not-allowed' : 'text' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Bank Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter bank name" 
+                    value={profileData.bankName}
+                    onChange={e => setProfileData({ ...profileData, bankName: e.target.value })}
+                    className="form-input" 
+                    disabled={!isEditingBankDetails}
+                    style={{ background: !isEditingBankDetails ? '#f8fafc' : '#fff', cursor: !isEditingBankDetails ? 'not-allowed' : 'text' }}
+                  />
+                </div>
+                <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Account Number</label>
                   <input 
                     type="text" 
@@ -968,6 +1000,8 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     value={profileData.bankAccountNumber}
                     onChange={e => setProfileData({ ...profileData, bankAccountNumber: e.target.value })}
                     className="form-input" 
+                    disabled={!isEditingBankDetails}
+                    style={{ background: !isEditingBankDetails ? '#f8fafc' : '#fff', cursor: !isEditingBankDetails ? 'not-allowed' : 'text' }}
                   />
                 </div>
                 <div>
@@ -978,17 +1012,43 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     value={profileData.bankIfscCode}
                     onChange={e => setProfileData({ ...profileData, bankIfscCode: e.target.value })}
                     className="form-input" 
+                    disabled={!isEditingBankDetails}
+                    style={{ background: !isEditingBankDetails ? '#f8fafc' : '#fff', cursor: !isEditingBankDetails ? 'not-allowed' : 'text' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Branch Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter branch name" 
+                    value={profileData.bankBranch}
+                    onChange={e => setProfileData({ ...profileData, bankBranch: e.target.value })}
+                    className="form-input" 
+                    disabled={!isEditingBankDetails}
+                    style={{ background: !isEditingBankDetails ? '#f8fafc' : '#fff', cursor: !isEditingBankDetails ? 'not-allowed' : 'text' }}
                   />
                 </div>
                 
-                <button 
-                  className="btn-primary" 
-                  onClick={handleProfileSave}
-                  disabled={profileSaving}
-                  style={{ alignSelf: 'flex-start', padding: '10px 24px', marginTop: '1rem', opacity: profileSaving ? 0.7 : 1 }}
-                >
-                  {profileSaving ? 'Saving...' : 'Save Changes'}
-                </button>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '1rem' }}>
+                  {isEditingBankDetails ? (
+                    <button 
+                      className="btn-primary" 
+                      onClick={handleProfileSave}
+                      disabled={profileSaving}
+                      style={{ padding: '10px 24px', opacity: profileSaving ? 0.7 : 1 }}
+                    >
+                      {profileSaving ? 'Saving...' : 'Save Details'}
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn-secondary" 
+                      onClick={() => setIsEditingBankDetails(true)}
+                      style={{ padding: '10px 24px' }}
+                    >
+                      Edit Details
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
         )}

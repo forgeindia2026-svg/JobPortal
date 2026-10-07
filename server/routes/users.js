@@ -302,11 +302,11 @@ router.put('/hr/:id/incentives', async (req, res) => {
 router.put('/:id/profile', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, bankAccountNumber, bankIfscCode } = req.body;
+    const { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName } = req.body;
     
     const updatedUser = await UserModel.findOneAndUpdate(
       { id },
-      { $set: { name, bankAccountNumber, bankIfscCode } },
+      { $set: { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName } },
       { returnDocument: 'after' }
     ).lean();
 
