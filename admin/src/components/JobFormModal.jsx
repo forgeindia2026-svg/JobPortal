@@ -97,8 +97,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         }]);
       }
 
-      setHrIncentiveFree(jobToEdit.hrIncentiveFree || '');
-      setHrIncentivePaid(jobToEdit.hrIncentivePaid || '');
+      setHrIncentiveFree(jobToEdit.hrIncentiveFree !== undefined ? jobToEdit.hrIncentiveFree : '');
+      setHrIncentivePaid(jobToEdit.hrIncentivePaid !== undefined ? jobToEdit.hrIncentivePaid : '');
       setOpenings(jobToEdit.openings || '');
       setDescription(jobToEdit.description || '');
       setLastDate(jobToEdit.lastDate || '');
