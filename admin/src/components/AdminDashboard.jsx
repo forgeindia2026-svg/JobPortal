@@ -173,6 +173,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       setLoading(false);
     }
 
+    // HR fetch - separate so it doesn't break main dashboard if endpoint is missing
+    try {
+      const [hrRes, agentsRes] = await Promise.all([
+        fetch(`${API_URL}/api/users/hr`),
+        fetch(`${API_URL}/api/users/agents/all`)
+      ]);
+      if (hrRes.ok) {
+        const hrData = await hrRes.json();
+        setHrs(Array.isArray(hrData) ? hrData : []);
+      }
+      if (agentsRes.ok) {
+        const agentsData = await agentsRes.json();
+        setAllAgents(Array.isArray(agentsData) ? agentsData : []);
+      }
+    } catch (err) {
+      console.warn('User endpoints not available yet:', err.message);
+    }
+  };
+
   const saveGlobalItIncentives = async () => {
     try {
       const res = await fetch(`${API_URL}/api/settings/it-training-incentives`, {
@@ -196,25 +215,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       ...prev,
       [processName]: Number(value)
     }));
-  };
-
-    // HR fetch - separate so it doesn't break main dashboard if endpoint is missing
-    try {
-      const [hrRes, agentsRes] = await Promise.all([
-        fetch(`${API_URL}/api/users/hr`),
-        fetch(`${API_URL}/api/users/agents/all`)
-      ]);
-      if (hrRes.ok) {
-        const hrData = await hrRes.json();
-        setHrs(Array.isArray(hrData) ? hrData : []);
-      }
-      if (agentsRes.ok) {
-        const agentsData = await agentsRes.json();
-        setAllAgents(Array.isArray(agentsData) ? agentsData : []);
-      }
-    } catch (err) {
-      console.warn('User endpoints not available yet:', err.message);
-    }
   };
 
   const handleSaveItProcess = async (processData) => {
