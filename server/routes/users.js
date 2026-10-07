@@ -90,6 +90,19 @@ router.post('/hr/:referralCode/visit', async (req, res) => {
 
 // ================= AGENTS (owned by an HR) =================
 
+// GET all agents (for admin)
+router.get('/agents/all', async (req, res) => {
+  try {
+    const agents = await UserModel.find({ role: 'agent' }).sort({ createdAt: -1 }).lean();
+    res.json(agents.map(a => {
+      const { passwordHash, ...rest } = a;
+      return rest;
+    }));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch all agents.' });
+  }
+});
+
 // GET all agents of an HR (with applied count)
 router.get('/hr/:hrId/agents', async (req, res) => {
   try {
@@ -231,16 +244,20 @@ router.put('/hr/:id/candidate-incentives', async (req, res) => {
     const { id } = req.params;
     const { items } = req.body;
 
-    const hrUser = await UserModel.findOne({ id, role: 'hr' }).lean();
-    if (!hrUser) {
-      return res.status(404).json({ error: 'HR user not found' });
+    const user = await UserModel.findOne({ id, role: { $in: ['hr', 'agent'] } }).lean();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
     if (!Array.isArray(items)) {
       return res.status(400).json({ error: 'items array is required.' });
     }
 
-    const agents = await UserModel.find({ parentHrId: id, role: 'agent' }).lean();
-    const codes = [hrUser.referralCode, ...agents.map(a => a.referralCode)].filter(Boolean);
+    let codes = [user.referralCode];
+    if (user.role === 'hr') {
+      const agents = await UserModel.find({ parentHrId: id, role: 'agent' }).lean();
+      codes = [...codes, ...agents.map(a => a.referralCode)];
+    }
+    codes = codes.filter(Boolean);
     const codesRegex = codes.map(c => new RegExp('^' + c + '$', 'i'));
 
     const now = new Date().toISOString();
@@ -257,7 +274,7 @@ router.put('/hr/:id/candidate-incentives', async (req, res) => {
     const total = apps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
 
     const updatedUser = await UserModel.findOneAndUpdate(
-      { id, role: 'hr' },
+      { id, role: { $in: ['hr', 'agent'] } },
       { $set: { incentives: total } },
       { returnDocument: 'after' }
     );

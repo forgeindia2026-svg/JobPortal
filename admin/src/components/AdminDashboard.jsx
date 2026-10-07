@@ -46,6 +46,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [interviews, setInterviews] = useState([]);
   const [itProcesses, setItProcesses] = useState([]);
   const [hrs, setHrs] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [jobModalOpen, setJobModalOpen] = useState(false);
@@ -170,13 +171,20 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
     // HR fetch - separate so it doesn't break main dashboard if endpoint is missing
     try {
-      const hrRes = await fetch(`${API_URL}/api/users/hr`);
+      const [hrRes, agentsRes] = await Promise.all([
+        fetch(`${API_URL}/api/users/hr`),
+        fetch(`${API_URL}/api/users/agents/all`)
+      ]);
       if (hrRes.ok) {
         const hrData = await hrRes.json();
         setHrs(Array.isArray(hrData) ? hrData : []);
       }
+      if (agentsRes.ok) {
+        const agentsData = await agentsRes.json();
+        setAllAgents(Array.isArray(agentsData) ? agentsData : []);
+      }
     } catch (err) {
-      console.warn('HR endpoint not available yet:', err.message);
+      console.warn('User endpoints not available yet:', err.message);
     }
   };
 
@@ -296,11 +304,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const handleBatchCancel = async (hrId, appIds, totalAmount, hrName) => {
     if (!window.confirm(`Cancel/Remove pending ₹${totalAmount} for ${hrName}?`)) return;
     try {
-      const incentives = appIds.map(id => ({ appId: id, amount: 0 }));
+      const items = appIds.map(id => ({ applicationId: id, amount: 0 }));
       const res = await fetch(`${API_URL}/api/users/hr/${hrId}/candidate-incentives`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ incentives })
+        body: JSON.stringify({ items })
       });
       if (res.ok) {
         fetchAllData();
@@ -1850,7 +1858,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </thead>
                 <tbody>
                   {(() => {
-                    const hrPayoutsList = hrs.map(hr => {
+                    const allReferrers = [...hrs, ...allAgents];
+                    const hrPayoutsList = allReferrers.map(hr => {
                       const hrApps = applications.filter(app => app.referredBy === hr.referralCode && (app.status === 'Selected' || app.status === 'Converted'));
                       let totalIncentiveEarned = 0;
                       let totalPending = 0;
@@ -1873,9 +1882,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       });
 
                       return {
+                        id: hr.id,
                         referralCode: hr.referralCode,
                         hrName: hr.name,
                         hrEmail: hr.email,
+                        role: hr.role,
                         closedCandidates: hrApps.length,
                         totalIncentiveEarned,
                         totalPending,
@@ -1903,7 +1914,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <tr key={hr.referralCode}>
                         <td>
                           <div style={{ fontWeight: 700, color: '#1e293b', cursor: 'pointer', display: 'inline-block', borderBottom: '1px dashed #94a3b8' }} onClick={() => setBankInfoModal(hr)} title="Click to view Bank Details">
-                            {hr.hrName}
+                            {hr.hrName} <span style={{ fontSize: '0.7rem', color: hr.role === 'agent' ? '#8b5cf6' : '#f59e0b', background: hr.role === 'agent' ? '#f3e8ff' : '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginLeft: '6px' }}>{hr.role === 'agent' ? 'Partner' : 'HR'}</span>
                           </div>
                           <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{hr.hrEmail}</div>
                         </td>
@@ -1953,7 +1964,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                 <button
                                   title={`Cancel (₹${totalToPay})`}
                                   disabled={totalToPay === 0}
-                                  onClick={() => handleBatchCancel(hrs.find(h => h.referralCode === hr.referralCode)?.id, hr.appIds, totalToPay, hr.hrName)}
+                                  onClick={() => handleBatchCancel(allReferrers.find(h => h.referralCode === hr.referralCode)?.id, hr.appIds, totalToPay, hr.hrName)}
                                   style={{
                                     background: totalToPay > 0 ? '#fee2e2' : '#f1f5f9',
                                     color: totalToPay > 0 ? '#dc2626' : '#94a3b8',
@@ -1971,7 +1982,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                               </div>
                             <button
                               onClick={() => {
-                                const originalHr = hrs.find(h => h.referralCode === hr.referralCode);
+                                const originalHr = allReferrers.find(h => h.referralCode === hr.referralCode);
                                 if (originalHr) {
                                   setSelectedHrForIncentive(originalHr);
                                   const initial = {};
