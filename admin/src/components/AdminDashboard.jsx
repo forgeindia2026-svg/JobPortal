@@ -1399,6 +1399,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <thead>
                   <tr>
                     <th>Candidate</th>
+                    <th>HR / Partner</th>
                     <th>Job Title</th>
                     <th>Company</th>
                     <th>Round</th>
@@ -1410,10 +1411,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   </tr>
                 </thead>
                 <tbody>
-                  {interviews.map(int => (
-                    <tr key={int.id}>
-                      <td style={{ fontWeight: 700 }}>{int.candidateName}</td>
-                      <td>{int.jobTitle}</td>
+                  {interviews.map(int => {
+                    const app = applications.find(a => a.id === int.applicationId);
+                    const referrer = app && app.referredBy ? [...hrs, ...allAgents].find(r => r.referralCode === app.referredBy) : null;
+                    return (
+                      <tr key={int.id}>
+                        <td style={{ fontWeight: 700 }}>{int.candidateName}</td>
+                        <td>
+                          {referrer ? (
+                            <div>
+                              <div style={{ fontWeight: 600, color: '#334155' }}>{referrer.name}</div>
+                              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{referrer.referralCode}</div>
+                            </div>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>
+                          )}
+                        </td>
+                        <td>{int.jobTitle}</td>
                       <td>{int.companyName}</td>
                       <td><span className="badge badge-shortlisted">{int.round}</span></td>
                       <td style={{ fontWeight: 600 }}>{int.date} at {int.time}</td>
