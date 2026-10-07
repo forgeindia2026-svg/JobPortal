@@ -5,6 +5,22 @@ import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
 
+const getCompanyColor = (name) => {
+  const lowerName = (name || '').toLowerCase();
+  if (lowerName.includes('idfc')) return '#991b1b';
+  if (lowerName.includes('bandhan')) return '#0369a1';
+  if (lowerName.includes('hdfc')) return '#1d4ed8';
+  if (lowerName.includes('aditya birla')) return '#b91c1c';
+  if (lowerName.includes('kotak')) return '#003366';
+  if (lowerName.includes('mahindra finance')) return '#e11d48';
+  if (lowerName.includes('axis')) return '#831843';
+  if (lowerName.includes('icici')) return '#ea580c';
+  if (lowerName.includes('yes bank')) return '#0284c7';
+  if (lowerName.includes('tata aig')) return '#1e3a8a';
+  if (lowerName.includes('fic') || lowerName.includes('pan india')) return '#d97706';
+  return '#475569';
+};
+
 export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false }) {
   const roleLabel = isAgent ? 'Partner' : 'HR';
   const [stats, setStats] = useState(null);
@@ -26,6 +42,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
   const [interviews, setInterviews] = useState([]);
   const [jobs, setJobs] = useState([]);
+  
+  const [showPartnerIncentiveModal, setShowPartnerIncentiveModal] = useState(false);
+  const [selectedJobForIncentive, setSelectedJobForIncentive] = useState(null);
+  const [partnerIncentiveForm, setPartnerIncentiveForm] = useState({ freeJobIncentive: 0, paidJobIncentive: 0, processIncentives: {} });
 
   // Modals for HR Actions
   const [statusModalApp, setStatusModalApp] = useState(null);
@@ -114,9 +134,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       Promise.all([
         fetch(`${API_URL}/api/jobs?status=Active`).then(res => res.json()),
         fetch(`${API_URL}/api/it-training-processes`).then(res => res.json()),
-        fetch(`${API_URL}/api/settings/it-training-incentives`).then(res => res.json()).catch(() => ({}))
+        fetch(`${API_URL}/api/settings/it-training-incentives`).then(res => res.json()).catch(() => ({})),
+        fetch(`${API_URL}/api/partner-incentives?hrId=${isAgent ? currentUser.parentHrId : currentUser.id}`).then(res => res.json()).catch(() => ([]))
       ])
-      .then(([jobsData, itData, globalIncentives]) => {
+      .then(([jobsData, itData, globalIncentives, partnerIncentives]) => {
         const standardJobs = Array.isArray(jobsData) ? jobsData : [];
         let combinedItJob = null;
         if (Array.isArray(itData)) {
@@ -143,7 +164,22 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             };
           }
         }
-        setJobs(combinedItJob ? [combinedItJob, ...standardJobs] : standardJobs);
+        
+        const allJobs = combinedItJob ? [combinedItJob, ...standardJobs] : standardJobs;
+        
+        // Attach partner incentives to jobs
+        const mappedJobs = allJobs.map(job => {
+          const pi = partnerIncentives.find(p => p.jobId === job.id) || {};
+          if (job.isCombinedItTraining) {
+             job.partnerProcessIncentives = pi.processIncentives || {};
+          } else {
+             job.partnerIncentiveFree = pi.freeJobIncentive || 0;
+             job.partnerIncentivePaid = pi.paidJobIncentive || 0;
+          }
+          return job;
+        });
+
+        setJobs(mappedJobs);
       })
       .catch(err => console.error('Error fetching jobs:', err));
     }
@@ -201,6 +237,41 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     } catch (err) {
       console.error(err);
       showToast('Error updating interview status', 'error');
+    }
+  };
+
+  const handleSavePartnerIncentive = async () => {
+    try {
+      const payload = {
+        hrId: currentUser.id,
+        jobId: selectedJobForIncentive.id,
+        ...partnerIncentiveForm
+      };
+      const res = await fetch(`${API_URL}/api/partner-incentives`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('Partner incentive saved successfully!');
+        setShowPartnerIncentiveModal(false);
+        // Refresh jobs to show updated partner incentives locally
+        setJobs(prevJobs => prevJobs.map(j => {
+          if (j.id === selectedJobForIncentive.id) {
+            if (j.isCombinedItTraining) {
+              return { ...j, partnerProcessIncentives: { ...partnerIncentiveForm.processIncentives } };
+            } else {
+              return { ...j, partnerIncentiveFree: partnerIncentiveForm.freeJobIncentive, partnerIncentivePaid: partnerIncentiveForm.paidJobIncentive };
+            }
+          }
+          return j;
+        }));
+      } else {
+        showToast('Failed to save partner incentive', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error saving partner incentive', 'error');
     }
   };
 
@@ -355,7 +426,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           </button>
           
           <button className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => { setActiveTab('jobs'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
-            <Briefcase size={18} /><span>Job Openings</span>
+            <Briefcase size={18} /><span>Incentive Slot</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'incentives' ? 'active' : ''}`} onClick={() => { setActiveTab('incentives'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
@@ -743,85 +814,115 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {activeTab === 'jobs' && (
           <div className="animate-fade">
             <div style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Job Openings & Incentives</h2>
+              <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Incentive Slot</h2>
               <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
                 View all active job requirements and the incentive you earn for each successful selection.
               </p>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {jobs.map((job, index) => {
-                const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
-                const themeColor = colors[index % colors.length];
+                const compColor = getCompanyColor(job.companyName);
+                const bgGradient = `linear-gradient(135deg, ${compColor} 0%, ${compColor}dd 100%)`;
 
                 if (job.isCombinedItTraining) {
                   return (
-                    <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderTop: `4px solid ${themeColor}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
-                      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                        <div style={{ width: '64px', height: '64px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
-                          <GraduationCap size={28} color={themeColor} />
+                    <div key={job.id} style={{ background: bgGradient, borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s', color: 'white' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ padding: '4px', background: '#ffffff', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.5)', flexShrink: 0, width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img src="/logo.png" alt="FIC Logo" style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '6px' }} />
                         </div>
                         <div>
-                          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b', fontWeight: 800, lineHeight: 1.2 }}>{job.title}</h3>
-                          <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '4px', fontWeight: 500 }}>{job.companyName}</div>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff', fontWeight: 800, lineHeight: 1.2 }}>{job.title}</h3>
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', marginTop: '2px', fontWeight: 500 }}>{job.companyName}</div>
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.85rem' }}>
-                        <span style={{ background: `${themeColor}15`, color: themeColor, padding: '6px 12px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><MapPin size={14}/> PAN India</span>
-                      </div>
-                      
-                      <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>Your Incentive per Candidate:</div>
+                      <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>
+                          {isAgent ? 'Partner Incentive per Candidate:' : 'Your Incentive per Candidate:'}
+                        </div>
                         {job.processes.map((p) => (
-                          <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '8px 12px', borderRadius: '8px' }}>
-                            <span style={{ fontWeight: 700, color: '#334155' }}>{p.processName}</span>
-                            <div style={{ color: themeColor, fontWeight: 800 }}>Rs. {p.hrIncentiveAmount || 0}</div>
+                          <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.15)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.processName}</span>
+                            <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>
+                              Rs. {isAgent ? (job.partnerProcessIncentives?.[p.processName] || 0) : (p.hrIncentiveAmount || 0)}
+                            </div>
                           </div>
                         ))}
+                        {!isAgent && (
+                          <button
+                            onClick={() => {
+                              setSelectedJobForIncentive(job);
+                              setPartnerIncentiveForm({
+                                freeJobIncentive: 0,
+                                paidJobIncentive: 0,
+                                processIncentives: job.partnerProcessIncentives || {}
+                              });
+                              setShowPartnerIncentiveModal(true);
+                            }}
+                            style={{ background: 'white', color: bgGradient.match(/#([0-9a-fA-F]{6})/)?.[1] ? `#${bgGradient.match(/#([0-9a-fA-F]{6})/)[1]}` : '#333', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', marginTop: '4px' }}
+                          >
+                            Set Partner Incentive
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
                 }
 
                 return (
-                <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderTop: `4px solid ${themeColor}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div key={job.id} style={{ background: bgGradient, borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s', color: 'white' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     {job.companyLogo ? (
-                      <div style={{ padding: '8px', background: 'white', borderRadius: '12px', border: '1px solid #f1f5f9', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                        <img src={job.companyLogo} alt={job.companyName} style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                      <div style={{ padding: '4px', background: '#ffffff', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.5)', flexShrink: 0, width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src={job.companyLogo} alt={job.companyName} style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '6px' }} />
                       </div>
                     ) : (
-                      <div style={{ width: '64px', height: '64px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
-                        <Briefcase size={28} color="#94a3b8" />
+                      <div style={{ width: '44px', height: '44px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)', flexShrink: 0 }}>
+                        <Briefcase size={24} color="#ffffff" />
                       </div>
                     )}
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b', fontWeight: 800, lineHeight: 1.2 }}>{job.title}</h3>
-                      <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '4px', fontWeight: 500 }}>{job.companyName}</div>
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff', fontWeight: 800, lineHeight: 1.2 }}>{job.title}</h3>
+                      <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', marginTop: '2px', fontWeight: 500 }}>{job.companyName}</div>
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.85rem' }}>
-                    {job.location && <span style={{ background: `${themeColor}15`, color: themeColor, padding: '6px 12px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><MapPin size={14}/> {job.location}</span>}
-                  </div>
-                  
-                  <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Your Incentive per Candidate:</div>
+                  <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>
+                      {isAgent ? 'Partner Incentive per Candidate:' : 'Your Incentive per Candidate:'}
+                    </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <div style={{ background: `linear-gradient(135deg, #10b981dd 0%, #10b981 100%)`, color: 'white', padding: '6px 12px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 2px 5px #10b98140` }}>
-                        <span>Free Job:</span> Rs. {job.hrIncentiveFree || 0}
+                      <div style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', padding: '6px 12px', borderRadius: '24px', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>Free Job:</span> Rs. {isAgent ? (job.partnerIncentiveFree || 0) : (job.hrIncentiveFree || 0)}
                       </div>
-                      <div style={{ background: `linear-gradient(135deg, #3b82f6dd 0%, #3b82f6 100%)`, color: 'white', padding: '6px 12px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 2px 5px #3b82f640` }}>
-                        <span>Paid Job:</span> Rs. {job.hrIncentivePaid || 0}
+                      <div style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', padding: '6px 12px', borderRadius: '24px', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>Paid Job:</span> Rs. {isAgent ? (job.partnerIncentivePaid || 0) : (job.hrIncentivePaid || 0)}
                       </div>
                     </div>
+                    {!isAgent && (
+                      <button
+                        onClick={() => {
+                          setSelectedJobForIncentive(job);
+                          setPartnerIncentiveForm({
+                            freeJobIncentive: job.partnerIncentiveFree || 0,
+                            paidJobIncentive: job.partnerIncentivePaid || 0,
+                            processIncentives: {}
+                          });
+                          setShowPartnerIncentiveModal(true);
+                        }}
+                        style={{ background: 'white', color: bgGradient.match(/#([0-9a-fA-F]{6})/)?.[1] ? `#${bgGradient.match(/#([0-9a-fA-F]{6})/)[1]}` : '#333', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', marginTop: '4px' }}
+                      >
+                        Set Partner Incentive
+                      </button>
+                    )}
                   </div>
                 </div>
               )})}
               {jobs.length === 0 && (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#64748b', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  No active job openings found.
+                  No active incentive slots found.
                 </div>
               )}
             </div>
@@ -1129,6 +1230,86 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showPartnerIncentiveModal && selectedJobForIncentive && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>Set Partner Incentive</h3>
+              <button onClick={() => setShowPartnerIncentiveModal(false)} className="btn-icon"><X size={20} /></button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>{selectedJobForIncentive.title}</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{selectedJobForIncentive.companyName}</div>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {selectedJobForIncentive.isCombinedItTraining ? (
+                  <>
+                    <div style={{ fontWeight: 600, color: '#334155' }}>Set Process Incentives:</div>
+                    {selectedJobForIncentive.processes.map(p => (
+                      <div key={p.id} className="form-group" style={{ marginBottom: '0' }}>
+                        <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{p.processName}</span>
+                          <span style={{ color: '#059669' }}>Your Incentive: Rs. {p.hrIncentiveAmount || 0}</span>
+                        </label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={partnerIncentiveForm.processIncentives[p.processName] || 0}
+                          onChange={(e) => setPartnerIncentiveForm({
+                            ...partnerIncentiveForm,
+                            processIncentives: {
+                              ...partnerIncentiveForm.processIncentives,
+                              [p.processName]: Number(e.target.value) || 0
+                            }
+                          })}
+                          min="0"
+                        />
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Free Job Incentive</span>
+                        <span style={{ color: '#059669' }}>Your Incentive: Rs. {selectedJobForIncentive.hrIncentiveFree || 0}</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={partnerIncentiveForm.freeJobIncentive}
+                        onChange={(e) => setPartnerIncentiveForm({...partnerIncentiveForm, freeJobIncentive: Number(e.target.value) || 0})}
+                        min="0"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Paid Job Incentive</span>
+                        <span style={{ color: '#059669' }}>Your Incentive: Rs. {selectedJobForIncentive.hrIncentivePaid || 0}</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={partnerIncentiveForm.paidJobIncentive}
+                        onChange={(e) => setPartnerIncentiveForm({...partnerIncentiveForm, paidJobIncentive: Number(e.target.value) || 0})}
+                        min="0"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="modal-actions" style={{ padding: 0, marginTop: '24px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowPartnerIncentiveModal(false)}>Cancel</button>
+                <button type="button" className="btn-primary" onClick={handleSavePartnerIncentive}>Save Partner Incentive</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

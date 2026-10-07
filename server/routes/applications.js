@@ -169,6 +169,42 @@ router.post('/', async (req, res) => {
       }
     }
 
+    let hrIncentive = 0;
+    let agentIncentive = 0;
+
+    if (referredBy) {
+      const { UserModel, PartnerIncentiveModel, GlobalSettingsModel } = require('../db');
+      const referrer = await UserModel.findOne({ referralCode: referredBy }).lean();
+      
+      if (referrer) {
+        let hrId = referrer.role === 'hr' ? referrer.id : referrer.parentHrId;
+        
+        // 1. Calculate HR Incentive
+        const itProc = db.itTrainingProcesses?.find(p => p.id === jobId);
+        if (itProc && itProc.itCategory === 'Placement') {
+          // IT Training Placement process
+          const globalIncentives = await GlobalSettingsModel.findOne({ type: 'it-training-incentives' }).lean();
+          const gData = globalIncentives ? globalIncentives.data : {};
+          hrIncentive = Number(gData[itProc.processName?.toUpperCase().trim()]) || 0;
+        } else {
+          // Regular job
+          hrIncentive = Number(finalPaymentAmount) > 0 ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+        }
+
+        // 2. Calculate Agent Incentive if referred by Agent
+        if (referrer.role === 'agent') {
+          const pi = await PartnerIncentiveModel.findOne({ hrId, jobId: itProc ? 'combined-it-training' : jobId }).lean();
+          if (pi) {
+            if (itProc && itProc.itCategory === 'Placement') {
+               agentIncentive = Number(pi.processIncentives?.[itProc.processName?.toUpperCase().trim()]) || 0;
+            } else {
+               agentIncentive = Number(finalPaymentAmount) > 0 ? (Number(pi.paidJobIncentive) || 0) : (Number(pi.freeJobIncentive) || 0);
+            }
+          }
+        }
+      }
+    }
+
     const newApp = {
       id: 'app_' + Date.now(),
       applicationNumber: appNumber,
@@ -183,6 +219,8 @@ router.post('/', async (req, res) => {
       referredBy: referredBy || null,
       paymentId: paymentId || (isAdminManual ? `MANUAL_ADMIN_${Date.now()}` : null),
       paymentAmount: Number(finalPaymentAmount),
+      incentiveAmount: hrIncentive,
+      agentIncentiveAmount: agentIncentive,
       updatedAt: new Date().toISOString()
     };
 

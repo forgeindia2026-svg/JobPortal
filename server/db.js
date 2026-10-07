@@ -205,6 +205,17 @@ const globalSettingsSchema = new mongoose.Schema({
 }, { timestamps: true });
 const GlobalSettingsModel = mongoose.model('GlobalSettings', globalSettingsSchema);
 
+const partnerIncentiveSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  hrId: { type: String, required: true },
+  jobId: { type: String, required: true }, // For IT Training, it can be 'it_training_master'
+  freeJobIncentive: { type: Number, default: 0 },
+  paidJobIncentive: { type: Number, default: 0 },
+  processIncentives: { type: mongoose.Schema.Types.Mixed, default: {} }, // map of processName -> amount
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: String
+});
+const PartnerIncentiveModel = mongoose.model('PartnerIncentive', partnerIncentiveSchema);
 
 const initialData = {
   users: [
@@ -844,6 +855,7 @@ module.exports = {
   ApplicationModel,
   InterviewModel,
   ItTrainingProcessModel,
-  GlobalSettingsModel
+  GlobalSettingsModel,
+  PartnerIncentiveModel
 };
 

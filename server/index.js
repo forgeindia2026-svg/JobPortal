@@ -44,6 +44,8 @@ if (!fs.existsSync(sampleResumePath)) {
 
 const userRoutes = require('./routes/users');
 
+const partnerIncentivesRoutes = require('./routes/partnerIncentives');
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -56,6 +58,7 @@ app.use('/api/it-training-processes', itTrainingRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/partner-incentives', partnerIncentivesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

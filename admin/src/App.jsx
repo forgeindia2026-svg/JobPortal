@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import AdminNavbar from './components/AdminNavbar';
 import AdminDashboard from './components/AdminDashboard';
 import HrDashboard from './components/HrDashboard';
@@ -18,6 +19,7 @@ export default function App() {
   });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,15 +79,34 @@ export default function App() {
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
               />
             </div>
-            <div>
+            <div style={{ position: 'relative' }}>
               <label style={{ display: 'block', marginBottom: '6px', color: '#334155', fontWeight: '600', fontSize: '0.9rem' }}>Password</label>
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 required 
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                style={{ width: '100%', padding: '10px 40px 10px 10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '36px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0'
+                }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             <button type="submit" disabled={loading} className="btn-primary" style={{ marginTop: '1rem', padding: '12px', width: '100%' }}>
               {loading ? 'Signing in...' : 'Sign In'}
