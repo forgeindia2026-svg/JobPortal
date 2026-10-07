@@ -1485,7 +1485,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                           <option value="Document Submitted">Document Submitted</option>
                           <option value="L1 Selected">L1 Selected</option>
                           <option value="L2 Selected">L2 Selected</option>
-                          <option value="2 Times Attended Interview">2 Times Attended Interview</option>
+                          <option value="2 Times re-scheduled interview">2 Times re-scheduled interview</option>
                           <option value="Enrollment">Enrollment</option>
                         </select>
                       </td>
