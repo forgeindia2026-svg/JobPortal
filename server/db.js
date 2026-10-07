@@ -162,6 +162,7 @@ const itTrainingProcessSchema = new mongoose.Schema({
   role: { type: String, default: 'Software Engineer Trainee' },
   salary: { type: String, default: '3.5 - 5.0 LPA' },
   location: { type: String, default: 'PAN INDIA / Chennai / Bangalore' },
+  hrIncentiveAmount: { type: Number, default: 0 },
   trainingPeriod: { type: String, default: '6 Months' },
   trainingSubtext: { type: String, default: '3 Months Classroom Training | 3 Months Project Training' },
   stipend: { type: String, default: '12,000' },

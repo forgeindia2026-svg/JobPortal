@@ -111,10 +111,21 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
   useEffect(() => {
     if (activeTab === 'jobs') {
-      fetch(`${API_URL}/api/jobs?status=Active`)
-        .then(res => res.json())
-        .then(data => setJobs(Array.isArray(data) ? data : []))
-        .catch(err => console.error('Error fetching jobs:', err));
+      Promise.all([
+        fetch(`${API_URL}/api/jobs?status=Active`).then(res => res.json()),
+        fetch(`${API_URL}/api/it-training-processes`).then(res => res.json())
+      ])
+      .then(([jobsData, itData]) => {
+        const standardJobs = Array.isArray(jobsData) ? jobsData : [];
+        const itJobs = Array.isArray(itData) ? itData.map(it => ({
+          ...it,
+          isItTraining: true,
+          title: it.processName,
+          companyName: it.programTitle
+        })) : [];
+        setJobs([...itJobs, ...standardJobs]);
+      })
+      .catch(err => console.error('Error fetching jobs:', err));
     }
   }, [API_URL, activeTab]);
 
