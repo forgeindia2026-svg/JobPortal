@@ -677,7 +677,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => setActiveTab('jobs')}
                 style={{
-                  background: '#eff6ff', border: '1px solid #93c5fd', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
@@ -696,7 +696,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => setActiveTab('applications')}
                 style={{
-                  background: '#f0fdfa', border: '1px solid #5eead4', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
@@ -715,7 +715,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => setActiveTab('applications')}
                 style={{
-                  background: '#fffbeb', border: '1px solid #fcd34d', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
@@ -734,7 +734,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => setActiveTab('interviews')}
                 style={{
-                  background: '#fdf4ff', border: '1px solid #f0abfc', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
@@ -753,7 +753,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => { setActiveTab('applications'); setAppStatusFilter('Processing'); }}
                 style={{
-                  background: '#e0e7ff', border: '1px solid #a5b4fc', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
@@ -772,7 +772,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => { setActiveTab('applications'); setAppStatusFilter('Selected'); }}
                 style={{
-                  background: '#ecfdf5', border: '1px solid #6ee7b7', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
@@ -791,7 +791,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 className="kpi-card" 
                 onClick={() => { setActiveTab('applications'); setAppStatusFilter('Rejected'); }}
                 style={{
-                  background: '#fef2f2', border: '1px solid #fca5a5', cursor: 'pointer',
+                  background: 'var(--primary-light)', border: '1px solid var(--primary)', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
