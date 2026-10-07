@@ -776,7 +776,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         {job.processes.map((p) => (
                           <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '8px 12px', borderRadius: '8px' }}>
                             <span style={{ fontWeight: 700, color: '#334155' }}>{p.processName}</span>
-                            <div style={{ color: themeColor, fontWeight: 800 }}>💸 ₹{p.hrIncentiveAmount || 0}</div>
+                            <div style={{ color: themeColor, fontWeight: 800 }}>Rs. {p.hrIncentiveAmount || 0}</div>
                           </div>
                         ))}
                       </div>
@@ -810,10 +810,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Your Incentive per Candidate:</div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <div style={{ background: `linear-gradient(135deg, #10b981dd 0%, #10b981 100%)`, color: 'white', padding: '6px 12px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 2px 5px #10b98140` }}>
-                        <span>Free Job:</span> 💸 ₹{job.hrIncentiveFree || 0}
+                        <span>Free Job:</span> Rs. {job.hrIncentiveFree || 0}
                       </div>
                       <div style={{ background: `linear-gradient(135deg, #3b82f6dd 0%, #3b82f6 100%)`, color: 'white', padding: '6px 12px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 2px 5px #3b82f640` }}>
-                        <span>Paid Job:</span> 💸 ₹{job.hrIncentivePaid || 0}
+                        <span>Paid Job:</span> Rs. {job.hrIncentivePaid || 0}
                       </div>
                     </div>
                   </div>
