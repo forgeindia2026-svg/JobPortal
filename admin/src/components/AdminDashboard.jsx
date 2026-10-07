@@ -45,6 +45,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [applications, setApplications] = useState([]);
   const [interviews, setInterviews] = useState([]);
   const [itProcesses, setItProcesses] = useState([]);
+  const [globalItIncentives, setGlobalItIncentives] = useState({});
   const [hrs, setHrs] = useState([]);
   const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -129,14 +130,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     setLoading(true);
     try {
       // Main data fetches - critical for dashboard
-      const [kpiRes, catRes, compRes, jobsRes, appsRes, intRes, itRes] = await Promise.all([
+      const [kpiRes, catRes, compRes, jobsRes, appsRes, intRes, itRes, globalItRes] = await Promise.all([
         fetch(`${API_URL}/api/reports/dashboard`),
         fetch(`${API_URL}/api/categories`),
         fetch(`${API_URL}/api/companies`),
         fetch(`${API_URL}/api/jobs`),
         fetch(`${API_URL}/api/applications`),
         fetch(`${API_URL}/api/interviews`),
-        fetch(`${API_URL}/api/it-training-processes/all`)
+        fetch(`${API_URL}/api/it-training-processes/all`),
+        fetch(`${API_URL}/api/settings/it-training-incentives`)
       ]);
 
       const kpiData = await kpiRes.json();
@@ -146,6 +148,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       const appsData = await appsRes.json();
       const intData = await intRes.json();
       const itData = await itRes.json();
+      const globalItResData = await globalItRes.json();
 
       setKpis(kpiData);
       setCategories(Array.isArray(catData) ? catData : []);
@@ -163,11 +166,37 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       }
       setInterviews(Array.from(uniqueInterviewsMap.values()));
       setItProcesses(Array.isArray(itData) ? itData : []);
+      setGlobalItIncentives(globalItResData || {});
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
     }
+
+  const saveGlobalItIncentives = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/settings/it-training-incentives`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(globalItIncentives)
+      });
+      if (res.ok) {
+        alert('IT Training Incentives saved successfully!');
+      } else {
+        alert('Failed to save IT Training Incentives.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error saving incentives.');
+    }
+  };
+
+  const handleUpdateGlobalItIncentive = (processName, value) => {
+    setGlobalItIncentives(prev => ({
+      ...prev,
+      [processName]: Number(value)
+    }));
+  };
 
     // HR fetch - separate so it doesn't break main dashboard if endpoint is missing
     try {
@@ -1880,6 +1909,26 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   Track and manage incentive payments for HR referrals across all applications.
                 </p>
               </div>
+            </div>
+
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+              <h3 style={{ fontSize: '1.2rem', color: '#1e293b', margin: '0 0 0.5rem 0' }}>IT Training Process Incentives (Global)</h3>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 1.5rem 0' }}>Set the universal HR incentive payout for each IT Training process. This applies universally to all candidate selections.</p>
+              
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                {Array.from(new Set(itProcesses.filter(it => it.itCategory === 'Placement').map(p => p.processName?.toUpperCase().trim()))).filter(Boolean).sort().map(pName => (
+                  <div key={pName} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                     <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>{pName} (₹)</label>
+                     <input 
+                       type="number" 
+                       value={globalItIncentives[pName] || ''} 
+                       onChange={(e) => handleUpdateGlobalItIncentive(pName, e.target.value)} 
+                       style={{ padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', width: '120px' }} 
+                     />
+                  </div>
+                ))}
+              </div>
+              <button onClick={saveGlobalItIncentives} style={{ marginTop: '1rem', background: '#3b82f6', color: 'white', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Save Global Incentives</button>
             </div>
 
             <div className="table-container">

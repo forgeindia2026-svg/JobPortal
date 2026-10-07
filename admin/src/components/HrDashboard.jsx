@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -113,17 +113,37 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     if (activeTab === 'jobs') {
       Promise.all([
         fetch(`${API_URL}/api/jobs?status=Active`).then(res => res.json()),
-        fetch(`${API_URL}/api/it-training-processes`).then(res => res.json())
+        fetch(`${API_URL}/api/it-training-processes`).then(res => res.json()),
+        fetch(`${API_URL}/api/settings/it-training-incentives`).then(res => res.json()).catch(() => ({}))
       ])
-      .then(([jobsData, itData]) => {
+      .then(([jobsData, itData, globalIncentives]) => {
         const standardJobs = Array.isArray(jobsData) ? jobsData : [];
-        const itJobs = Array.isArray(itData) ? itData.map(it => ({
-          ...it,
-          isItTraining: true,
-          title: it.processName,
-          companyName: it.programTitle
-        })) : [];
-        setJobs([...itJobs, ...standardJobs]);
+        let combinedItJob = null;
+        if (Array.isArray(itData)) {
+          const placementProcesses = itData.filter(it => it.itCategory === 'Placement');
+          if (placementProcesses.length > 0) {
+            const uniqueProcesses = [];
+            const seen = new Set();
+            placementProcesses.forEach(p => {
+              const pName = p.processName?.toUpperCase().trim();
+              if (pName && !seen.has(pName)) {
+                seen.add(pName);
+                p.hrIncentiveAmount = globalIncentives?.[pName] || 0;
+                uniqueProcesses.push(p);
+              }
+            });
+            uniqueProcesses.sort((a,b) => a.processName.localeCompare(b.processName));
+
+            combinedItJob = {
+              id: 'combined-it-training',
+              isCombinedItTraining: true,
+              title: 'FIC IT Training & 100% Placement Programme',
+              companyName: 'PAN India Opportunities',
+              processes: uniqueProcesses
+            };
+          }
+        }
+        setJobs(combinedItJob ? [combinedItJob, ...standardJobs] : standardJobs);
       })
       .catch(err => console.error('Error fetching jobs:', err));
     }
@@ -733,6 +753,37 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               {jobs.map((job, index) => {
                 const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
                 const themeColor = colors[index % colors.length];
+
+                if (job.isCombinedItTraining) {
+                  return (
+                    <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderTop: `4px solid ${themeColor}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                        <div style={{ width: '64px', height: '64px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                          <GraduationCap size={28} color={themeColor} />
+                        </div>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b', fontWeight: 800, lineHeight: 1.2 }}>{job.title}</h3>
+                          <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '4px', fontWeight: 500 }}>{job.companyName}</div>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ background: `${themeColor}15`, color: themeColor, padding: '6px 12px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><MapPin size={14}/> PAN India</span>
+                      </div>
+                      
+                      <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>Your Incentive per Candidate:</div>
+                        {job.processes.map((p) => (
+                          <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '8px 12px', borderRadius: '8px' }}>
+                            <span style={{ fontWeight: 700, color: '#334155' }}>{p.processName}</span>
+                            <div style={{ color: themeColor, fontWeight: 800 }}>💸 ₹{p.hrIncentiveAmount || 0}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                 <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderTop: `4px solid ${themeColor}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
@@ -755,10 +806,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     {job.location && <span style={{ background: `${themeColor}15`, color: themeColor, padding: '6px 12px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><MapPin size={14}/> {job.location}</span>}
                   </div>
                   
-                  <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Your Incentive per Candidate:</div>
-                    <div style={{ background: `linear-gradient(135deg, ${themeColor}dd 0%, ${themeColor} 100%)`, color: 'white', padding: '8px 16px', borderRadius: '24px', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 4px 10px ${themeColor}40` }}>
-                      💸 ₹{job.hrIncentiveAmount || 0}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <div style={{ background: `linear-gradient(135deg, #10b981dd 0%, #10b981 100%)`, color: 'white', padding: '6px 12px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 2px 5px #10b98140` }}>
+                        <span>Free Job:</span> 💸 ₹{job.hrIncentiveFree || 0}
+                      </div>
+                      <div style={{ background: `linear-gradient(135deg, #3b82f6dd 0%, #3b82f6 100%)`, color: 'white', padding: '6px 12px', borderRadius: '24px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 2px 5px #3b82f640` }}>
+                        <span>Paid Job:</span> 💸 ₹{job.hrIncentivePaid || 0}
+                      </div>
                     </div>
                   </div>
                 </div>

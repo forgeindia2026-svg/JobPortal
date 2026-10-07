@@ -127,6 +127,8 @@ router.post('/', async (req, res) => {
       interviewSteps = [],
       documentsRequired = [],
       lastDate,
+      hrIncentiveFree = 0,
+      hrIncentivePaid = 0,
       status = 'Active'
     } = req.body;
 
@@ -168,6 +170,8 @@ router.post('/', async (req, res) => {
       interviewSteps: Array.isArray(interviewSteps) ? interviewSteps : [],
       documentsRequired: Array.isArray(documentsRequired) ? documentsRequired : [],
       lastDate: lastDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      hrIncentiveFree: Number(hrIncentiveFree) || 0,
+      hrIncentivePaid: Number(hrIncentivePaid) || 0,
       status,
       createdAt: new Date().toISOString()
     };

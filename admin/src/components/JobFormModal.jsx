@@ -34,7 +34,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [interviewFeeDetails, setInterviewFeeDetails] = useState('');
   const [ficTrainingPeriod, setFicTrainingPeriod] = useState('');
 
-  const [hrIncentiveAmount, setHrIncentiveAmount] = useState('');
+  const [hrIncentiveFree, setHrIncentiveFree] = useState('');
+  const [hrIncentivePaid, setHrIncentivePaid] = useState('');
   const [openings, setOpenings] = useState('');
   const [description, setDescription] = useState('');
   const [lastDate, setLastDate] = useState('');
@@ -96,7 +97,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         }]);
       }
 
-      setHrIncentiveAmount(jobToEdit.hrIncentiveAmount || '');
+      setHrIncentiveFree(jobToEdit.hrIncentiveFree || '');
+      setHrIncentivePaid(jobToEdit.hrIncentivePaid || '');
       setOpenings(jobToEdit.openings || '');
       setDescription(jobToEdit.description || '');
       setLastDate(jobToEdit.lastDate || '');
@@ -134,7 +136,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setHasTraining('Yes');
       setTrainingPhases([{ duration: '', mode: '', stipend: '' }]);
 
-      setHrIncentiveAmount('');
+      setHrIncentiveFree('');
+      setHrIncentivePaid('');
       setOpenings('');
       setDescription('');
       setLastDate('');
@@ -213,7 +216,8 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         ficTrainingPeriod,
         trainingPhases: validPhases,
         hasTraining,
-        hrIncentiveAmount: Number(hrIncentiveAmount),
+        hrIncentiveFree: Number(hrIncentiveFree) || 0,
+        hrIncentivePaid: Number(hrIncentivePaid) || 0,
         openings: Number(openings),
         description,
         responsibilities: responsibilities.filter(r => r.trim() !== ''),
@@ -698,13 +702,23 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">HR Incentive per Selection (₹)</label>
+                <label className="form-label" style={{ color: '#10b981' }}>HR Incentive (Free Job) (₹)</label>
                 <input
                   type="number"
                   className="form-input"
                   placeholder="e.g. 500"
-                  value={hrIncentiveAmount}
-                  onChange={e => setHrIncentiveAmount(e.target.value)}
+                  value={hrIncentiveFree}
+                  onChange={e => setHrIncentiveFree(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#3b82f6' }}>HR Incentive (Paid Job) (₹)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="e.g. 1000"
+                  value={hrIncentivePaid}
+                  onChange={e => setHrIncentivePaid(e.target.value)}
                 />
               </div>
             </div>

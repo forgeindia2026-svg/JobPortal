@@ -13,6 +13,7 @@ const interviewRoutes = require('./routes/interviews');
 const reportRoutes = require('./routes/reports');
 const itTrainingRoutes = require('./routes/itTraining');
 const paymentRoutes = require('./routes/payment');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,6 +55,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/it-training-processes', itTrainingRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

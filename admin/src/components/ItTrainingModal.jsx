@@ -7,7 +7,6 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
     itCategory: 'Placement',
     programTitle: '',
     role: '',
-    hrIncentiveAmount: 0,
     salary: '',
     location: '',
     trainingPeriod: '',
@@ -42,7 +41,6 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
         itCategory: processToEdit.itCategory || 'Placement',
         programTitle: processToEdit.programTitle || '',
         role: processToEdit.role || '',
-        hrIncentiveAmount: processToEdit.hrIncentiveAmount || 0,
         salary: processToEdit.salary || '',
         location: processToEdit.location || '',
         trainingPeriod: processToEdit.trainingPeriod || '',
@@ -80,7 +78,6 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
         itCategory: 'Placement',
         programTitle: 'FIC IT Training & 100% Placement Programme',
         role: 'Software Engineer Trainee',
-        hrIncentiveAmount: 0,
         salary: '4.0 LPA + Incentives',
         location: 'PAN INDIA / Chennai / Bangalore',
         trainingPeriod: '6 Months',
@@ -231,19 +228,7 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
               </select>
             </div>
 
-            <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#10b981', display: 'block', marginBottom: '6px' }}>
-                HR Incentive per Selection (₹)
-              </label>
-              <input
-                type="number"
-                name="hrIncentiveAmount"
-                value={formData.hrIncentiveAmount}
-                onChange={handleChange}
-                placeholder="e.g. 1000"
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.95rem' }}
-              />
-            </div>
+
           </div>
 
           {/* ROW 2: Program Title & Role */}

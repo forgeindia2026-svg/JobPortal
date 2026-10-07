@@ -82,6 +82,8 @@ const jobSchema = new mongoose.Schema({
   }],
   openings: Number,
   hrIncentiveAmount: { type: Number, default: 0 },
+  hrIncentiveFree: { type: Number, default: 0 },
+  hrIncentivePaid: { type: Number, default: 0 },
   description: String,
   responsibilities: [String],
   requirements: [String],
@@ -196,6 +198,12 @@ const CandidateModel = mongoose.model('Candidate', candidateSchema);
 const ApplicationModel = mongoose.model('Application', applicationSchema);
 const InterviewModel = mongoose.model('Interview', interviewSchema);
 const ItTrainingProcessModel = mongoose.model('ItTrainingProcess', itTrainingProcessSchema);
+
+const globalSettingsSchema = new mongoose.Schema({
+  type: { type: String, required: true, unique: true },
+  data: { type: mongoose.Schema.Types.Mixed, required: true }
+}, { timestamps: true });
+const GlobalSettingsModel = mongoose.model('GlobalSettings', globalSettingsSchema);
 
 
 const initialData = {
@@ -835,6 +843,7 @@ module.exports = {
   CandidateModel,
   ApplicationModel,
   InterviewModel,
-  ItTrainingProcessModel
+  ItTrainingProcessModel,
+  GlobalSettingsModel
 };
 
