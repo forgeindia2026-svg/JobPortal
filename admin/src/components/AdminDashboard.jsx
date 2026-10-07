@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -571,6 +571,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           onClick={() => handleTabChange('applications')}
         >
           <FileText size={18} /> Applied ({applications.length})
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'interviews' ? 'active' : ''}`}
+          onClick={() => handleTabChange('interviews')}
+        >
+          <CalendarDays size={18} /> Interviews ({interviews.length})
         </button>
 
         <button
