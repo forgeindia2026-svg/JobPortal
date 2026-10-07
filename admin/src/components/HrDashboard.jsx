@@ -719,35 +719,39 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-              {jobs.map(job => (
-                <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              {jobs.map((job, index) => {
+                const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+                const themeColor = colors[index % colors.length];
+                return (
+                <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderTop: `4px solid ${themeColor}`, borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                     {job.companyLogo ? (
-                      <img src={job.companyLogo} alt={job.companyName} style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #f1f5f9' }} />
+                      <div style={{ padding: '8px', background: 'white', borderRadius: '12px', border: '1px solid #f1f5f9', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <img src={job.companyLogo} alt={job.companyName} style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                      </div>
                     ) : (
-                      <div style={{ width: '48px', height: '48px', background: '#f8fafc', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
-                        <Briefcase size={24} color="#94a3b8" />
+                      <div style={{ width: '64px', height: '64px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                        <Briefcase size={28} color="#94a3b8" />
                       </div>
                     )}
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b', fontWeight: 700, lineHeight: 1.2 }}>{job.title}</h3>
-                      <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>{job.companyName}</div>
+                      <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#1e293b', fontWeight: 800, lineHeight: 1.2 }}>{job.title}</h3>
+                      <div style={{ fontSize: '0.95rem', color: '#64748b', marginTop: '4px', fontWeight: 500 }}>{job.companyName}</div>
                     </div>
                   </div>
                   
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.8rem' }}>
-                    {job.location && <span style={{ background: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12}/> {job.location}</span>}
-                    {job.openings > 0 && <span style={{ background: '#fee2e2', color: '#b91c1c', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>🔥 {job.openings} Openings</span>}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.85rem' }}>
+                    {job.location && <span style={{ background: `${themeColor}15`, color: themeColor, padding: '6px 12px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><MapPin size={14}/> {job.location}</span>}
                   </div>
                   
-                  <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Your Incentive:</div>
-                    <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Your Incentive per Candidate:</div>
+                    <div style={{ background: `linear-gradient(135deg, ${themeColor}dd 0%, ${themeColor} 100%)`, color: 'white', padding: '8px 16px', borderRadius: '24px', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: `0 4px 10px ${themeColor}40` }}>
                       💸 ₹{job.hrIncentiveAmount || 0}
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
               {jobs.length === 0 && (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#64748b', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                   No active job openings found.
