@@ -25,6 +25,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [showNotifications, setShowNotifications] = useState(false);
 
   const [interviews, setInterviews] = useState([]);
+  const [jobs, setJobs] = useState([]);
 
   // Modals for HR Actions
   const [statusModalApp, setStatusModalApp] = useState(null);
@@ -107,6 +108,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       fetchInterviews();
     }
   }, [activeTab, stats]);
+
+  useEffect(() => {
+    if (activeTab === 'jobs') {
+      fetch(`${API_URL}/api/jobs?status=Active`)
+        .then(res => res.json())
+        .then(data => setJobs(Array.isArray(data) ? data : []))
+        .catch(err => console.error('Error fetching jobs:', err));
+    }
+  }, [API_URL, activeTab]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -311,6 +321,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
           <button id="hr-agents-tab" className={`nav-item ${activeTab === 'agents' ? 'active' : ''}`} onClick={() => { setActiveTab('agents'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <UserCog size={18} /><span>{isAgent ? 'My Partners' : 'Partners'}</span>
+          </button>
+          
+          <button className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => { setActiveTab('jobs'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <Briefcase size={18} /><span>Job Openings</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'incentives' ? 'active' : ''}`} onClick={() => { setActiveTab('incentives'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
@@ -695,6 +709,54 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         )}
 
         {/* Settings Tab */}
+        {activeTab === 'jobs' && (
+          <div className="animate-fade">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Job Openings & Incentives</h2>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
+                View all active job requirements and the incentive you earn for each successful selection.
+              </p>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              {jobs.map(job => (
+                <div key={job.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    {job.companyLogo ? (
+                      <img src={job.companyLogo} alt={job.companyName} style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #f1f5f9' }} />
+                    ) : (
+                      <div style={{ width: '48px', height: '48px', background: '#f8fafc', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
+                        <Briefcase size={24} color="#94a3b8" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b', fontWeight: 700, lineHeight: 1.2 }}>{job.title}</h3>
+                      <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>{job.companyName}</div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '0.8rem' }}>
+                    {job.location && <span style={{ background: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={12}/> {job.location}</span>}
+                    {job.openings > 0 && <span style={{ background: '#fee2e2', color: '#b91c1c', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>🔥 {job.openings} Openings</span>}
+                  </div>
+                  
+                  <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Your Incentive:</div>
+                    <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '6px 12px', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      💸 ₹{job.hrIncentiveAmount || 0}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {jobs.length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#64748b', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  No active job openings found.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className="animate-fade" style={{ background: 'white', padding: '2rem', borderRadius: '12px', border: '1px solid #e2e8f0', maxWidth: '600px' }}>
             <h3 style={{ fontSize: '1.4rem', color: '#0f172a', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -81,6 +81,7 @@ const jobSchema = new mongoose.Schema({
     stipend: String
   }],
   openings: Number,
+  hrIncentiveAmount: { type: Number, default: 0 },
   description: String,
   responsibilities: [String],
   requirements: [String],

@@ -34,6 +34,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
   const [interviewFeeDetails, setInterviewFeeDetails] = useState('');
   const [ficTrainingPeriod, setFicTrainingPeriod] = useState('');
 
+  const [hrIncentiveAmount, setHrIncentiveAmount] = useState('');
   const [openings, setOpenings] = useState('');
   const [description, setDescription] = useState('');
   const [lastDate, setLastDate] = useState('');
@@ -95,6 +96,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         }]);
       }
 
+      setHrIncentiveAmount(jobToEdit.hrIncentiveAmount || '');
       setOpenings(jobToEdit.openings || '');
       setDescription(jobToEdit.description || '');
       setLastDate(jobToEdit.lastDate || '');
@@ -132,6 +134,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
       setHasTraining('Yes');
       setTrainingPhases([{ duration: '', mode: '', stipend: '' }]);
 
+      setHrIncentiveAmount('');
       setOpenings('');
       setDescription('');
       setLastDate('');
@@ -210,6 +213,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         ficTrainingPeriod,
         trainingPhases: validPhases,
         hasTraining,
+        hrIncentiveAmount: Number(hrIncentiveAmount),
         openings: Number(openings),
         description,
         responsibilities: responsibilities.filter(r => r.trim() !== ''),
@@ -693,6 +697,19 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                   onChange={e => setOpenings(e.target.value)}
                 />
               </div>
+              <div className="form-group">
+                <label className="form-label">HR Incentive per Selection (₹)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="e.g. 500"
+                  value={hrIncentiveAmount}
+                  onChange={e => setHrIncentiveAmount(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Application Last Date</label>
                 <input
