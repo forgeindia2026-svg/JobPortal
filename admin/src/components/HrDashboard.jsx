@@ -601,7 +601,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   {marqueeApps.map((app, idx) => {
                     let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
                     if (!amt || amt === 0) {
-                      const job = jobs.find(j => j.id === app.jobId || (j.title === app.jobTitle && j.companyName === app.companyName));
+                      let job = jobs.find(j => j.id === app.jobId);
+                      if (!job || (Number(job.hrIncentiveFree) === 0 && Number(job.hrIncentivePaid) === 0)) {
+                        const fallbackJob = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName && (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0));
+                        if (fallbackJob) job = fallbackJob;
+                      }
+                      if (!job) {
+                        job = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName);
+                      }
                       if (job) {
                         if (currentUser.role === 'agent') {
                            amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
@@ -803,7 +810,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>                {verticalApps.map((app, idx) => {
                   let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
                   if (!amt || amt === 0) {
-                    const job = jobs.find(j => j.id === app.jobId || (j.title === app.jobTitle && j.companyName === app.companyName));
+                    let job = jobs.find(j => j.id === app.jobId);
+                    if (!job || (Number(job.hrIncentiveFree) === 0 && Number(job.hrIncentivePaid) === 0)) {
+                      const fallbackJob = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName && (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0));
+                      if (fallbackJob) job = fallbackJob;
+                    }
+                    if (!job) {
+                      job = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName);
+                    }
                     if (job) {
                       if (currentUser.role === 'agent') {
                          amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);

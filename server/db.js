@@ -862,7 +862,6 @@ module.exports = {
   JobModel,
   CandidateModel,
   ApplicationModel,
-  InterviewModel,
   ItTrainingProcessModel,
   GlobalSettingsModel,
   PartnerIncentiveModel,
