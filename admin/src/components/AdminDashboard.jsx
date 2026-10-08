@@ -1483,7 +1483,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         <td>{int.jobTitle}</td>
                       <td>{int.companyName}</td>
                       <td><span className="badge badge-shortlisted">{int.round}</span></td>
-                      <td style={{ fontWeight: 600 }}>{int.date} at {int.time}</td>
+                      <td style={{ fontWeight: 600 }}>
+                        <div style={{ color: '#334155' }}>
+                          {int.date ? new Date(int.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD'}
+                        </div>
+                        {int.time && (
+                          <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '2px' }}>
+                            {(() => {
+                              const p = int.time.split(':');
+                              let h = parseInt(p[0], 10);
+                              const m = p[1] || '00';
+                              const ampm = h >= 12 ? 'PM' : 'AM';
+                              h = h % 12 || 12;
+                              return `${h}:${m} ${ampm}`;
+                            })()}
+                          </div>
+                        )}
+                      </td>
                       <td>
                         {int.mode === 'Online' ? (
                           <div>
