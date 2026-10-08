@@ -437,24 +437,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     return { totalIncentiveAmount: total, upcomingIncentiveAmount: upcoming, upcomingCount: upcomingCnt };
   }, [stats, jobs, currentUser.role]);
 
-  const marqueeApps = recentIncentiveApps.slice(0, 10);
   const verticalApps = recentIncentiveApps.slice(0, 5);
-
-  const [activeAdIndex, setActiveAdIndex] = useState(0);
-  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
-  const isBannerHoveredRef = useRef(false);
-
-  useEffect(() => {
-    if (marqueeApps.length === 0) return;
-    if (isManuallyPaused) return; // Don't run interval if manually paused
-    
-    const interval = setInterval(() => {
-      if (!isBannerHoveredRef.current) {
-        setActiveAdIndex((prev) => (prev + 1) % marqueeApps.length);
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [marqueeApps, isManuallyPaused]);
 
   // Analytics Data
   const chartData = useMemo(() => {
@@ -630,88 +613,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             
             
 
-            {marqueeApps.length > 0 && (
-              <div 
-                className="mass-banner" 
-                style={{ position: 'relative', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'pan-y', cursor: 'pointer' }}
-                onMouseEnter={() => { isBannerHoveredRef.current = true; }}
-                onMouseLeave={() => { isBannerHoveredRef.current = false; }}
-                onTouchStart={() => { isBannerHoveredRef.current = true; }}
-                onTouchEnd={() => { isBannerHoveredRef.current = false; }}
-                onClick={() => setIsManuallyPaused(prev => !prev)}
-                title={isManuallyPaused ? "Click to Resume" : "Click to Pause"}
-              >
-                <div style={{ position: 'relative', width: '100%', maxWidth: '800px', padding: '0 24px' }}>
-                  {marqueeApps.map((app, idx) => {
-                    let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
-                    if (!Number(amt)) {
-                      let job = jobs.find(j => j.id === app.jobId);
-                      if (!job) {
-                        job = jobs.find(j => 
-                          (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
-                          (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
-                        );
-                      }
-                      if (job) {
-                        const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
-                        if (currentUser.role === 'agent') {
-                           amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
-                        } else {
-                           amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
-                        }
-                        console.log('MARQUEE APP:', app.candidateName, 'JOB:', job?.id, 'IS_PAID:', isPaid, 'FINAL AMT:', amt);
-                      }
-                    }
-                    const isActive = idx === activeAdIndex;
-                    return (
-                      <div 
-                        key={`mq-${app.id}`} 
-                        style={{ 
-                          display: isActive ? 'flex' : 'none', 
-                          alignItems: 'center', 
-                          gap: '24px',
-                          animation: isActive ? 'fadeIn 0.5s ease-in-out' : 'none',
-                          flexDirection: 'row'
-                        }}
-                        className="mass-card-mobile-adjust"
-                      >
-                        <div className="mass-card-logo">
-                          {app.companyLogo ? (
-                            <img src={app.companyLogo} alt={app.companyName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                          ) : (
-                            <Zap size={32} />
-                          )}
-                        </div>
-                        <div className="mass-card-content" style={{ flex: 1, whiteSpace: 'normal' }}>
-                          <div className="mass-card-title">{app.candidateName} applied for {app.jobTitle} at {app.companyName}</div>
-                          {amt && amt > 0 ? (
-                            <div className="mass-card-subtitle">{MOTIVATIONAL_QUOTES[idx % MOTIVATIONAL_QUOTES.length]} <br/><span style={{opacity: 0.9, marginTop: '4px', display: 'inline-block'}}>Incentive: <strong className="mass-card-amount">₹{amt}</strong></span></div>
-                          ) : (
-                            <div className="mass-card-subtitle">{MOTIVATIONAL_QUOTES[idx % MOTIVATIONAL_QUOTES.length]}</div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Dots Indicator */}
-                <div style={{ position: 'absolute', bottom: '16px', left: '0', right: '0', display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                  {marqueeApps.map((_, idx) => (
-                    <div 
-                      key={idx} 
-                      style={{ 
-                        width: '8px', height: '8px', borderRadius: '50%', 
-                        background: idx === activeAdIndex ? '#fff' : 'rgba(255,255,255,0.3)',
-                        transition: 'background 0.3s'
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
 
-            <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', padding: '1.5rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: marqueeApps.length > 0 ? '0' : '0' }}>
+
+            <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', padding: '1.5rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', fontWeight: 'bold' }}>Your Unique Referral Link</h3>
                 <p style={{ color: '#e0e7ff', fontSize: '0.85rem' }}>Share this link with candidates. Anyone who opens or applies using this link will be tracked under your account.</p>
