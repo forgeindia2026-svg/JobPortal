@@ -455,8 +455,8 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
 
       return {
         ...app,
-        incentiveAmount: app.incentiveAmount ?? fallbackHrIncentive,
-        agentIncentiveAmount: app.agentIncentiveAmount ?? (fallbackHrIncentive * agentCut / 100),
+        incentiveAmount: app.incentiveAmount || fallbackHrIncentive,
+        agentIncentiveAmount: app.agentIncentiveAmount || (fallbackHrIncentive * agentCut / 100),
         candidateName: candidate.name || 'Anonymous',
         candidateEmail: candidate.email || '',
         candidateMobile: candidate.mobile || '',
