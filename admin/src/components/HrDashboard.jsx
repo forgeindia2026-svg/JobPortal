@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -391,6 +391,47 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [stats]);
 
+  const { totalIncentiveAmount, upcomingIncentiveAmount, upcomingCount } = useMemo(() => {
+    let total = 0;
+    let upcoming = 0;
+    let upcomingCnt = 0;
+    
+    if (stats && stats.applications && jobs.length > 0) {
+      stats.applications.forEach(app => {
+        let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+        if (!Number(amt)) {
+          let job = jobs.find(j => j.id === app.jobId);
+          if (!job) {
+            job = jobs.find(j => 
+              (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+              (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
+            );
+          }
+          if (job) {
+            const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
+            if (currentUser.role === 'agent') {
+               amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+            } else {
+               amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+            }
+          }
+        }
+        const val = Number(amt) || 0;
+        
+        const isClosed = ['Selected', 'Converted', 'Hired'].includes(app.status);
+        const isRejected = ['Rejected', 'Not Interested'].includes(app.status);
+        
+        if (isClosed) {
+          total += val;
+        } else if (!isRejected) {
+          upcoming += val;
+          upcomingCnt += 1;
+        }
+      });
+    }
+    return { totalIncentiveAmount: total, upcomingIncentiveAmount: upcoming, upcomingCount: upcomingCnt };
+  }, [stats, jobs, currentUser.role]);
+
   const marqueeApps = recentIncentiveApps.slice(0, 10);
   const verticalApps = recentIncentiveApps.slice(0, 5);
 
@@ -705,6 +746,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               <div className="kpi-card" style={{ borderLeft: '4px solid #ef4444', background: '#fef2f2' }}>
                 <div className="kpi-icon" style={{ background: '#fecaca', color: '#b91c1c' }}><X size={20} /></div>
                 <div><div className="kpi-val">{stats?.applications?.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length || 0}</div><div className="kpi-label">Rejected</div></div>
+              </div>
+              <div className="kpi-card" style={{ borderLeft: '4px solid #8b5cf6', background: '#f5f3ff' }}>
+                <div className="kpi-icon" style={{ background: '#ddd6fe', color: '#6d28d9' }}><Gift size={20} /></div>
+                <div><div className="kpi-val">₹{totalIncentiveAmount.toLocaleString()}</div><div className="kpi-label">Total Incentive</div></div>
+              </div>
+              <div className="kpi-card" style={{ borderLeft: '4px solid #f97316', background: '#fff7ed' }}>
+                <div className="kpi-icon" style={{ background: '#ffedd5', color: '#c2410c' }}><TrendingUp size={20} /></div>
+                <div>
+                  <div className="kpi-val">₹{upcomingIncentiveAmount.toLocaleString()}</div>
+                  <div className="kpi-label">Upcoming ({upcomingCount} Apps)</div>
+                </div>
               </div>
             </div>
 
