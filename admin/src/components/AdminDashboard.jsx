@@ -1516,9 +1516,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         )}
                       </td>
                       <td>
-                        <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
-                          {int.status || 'Scheduled'}
-                        </span>
+                        {(() => {
+                          const status = int.status || 'Scheduled';
+                          let bg = '#e0f2fe';
+                          let color = '#0284c7';
+                          if (status.toLowerCase() === 'rejected') {
+                            bg = '#fee2e2';
+                            color = '#dc2626';
+                          } else if (status.toLowerCase() === 'selected' || status.toLowerCase() === 'hired') {
+                            bg = '#dcfce7';
+                            color = '#16a34a';
+                          }
+                          return (
+                            <span className="badge" style={{ background: bg, color: color, padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                              {status}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td>
                         <button
