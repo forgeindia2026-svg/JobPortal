@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
@@ -20,6 +20,17 @@ const getCompanyColor = (name) => {
   if (lowerName.includes('fic') || lowerName.includes('pan india')) return '#d97706';
   return '#475569';
 };
+
+const MOTIVATIONAL_QUOTES = [
+  "Close it now and get the incentive amount in your account! 💸",
+  "Seal the deal to claim your reward! 🚀",
+  "Fast-track this profile for a quick payout! ⚡",
+  "Convert this candidate and bank your earnings! 🏦",
+  "Secure the hire and grab your cash bonus! 💰",
+  "Your bonus is waiting—finish the process! 🔥",
+  "Drive this to closure and watch your wallet grow! 📈",
+  "Help them get hired to unlock your reward! 🎯"
+];
 
 export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false }) {
   const roleLabel = isAgent ? 'Partner' : 'HR';
@@ -351,9 +362,27 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     if (!stats || !stats.applications) return [];
     return [...stats.applications]
       .filter(app => app.status !== 'Rejected')
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 5); // top 5 recent applications
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [stats]);
+
+  const marqueeApps = recentIncentiveApps.slice(0, 10);
+  const verticalApps = recentIncentiveApps.slice(0, 5);
+
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const isBannerHoveredRef = useRef(false);
+
+  useEffect(() => {
+    if (marqueeApps.length === 0) return;
+    if (isManuallyPaused) return; // Don't run interval if manually paused
+    
+    const interval = setInterval(() => {
+      if (!isBannerHoveredRef.current) {
+        setActiveAdIndex((prev) => (prev + 1) % marqueeApps.length);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [marqueeApps, isManuallyPaused]);
 
   // Analytics Data
   const chartData = useMemo(() => {
@@ -527,7 +556,72 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {activeTab === 'overview' && (
           <div className="animate-fade">
             
-            <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', padding: '1.5rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            
+
+            {marqueeApps.length > 0 && (
+              <div 
+                className="mass-banner" 
+                style={{ position: 'relative', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'pan-y', cursor: 'pointer' }}
+                onMouseEnter={() => { isBannerHoveredRef.current = true; }}
+                onMouseLeave={() => { isBannerHoveredRef.current = false; }}
+                onTouchStart={() => { isBannerHoveredRef.current = true; }}
+                onTouchEnd={() => { isBannerHoveredRef.current = false; }}
+                onClick={() => setIsManuallyPaused(prev => !prev)}
+                title={isManuallyPaused ? "Click to Resume" : "Click to Pause"}
+              >
+                <div style={{ position: 'relative', width: '100%', maxWidth: '800px', padding: '0 24px' }}>
+                  {marqueeApps.map((app, idx) => {
+                    const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                    const isActive = idx === activeAdIndex;
+                    return (
+                      <div 
+                        key={`mq-${app.id}`} 
+                        style={{ 
+                          display: isActive ? 'flex' : 'none', 
+                          alignItems: 'center', 
+                          gap: '24px',
+                          animation: isActive ? 'fadeIn 0.5s ease-in-out' : 'none',
+                          flexDirection: 'row'
+                        }}
+                        className="mass-card-mobile-adjust"
+                      >
+                        <div className="mass-card-logo">
+                          {app.companyLogo ? (
+                            <img src={app.companyLogo} alt={app.companyName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          ) : (
+                            <Zap size={32} />
+                          )}
+                        </div>
+                        <div className="mass-card-content" style={{ flex: 1, whiteSpace: 'normal' }}>
+                          <div className="mass-card-title">{app.candidateName} applied for {app.jobTitle} at {app.companyName}</div>
+                          {amt && amt > 0 ? (
+                            <div className="mass-card-subtitle">{MOTIVATIONAL_QUOTES[idx % MOTIVATIONAL_QUOTES.length]} <br/><span style={{opacity: 0.9, marginTop: '4px', display: 'inline-block'}}>Incentive: <strong className="mass-card-amount">₹{amt}</strong></span></div>
+                          ) : (
+                            <div className="mass-card-subtitle">{MOTIVATIONAL_QUOTES[idx % MOTIVATIONAL_QUOTES.length]}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Dots Indicator */}
+                <div style={{ position: 'absolute', bottom: '16px', left: '0', right: '0', display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                  {marqueeApps.map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        width: '8px', height: '8px', borderRadius: '50%', 
+                        background: idx === activeAdIndex ? '#fff' : 'rgba(255,255,255,0.3)',
+                        transition: 'background 0.3s'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', padding: '1.5rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: marqueeApps.length > 0 ? '0' : '0' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', fontWeight: 'bold' }}>Your Unique Referral Link</h3>
                 <p style={{ color: '#e0e7ff', fontSize: '0.85rem' }}>Share this link with candidates. Anyone who opens or applies using this link will be tracked under your account.</p>
@@ -542,40 +636,6 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </button>
               </div>
             </div>
-
-            {recentIncentiveApps.length > 0 && (
-              <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>
-                {recentIncentiveApps.map(app => {
-                  const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
-                  return (
-                    <div key={app.id} style={{
-                      background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 16px',
-                      display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                      color: '#92400e', fontSize: '0.95rem'
-                    }}>
-                      <div style={{ background: '#fff', width: '36px', height: '36px', borderRadius: '50%', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, border: '1px solid #fde68a' }}>
-                        {app.companyLogo ? (
-                          <img src={app.companyLogo} alt={app.companyName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        ) : (
-                          <div style={{ background: '#fef3c7', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Zap size={20} />
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ flex: 1, lineHeight: '1.4' }}>
-                        🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobTitle || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! 
-                        {amt && amt > 0 ? (
-                          <> your incentive <span style={{ color: '#059669', fontWeight: 'bold' }}>₹{amt}</span> is on the way.</>
-                        ) : (
-                          <> your incentive is on the way.</>
-                        )} Close fast! 🔥
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             <div className="kpi-grid">
               <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1', background: '#eef2ff' }}>
@@ -602,6 +662,39 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+              </div>
+            )}
+
+            {verticalApps.length > 0 && (
+              <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>                {verticalApps.map((app, idx) => {
+                  const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                  return (
+                    <div key={app.id} style={{
+                      background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 16px',
+                      display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      color: '#92400e', fontSize: '0.95rem'
+                    }}>
+                      <div style={{ background: '#fff', width: '36px', height: '36px', borderRadius: '50%', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, border: '1px solid #fde68a' }}>
+                        {app.companyLogo ? (
+                          <img src={app.companyLogo} alt={app.companyName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <div style={{ background: '#fef3c7', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Zap size={20} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, lineHeight: '1.4' }}>
+                        ⚡ Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobTitle || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! 
+                        {amt && amt > 0 ? (
+                          <> <br/>Incentive: <span style={{ color: '#059669', fontWeight: 'bold' }}>₹{amt}</span>. {MOTIVATIONAL_QUOTES[(idx + 3) % MOTIVATIONAL_QUOTES.length]}</>
+                        ) : (
+                          <> <br/>{MOTIVATIONAL_QUOTES[(idx + 3) % MOTIVATIONAL_QUOTES.length]}</>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
