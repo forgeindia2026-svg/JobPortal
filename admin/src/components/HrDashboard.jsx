@@ -554,8 +554,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                       color: '#92400e', fontSize: '0.95rem'
                     }}>
-                      <div style={{ background: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Zap size={20} />
+                      <div style={{ background: '#fff', width: '36px', height: '36px', borderRadius: '50%', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, border: '1px solid #fde68a' }}>
+                        {app.companyLogo ? (
+                          <img src={app.companyLogo} alt={app.companyName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <div style={{ background: '#fef3c7', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Zap size={20} />
+                          </div>
+                        )}
                       </div>
                       <div style={{ flex: 1, lineHeight: '1.4' }}>
                         🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobTitle || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! 

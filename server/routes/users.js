@@ -464,7 +464,8 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
         candidateDOB: candidate.qualification || '',
         candidateExperience: candidate.experience || '',
         jobTitle: job ? (job.title || job.companyName) : 'Untitled Job',
-        companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company')
+        companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company'),
+        companyLogo: company.logo || ''
       };
     });
 
