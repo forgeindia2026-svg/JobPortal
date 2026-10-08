@@ -756,7 +756,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <div className="kpi-icon" style={{ background: '#ddd6fe', color: '#6d28d9' }}><Gift size={20} /></div>
                 <div><div className="kpi-val">₹{totalIncentiveAmount.toLocaleString()}</div><div className="kpi-label">Total Incentive</div></div>
               </div>
-              <div className="kpi-card" onClick={() => { setActiveTab('incentives'); }} style={{ borderLeft: '4px solid #f97316', background: '#fff7ed', cursor: 'pointer' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Processing'); }} style={{ borderLeft: '4px solid #f97316', background: '#fff7ed', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#ffedd5', color: '#c2410c' }}><TrendingUp size={20} /></div>
                 <div>
                   <div className="kpi-val">₹{upcomingIncentiveAmount.toLocaleString()}</div>
