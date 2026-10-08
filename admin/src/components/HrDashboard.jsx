@@ -603,11 +603,18 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     if (!amt || amt === 0) {
                       let job = jobs.find(j => j.id === app.jobId);
                       if (!job || (Number(job.hrIncentiveFree) === 0 && Number(job.hrIncentivePaid) === 0)) {
-                        const fallbackJob = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName && (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0));
+                        const fallbackJob = jobs.find(j => 
+                          (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+                          (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase() && 
+                          (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0)
+                        );
                         if (fallbackJob) job = fallbackJob;
                       }
                       if (!job) {
-                        job = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName);
+                        job = jobs.find(j => 
+                          (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+                          (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
+                        );
                       }
                       if (job) {
                         if (currentUser.role === 'agent') {
@@ -812,11 +819,18 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   if (!amt || amt === 0) {
                     let job = jobs.find(j => j.id === app.jobId);
                     if (!job || (Number(job.hrIncentiveFree) === 0 && Number(job.hrIncentivePaid) === 0)) {
-                      const fallbackJob = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName && (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0));
+                      const fallbackJob = jobs.find(j => 
+                        (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+                        (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase() && 
+                        (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0)
+                      );
                       if (fallbackJob) job = fallbackJob;
                     }
                     if (!job) {
-                      job = jobs.find(j => j.title === app.jobTitle && j.companyName === app.companyName);
+                      job = jobs.find(j => 
+                        (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+                        (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
+                      );
                     }
                     if (job) {
                       if (currentUser.role === 'agent') {
