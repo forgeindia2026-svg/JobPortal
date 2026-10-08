@@ -1,0 +1,1 @@
+require('mongoose').connect('mongodb+srv://JobPortal:vmjpDTY7R3TPSmPA@cluster0.wkptyao.mongodb.net/recruitment_db?retryWrites=true&w=majority&appName=Cluster0').then(async () => { const db = require('mongoose').connection.db; const apps = await db.collection('applications').find({ candidateName: /Aruna/i }).toArray(); console.log(apps); process.exit(0); })

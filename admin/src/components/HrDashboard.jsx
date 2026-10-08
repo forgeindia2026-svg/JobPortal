@@ -602,16 +602,6 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
                     if (!Number(amt)) {
                       let job = jobs.find(j => j.id === app.jobId);
-                      const isPaid = Number(app.paymentAmount) >= 1499 || (job && job.isFicFlow);
-                      
-                      if (!job || (isPaid ? !Number(job.hrIncentivePaid) : !Number(job.hrIncentiveFree))) {
-                        const fallbackJob = jobs.find(j => 
-                          (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
-                          (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase() && 
-                          (isPaid ? Number(j.hrIncentivePaid) > 0 : Number(j.hrIncentiveFree) > 0)
-                        );
-                        if (fallbackJob) job = fallbackJob;
-                      }
                       if (!job) {
                         job = jobs.find(j => 
                           (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
@@ -619,10 +609,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         );
                       }
                       if (job) {
+                        const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
                         if (currentUser.role === 'agent') {
-                           amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+                           amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
                         } else {
-                           amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+                           amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
                         }
                       }
                     }
@@ -820,16 +811,6 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
                   if (!Number(amt)) {
                     let job = jobs.find(j => j.id === app.jobId);
-                    const isPaid = Number(app.paymentAmount) >= 1499 || (job && job.isFicFlow);
-                    
-                    if (!job || (isPaid ? !Number(job.hrIncentivePaid) : !Number(job.hrIncentiveFree))) {
-                      const fallbackJob = jobs.find(j => 
-                        (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
-                        (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase() && 
-                        (isPaid ? Number(j.hrIncentivePaid) > 0 : Number(j.hrIncentiveFree) > 0)
-                      );
-                      if (fallbackJob) job = fallbackJob;
-                    }
                     if (!job) {
                       job = jobs.find(j => 
                         (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
@@ -837,10 +818,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       );
                     }
                     if (job) {
+                      const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
                       if (currentUser.role === 'agent') {
-                         amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+                         amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
                       } else {
-                         amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+                         amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
                       }
                     }
                   }
