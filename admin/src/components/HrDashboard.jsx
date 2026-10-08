@@ -559,7 +559,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <Zap size={20} />
                       </div>
                       <div style={{ flex: 1, lineHeight: '1.4' }}>
-                        🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobDetails?.title || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! <span style={{ color: '#059669', fontWeight: 'bold' }}>{amtStr}</span> is on the way. Close fast! 🔥
+                        🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobTitle || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! <span style={{ color: '#059669', fontWeight: 'bold' }}>{amtStr}</span> is on the way. Close fast! 🔥
                       </div>
                     </div>
                   );
