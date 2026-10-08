@@ -360,7 +360,12 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     return stats.applications.filter(app => {
       const matchesSearch = app.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             (app.candidateMobile && app.candidateMobile.includes(searchTerm));
-      const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
+      let matchesStatus = true;
+      if (statusFilter === 'Processing') {
+        matchesStatus = !app.status || ['Applied', 'Shortlisted', 'Follow up'].includes(app.status);
+      } else if (statusFilter !== 'All') {
+        matchesStatus = app.status === statusFilter;
+      }
       
       let matchesDate = true;
       if (dateFilter !== 'All' && app.appliedAt) {
@@ -727,31 +732,31 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <div className="kpi-icon" style={{ background: '#c7d2fe', color: '#4f46e5' }}><MousePointerClick size={20} /></div>
                 <div><div className="kpi-val">{stats ? stats.linkClicks : 0}</div><div className="kpi-label">Total Link Clicks</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #10b981', background: '#ecfdf5' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('All'); }} style={{ borderLeft: '4px solid #10b981', background: '#ecfdf5', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#a7f3d0', color: '#059669' }}><Users size={20} /></div>
                 <div><div className="kpi-val">{stats ? stats.totalApplications : 0}</div><div className="kpi-label">Candidates Applied</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #3b82f6', background: '#eff6ff' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Processing'); }} style={{ borderLeft: '4px solid #3b82f6', background: '#eff6ff', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#bfdbfe', color: '#2563eb' }}><Briefcase size={20} /></div>
                 <div><div className="kpi-val">{stats?.applications?.filter(a => !a.status || ['Applied', 'Shortlisted', 'Follow up'].includes(a.status)).length || 0}</div><div className="kpi-label">Processing</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #f59e0b', background: '#fffbeb' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Interview Scheduled'); }} style={{ borderLeft: '4px solid #f59e0b', background: '#fffbeb', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#fde68a', color: '#d97706' }}><CalendarDays size={20} /></div>
                 <div><div className="kpi-val">{stats?.applications?.filter(a => a.status === 'Interview Scheduled').length || 0}</div><div className="kpi-label">Interview Scheduled</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #059669', background: '#ecfdf5' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Selected'); }} style={{ borderLeft: '4px solid #059669', background: '#ecfdf5', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#a7f3d0', color: '#047857' }}><CheckCircle size={20} /></div>
                 <div><div className="kpi-val">{stats?.applications?.filter(a => ['Selected', 'Converted', 'Hired'].includes(a.status)).length || 0}</div><div className="kpi-label">Selected</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #ef4444', background: '#fef2f2' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Rejected'); }} style={{ borderLeft: '4px solid #ef4444', background: '#fef2f2', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#fecaca', color: '#b91c1c' }}><X size={20} /></div>
                 <div><div className="kpi-val">{stats?.applications?.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length || 0}</div><div className="kpi-label">Rejected</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #8b5cf6', background: '#f5f3ff' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('incentives'); }} style={{ borderLeft: '4px solid #8b5cf6', background: '#f5f3ff', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#ddd6fe', color: '#6d28d9' }}><Gift size={20} /></div>
                 <div><div className="kpi-val">₹{totalIncentiveAmount.toLocaleString()}</div><div className="kpi-label">Total Incentive</div></div>
               </div>
-              <div className="kpi-card" style={{ borderLeft: '4px solid #f97316', background: '#fff7ed' }}>
+              <div className="kpi-card" onClick={() => { setActiveTab('incentives'); }} style={{ borderLeft: '4px solid #f97316', background: '#fff7ed', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#ffedd5', color: '#c2410c' }}><TrendingUp size={20} /></div>
                 <div>
                   <div className="kpi-val">₹{upcomingIncentiveAmount.toLocaleString()}</div>
@@ -921,6 +926,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </div>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', background: 'white' }}>
                   <option value="All">All Statuses</option>
+                  <option value="Processing">Processing</option>
                   <option value="Applied">Applied</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Selected">Selected</option>
