@@ -52,11 +52,25 @@ router.get('/', async (req, res) => {
           computedPaymentAmount = 49;
         }
       }
-
       const cDet = app.candidateDetails || {};
+
+      let fallbackHrIncentive = 0;
+      if (Number(computedPaymentAmount) >= 1499 || job?.isFicFlow) {
+        fallbackHrIncentive = job?.hrIncentivePaid || 0;
+      } else {
+        fallbackHrIncentive = job?.hrIncentiveFree !== undefined ? job.hrIncentiveFree : (job?.hrIncentiveAmount || 0);
+      }
+
+      let actualHrIncentive = app.incentiveAmount;
+      if (actualHrIncentive > 0 && Number(computedPaymentAmount) < 1499 && !job?.isFicFlow) {
+         if (actualHrIncentive === job?.hrIncentivePaid || actualHrIncentive === 7000) {
+             actualHrIncentive = fallbackHrIncentive;
+         }
+      }
 
       return {
         ...app,
+        incentiveAmount: actualHrIncentive !== undefined ? actualHrIncentive : fallbackHrIncentive,
         candidateName: candidate.name || cDet.name || 'Anonymous',
         candidateEmail: candidate.email || cDet.email || '',
         candidateMobile: candidate.mobile || cDet.mobile || '',
