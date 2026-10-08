@@ -74,6 +74,32 @@ router.delete('/hr/:id', async (req, res) => {
   }
 });
 
+// PUT update user password
+router.put('/:id/password', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await UserModel.findOne({ id });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Validate old password (using the dummy hash matching pattern from auth)
+    if (user.passwordHash !== 'dummy_hash_' + oldPassword) {
+      return res.status(401).json({ error: 'Incorrect old password' });
+    }
+
+    // Update with new password
+    await UserModel.updateOne(
+      { id },
+      { $set: { passwordHash: 'dummy_hash_' + newPassword } }
+    );
+    
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
 // POST track link click - candidate referral link open panna auto call aagum (renamed to visit to avoid adblockers)
 router.post('/hr/:referralCode/visit', async (req, res) => {
   try {
@@ -353,7 +379,7 @@ router.put('/hr/:id/candidate-incentives', async (req, res) => {
       const amount = Math.max(0, Number(item.amount) || 0);
       await ApplicationModel.updateOne(
         { id: item.applicationId, referredBy: { $in: codesRegex } },
-        { $set: { incentiveAmount: amount, incentiveUpdatedAt: now } }
+        { $set: { incentiveAmount: amount, incentiveUpdatedAt: now, incentiveConfirmed: true } }
       );
     }
 

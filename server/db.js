@@ -196,8 +196,17 @@ const CompanyModel = mongoose.model('Company', companySchema);
 const JobModel = mongoose.model('Job', jobSchema);
 const CandidateModel = mongoose.model('Candidate', candidateSchema);
 const ApplicationModel = mongoose.model('Application', applicationSchema);
-const InterviewModel = mongoose.model('Interview', interviewSchema);
 const ItTrainingProcessModel = mongoose.model('ItTrainingProcess', itTrainingProcessSchema);
+
+const withdrawalRequestSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: String,
+  amount: Number,
+  status: { type: String, default: 'Pending' }, // Pending, Paid, Rejected
+  requestedAt: { type: String, default: () => new Date().toISOString() },
+  processedAt: String
+});
+const WithdrawalRequestModel = mongoose.model('WithdrawalRequest', withdrawalRequestSchema);
 
 const globalSettingsSchema = new mongoose.Schema({
   type: { type: String, required: true, unique: true },
@@ -856,6 +865,7 @@ module.exports = {
   InterviewModel,
   ItTrainingProcessModel,
   GlobalSettingsModel,
-  PartnerIncentiveModel
+  PartnerIncentiveModel,
+  WithdrawalRequestModel
 };
 

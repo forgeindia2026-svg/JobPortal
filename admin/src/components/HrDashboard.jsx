@@ -103,6 +103,34 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     }
   };
 
+  const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '' });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+
+  const handlePasswordChange = async () => {
+    if (!passwordData.oldPassword || !passwordData.newPassword) {
+      showToast('Please enter both old and new passwords', 'error');
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/${currentUser.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(passwordData)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update password');
+      showToast('Password updated successfully!', 'success');
+      setPasswordData({ oldPassword: '', newPassword: '' });
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Failed to update password', 'error');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+
   const candidatePortalBaseUrl = window.location.hostname === 'localhost'
     ? 'http://localhost:5173'
     : 'https://jobs.forgeindiaconnect.in';
@@ -571,7 +599,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               >
                 <div style={{ position: 'relative', width: '100%', maxWidth: '800px', padding: '0 24px' }}>
                   {marqueeApps.map((app, idx) => {
-                    const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                    let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                    if (!amt || amt === 0) {
+                      const job = jobs.find(j => j.id === app.jobId || (j.title === app.jobTitle && j.companyName === app.companyName));
+                      if (job) {
+                        if (currentUser.role === 'agent') {
+                           amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+                        } else {
+                           amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+                        }
+                      }
+                    }
                     const isActive = idx === activeAdIndex;
                     return (
                       <div 
@@ -763,7 +801,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             {verticalApps.length > 0 && (
               <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>                {verticalApps.map((app, idx) => {
-                  const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                  let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                  if (!amt || amt === 0) {
+                    const job = jobs.find(j => j.id === app.jobId || (j.title === app.jobTitle && j.companyName === app.companyName));
+                    if (job) {
+                      if (currentUser.role === 'agent') {
+                         amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+                      } else {
+                         amt = (Number(app.paymentAmount) >= 1499 || job.isFicFlow) ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+                      }
+                    }
+                  }
                   return (
                     <div key={app.id} style={{
                       background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 16px',
@@ -1195,6 +1243,41 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   />
                   <small style={{ color: '#ef4444', display: 'block', marginTop: '4px' }}>* Login email cannot be changed.</small>
                 </div>
+
+                <div style={{ borderTop: '1px solid #e2e8f0', margin: '1rem 0' }}></div>
+                <h4 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0' }}>Change Password</h4>
+                
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Current Password</label>
+                  <input 
+                    type="password" 
+                    placeholder="Enter current password"
+                    value={passwordData.oldPassword}
+                    onChange={e => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
+                    className="form-input" 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>New Password</label>
+                  <input 
+                    type="password" 
+                    placeholder="Enter new password"
+                    value={passwordData.newPassword}
+                    onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    className="form-input" 
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '0.5rem' }}>
+                  <button 
+                    className="btn-primary" 
+                    onClick={handlePasswordChange}
+                    disabled={passwordSaving || !passwordData.oldPassword || !passwordData.newPassword}
+                    style={{ padding: '8px 20px', opacity: (passwordSaving || !passwordData.oldPassword || !passwordData.newPassword) ? 0.6 : 1 }}
+                  >
+                    {passwordSaving ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+
                 <div style={{ borderTop: '1px solid #e2e8f0', margin: '1rem 0' }}></div>
                 <h4 style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0' }}>Bank Account Details</h4>
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>Required for incentive payouts</p>
@@ -1287,23 +1370,40 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {activeTab === 'incentives' && (
           <div className="animate-fade">
             {(() => {
-              const closedStatuses = ['selected', 'converted', 'joined'];
+              const closedStatuses = ['selected', 'joined'];
               const closedApps = (stats?.applications || []).filter(a =>
-                closedStatuses.includes(String(a.status || '').toLowerCase()) || Number(a.incentiveAmount) > 0
+                closedStatuses.includes(String(a.status || '').toLowerCase())
               );
               
-              const totalEarned = closedApps.reduce((sum, app) => sum + (Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0), 0);
+              const totalEarned = closedApps.reduce((sum, app) => {
+                 const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
+                 return sum + (app.incentiveStatus === 'Paid' ? amt : 0);
+              }, 0);
+              
               const totalAvailable = closedApps.reduce((sum, app) => {
                  const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
-                 return sum + ((!app.incentiveStatus || app.incentiveStatus === 'Pending') && amt > 0 ? amt : 0);
+                 return sum + (app.incentiveConfirmed && (!app.incentiveStatus || app.incentiveStatus === 'Pending') && amt > 0 ? amt : 0);
               }, 0);
               
               const withdrawableApps = closedApps.filter(app => {
                  const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
-                 return (!app.incentiveStatus || app.incentiveStatus === 'Pending') && amt > 0;
+                 return app.incentiveConfirmed && (!app.incentiveStatus || app.incentiveStatus === 'Pending') && amt > 0;
+              });
+
+              // Check if user has withdrawn in the last 30 days
+              const hasRecentWithdrawal = closedApps.some(app => {
+                 if (!app.incentiveUpdatedAt || (app.incentiveStatus !== 'Withdraw Requested' && app.incentiveStatus !== 'Paid')) return false;
+                 const updatedAt = new Date(app.incentiveUpdatedAt);
+                 const now = new Date();
+                 const diffDays = Math.floor((now - updatedAt) / (1000 * 60 * 60 * 24));
+                 return diffDays < 30;
               });
 
               const handleWithdraw = async () => {
+                 if (hasRecentWithdrawal) {
+                    alert('You have already made a withdrawal within the last 30 days. Please wait for the cooldown period to end.');
+                    return;
+                 }
                  if(withdrawableApps.length === 0) return;
                  if(!window.confirm(`Request withdrawal for ₹${totalAvailable.toLocaleString()}?`)) return;
                  
@@ -1317,7 +1417,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                        })
                     ));
                     fetchStats();
-                    alert('Withdrawal request sent successfully!');
+                    alert('Withdrawal request submitted. It will be received in your bank within 24 to 48 hours.');
                  } catch(e) {
                     console.error(e);
                     alert('Failed to request withdrawal');
@@ -1325,6 +1425,29 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     setLoading(false);
                  }
               };
+
+              const withdrawalHistory = [];
+              closedApps.forEach(app => {
+                if (app.incentiveStatus === 'Withdraw Requested' || app.incentiveStatus === 'Paid') {
+                  const date = new Date(app.incentiveUpdatedAt).toLocaleDateString();
+                  const existing = withdrawalHistory.find(w => w.date === date);
+                  const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
+                  if (existing) {
+                    existing.amount += amt;
+                    existing.apps.push(app);
+                    if (app.incentiveStatus === 'Paid') existing.paidCount++;
+                  } else {
+                    withdrawalHistory.push({
+                      id: date,
+                      date: date,
+                      amount: amt,
+                      apps: [app],
+                      paidCount: app.incentiveStatus === 'Paid' ? 1 : 0
+                    });
+                  }
+                }
+              });
+              withdrawalHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
 
               return (
                 <>
@@ -1337,8 +1460,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       </div>
                       <button 
                         onClick={handleWithdraw}
-                        disabled={totalAvailable === 0}
-                        style={{ background: totalAvailable > 0 ? '#10b981' : '#cbd5e1', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: totalAvailable > 0 ? 'pointer' : 'not-allowed', fontSize: '0.8rem' }}
+                        disabled={totalAvailable === 0 || hasRecentWithdrawal}
+                        style={{ background: (totalAvailable > 0 && !hasRecentWithdrawal) ? '#10b981' : '#cbd5e1', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, cursor: (totalAvailable > 0 && !hasRecentWithdrawal) ? 'pointer' : 'not-allowed', fontSize: '0.8rem' }}
+                        title={hasRecentWithdrawal ? 'You can only withdraw once every 30 days.' : ''}
                       >
                         Withdraw
                       </button>
@@ -1397,9 +1521,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                               </td>
                             )}
                             <td style={{ textAlign: 'right', fontWeight: 800, color: (isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)) > 0 ? '#059669' : '#94a3b8' }}>
-                              {(isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)) > 0 
-                                ? `₹${(isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)).toLocaleString()}` 
-                                : 'Pending'}
+                              {app.incentiveConfirmed ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                  <span>₹{(isAgent ? Number(app.agentIncentiveAmount) : Number(app.incentiveAmount)).toLocaleString()}</span>
+                                  {app.incentiveStatus === 'Paid' && <span style={{ fontSize: '0.65rem', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>Paid ✓</span>}
+                                  {app.incentiveStatus === 'Withdraw Requested' && <span style={{ fontSize: '0.65rem', background: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>Processing</span>}
+                                </div>
+                              ) : (
+                                <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>Pending Admin Setup</span>
+                              )}
                             </td>
                             {!isAgent && (
                               <td style={{ textAlign: 'right' }}>
@@ -1423,6 +1553,47 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <tr>
                           <td colSpan={isAgent ? 4 : 6} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
                             No closed candidates yet. Incentives appear here once your candidates are Selected / Converted.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="table-container" style={{ marginTop: '2.5rem' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1.05rem', color: '#0f172a', margin: 0 }}>Withdrawal History</h3>
+                  </div>
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Date Requested</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Candidates Included</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {withdrawalHistory.map(w => (
+                        <tr key={w.id}>
+                          <td style={{ fontWeight: 600 }}>{w.date}</td>
+                          <td style={{ fontWeight: 800, color: '#059669' }}>₹{w.amount.toLocaleString()}</td>
+                          <td>
+                            {w.paidCount === w.apps.length ? (
+                              <span style={{ background: '#10b981', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Paid ✓</span>
+                            ) : (
+                              <span style={{ background: '#3b82f6', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Processing</span>
+                            )}
+                          </td>
+                          <td style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                            {w.apps.map(a => a.candidateName).join(', ')}
+                          </td>
+                        </tr>
+                      ))}
+                      {withdrawalHistory.length === 0 && (
+                        <tr>
+                          <td colSpan={4} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
+                            No withdrawals made yet.
                           </td>
                         </tr>
                       )}

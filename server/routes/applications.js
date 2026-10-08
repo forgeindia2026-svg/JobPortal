@@ -311,22 +311,24 @@ router.delete('/:id', async (req, res) => {
 router.put('/:id/incentive-status', async (req, res) => {
   try {
     const { status } = req.body;
-    const db = await readDBAsync();
     
-    const appIndex = db.applications.findIndex(a => a.id === req.params.id);
-    if (appIndex === -1) {
+    const app = await ApplicationModel.findOneAndUpdate(
+      { id: req.params.id },
+      { 
+        $set: { 
+          incentiveStatus: status, 
+          incentiveUpdatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        } 
+      },
+      { new: true }
+    );
+
+    if (!app) {
       return res.status(404).json({ error: 'Application not found' });
     }
 
-    db.applications[appIndex].incentiveStatus = status;
-    db.applications[appIndex].updatedAt = new Date().toISOString();
-
-    await ApplicationModel.findOneAndUpdate(
-      { id: req.params.id },
-      { incentiveStatus: status, updatedAt: db.applications[appIndex].updatedAt }
-    );
-
-    res.json({ message: 'Incentive status updated successfully', application: db.applications[appIndex] });
+    res.json({ message: 'Incentive status updated successfully', application: app });
   } catch (err) {
     console.error('Error updating incentive status:', err);
     res.status(500).json({ error: 'Server error' });

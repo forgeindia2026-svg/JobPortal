@@ -94,8 +94,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [incentiveSaving, setIncentiveSaving] = useState(false);
   const [incentiveError, setIncentiveError] = useState('');
 
-  // Closed candidates (Selected / Converted) referred by an HR — incentive is given per candidate
-  const CLOSED_STATUSES = ['selected', 'converted', 'joined'];
+  // Closed candidates (Selected / Joined) referred by an HR — incentive is given per candidate
+  const CLOSED_STATUSES = ['selected', 'joined'];
   const getHrClosedApps = (hr) => {
     if (!hr) return [];
     const code = String(hr.referralCode || '').toLowerCase();
@@ -2465,8 +2465,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                   type="button"
                                   onClick={(e) => { e.preventDefault(); handleToggleIncentiveStatus(app); }}
                                   style={{
-                                    background: app.incentiveStatus === 'Paid' ? '#10b981' : '#fef08a',
-                                    color: app.incentiveStatus === 'Paid' ? '#fff' : '#854d0e',
+                                    background: app.incentiveStatus === 'Paid' ? '#10b981' : (app.incentiveStatus === 'Withdraw Requested' ? '#3b82f6' : '#fef08a'),
+                                    color: app.incentiveStatus === 'Paid' ? '#fff' : (app.incentiveStatus === 'Withdraw Requested' ? '#fff' : '#854d0e'),
                                     border: 'none',
                                     borderRadius: '6px',
                                     padding: '6px 10px',
@@ -2478,8 +2478,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                     justifyContent: 'center',
                                     minWidth: '75px'
                                   }}
+                                  title={app.incentiveStatus === 'Withdraw Requested' ? 'HR requested withdrawal' : ''}
                                 >
-                                  {app.incentiveStatus === 'Paid' ? 'Paid ✓' : 'Pay Now'}
+                                  {app.incentiveStatus === 'Paid' ? 'Paid ✓' : (app.incentiveStatus === 'Withdraw Requested' ? 'Pay Request' : 'Pay Now')}
                                 </button>
                               )}
                             </div>
