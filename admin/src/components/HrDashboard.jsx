@@ -548,7 +548,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>
                 {recentIncentiveApps.map(app => {
                   const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
-                  const amtStr = amt ? `₹${amt}` : 'your incentive';
+                  const amtStr = amt ? `₹${amt}` : '';
                   return (
                     <div key={app.id} style={{
                       background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 16px',
@@ -559,7 +559,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <Zap size={20} />
                       </div>
                       <div style={{ flex: 1, lineHeight: '1.4' }}>
-                        🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobTitle || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! <span style={{ color: '#059669', fontWeight: 'bold' }}>{amtStr}</span> is on the way. Close fast! 🔥
+                        🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobTitle || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! your incentive <span style={{ color: '#059669', fontWeight: 'bold' }}>{amtStr}</span> is on the way. Close fast! 🔥
                       </div>
                     </div>
                   );
