@@ -63,7 +63,7 @@ router.get('/', async (req, res) => {
 
       let actualHrIncentive = app.incentiveAmount;
       if (actualHrIncentive > 0 && Number(computedPaymentAmount) < 1499 && !job?.isFicFlow) {
-         if (actualHrIncentive === job?.hrIncentivePaid || actualHrIncentive === 7000) {
+         if (actualHrIncentive === job?.hrIncentivePaid || actualHrIncentive > fallbackHrIncentive) {
              actualHrIncentive = fallbackHrIncentive;
          }
       }

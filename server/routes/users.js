@@ -461,7 +461,7 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
       // Fix for old applications saved with the bug
       let actualHrIncentive = app.incentiveAmount;
       if (actualHrIncentive > 0 && Number(app.paymentAmount || app.feeAmount || 49) < 1499 && !job?.isFicFlow) {
-         if (actualHrIncentive === job?.hrIncentivePaid || actualHrIncentive === 7000) {
+         if (actualHrIncentive === job?.hrIncentivePaid || actualHrIncentive > fallbackHrIncentive) {
              actualHrIncentive = fallbackHrIncentive;
          }
       }
