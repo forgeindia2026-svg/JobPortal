@@ -177,60 +177,58 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   }, [activeTab, stats]);
 
   useEffect(() => {
-    if (activeTab === 'jobs') {
-      Promise.all([
-        fetch(`${API_URL}/api/jobs?status=Active`).then(res => res.json()),
-        fetch(`${API_URL}/api/it-training-processes`).then(res => res.json()),
-        fetch(`${API_URL}/api/settings/it-training-incentives`).then(res => res.json()).catch(() => ({})),
-        fetch(`${API_URL}/api/partner-incentives?hrId=${isAgent ? currentUser.parentHrId : currentUser.id}`).then(res => res.json()).catch(() => ([]))
-      ])
-      .then(([jobsData, itData, globalIncentives, partnerIncentives]) => {
-        const standardJobs = Array.isArray(jobsData) ? jobsData : [];
-        let combinedItJob = null;
-        if (Array.isArray(itData)) {
-          const placementProcesses = itData.filter(it => it.itCategory === 'Placement');
-          if (placementProcesses.length > 0) {
-            const uniqueProcesses = [];
-            const seen = new Set();
-            placementProcesses.forEach(p => {
-              const pName = p.processName?.toUpperCase().trim();
-              if (pName && !seen.has(pName)) {
-                seen.add(pName);
-                p.hrIncentiveAmount = globalIncentives?.[pName] || 0;
-                uniqueProcesses.push(p);
-              }
-            });
-            uniqueProcesses.sort((a,b) => a.processName.localeCompare(b.processName));
+    Promise.all([
+      fetch(`${API_URL}/api/jobs?status=Active`).then(res => res.json()),
+      fetch(`${API_URL}/api/it-training-processes`).then(res => res.json()),
+      fetch(`${API_URL}/api/settings/it-training-incentives`).then(res => res.json()).catch(() => ({})),
+      fetch(`${API_URL}/api/partner-incentives?hrId=${isAgent ? currentUser.parentHrId : currentUser.id}`).then(res => res.json()).catch(() => ([]))
+    ])
+    .then(([jobsData, itData, globalIncentives, partnerIncentives]) => {
+      const standardJobs = Array.isArray(jobsData) ? jobsData : [];
+      let combinedItJob = null;
+      if (Array.isArray(itData)) {
+        const placementProcesses = itData.filter(it => it.itCategory === 'Placement');
+        if (placementProcesses.length > 0) {
+          const uniqueProcesses = [];
+          const seen = new Set();
+          placementProcesses.forEach(p => {
+            const pName = p.processName?.toUpperCase().trim();
+            if (pName && !seen.has(pName)) {
+              seen.add(pName);
+              p.hrIncentiveAmount = globalIncentives?.[pName] || 0;
+              uniqueProcesses.push(p);
+            }
+          });
+          uniqueProcesses.sort((a,b) => a.processName.localeCompare(b.processName));
 
-            combinedItJob = {
-              id: 'combined-it-training',
-              isCombinedItTraining: true,
-              title: 'FIC IT Training & 100% Placement Programme',
-              companyName: 'PAN India Opportunities',
-              processes: uniqueProcesses
-            };
-          }
+          combinedItJob = {
+            id: 'combined-it-training',
+            isCombinedItTraining: true,
+            title: 'FIC IT Training & 100% Placement Programme',
+            companyName: 'PAN India Opportunities',
+            processes: uniqueProcesses
+          };
         }
-        
-        const allJobs = combinedItJob ? [combinedItJob, ...standardJobs] : standardJobs;
-        
-        // Attach partner incentives to jobs
-        const mappedJobs = allJobs.map(job => {
-          const pi = partnerIncentives.find(p => p.jobId === job.id) || {};
-          if (job.isCombinedItTraining) {
-             job.partnerProcessIncentives = pi.processIncentives || {};
-          } else {
-             job.partnerIncentiveFree = pi.freeJobIncentive || 0;
-             job.partnerIncentivePaid = pi.paidJobIncentive || 0;
-          }
-          return job;
-        });
+      }
+      
+      const allJobs = combinedItJob ? [combinedItJob, ...standardJobs] : standardJobs;
+      
+      // Attach partner incentives to jobs
+      const mappedJobs = allJobs.map(job => {
+        const pi = partnerIncentives.find(p => p.jobId === job.id) || {};
+        if (job.isCombinedItTraining) {
+           job.partnerProcessIncentives = pi.processIncentives || {};
+        } else {
+           job.partnerIncentiveFree = pi.freeJobIncentive || 0;
+           job.partnerIncentivePaid = pi.paidJobIncentive || 0;
+        }
+        return job;
+      });
 
-        setJobs(mappedJobs);
-      })
-      .catch(err => console.error('Error fetching jobs:', err));
-    }
-  }, [API_URL, activeTab]);
+      setJobs(mappedJobs);
+    })
+    .catch(err => console.error('Error fetching jobs:', err));
+  }, [API_URL, currentUser.id, currentUser.parentHrId, isAgent]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -615,6 +613,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         } else {
                            amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
                         }
+                        console.log('MARQUEE APP:', app.candidateName, 'JOB:', job?.id, 'IS_PAID:', isPaid, 'FINAL AMT:', amt);
                       }
                     }
                     const isActive = idx === activeAdIndex;
@@ -824,6 +823,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       } else {
                          amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
                       }
+                      console.log('VERTICAL APP:', app.candidateName, 'JOB:', job?.id, 'IS_PAID:', isPaid, 'FINAL AMT:', amt);
                     }
                   }
                   return (
