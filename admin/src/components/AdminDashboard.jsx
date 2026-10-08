@@ -104,8 +104,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     
     return applications.filter(app => {
       const ref = String(app.referredBy || '').toLowerCase();
-      return allCodes.includes(ref) && 
-        (CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || Number(app.incentiveAmount) > 0);
+      return allCodes.includes(ref) && CLOSED_STATUSES.includes(String(app.status || '').toLowerCase());
     });
   };
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
@@ -1456,7 +1455,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>HR / Partner</th>
                     <th>Job Title</th>
                     <th>Company</th>
-                    <th>Round</th>
                     <th>Date & Time</th>
                     <th>Mode & Link / Address</th>
                     <th>Status</th>
@@ -1482,7 +1480,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         </td>
                         <td>{int.jobTitle}</td>
                       <td>{int.companyName}</td>
-                      <td><span className="badge badge-shortlisted">{int.round}</span></td>
                       <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
                         <div style={{ color: '#334155' }}>
                           {int.date ? new Date(int.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD'}
