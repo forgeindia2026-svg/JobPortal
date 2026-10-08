@@ -1483,7 +1483,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         <td>{int.jobTitle}</td>
                       <td>{int.companyName}</td>
                       <td><span className="badge badge-shortlisted">{int.round}</span></td>
-                      <td style={{ fontWeight: 600 }}>
+                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
                         <div style={{ color: '#334155' }}>
                           {int.date ? new Date(int.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD'}
                         </div>
