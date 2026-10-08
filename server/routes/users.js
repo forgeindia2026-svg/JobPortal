@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { UserModel, ApplicationModel, readDBAsync } = require('../db');
+const { UserModel, ApplicationModel, PartnerIncentiveModel, GlobalSettingsModel, readDBAsync } = require('../db');
 
 // GET all HRs / Employees
 router.get('/hr', async (req, res) => {
@@ -432,6 +432,11 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
     // Find applications referred by this HR or their agents
     const applications = await ApplicationModel.find({ referredBy: { $in: codesRegex } }).lean();
     const db = await readDBAsync();
+    
+    // Fetch settings for dynamic incentive calculation if missing
+    const partnerIncentives = await PartnerIncentiveModel.find({ hrId: hrUser.id }).lean();
+    const incSetting = await GlobalSettingsModel.findOne({ type: 'incentives' }).lean();
+    const agentCut = incSetting?.data?.agentCutPercentage || 50;
 
     const populated = applications.map(app => {
       const candidate = db.candidates.find(c => c.id === app.candidateId) || {};
@@ -445,12 +450,8 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
       const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
 
       let fallbackHrIncentive = job?.hrIncentiveFree || job?.hrIncentivePaid || job?.hrIncentiveAmount || 0;
-      const partnerIncentives = db.partnerIncentives || [];
-      const override = partnerIncentives.find(p => p.jobId === app.jobId && p.hrId === hrUser.id);
-      if (override) fallbackHrIncentive = override.incentiveAmount;
-      
-      const incSetting = (db.globalSettings || []).find(s => s.type === 'incentives');
-      const agentCut = incSetting?.data?.agentCutPercentage || 50;
+      const override = partnerIncentives.find(p => p.jobId === app.jobId);
+      if (override && override.incentiveAmount) fallbackHrIncentive = override.incentiveAmount;
 
       return {
         ...app,
