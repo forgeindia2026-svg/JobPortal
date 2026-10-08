@@ -664,7 +664,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <div className="kpi-icon" style={{ background: '#ffedd5', color: '#c2410c' }}><TrendingUp size={20} /></div>
                 <div>
                   <div className="kpi-val">₹{upcomingIncentiveAmount.toLocaleString()}</div>
-                  <div className="kpi-label">Upcoming ({upcomingCount} Candidates)</div>
+                  <div className="kpi-label">Upcoming ({upcomingCount} Candidates) Incentives</div>
                 </div>
               </div>
             </div>
