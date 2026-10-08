@@ -449,13 +449,26 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
       }
       const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
 
-      let fallbackHrIncentive = job?.hrIncentiveFree || job?.hrIncentivePaid || job?.hrIncentiveAmount || 0;
+      let fallbackHrIncentive = 0;
+      if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job?.isFicFlow) {
+        fallbackHrIncentive = job?.hrIncentivePaid || 0;
+      } else {
+        fallbackHrIncentive = job?.hrIncentiveFree !== undefined ? job.hrIncentiveFree : (job?.hrIncentiveAmount || 0);
+      }
       const override = partnerIncentives.find(p => p.jobId === app.jobId);
       if (override && override.incentiveAmount) fallbackHrIncentive = override.incentiveAmount;
 
+      // Fix for old applications saved with the bug
+      let actualHrIncentive = app.incentiveAmount;
+      if (actualHrIncentive > 0 && Number(app.paymentAmount || app.feeAmount || 49) < 1499 && !job?.isFicFlow) {
+         if (actualHrIncentive === job?.hrIncentivePaid || actualHrIncentive === 7000) {
+             actualHrIncentive = fallbackHrIncentive;
+         }
+      }
+
       return {
         ...app,
-        incentiveAmount: app.incentiveAmount || fallbackHrIncentive,
+        incentiveAmount: actualHrIncentive !== undefined ? actualHrIncentive : fallbackHrIncentive,
         agentIncentiveAmount: app.agentIncentiveAmount || (fallbackHrIncentive * agentCut / 100),
         candidateName: candidate.name || 'Anonymous',
         candidateEmail: candidate.email || '',

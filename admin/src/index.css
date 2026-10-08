@@ -567,11 +567,19 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #1e3a8a);
   background-size: 400% 400%;
   animation: gradientBG 15s ease infinite;
-  border-radius: 16px;
   overflow: hidden;
   position: relative;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
   margin-bottom: 24px;
+}
+
+/* Desktop Full Width */
+@media (min-width: 769px) {
+  .mass-banner {
+    margin-left: -2rem;
+    margin-right: -2rem;
+    border-radius: 0;
+  }
 }
 
 .mass-marquee-container {
@@ -650,7 +658,9 @@ h1, h2, h3, h4, h5, h6 {
   .mass-banner {
     padding: 40px 0;
     margin-bottom: 16px;
-    border-radius: 12px;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    border-radius: 0;
   }
   .mass-card-logo {
     width: 56px;

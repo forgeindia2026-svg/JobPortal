@@ -188,7 +188,7 @@ router.post('/', async (req, res) => {
           hrIncentive = Number(gData[itProc.processName?.toUpperCase().trim()]) || 0;
         } else {
           // Regular job
-          hrIncentive = Number(finalPaymentAmount) > 0 ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+          hrIncentive = (Number(finalPaymentAmount) >= 1499 || job?.isFicFlow) ? (Number(job.hrIncentivePaid) || 0) : (job?.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job?.hrIncentiveAmount) || 0));
         }
 
         // 2. Calculate Agent Incentive if referred by Agent
@@ -198,7 +198,7 @@ router.post('/', async (req, res) => {
             if (itProc && itProc.itCategory === 'Placement') {
                agentIncentive = Number(pi.processIncentives?.[itProc.processName?.toUpperCase().trim()]) || 0;
             } else {
-               agentIncentive = Number(finalPaymentAmount) > 0 ? (Number(pi.paidJobIncentive) || 0) : (Number(pi.freeJobIncentive) || 0);
+               agentIncentive = (Number(finalPaymentAmount) >= 1499 || job?.isFicFlow) ? (Number(pi.paidJobIncentive) || 0) : (Number(pi.freeJobIncentive) || 0);
             }
           }
         }
