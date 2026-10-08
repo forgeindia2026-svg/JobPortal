@@ -600,13 +600,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <div style={{ position: 'relative', width: '100%', maxWidth: '800px', padding: '0 24px' }}>
                   {marqueeApps.map((app, idx) => {
                     let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
-                    if (!amt || amt === 0) {
+                    if (!Number(amt)) {
                       let job = jobs.find(j => j.id === app.jobId);
-                      if (!job || (!Number(job.hrIncentiveFree) && !Number(job.hrIncentivePaid))) {
+                      const isPaid = Number(app.paymentAmount) >= 1499 || (job && job.isFicFlow);
+                      
+                      if (!job || (isPaid ? !Number(job.hrIncentivePaid) : !Number(job.hrIncentiveFree))) {
                         const fallbackJob = jobs.find(j => 
                           (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
                           (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase() && 
-                          (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0)
+                          (isPaid ? Number(j.hrIncentivePaid) > 0 : Number(j.hrIncentiveFree) > 0)
                         );
                         if (fallbackJob) job = fallbackJob;
                       }
@@ -816,13 +818,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>                {verticalApps.map((app, idx) => {
                   let amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
-                  if (!amt || amt === 0) {
+                  if (!Number(amt)) {
                     let job = jobs.find(j => j.id === app.jobId);
-                    if (!job || (!Number(job.hrIncentiveFree) && !Number(job.hrIncentivePaid))) {
+                    const isPaid = Number(app.paymentAmount) >= 1499 || (job && job.isFicFlow);
+                    
+                    if (!job || (isPaid ? !Number(job.hrIncentivePaid) : !Number(job.hrIncentiveFree))) {
                       const fallbackJob = jobs.find(j => 
                         (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
                         (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase() && 
-                        (Number(j.hrIncentiveFree) > 0 || Number(j.hrIncentivePaid) > 0)
+                        (isPaid ? Number(j.hrIncentivePaid) > 0 : Number(j.hrIncentiveFree) > 0)
                       );
                       if (fallbackJob) job = fallbackJob;
                     }
