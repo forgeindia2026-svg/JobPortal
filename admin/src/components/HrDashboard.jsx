@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -347,6 +347,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     });
   }, [stats, searchTerm, statusFilter, dateFilter]);
 
+  const recentIncentiveApps = useMemo(() => {
+    if (!stats || !stats.applications) return [];
+    return [...stats.applications]
+      .filter(app => app.status !== 'Rejected')
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5); // top 5 recent applications
+  }, [stats]);
+
   // Analytics Data
   const chartData = useMemo(() => {
     if (!stats?.applications) return [];
@@ -534,6 +542,30 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </button>
               </div>
             </div>
+
+            {recentIncentiveApps.length > 0 && (
+              <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: 600, margin: 0 }}>Recent Activity Alerts</h3>
+                {recentIncentiveApps.map(app => {
+                  const amt = currentUser.role === 'agent' ? app.agentIncentiveAmount : app.incentiveAmount;
+                  const amtStr = amt ? `₹${amt}` : 'your incentive';
+                  return (
+                    <div key={app.id} style={{
+                      background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 16px',
+                      display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      color: '#92400e', fontSize: '0.95rem'
+                    }}>
+                      <div style={{ background: '#fef3c7', padding: '8px', borderRadius: '50%', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Zap size={20} />
+                      </div>
+                      <div style={{ flex: 1, lineHeight: '1.4' }}>
+                        🎉 Candidate <span style={{ fontWeight: 600 }}>{app.candidateName}</span> just applied for <span style={{ fontWeight: 600 }}>{app.jobDetails?.title || 'a role'}</span> at <span style={{ fontWeight: 600 }}>{app.companyName || 'our partner company'}</span>! <span style={{ color: '#059669', fontWeight: 'bold' }}>{amtStr}</span> is on the way. Close fast! 🔥
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="kpi-grid">
               <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1', background: '#eef2ff' }}>
