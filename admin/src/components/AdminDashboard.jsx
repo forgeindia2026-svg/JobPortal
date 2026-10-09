@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard
@@ -108,7 +108,76 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       return allCodes.includes(ref) && CLOSED_STATUSES.includes(String(app.status || '').toLowerCase());
     });
   };
+
+  const getUpcomingIncentivesData = () => {
+    const allReferrers = [...hrs, ...allAgents];
+    const results = [];
+    allReferrers.forEach(referrer => {
+      let upcoming = 0;
+      let upcomingCnt = 0;
+      const upcomingApps = [];
+      
+      const code = String(referrer.referralCode || '').toLowerCase();
+      const agentCodes = Array.isArray(referrer.agentCodes) ? referrer.agentCodes : [];
+      const allCodes = [code, ...agentCodes].filter(Boolean);
+
+      const refApps = validApplications.filter(app => {
+         const ref = String(app.referredBy || '').toLowerCase();
+         return allCodes.includes(ref);
+      });
+
+      refApps.forEach(app => {
+        let amt = referrer.role === 'agent' || referrer.role === 'franchise' ? app.agentIncentiveAmount : app.incentiveAmount;
+        if (!Number(amt)) {
+          let job = jobs.find(j => j.id === app.jobId);
+          if (!job) {
+            job = jobs.find(j => 
+              (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+              (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
+            );
+          }
+          if (job) {
+            const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
+            if (referrer.role === 'agent' || referrer.role === 'franchise') {
+               amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+            } else {
+               amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+            }
+          }
+        }
+        const val = Number(amt) || 0;
+        
+        const isClosed = ['selected', 'converted', 'hired'].includes(String(app.status||'').toLowerCase());
+        const isRejected = ['rejected', 'not interested'].includes(String(app.status||'').toLowerCase());
+        
+        if (!isClosed && !isRejected) {
+          upcoming += val;
+          upcomingCnt += 1;
+          upcomingApps.push(app);
+        }
+      });
+
+      if (upcomingCnt > 0) {
+        results.push({
+          hr: referrer,
+          hrName: referrer.name || 'Unknown',
+          upcomingCount: upcomingCnt,
+          upcomingAmount: upcoming,
+          applications: upcomingApps
+        });
+      }
+    });
+
+    return results;
+  };
+
+  const upcomingIncentivesData = useMemo(() => getUpcomingIncentivesData(), [validApplications, hrs, allAgents, jobs]);
+  const globalUpcomingIncentiveTotal = upcomingIncentivesData.reduce((sum, item) => sum + item.upcomingAmount, 0);
+
+  const [selectedHrForUpcomingDetails, setSelectedHrForUpcomingDetails] = useState(null);
+
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
+
 
   const [hrRefModalApp, setHrRefModalApp] = useState(null);
   const [selectedHrRef, setSelectedHrRef] = useState('');
@@ -832,6 +901,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <div>
                   <div className="kpi-val" style={{ color: '#7f1d1d' }}>{applications.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#7f1d1d', opacity: 0.8, fontWeight: 600 }}>Rejected</div>
+                </div>
+              </div>
+
+              <div 
+                className="kpi-card" 
+                onClick={() => { setActiveTab('hr-upcoming-incentives'); setSelectedHrForUpcomingDetails(null); }}
+                style={{
+                  background: '#fef3c7', border: '1px solid #fde68a', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#fde68a', color: '#d97706' }}>
+                  <Gift size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#92400e' }}>₹{globalUpcomingIncentiveTotal.toLocaleString()}</div>
+                  <div className="kpi-label" style={{ color: '#92400e', opacity: 0.8, fontWeight: 600 }}>HR Upcoming Incentives</div>
                 </div>
               </div>
             </div>
@@ -1967,7 +2055,132 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             )}
           </div>
         )}
-        {activeTab === 'partners_admin' && (
+
+        {activeTab === 'hr-upcoming-incentives' && (
+          <div className="fade-in">
+            <div className="dashboard-header" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 className="dashboard-title">HR Upcoming Incentives</h2>
+                <p className="dashboard-subtitle">Track candidate applications that are currently in process and their expected incentives.</p>
+              </div>
+              {selectedHrForUpcomingDetails && (
+                <button className="btn-secondary" onClick={() => setSelectedHrForUpcomingDetails(null)}>
+                  &larr; Back to HR List
+                </button>
+              )}
+            </div>
+
+            {!selectedHrForUpcomingDetails ? (
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>HR Name</th>
+                      <th>Referral Code</th>
+                      <th>Upcoming Candidates</th>
+                      <th>Total Upcoming Amount</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcomingIncentivesData.length > 0 ? upcomingIncentivesData.map((data, idx) => (
+                      <tr key={idx}>
+                        <td>
+                          <div style={{ fontWeight: '600', color: '#1e293b' }}>{data.hrName}</div>
+                          <span className="badge" style={{ marginTop: '4px' }}>{data.hr.role.toUpperCase()}</span>
+                        </td>
+                        <td><span className="badge badge-blue">{data.hr.referralCode}</span></td>
+                        <td>{data.upcomingCount} Candidates</td>
+                        <td style={{ fontWeight: '600', color: '#0d9488' }}>₹{data.upcomingAmount.toLocaleString()}</td>
+                        <td>
+                          <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setSelectedHrForUpcomingDetails(data)}>
+                            View Candidates
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                          No upcoming incentives found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div>
+                <div style={{ marginBottom: '16px', padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', color: '#0f172a', fontWeight: '600', marginBottom: '4px' }}>Upcoming Candidates for {selectedHrForUpcomingDetails.hrName}</h3>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>Referral Code: {selectedHrForUpcomingDetails.hr.referralCode}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0d9488' }}>₹{selectedHrForUpcomingDetails.upcomingAmount.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Expected</div>
+                  </div>
+                </div>
+
+                <div className="table-container">
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Candidate Details</th>
+                        <th>Job Info</th>
+                        <th>Status</th>
+                        <th>Expected Incentive</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedHrForUpcomingDetails.applications.map(app => (
+                        <tr key={app.id}>
+                          <td>
+                            <div style={{ fontWeight: '600', color: '#1e293b' }}>{app.candidateName}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{app.candidateEmail}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{app.candidatePhone}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: '500' }}>{app.jobTitle}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{app.companyName}</div>
+                          </td>
+                          <td>
+                            <span className={`status-badge status-${(app.status || 'Received').replace(/\s+/g, '-').toLowerCase()}`}>
+                              {app.status || 'Received'}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: '600', color: '#0d9488' }}>
+                            ₹{(() => {
+                              let amt = selectedHrForUpcomingDetails.hr.role === 'agent' || selectedHrForUpcomingDetails.hr.role === 'franchise' ? app.agentIncentiveAmount : app.incentiveAmount;
+                              if (!Number(amt)) {
+                                let job = jobs.find(j => j.id === app.jobId);
+                                if (!job) {
+                                  job = jobs.find(j => 
+                                    (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+                                    (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
+                                  );
+                                }
+                                if (job) {
+                                  const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
+                                  if (selectedHrForUpcomingDetails.hr.role === 'agent' || selectedHrForUpcomingDetails.hr.role === 'franchise') {
+                                     amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+                                  } else {
+                                     amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+                                  }
+                                }
+                              }
+                              return Number(amt) || 0;
+                            })().toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+\n        {activeTab === 'partners_admin' && (
           <div>
             {selectedHrForPartners ? (
               <div>
