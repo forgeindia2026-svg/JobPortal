@@ -109,73 +109,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     });
   };
 
-  const getUpcomingIncentivesData = () => {
-    const allReferrers = [...hrs, ...allAgents];
-    const results = [];
-    allReferrers.forEach(referrer => {
-      let upcoming = 0;
-      let upcomingCnt = 0;
-      const upcomingApps = [];
-      
-      const code = String(referrer.referralCode || '').toLowerCase();
-      const agentCodes = Array.isArray(referrer.agentCodes) ? referrer.agentCodes : [];
-      const allCodes = [code, ...agentCodes].filter(Boolean);
-
-      const refApps = validApplications.filter(app => {
-         const ref = String(app.referredBy || '').toLowerCase();
-         return allCodes.includes(ref);
-      });
-
-      refApps.forEach(app => {
-        let amt = referrer.role === 'agent' || referrer.role === 'franchise' ? app.agentIncentiveAmount : app.incentiveAmount;
-        if (!Number(amt)) {
-          let job = jobs.find(j => j.id === app.jobId);
-          if (!job) {
-            job = jobs.find(j => 
-              (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
-              (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
-            );
-          }
-          if (job) {
-            const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
-            if (referrer.role === 'agent' || referrer.role === 'franchise') {
-               amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
-            } else {
-               amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
-            }
-          }
-        }
-        const val = Number(amt) || 0;
-        
-        const isClosed = ['selected', 'converted', 'hired'].includes(String(app.status||'').toLowerCase());
-        const isRejected = ['rejected', 'not interested'].includes(String(app.status||'').toLowerCase());
-        
-        if (!isClosed && !isRejected) {
-          upcoming += val;
-          upcomingCnt += 1;
-          upcomingApps.push(app);
-        }
-      });
-
-      if (upcomingCnt > 0) {
-        results.push({
-          hr: referrer,
-          hrName: referrer.name || 'Unknown',
-          upcomingCount: upcomingCnt,
-          upcomingAmount: upcoming,
-          applications: upcomingApps
-        });
-      }
-    });
-
-    return results;
-  };
-
-  const upcomingIncentivesData = useMemo(() => getUpcomingIncentivesData(), [validApplications, hrs, allAgents, jobs]);
-  const globalUpcomingIncentiveTotal = upcomingIncentivesData.reduce((sum, item) => sum + item.upcomingAmount, 0);
-
-  const [selectedHrForUpcomingDetails, setSelectedHrForUpcomingDetails] = useState(null);
-
   const [activeItCategoryTab, setActiveItCategoryTab] = useState('Placement');
 
 
@@ -543,6 +476,73 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   };
 
   const validApplications = applications.filter(app => app.status !== 'Payment Pending');
+
+  const getUpcomingIncentivesData = () => {
+    const allReferrers = [...hrs, ...allAgents];
+    const results = [];
+    allReferrers.forEach(referrer => {
+      let upcoming = 0;
+      let upcomingCnt = 0;
+      const upcomingApps = [];
+      
+      const code = String(referrer.referralCode || '').toLowerCase();
+      const agentCodes = Array.isArray(referrer.agentCodes) ? referrer.agentCodes : [];
+      const allCodes = [code, ...agentCodes].filter(Boolean);
+
+      const refApps = validApplications.filter(app => {
+         const ref = String(app.referredBy || '').toLowerCase();
+         return allCodes.includes(ref);
+      });
+
+      refApps.forEach(app => {
+        let amt = referrer.role === 'agent' || referrer.role === 'franchise' ? app.agentIncentiveAmount : app.incentiveAmount;
+        if (!Number(amt)) {
+          let job = jobs.find(j => j.id === app.jobId);
+          if (!job) {
+            job = jobs.find(j => 
+              (j.title || '').trim().toLowerCase() === (app.jobTitle || '').trim().toLowerCase() && 
+              (j.companyName || '').trim().toLowerCase() === (app.companyName || '').trim().toLowerCase()
+            );
+          }
+          if (job) {
+            const isPaid = Number(app.paymentAmount) >= 1499 || job.isFicFlow;
+            if (referrer.role === 'agent' || referrer.role === 'franchise') {
+               amt = isPaid ? (Number(job.partnerIncentivePaid) || 0) : (Number(job.partnerIncentiveFree) || 0);
+            } else {
+               amt = isPaid ? (Number(job.hrIncentivePaid) || 0) : (Number(job.hrIncentiveFree) || 0);
+            }
+          }
+        }
+        const val = Number(amt) || 0;
+        
+        const isClosed = ['selected', 'converted', 'hired'].includes(String(app.status||'').toLowerCase());
+        const isRejected = ['rejected', 'not interested'].includes(String(app.status||'').toLowerCase());
+        
+        if (!isClosed && !isRejected) {
+          upcoming += val;
+          upcomingCnt += 1;
+          upcomingApps.push(app);
+        }
+      });
+
+      if (upcomingCnt > 0) {
+        results.push({
+          hr: referrer,
+          hrName: referrer.name || 'Unknown',
+          upcomingCount: upcomingCnt,
+          upcomingAmount: upcoming,
+          applications: upcomingApps
+        });
+      }
+    });
+
+    return results;
+  };
+
+  const upcomingIncentivesData = useMemo(() => getUpcomingIncentivesData(), [validApplications, hrs, allAgents, jobs]);
+  const globalUpcomingIncentiveTotal = upcomingIncentivesData.reduce((sum, item) => sum + item.upcomingAmount, 0);
+
+  const [selectedHrForUpcomingDetails, setSelectedHrForUpcomingDetails] = useState(null);
 
   const todayAppCount = validApplications.filter(a => isToday(a.appliedAt)).length;
   const yesterdayAppCount = validApplications.filter(a => isYesterday(a.appliedAt)).length;
