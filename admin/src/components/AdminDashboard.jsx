@@ -773,25 +773,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             <div className="kpi-grid">
               <div 
                 className="kpi-card" 
-                onClick={() => setActiveTab('jobs')}
-                style={{
-                  background: '#eff6ff', border: '1px solid #93c5fd', cursor: 'pointer',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
-              >
-                <div className="kpi-icon" style={{ background: '#dbeafe', color: '#2563eb' }}>
-                  <Briefcase size={22} />
-                </div>
-                <div>
-                  <div className="kpi-val" style={{ color: '#1e3a8a' }}>{kpis ? kpis.kpis.totalJobs : jobs.length}</div>
-                  <div className="kpi-label" style={{ color: '#1e3a8a', opacity: 0.8, fontWeight: 600 }}>Total Jobs ({kpis ? kpis.kpis.activeJobs : 0} Active)</div>
-                </div>
-              </div>
-
-              <div 
-                className="kpi-card" 
                 onClick={() => setActiveTab('applications')}
                 style={{
                   background: '#f0fdfa', border: '1px solid #5eead4', cursor: 'pointer',
@@ -830,25 +811,6 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
               <div 
                 className="kpi-card" 
-                onClick={() => setActiveTab('interviews')}
-                style={{
-                  background: '#fdf4ff', border: '1px solid #f0abfc', cursor: 'pointer',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
-              >
-                <div className="kpi-icon" style={{ background: '#fae8ff', color: '#c026d3' }}>
-                  <Calendar size={22} />
-                </div>
-                <div>
-                  <div className="kpi-val" style={{ color: '#701a75' }}>{interviews.length}</div>
-                  <div className="kpi-label" style={{ color: '#701a75', opacity: 0.8, fontWeight: 600 }}>Interviews Scheduled</div>
-                </div>
-              </div>
-
-              <div 
-                className="kpi-card" 
                 onClick={() => { setActiveTab('applications'); setAppStatusFilter('Processing'); }}
                 style={{
                   background: '#e0e7ff', border: '1px solid #a5b4fc', cursor: 'pointer',
@@ -863,6 +825,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <div>
                   <div className="kpi-val" style={{ color: '#312e81' }}>{validApplications.filter(a => !['Selected', 'Converted', 'Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
+                </div>
+              </div>
+
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('interviews')}
+                style={{
+                  background: '#fdf4ff', border: '1px solid #f0abfc', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#fae8ff', color: '#c026d3' }}>
+                  <Calendar size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#701a75' }}>{interviews.length}</div>
+                  <div className="kpi-label" style={{ color: '#701a75', opacity: 0.8, fontWeight: 600 }}>Interviews Scheduled</div>
                 </div>
               </div>
 
@@ -901,6 +882,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <div>
                   <div className="kpi-val" style={{ color: '#7f1d1d' }}>{validApplications.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#7f1d1d', opacity: 0.8, fontWeight: 600 }}>Rejected</div>
+                </div>
+              </div>
+
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('jobs')}
+                style={{
+                  background: '#eff6ff', border: '1px solid #93c5fd', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#dbeafe', color: '#2563eb' }}>
+                  <Briefcase size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#1e3a8a' }}>{kpis ? kpis.kpis.totalJobs : jobs.length}</div>
+                  <div className="kpi-label" style={{ color: '#1e3a8a', opacity: 0.8, fontWeight: 600 }}>Total Jobs ({kpis ? kpis.kpis.activeJobs : 0} Active)</div>
                 </div>
               </div>
 
