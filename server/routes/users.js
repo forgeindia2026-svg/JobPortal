@@ -383,7 +383,7 @@ router.put('/hr/:id/candidate-incentives', async (req, res) => {
       );
     }
 
-    const apps = await ApplicationModel.find({ referredBy: { $in: codesRegex } }, { incentiveAmount: 1 }).lean();
+    const apps = await ApplicationModel.find({ referredBy: { $in: codesRegex }, status: { $ne: 'Payment Pending' } }, { incentiveAmount: 1 }).lean();
     const total = apps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
 
     const updatedUser = await UserModel.findOneAndUpdate(
@@ -424,7 +424,7 @@ router.put('/hr/:hrId/agent-incentives', async (req, res) => {
       );
     }
 
-    const apps = await ApplicationModel.find({ referredBy: refRegex }, { agentIncentiveAmount: 1 }).lean();
+    const apps = await ApplicationModel.find({ referredBy: refRegex, status: { $ne: 'Payment Pending' } }, { agentIncentiveAmount: 1 }).lean();
     const total = apps.reduce((sum, a) => sum + (Number(a.agentIncentiveAmount) || 0), 0);
 
     const updatedAgent = await UserModel.findOneAndUpdate(
@@ -456,7 +456,7 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
     }
 
     // Find applications referred by this HR or their agents
-    const applications = await ApplicationModel.find({ referredBy: { $in: codesRegex } }).lean();
+    const applications = await ApplicationModel.find({ referredBy: { $in: codesRegex }, status: { $ne: 'Payment Pending' } }).lean();
     const db = await readDBAsync();
     
     // Fetch settings for dynamic incentive calculation if missing
