@@ -251,12 +251,13 @@ router.post('/', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, adminNotes, referredBy } = req.body;
+    const { status, adminNotes, referredBy, paymentId } = req.body;
 
     const updateObj = { updatedAt: new Date().toISOString() };
     if (status) updateObj.status = status;
     if (adminNotes !== undefined) updateObj.adminNotes = adminNotes;
     if (referredBy !== undefined) updateObj.referredBy = referredBy || null;
+    if (paymentId) updateObj.paymentId = paymentId;
 
     const updated = await ApplicationModel.findOneAndUpdate({ id }, { $set: updateObj }, { new: true }).lean();
 

@@ -64,6 +64,14 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     setError('');
 
     try {
+      // 0. Pre-save Application as Payment Pending
+      let pendingApp;
+      try {
+        pendingApp = await submitApplicationToDb('PENDING_' + Date.now(), 'Payment Pending', true);
+      } catch (err) {
+        throw new Error('Failed to initialize application: ' + err.message);
+      }
+
       // 1. Create order on server
       const orderRes = await fetch(`${API_URL}/api/payment/create-order`, {
         method: 'POST',
@@ -85,8 +93,24 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         description: `Application Fee - ${job.title}`,
         order_id: orderData.order.id,
         handler: async function (response) {
-          // 3. Payment Success - Submit Application
-          await submitApplicationToDb(response.razorpay_payment_id);
+          // 3. Payment Success - Update Application Status
+          try {
+             setSubmitting(true);
+             const updateRes = await fetch(`${API_URL}/api/applications/${pendingApp.id || pendingApp._id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Applied', paymentId: response.razorpay_payment_id })
+             });
+             const updatedData = await updateRes.json();
+             if (!updateRes.ok) throw new Error(updatedData.error || 'Failed to update status');
+             
+             setSuccessApp(updatedData);
+             if (onSubmitSuccess) onSubmitSuccess(updatedData);
+          } catch(err) {
+             setError('Payment succeeded but failed to update status. Please contact support.');
+          } finally {
+             setSubmitting(false);
+          }
         },
         prefill: {
           name: name,
@@ -115,7 +139,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     }
   };
 
-  const submitApplicationToDb = async (paymentId) => {
+  const submitApplicationToDb = async (paymentId, status = 'Applied', isPending = false) => {
 
     try {
       const payload = {
@@ -123,6 +147,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         jobId: job.id,
         resumeUrl,
         coverNotes,
+        status,
         paymentId: paymentId || 'FREE_TEST_' + Date.now(),
         paymentAmount: feeAmount,
         candidateDetails: {
@@ -152,12 +177,16 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         throw new Error(data.error || 'Failed to submit application.');
       }
 
-      setSuccessApp(data);
-      if (onSubmitSuccess) onSubmitSuccess(data);
+      if (!isPending) {
+        setSuccessApp(data);
+        if (onSubmitSuccess) onSubmitSuccess(data);
+      }
+      return data;
     } catch (err) {
-      setError(err.message);
+      if (!isPending) setError(err.message);
+      throw err;
     } finally {
-      setSubmitting(false);
+      if (!isPending) setSubmitting(false);
     }
   };
 
