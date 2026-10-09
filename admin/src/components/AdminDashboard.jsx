@@ -861,7 +861,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <RefreshCw size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#312e81' }}>{applications.filter(a => !['Selected', 'Converted', 'Rejected', 'Not Interested'].includes(a.status)).length}</div>
+                  <div className="kpi-val" style={{ color: '#312e81' }}>{validApplications.filter(a => !['Selected', 'Converted', 'Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
                 </div>
               </div>
@@ -880,7 +880,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <CheckCircle size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#064e3b' }}>{applications.filter(a => ['Selected', 'Converted'].includes(a.status)).length}</div>
+                  <div className="kpi-val" style={{ color: '#064e3b' }}>{validApplications.filter(a => ['Selected', 'Converted'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#064e3b', opacity: 0.8, fontWeight: 600 }}>Selected</div>
                 </div>
               </div>
@@ -899,7 +899,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <X size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#7f1d1d' }}>{applications.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length}</div>
+                  <div className="kpi-val" style={{ color: '#7f1d1d' }}>{validApplications.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length}</div>
                   <div className="kpi-label" style={{ color: '#7f1d1d', opacity: 0.8, fontWeight: 600 }}>Rejected</div>
                 </div>
               </div>
@@ -945,7 +945,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.slice(0, 5).map(app => (
+                  {validApplications.slice(0, 5).map(app => (
                     <tr key={app.id}>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber}</td>
                       <td>
