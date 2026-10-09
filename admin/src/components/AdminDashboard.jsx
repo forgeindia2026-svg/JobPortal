@@ -754,7 +754,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <FileText size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#78350f' }}>{kpis ? kpis.kpis.totalApplications : applications.length}</div>
+                  <div className="kpi-val" style={{ color: '#78350f' }}>{validApplications.length}</div>
                   <div className="kpi-label" style={{ color: '#78350f', opacity: 0.8, fontWeight: 600 }}>Applications Received</div>
                 </div>
               </div>
