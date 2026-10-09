@@ -451,9 +451,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     
     const dataArray = Object.keys(dateCounts).map(date => ({
       name: date,
+      timestamp: new Date(date).getTime(),
       Candidates: dateCounts[date]
-    }));
-    return dataArray.slice(-7);
+    })).sort((a, b) => a.timestamp - b.timestamp);
+    
+    return dataArray.map(({ name, Candidates }) => ({ name, Candidates })).slice(-7);
   }, [stats]);
 
   // Export CSV
