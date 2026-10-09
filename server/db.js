@@ -197,6 +197,7 @@ const JobModel = mongoose.model('Job', jobSchema);
 const CandidateModel = mongoose.model('Candidate', candidateSchema);
 const ApplicationModel = mongoose.model('Application', applicationSchema);
 const ItTrainingProcessModel = mongoose.model('ItTrainingProcess', itTrainingProcessSchema);
+const InterviewModel = mongoose.model('Interview', interviewSchema);
 
 const withdrawalRequestSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -865,6 +866,7 @@ module.exports = {
   ItTrainingProcessModel,
   GlobalSettingsModel,
   PartnerIncentiveModel,
-  WithdrawalRequestModel
+  WithdrawalRequestModel,
+  InterviewModel
 };
 
