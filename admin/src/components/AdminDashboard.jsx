@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -270,6 +270,26 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       }
     } catch (err) {
       console.error('Error updating status:', err);
+    }
+  };
+
+  const handleApprovePayment = async (app) => {
+    if (!window.confirm(`Mark payment for ${app.candidateName} as Paid and update application status to 'Applied'?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/applications/${app.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Applied', paymentId: `MANUAL_PAYMENT_${Date.now()}` })
+      });
+      if (res.ok) {
+        fetchAllData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to approve payment');
+      }
+    } catch (err) {
+      console.error('Error approving payment:', err);
+      alert('Network error approving payment');
     }
   };
 
@@ -630,6 +650,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </button>
 
         <button
+          className={`nav-item ${activeTab === 'payments' ? 'active' : ''}`}
+          onClick={() => handleTabChange('payments')}
+        >
+          <CreditCard size={18} /> Payments
+        </button>
+
+        <button
           className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`}
           onClick={() => handleTabChange('jobs')}
         >
@@ -938,6 +965,74 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'payments' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Payment Transactions</h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Track candidate application fees and manual approvals.</p>
+              </div>
+            </div>
+            
+            <div className="table-container">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Candidate</th>
+                    <th>Job Applied</th>
+                    <th>Amount</th>
+                    <th>Payment ID</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.filter(app => getAppPaymentAmount(app) > 0).map(app => (
+                    <tr key={app.id}>
+                      <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                      <td>
+                        <strong>{app.candidateName}</strong><br/>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.candidateMobile}</span>
+                      </td>
+                      <td>{app.jobTitle}</td>
+                      <td>₹{getAppPaymentAmount(app)}</td>
+                      <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{app.paymentId || 'N/A'}</span></td>
+                      <td>
+                        <span className={`status-badge ${app.status === 'Payment Pending' ? 'pending' : 'active'}`}>
+                          {app.status === 'Payment Pending' ? 'Pending' : 'Success'}
+                        </span>
+                      </td>
+                      <td>
+                        {app.status === 'Payment Pending' ? (
+                          <button 
+                            className="btn-primary" 
+                            style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', gap: '4px', alignItems: 'center' }}
+                            onClick={() => handleApprovePayment(app)}
+                          >
+                            <CheckCircle size={14} /> Approve
+                          </button>
+                        ) : (
+                          <span style={{ color: '#10b981', fontSize: '0.85rem', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <Check size={14} /> Approved
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {applications.filter(app => getAppPaymentAmount(app) > 0).length === 0 && (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                        No payment records found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
