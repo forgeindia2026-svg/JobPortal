@@ -1715,7 +1715,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       </td>
                       <td style={{ fontWeight: 600, color: '#3b82f6' }}>{hr.linkClicks || 0}</td>
                       <td style={{ fontWeight: 600, color: '#10b981' }}>
-                        {applications.filter(app => String(app.referredBy || '').toLowerCase() === String(hr.referralCode || '').toLowerCase()).length}
+                        {validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(hr.referralCode || '').toLowerCase()).length}
                         <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>
                           {getHrClosedApps(hr).filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length} closed
                         </div>
