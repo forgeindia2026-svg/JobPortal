@@ -7,10 +7,21 @@ router.get('/dashboard', async (req, res) => {
   try {
     const db = await readDBAsync();
 
+    const validApps = db.applications.filter(a => a.status !== 'Payment Pending');
+    const candidateIdsWithValidApps = new Set(validApps.map(a => String(a.candidateId)));
+    const candidateIdsWithPendingApps = new Set(db.applications.filter(a => a.status === 'Payment Pending').map(a => String(a.candidateId)));
+
     const totalJobs = db.jobs.length;
     const activeJobs = db.jobs.filter(j => j.status === 'Active').length;
-    const totalCandidates = db.candidates.length;
-    const totalApplications = db.applications.length;
+    
+    const totalCandidates = db.candidates.filter(c => {
+      const hasValid = candidateIdsWithValidApps.has(String(c.id));
+      const hasPending = candidateIdsWithPendingApps.has(String(c.id));
+      if (hasPending && !hasValid) return false;
+      return true;
+    }).length;
+    
+    const totalApplications = validApps.length;
 
     // Deduplicate scheduled interviews count
     const uniqueIntMap = new Map();
