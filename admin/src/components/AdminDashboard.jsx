@@ -2180,7 +2180,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             )}
           </div>
         )}
-\n        {activeTab === 'partners_admin' && (
+        {activeTab === 'partners_admin' && (
           <div>
             {selectedHrForPartners ? (
               <div>
