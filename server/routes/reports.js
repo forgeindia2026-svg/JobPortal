@@ -14,12 +14,34 @@ router.get('/dashboard', async (req, res) => {
     const totalJobs = db.jobs.length;
     const activeJobs = db.jobs.filter(j => j.status === 'Active').length;
     
-    const totalCandidates = db.candidates.filter(c => {
+    const activeCandidates = db.candidates.filter(c => {
       const hasValid = candidateIdsWithValidApps.has(String(c.id));
       const hasPending = candidateIdsWithPendingApps.has(String(c.id));
       if (hasPending && !hasValid) return false;
       return true;
-    }).length;
+    });
+
+    const seenIdentifiers = new Set();
+    let totalCandidates = 0;
+
+    activeCandidates.forEach(c => {
+      const email = c.email ? c.email.toLowerCase().trim() : null;
+      const mobile = c.mobile ? c.mobile.trim() : null;
+      
+      const emailKey = email ? `email:${email}` : null;
+      const mobileKey = mobile ? `mobile:${mobile}` : null;
+      
+      let isDuplicate = false;
+      if (emailKey && seenIdentifiers.has(emailKey)) isDuplicate = true;
+      if (mobileKey && seenIdentifiers.has(mobileKey)) isDuplicate = true;
+      
+      if (!isDuplicate) {
+        totalCandidates++;
+      }
+      
+      if (emailKey) seenIdentifiers.add(emailKey);
+      if (mobileKey) seenIdentifiers.add(mobileKey);
+    });
     
     const totalApplications = validApps.length;
 
