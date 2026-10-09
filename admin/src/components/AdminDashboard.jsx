@@ -17,6 +17,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     const hash = window.location.hash.replace('#', '');
     return hash || 'dashboard';
   });
+  const [paymentSubTab, setPaymentSubTab] = useState('success');
 
   useEffect(() => {
     if (window.location.hash.replace('#', '') !== activeTab) {
@@ -472,12 +473,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
            d.getMonth() === now.getMonth();
   };
 
-  const todayAppCount = applications.filter(a => isToday(a.appliedAt)).length;
-  const yesterdayAppCount = applications.filter(a => isYesterday(a.appliedAt)).length;
-  const last7DaysAppCount = applications.filter(a => isLast7Days(a.appliedAt)).length;
-  const thisMonthAppCount = applications.filter(a => isThisMonth(a.appliedAt)).length;
+  const validApplications = applications.filter(app => app.status !== 'Payment Pending');
 
-  const filteredApplications = applications.filter(app => {
+  const todayAppCount = validApplications.filter(a => isToday(a.appliedAt)).length;
+  const yesterdayAppCount = validApplications.filter(a => isYesterday(a.appliedAt)).length;
+  const last7DaysAppCount = validApplications.filter(a => isLast7Days(a.appliedAt)).length;
+  const thisMonthAppCount = validApplications.filter(a => isThisMonth(a.appliedAt)).length;
+
+  const filteredApplications = validApplications.filter(app => {
     if (appDateFilter === 'today' && !isToday(app.appliedAt)) return false;
     if (appDateFilter === 'yesterday' && !isYesterday(app.appliedAt)) return false;
     if (appDateFilter === 'last7' && !isLast7Days(app.appliedAt)) return false;
@@ -618,7 +621,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           className={`nav-item ${activeTab === 'applications' ? 'active' : ''}`}
           onClick={() => handleTabChange('applications')}
         >
-          <FileText size={18} /> Applied ({applications.length})
+          <FileText size={18} /> Applied ({validApplications.length})
         </button>
 
         <button
@@ -973,11 +976,34 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'payments' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Payment Transactions</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Track candidate application fees and manual approvals.</p>
               </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                onClick={() => setPaymentSubTab('success')}
+                style={{
+                  padding: '7px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', border: 'none',
+                  background: paymentSubTab === 'success' ? '#059669' : '#f1f5f9',
+                  color: paymentSubTab === 'success' ? 'white' : '#475569',
+                }}
+              >
+                Payment Transactions
+              </button>
+              <button
+                onClick={() => setPaymentSubTab('pending')}
+                style={{
+                  padding: '7px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', border: 'none',
+                  background: paymentSubTab === 'pending' ? '#ea580c' : '#f1f5f9',
+                  color: paymentSubTab === 'pending' ? 'white' : '#475569',
+                }}
+              >
+                Payment Pending
+              </button>
             </div>
             
             <div className="table-container">
@@ -994,7 +1020,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.filter(app => getAppPaymentAmount(app) > 0).map(app => (
+                  {applications.filter(app => getAppPaymentAmount(app) > 0 && (paymentSubTab === 'pending' ? app.status === 'Payment Pending' : app.status !== 'Payment Pending')).map(app => (
                     <tr key={app.id}>
                       <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
                       <td>
@@ -1026,10 +1052,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       </td>
                     </tr>
                   ))}
-                  {applications.filter(app => getAppPaymentAmount(app) > 0).length === 0 && (
+                  {applications.filter(app => getAppPaymentAmount(app) > 0 && (paymentSubTab === 'pending' ? app.status === 'Payment Pending' : app.status !== 'Payment Pending')).length === 0 && (
                     <tr>
                       <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                        No payment records found.
+                        No {paymentSubTab} payment records found.
                       </td>
                     </tr>
                   )}
@@ -1218,7 +1244,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   transition: 'all 0.2s'
                 }}
               >
-                All Applications ({applications.length})
+                All Applications ({validApplications.length})
               </button>
 
               <button
