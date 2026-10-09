@@ -50,6 +50,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [statusFilter, setStatusFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [visibleAlertsCount, setVisibleAlertsCount] = useState(5);
 
   const [interviews, setInterviews] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -437,7 +438,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     return { totalIncentiveAmount: total, upcomingIncentiveAmount: upcoming, upcomingCount: upcomingCnt };
   }, [stats, jobs, currentUser.role]);
 
-  const verticalApps = recentIncentiveApps.slice(0, 5);
+  const verticalApps = recentIncentiveApps.slice(0, visibleAlertsCount);
 
   // Analytics Data
   const chartData = useMemo(() => {
@@ -813,6 +814,19 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     </div>
                   );
                 })}
+                
+                {visibleAlertsCount < recentIncentiveApps.length && (
+                  <button 
+                    onClick={() => setVisibleAlertsCount(prev => prev + 5)}
+                    style={{
+                      background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, 
+                      cursor: 'pointer', padding: '10px', marginTop: '4px', alignSelf: 'center',
+                      fontSize: '0.9rem', textDecoration: 'underline'
+                    }}
+                  >
+                    See More
+                  </button>
+                )}
               </div>
             )}
           </div>
