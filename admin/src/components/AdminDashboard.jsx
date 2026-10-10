@@ -2137,16 +2137,18 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <table className="custom-table">
                     <thead>
                       <tr>
-                        <th>Candidate Details</th>
+                        <th>S.No</th>
+                          <th>Candidate Details</th>
                         <th>Job Info</th>
                         <th>Status</th>
                         <th>Expected Incentive</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedHrForUpcomingDetails.applications.map(app => (
+                      {selectedHrForUpcomingDetails.applications.map((app, index) => (
                         <tr key={app.id}>
-                          <td>
+                            <td style={{ fontWeight: 600, color: '#64748b' }}>{index + 1}</td>
+                            <td>
                             <div style={{ fontWeight: '600', color: '#1e293b' }}>{app.candidateName}</div>
                             <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{app.candidateEmail}</div>
                             <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{app.candidatePhone}</div>
