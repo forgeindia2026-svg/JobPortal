@@ -11,6 +11,7 @@ import ScheduleInterviewModal from './ScheduleInterviewModal';
 import ItTrainingModal from './ItTrainingModal';
 import ManualApplicationModal from './ManualApplicationModal';
 import AgentsManager from './AgentsManager';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
   const [activeTab, setActiveTab] = useState(() => {
@@ -88,6 +89,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [hrToEdit, setHrToEdit] = useState(null);
   const [hrForm, setHrForm] = useState({ name: '', email: '', password: '', mobile: '', profilePhoto: '' });
   const [hrSaving, setHrSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [hrError, setHrError] = useState('');
 
   const [incentiveModalOpen, setIncentiveModalOpen] = useState(false);
@@ -2727,24 +2729,31 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center' }}>
-                  <label style={{ cursor: 'pointer', background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    📷 Upload Photo
+                  <label style={{ cursor: photoUploading ? 'not-allowed' : 'pointer', background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px', opacity: photoUploading ? 0.7 : 1 }}>
+                    {photoUploading ? '⏳ Uploading to Cloudinary...' : '📷 Upload Photo'}
                     <input 
                       type="file" 
                       accept="image/*" 
+                      disabled={photoUploading}
                       style={{ display: 'none' }} 
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files[0];
                         if (!file) return;
-                        if (file.size > 2 * 1024 * 1024) {
-                          setHrError('Image file is too large! Please select an image under 2MB.');
+                        if (file.size > 5 * 1024 * 1024) {
+                          setHrError('Image file is too large! Please select an image under 5MB.');
                           return;
                         }
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setHrForm(prev => ({ ...prev, profilePhoto: reader.result }));
-                        };
-                        reader.readAsDataURL(file);
+                        setPhotoUploading(true);
+                        setHrError('');
+                        try {
+                          const cloudUrl = await uploadToCloudinary(file);
+                          setHrForm(prev => ({ ...prev, profilePhoto: cloudUrl }));
+                        } catch (err) {
+                          console.error(err);
+                          setHrError('Failed to upload image to Cloudinary: ' + (err.message || ''));
+                        } finally {
+                          setPhotoUploading(false);
+                        }
                       }}
                     />
                   </label>
@@ -2817,7 +2826,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   Cancel
                 </button>
                 <button
-                  disabled={hrSaving}
+                  disabled={hrSaving || photoUploading}
                   onClick={async () => {
                     if (!hrForm.name || !hrForm.email) {
                       setHrError('Name and Email are required!');

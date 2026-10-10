@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 const getCompanyColor = (name) => {
   const lowerName = (name || '').toLowerCase();
@@ -85,6 +86,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const hasBankDetails = Boolean(currentUser.bankAccountNumber && currentUser.bankIfscCode);
   const [isEditingBankDetails, setIsEditingBankDetails] = useState(!hasBankDetails);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const handleProfileSave = async () => {
     setProfileSaving(true);
@@ -1274,24 +1276,31 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     )}
                   </div>
                   <div>
-                    <label style={{ cursor: 'pointer', background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      📷 Change Photo
+                    <label style={{ cursor: photoUploading ? 'not-allowed' : 'pointer', background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px', opacity: photoUploading ? 0.7 : 1 }}>
+                      {photoUploading ? '⏳ Uploading to Cloudinary...' : '📷 Change Photo'}
                       <input 
                         type="file" 
                         accept="image/*" 
+                        disabled={photoUploading}
                         style={{ display: 'none' }} 
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-                          if (file.size > 2 * 1024 * 1024) {
-                            showToast('Photo must be less than 2MB', 'error');
+                          if (file.size > 5 * 1024 * 1024) {
+                            showToast('Photo must be less than 5MB', 'error');
                             return;
                           }
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setProfileData(prev => ({ ...prev, profilePhoto: reader.result }));
-                          };
-                          reader.readAsDataURL(file);
+                          setPhotoUploading(true);
+                          try {
+                            const cloudUrl = await uploadToCloudinary(file);
+                            setProfileData(prev => ({ ...prev, profilePhoto: cloudUrl }));
+                            showToast('Photo uploaded to Cloudinary! Click Save Profile to apply.', 'success');
+                          } catch (err) {
+                            console.error(err);
+                            showToast('Failed to upload photo to Cloudinary', 'error');
+                          } finally {
+                            setPhotoUploading(false);
+                          }
                         }}
                       />
                     </label>
