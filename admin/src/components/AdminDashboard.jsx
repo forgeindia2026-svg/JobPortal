@@ -2264,7 +2264,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </button>
             </div>
 
-            <div className="table-container">
+            <div className="table-container hrs-desktop-table">
               <table className="custom-table">
                 <thead>
                   <tr>
@@ -2377,6 +2377,152 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile HR Cards Grid (Visible on Mobile <= 768px, Hidden on Desktop) */}
+            <div className="hrs-mobile-cards">
+              {hrs.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748b', padding: '2rem', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  No HRs found. Add one to get started.
+                </div>
+              ) : (
+                hrs.map(hr => {
+                  const appliedCount = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(hr.referralCode || '').toLowerCase()).length;
+                  const closedCount = getHrClosedApps(hr).filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
+                  return (
+                    <div
+                      key={hr.id}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                        padding: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      {/* Top Row: Avatar + Name/Email + Active Badge */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                          <div style={{
+                            width: '46px',
+                            height: '46px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            background: '#f8fafc',
+                            border: '2px solid #e2e8f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.06)'
+                          }}>
+                            {hr.profilePhoto ? (
+                              <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ fontWeight: 800, color: '#4f46e5', fontSize: '1.15rem' }}>
+                                {hr.name?.charAt(0)?.toUpperCase() || 'H'}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {hr.name}
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {hr.email}
+                            </div>
+                            {hr.mobile && (
+                              <div style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 600 }}>
+                                📱 {hr.mobile}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ flexShrink: 0 }}>
+                          <span className="badge badge-active" style={{ fontSize: '0.7rem', padding: '3px 8px' }}>Active</span>
+                        </div>
+                      </div>
+
+                      {/* Metrics Pill Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem' }}>
+                        <div style={{ background: '#fef3c7', color: '#92400e', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#b45309', fontWeight: 600 }}>Referral:</span>
+                          <span style={{ fontWeight: 800 }}>{hr.referralCode}</span>
+                        </div>
+                        <div style={{ background: '#eff6ff', color: '#1e40af', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#3b82f6', fontWeight: 600 }}>Clicks:</span>
+                          <span style={{ fontWeight: 800 }}>{hr.linkClicks || 0}</span>
+                        </div>
+                        <div style={{ background: '#ecfdf5', color: '#065f46', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>Candidates:</span>
+                          <span style={{ fontWeight: 800 }}>{appliedCount} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#047857' }}>({closedCount} closed)</span></span>
+                        </div>
+                        <div style={{ background: '#f0fdf4', color: '#166534', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 600 }}>Earned:</span>
+                          <span style={{ fontWeight: 800 }}>₹{(hr.incentives || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      {/* Actions Bar */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe', justifyContent: 'center' }}
+                          onClick={() => {
+                            const storedPhotos = (() => {
+                              try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
+                            })();
+                            const currentPhoto = hr.profilePhoto || storedPhotos[hr.id] || '';
+                            setHrToEdit(hr);
+                            setHrForm({
+                              name: hr.name || '',
+                              email: hr.email || '',
+                              password: '',
+                              mobile: hr.mobile || '',
+                              profilePhoto: currentPhoto
+                            });
+                            setHrError('');
+                            setHrModalOpen(true);
+                          }}
+                        >
+                          <Edit size={13} /> Edit HR
+                        </button>
+
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem', color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', justifyContent: 'center' }}
+                          onClick={() => {
+                            setSelectedHrForIncentive(hr);
+                            const initial = {};
+                            getHrClosedApps(hr).forEach(app => { initial[app.id] = Number(app.incentiveAmount) || 0; });
+                            setIncentiveInput(initial);
+                            setIncentiveError('');
+                            setIncentiveModalOpen(true);
+                          }}
+                        >
+                          <Gift size={13} /> Incentives
+                        </button>
+
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem', color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca', justifyContent: 'center' }}
+                          onClick={() => {
+                            if (!window.confirm(`Delete HR ${hr.name}?`)) return;
+                            fetch(`${API_URL}/api/users/hr/${hr.id}`, { method: 'DELETE' })
+                            .then(() => fetchAllData());
+                          }}
+                          title="Delete HR"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
