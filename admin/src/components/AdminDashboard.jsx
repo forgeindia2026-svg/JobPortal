@@ -2839,32 +2839,41 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     setHrSaving(true);
                     setHrError('');
                     try {
+                      let cleanPhoto = hrForm.profilePhoto || '';
+                      // If photo is still a base64 string, auto-upload to Cloudinary first to prevent 413 error
+                      if (cleanPhoto.startsWith('data:image/')) {
+                        try {
+                          cleanPhoto = await uploadToCloudinary(cleanPhoto);
+                          setHrForm(prev => ({ ...prev, profilePhoto: cleanPhoto }));
+                        } catch (err) {
+                          console.warn('Auto Cloudinary upload warning:', err);
+                        }
+                      }
+
                       // Save to local cache immediately
-                      if (hrForm.profilePhoto) {
+                      if (cleanPhoto) {
                         try {
                           const storedPhotos = JSON.parse(localStorage.getItem('hr_profile_photos') || '{}');
                           if (hrToEdit && hrToEdit.id) {
-                            storedPhotos[hrToEdit.id] = hrForm.profilePhoto;
+                            storedPhotos[hrToEdit.id] = cleanPhoto;
                           }
                           localStorage.setItem('hr_profile_photos', JSON.stringify(storedPhotos));
-                        } catch (e) {
-                          console.error(e);
-                        }
+                        } catch (e) {}
                       } else if (hrToEdit && hrToEdit.id) {
                         try {
                           const storedPhotos = JSON.parse(localStorage.getItem('hr_profile_photos') || '{}');
                           delete storedPhotos[hrToEdit.id];
                           localStorage.setItem('hr_profile_photos', JSON.stringify(storedPhotos));
-                        } catch (e) {
-                          console.error(e);
-                        }
+                        } catch (e) {}
                       }
+
+                      const payload = { ...hrForm, profilePhoto: cleanPhoto };
                       let res;
                       if (hrToEdit) {
                         res = await fetch(`${API_URL}/api/users/hr/${hrToEdit.id}`, {
                           method: 'PUT',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(hrForm)
+                          body: JSON.stringify(payload)
                         });
                         if (res.status === 404) {
                           // Fallback to profile route
@@ -2872,9 +2881,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                              name: hrForm.name,
-                              mobile: hrForm.mobile,
-                              profilePhoto: hrForm.profilePhoto
+                              name: payload.name,
+                              mobile: payload.mobile,
+                              profilePhoto: payload.profilePhoto
                             })
                           });
                         }
@@ -2882,7 +2891,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         res = await fetch(`${API_URL}/api/users/hr`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(hrForm)
+                          body: JSON.stringify(payload)
                         });
                       }
 
