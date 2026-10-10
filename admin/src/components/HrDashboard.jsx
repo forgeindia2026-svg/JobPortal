@@ -728,6 +728,76 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               
               return (
                 <div style={{ marginTop: '2.5rem', marginBottom: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  {/* Top Applications Received Card */}
+                  <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {topSourcers.map((hr, idx) => {
+                        const isMe = String(hr.referralCode || '').toLowerCase() === String(currentUser?.referralCode || '').toLowerCase();
+                        return (
+                          <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: isMe ? '#eff6ff' : '#f8fafc', border: isMe ? '1px solid #bfdbfe' : '1px solid #f1f5f9', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                              <div style={{ position: 'relative', flexShrink: 0 }}>
+                                <div style={{
+                                  width: '48px',
+                                  height: '48px',
+                                  borderRadius: '50%',
+                                  overflow: 'hidden',
+                                  boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                                  border: idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0',
+                                  background: hr.profilePhoto ? '#f8fafc' : (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9'),
+                                  color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: '800',
+                                  fontSize: '1.15rem'
+                                }}>
+                                  {hr.profilePhoto ? (
+                                    <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    (hr.name || 'HR').charAt(0).toUpperCase()
+                                  )}
+                                </div>
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: '-2px',
+                                  right: '-4px',
+                                  minWidth: '20px',
+                                  height: '20px',
+                                  padding: '0 4px',
+                                  borderRadius: '10px',
+                                  background: idx === 0 ? 'linear-gradient(135deg, #eab308, #ca8a04)' : idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#64748b',
+                                  color: '#ffffff',
+                                  fontSize: '0.65rem',
+                                  fontWeight: '800',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  border: '2px solid #ffffff',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                }}>
+                                  #{idx + 1}
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {hr.name}
+                                  {isMe && <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px', fontWeight: '700' }}>You</span>}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
+                              </div>
+                            </div>
+                            <div style={{ fontWeight: '800', color: '#2563eb', fontSize: '1.25rem' }}>
+                              {hr.totalSourced}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
                   {/* Top Closers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -798,77 +868,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       })}
                     </div>
                   </div>
-
-                  {/* Top Applications Received Card */}
-                  <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {topSourcers.map((hr, idx) => {
-                        const isMe = String(hr.referralCode || '').toLowerCase() === String(currentUser?.referralCode || '').toLowerCase();
-                        return (
-                          <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: isMe ? '#eff6ff' : '#f8fafc', border: isMe ? '1px solid #bfdbfe' : '1px solid #f1f5f9', borderRadius: '12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                              <div style={{ position: 'relative', flexShrink: 0 }}>
-                                <div style={{
-                                  width: '48px',
-                                  height: '48px',
-                                  borderRadius: '50%',
-                                  overflow: 'hidden',
-                                  boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                                  border: idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0',
-                                  background: hr.profilePhoto ? '#f8fafc' : (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9'),
-                                  color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontWeight: '800',
-                                  fontSize: '1.15rem'
-                                }}>
-                                  {hr.profilePhoto ? (
-                                    <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  ) : (
-                                    (hr.name || 'HR').charAt(0).toUpperCase()
-                                  )}
-                                </div>
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '-2px',
-                                  right: '-4px',
-                                  minWidth: '20px',
-                                  height: '20px',
-                                  padding: '0 4px',
-                                  borderRadius: '10px',
-                                  background: idx === 0 ? 'linear-gradient(135deg, #eab308, #ca8a04)' : idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#64748b',
-                                  color: '#ffffff',
-                                  fontSize: '0.65rem',
-                                  fontWeight: '800',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  border: '2px solid #ffffff',
-                                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }}>
-                                  #{idx + 1}
-                                </div>
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  {hr.name}
-                                  {isMe && <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px', fontWeight: '700' }}>You</span>}
-                                </div>
-                                <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
-                              </div>
-                            </div>
-                            <div style={{ fontWeight: '800', color: '#2563eb', fontSize: '1.25rem' }}>
-                              {hr.totalSourced}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                </div>
                 </div>
               );
             })()}
