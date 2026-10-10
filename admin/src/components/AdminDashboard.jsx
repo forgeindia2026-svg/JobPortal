@@ -933,6 +933,74 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 View Recent Applications ➔
               </button>
             </div>
+
+            {(() => {
+              const hrStats = hrs.map(hr => {
+                const hrApps = validApplications.filter(app => app.referredBy === hr.referralCode);
+                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                return {
+                  ...hr,
+                  totalSourced: hrApps.length,
+                  totalClosed: closedApps.length
+                };
+              });
+              const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed).slice(0, 5);
+              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced).slice(0, 5);
+              
+              return (
+                <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  {/* Top Closers Card */}
+                  <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected/Closed)</span>
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {topClosers.map((hr, idx) => (
+                        <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                              #{idx + 1}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>{hr.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: '800', color: '#059669', fontSize: '1.15rem' }}>
+                            {hr.totalClosed}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Top Sourcers Card */}
+                  <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🚀 Top Sourcers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {topSourcers.map((hr, idx) => (
+                        <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                              #{idx + 1}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>{hr.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: '800', color: '#2563eb', fontSize: '1.15rem' }}>
+                            {hr.totalSourced}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
