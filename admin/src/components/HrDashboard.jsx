@@ -174,7 +174,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       fetch(`${API_URL}/api/applications`).then(res => res.json()).catch(() => [])
     ])
     .then(([hrData, appsData]) => {
-      setHrs(Array.isArray(hrData) ? hrData : []);
+      const storedPhotos = (() => {
+        try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
+      })();
+      const mergedHrs = (Array.isArray(hrData) ? hrData : []).map(hr => ({
+        ...hr,
+        profilePhoto: hr.profilePhoto || storedPhotos[hr.id] || ''
+      }));
+      setHrs(mergedHrs);
       setAllApplications(Array.isArray(appsData) ? appsData : []);
     })
     .catch(err => console.error('Error fetching leaderboard data:', err));

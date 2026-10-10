@@ -182,9 +182,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         fetch(`${API_URL}/api/users/hr`),
         fetch(`${API_URL}/api/users/agents/all`)
       ]);
-      if (hrRes.ok) {
+            if (hrRes.ok) {
         const hrData = await hrRes.json();
-        setHrs(Array.isArray(hrData) ? hrData : []);
+        const storedPhotos = (() => {
+          try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
+        })();
+        const mergedHrs = (Array.isArray(hrData) ? hrData : []).map(hr => ({
+          ...hr,
+          profilePhoto: hr.profilePhoto || storedPhotos[hr.id] || ''
+        }));
+        setHrs(mergedHrs);
       }
       if (agentsRes.ok) {
         const agentsData = await agentsRes.json();
@@ -1851,13 +1858,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                             style={{ padding: '4px 8px', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
                             title="Edit HR Details & Photo"
                             onClick={() => {
+                              const storedPhotos = (() => {
+                                try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
+                              })();
+                              const currentPhoto = hr.profilePhoto || storedPhotos[hr.id] || '';
                               setHrToEdit(hr);
                               setHrForm({
                                 name: hr.name || '',
                                 email: hr.email || '',
                                 password: '',
                                 mobile: hr.mobile || '',
-                                profilePhoto: hr.profilePhoto || ''
+                                profilePhoto: currentPhoto
                               });
                               setHrError('');
                               setHrModalOpen(true);
@@ -2819,6 +2830,26 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     setHrSaving(true);
                     setHrError('');
                     try {
+                      // Save to local cache immediately
+                      if (hrForm.profilePhoto) {
+                        try {
+                          const storedPhotos = JSON.parse(localStorage.getItem('hr_profile_photos') || '{}');
+                          if (hrToEdit && hrToEdit.id) {
+                            storedPhotos[hrToEdit.id] = hrForm.profilePhoto;
+                          }
+                          localStorage.setItem('hr_profile_photos', JSON.stringify(storedPhotos));
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      } else if (hrToEdit && hrToEdit.id) {
+                        try {
+                          const storedPhotos = JSON.parse(localStorage.getItem('hr_profile_photos') || '{}');
+                          delete storedPhotos[hrToEdit.id];
+                          localStorage.setItem('hr_profile_photos', JSON.stringify(storedPhotos));
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }
                       let res;
                       if (hrToEdit) {
                         res = await fetch(`${API_URL}/api/users/hr/${hrToEdit.id}`, {
@@ -2858,6 +2889,16 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       if (!res.ok || data.error) {
                         setHrError(data.error || `Error ${res.status}: Could not save HR account.`);
                       } else {
+                        if (data && data.id && hrForm.profilePhoto) {
+                          try {
+                            const storedPhotos = JSON.parse(localStorage.getItem('hr_profile_photos') || '{}');
+                            storedPhotos[data.id] = hrForm.profilePhoto;
+                            localStorage.setItem('hr_profile_photos', JSON.stringify(storedPhotos));
+                          } catch (e) {}
+                        }
+                        if (hrToEdit) {
+                          setHrs(prev => prev.map(h => h.id === hrToEdit.id ? { ...h, ...hrForm } : h));
+                        }
                         setHrModalOpen(false);
                         setHrToEdit(null);
                         fetchAllData();
