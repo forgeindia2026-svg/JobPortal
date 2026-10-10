@@ -730,9 +730,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         return (
                           <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: isMe ? '#f0fdf4' : '#f8fafc', border: isMe ? '1px solid #bbf7d0' : 'none', borderRadius: '10px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
-                                #{idx + 1}
-                              </div>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                              {hr.profilePhoto ? (
+                                <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                `#${idx + 1}`
+                              )}
+                            </div>
                               <div>
                                 <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   {hr.name}
@@ -761,9 +765,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         return (
                           <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: isMe ? '#eff6ff' : '#f8fafc', border: isMe ? '1px solid #bfdbfe' : 'none', borderRadius: '10px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
-                                #{idx + 1}
-                              </div>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                              {hr.profilePhoto ? (
+                                <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                `#${idx + 1}`
+                              )}
+                            </div>
                               <div>
                                 <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   {hr.name}
@@ -1248,7 +1256,41 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Full Name</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '1rem' }}>
+                  <div style={{ width: '70px', height: '70px', borderRadius: '50%', overflow: 'hidden', background: '#f1f5f9', border: '2px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {profileData.profilePhoto ? (
+                      <img src={profileData.profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ fontWeight: 800, color: '#4f46e5', fontSize: '1.5rem' }}>
+                        {profileData.name?.charAt(0)?.toUpperCase() || 'H'}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label style={{ cursor: 'pointer', background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      📷 Change Photo
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            showToast('Photo must be less than 2MB', 'error');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setProfileData(prev => ({ ...prev, profilePhoto: reader.result }));
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', fontWeight: 600, color: '#334155' }}>Full Name</label>
                   <input 
                     type="text" 
                     value={profileData.name} 

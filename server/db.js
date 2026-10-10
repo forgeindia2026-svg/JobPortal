@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
   experience: String,
   skills: [String],
   resumeUrl: String,
+  profilePhoto: String,
   referralCode: { type: String, unique: true, sparse: true },
   linkClicks: { type: Number, default: 0 },
   incentives: { type: Number, default: 0 },

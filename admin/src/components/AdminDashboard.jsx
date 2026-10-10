@@ -85,7 +85,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [adminNoteInput, setAdminNoteInput] = useState('');
 
   const [hrModalOpen, setHrModalOpen] = useState(false);
-  const [hrForm, setHrForm] = useState({ name: '', email: '', password: '' });
+  const [hrToEdit, setHrToEdit] = useState(null);
+  const [hrForm, setHrForm] = useState({ name: '', email: '', password: '', mobile: '', profilePhoto: '' });
   const [hrSaving, setHrSaving] = useState(false);
   const [hrError, setHrError] = useState('');
 
@@ -958,8 +959,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       {topClosers.map((hr, idx) => (
                         <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
-                              #{idx + 1}
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                              {hr.profilePhoto ? (
+                                <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                `#${idx + 1}`
+                              )}
                             </div>
                             <div>
                               <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>{hr.name}</div>
@@ -983,8 +988,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       {topSourcers.map((hr, idx) => (
                         <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#f8fafc', borderRadius: '10px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
-                              #{idx + 1}
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                              {hr.profilePhoto ? (
+                                <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                `#${idx + 1}`
+                              )}
                             </div>
                             <div>
                               <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>{hr.name}</div>
@@ -1775,7 +1784,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Manage HR accounts and view their referral links.</p>
               </div>
               <button className="btn-primary" onClick={() => {
-                setHrForm({ name: '', email: '', password: '' });
+                setHrToEdit(null);
+                setHrForm({ name: '', email: '', password: '', mobile: '', profilePhoto: '' });
                 setHrError('');
                 setHrModalOpen(true);
               }}>
@@ -1801,7 +1811,21 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   {hrs.map(hr => (
                     <tr key={hr.id}>
                       <td>
-                        <div style={{ fontWeight: 700 }}>{hr.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#f1f5f9', border: '1.5px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {hr.profilePhoto ? (
+                              <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ fontWeight: 800, color: '#6366f1', fontSize: '1.05rem' }}>
+                                {hr.name?.charAt(0)?.toUpperCase() || 'H'}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, color: '#1e293b' }}>{hr.name}</div>
+                            {hr.mobile && <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{hr.mobile}</div>}
+                          </div>
+                        </div>
                       </td>
                       <td>{hr.email}</td>
                       <td>
@@ -1822,6 +1846,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td><span className="badge badge-active">Active</span></td>
                       <td>
                         <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '4px 8px', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
+                            title="Edit HR Details & Photo"
+                            onClick={() => {
+                              setHrToEdit(hr);
+                              setHrForm({
+                                name: hr.name || '',
+                                email: hr.email || '',
+                                password: '',
+                                mobile: hr.mobile || '',
+                                profilePhoto: hr.profilePhoto || ''
+                              });
+                              setHrError('');
+                              setHrModalOpen(true);
+                            }}
+                          >
+                            <Edit size={14} />
+                          </button>
                           <button
                             className="btn-secondary"
                             style={{ padding: '4px 10px', fontSize: '0.775rem', color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -2634,17 +2677,21 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </div>
       )}
 
-      {/* ===== ADD HR MODAL ===== */}
+      {/* ===== ADD / EDIT HR MODAL ===== */}
       {hrModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '460px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
             {/* Header */}
             <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Add New HR Employee</h3>
-                <p style={{ color: '#c4b5fd', fontSize: '0.85rem', margin: '4px 0 0 0' }}>Create login credentials for the HR</p>
+                <h3 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+                  {hrToEdit ? 'Edit HR Employee' : 'Add New HR Employee'}
+                </h3>
+                <p style={{ color: '#c4b5fd', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                  {hrToEdit ? 'Update details, photo and credentials' : 'Create login credentials for the HR'}
+                </p>
               </div>
-              <button onClick={() => setHrModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'white', display: 'flex' }}>
+              <button onClick={() => { setHrModalOpen(false); setHrToEdit(null); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'white', display: 'flex' }}>
                 <XCircle size={20} />
               </button>
             </div>
@@ -2656,6 +2703,51 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   ⚠️ {hrError}
                 </div>
               )}
+
+              {/* Profile Photo Upload */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ position: 'relative', width: '84px', height: '84px', borderRadius: '50%', background: '#f1f5f9', border: '3px solid #e2e8f0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                  {hrForm.profilePhoto ? (
+                    <img src={hrForm.profilePhoto} alt="HR Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ fontSize: '2rem', color: '#6366f1', fontWeight: 800 }}>
+                      {hrForm.name ? hrForm.name.charAt(0).toUpperCase() : 'HR'}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center' }}>
+                  <label style={{ cursor: 'pointer', background: '#eef2ff', color: '#4f46e5', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #c7d2fe', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    📷 Upload Photo
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      style={{ display: 'none' }} 
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) {
+                          setHrError('Image file is too large! Please select an image under 2MB.');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setHrForm(prev => ({ ...prev, profilePhoto: reader.result }));
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                  {hrForm.profilePhoto && (
+                    <button 
+                      type="button"
+                      onClick={() => setHrForm(prev => ({ ...prev, profilePhoto: '' }))}
+                      style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '6px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Full Name *</label>
@@ -2679,21 +2771,36 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 />
               </div>
 
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Mobile Number</label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={hrForm.mobile}
+                  onChange={e => setHrForm(f => ({ ...f, mobile: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Login Password *</label>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>
+                  {hrToEdit ? 'New Password (optional)' : 'Login Password *'}
+                </label>
                 <input
                   type="password"
-                  placeholder="Set a password for this HR"
+                  placeholder={hrToEdit ? "Leave blank to keep current password" : "Set a password for this HR"}
                   value={hrForm.password}
                   onChange={e => setHrForm(f => ({ ...f, password: e.target.value }))}
                   style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
                 />
-                <p style={{ color: '#9ca3af', fontSize: '0.78rem', marginTop: '5px' }}>💡 Itha password use panni HR this portal-la login panuvaanga. A unique referral link will be auto-generated for them.</p>
+                <p style={{ color: '#9ca3af', fontSize: '0.78rem', marginTop: '5px' }}>
+                  {hrToEdit ? '💡 Enter a new password only if you wish to reset it.' : '💡 Itha password use panni HR this portal-la login panuvaanga. A unique referral link will be auto-generated for them.'}
+                </p>
               </div>
 
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
-                  onClick={() => setHrModalOpen(false)}
+                  onClick={() => { setHrModalOpen(false); setHrToEdit(null); }}
                   style={{ flex: 1, padding: '11px', borderRadius: '8px', border: '1.5px solid #e5e7eb', background: 'white', color: '#374151', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}
                 >
                   Cancel
@@ -2701,41 +2808,70 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <button
                   disabled={hrSaving}
                   onClick={async () => {
-                    if (!hrForm.name || !hrForm.email || !hrForm.password) {
-                      setHrError('All fields are required!');
+                    if (!hrForm.name || !hrForm.email) {
+                      setHrError('Name and Email are required!');
+                      return;
+                    }
+                    if (!hrToEdit && !hrForm.password) {
+                      setHrError('Password is required for new HR accounts!');
                       return;
                     }
                     setHrSaving(true);
                     setHrError('');
                     try {
-                      const res = await fetch(`${API_URL}/api/users/hr`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(hrForm)
-                      });
+                      let res;
+                      if (hrToEdit) {
+                        res = await fetch(`${API_URL}/api/users/hr/${hrToEdit.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(hrForm)
+                        });
+                        if (res.status === 404) {
+                          // Fallback to profile route
+                          res = await fetch(`${API_URL}/api/users/${hrToEdit.id}/profile`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              name: hrForm.name,
+                              mobile: hrForm.mobile,
+                              profilePhoto: hrForm.profilePhoto
+                            })
+                          });
+                        }
+                      } else {
+                        res = await fetch(`${API_URL}/api/users/hr`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(hrForm)
+                        });
+                      }
+
                       let data;
                       try {
                         data = await res.json();
                       } catch {
-                        setHrError(`Server endpoint not found (${res.status}). Please deploy the latest server code to production first.`);
+                        setHrError(`Server response error (${res.status}). Please try again.`);
                         setHrSaving(false);
                         return;
                       }
+
                       if (!res.ok || data.error) {
-                        setHrError(data.error || `Error ${res.status}: Could not create HR account.`);
+                        setHrError(data.error || `Error ${res.status}: Could not save HR account.`);
                       } else {
                         setHrModalOpen(false);
+                        setHrToEdit(null);
                         fetchAllData();
                       }
                     } catch (err) {
-                      setHrError('Network error - Server reach aagala. Check your connection or run local server.');
+                      console.error(err);
+                      setHrError('Network error. Failed to save HR user.');
                     } finally {
                       setHrSaving(false);
                     }
                   }}
-                  style={{ flex: 1, padding: '11px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}
+                  style={{ flex: 1, padding: '11px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', opacity: hrSaving ? 0.7 : 1 }}
                 >
-                  {hrSaving ? 'Creating...' : '✅ Create HR Account'}
+                  {hrSaving ? 'Saving...' : (hrToEdit ? 'Save Changes' : 'Create HR Account')}
                 </button>
               </div>
             </div>

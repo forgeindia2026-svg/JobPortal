@@ -31,7 +31,7 @@ router.get('/hr', async (req, res) => {
 // POST to create HR
 router.post('/hr', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, mobile, profilePhoto } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -49,6 +49,8 @@ router.post('/hr', async (req, res) => {
       id: userId,
       name,
       email: email.toLowerCase(),
+      mobile: mobile || '',
+      profilePhoto: profilePhoto || '',
       passwordHash: 'dummy_hash_' + password,
       role: 'hr',
       referralCode,
@@ -57,9 +59,45 @@ router.post('/hr', async (req, res) => {
     };
 
     const savedUser = await UserModel.create(newUser);
-    res.status(201).json(savedUser);
+    const { passwordHash, ...safe } = savedUser.toObject();
+    res.status(201).json(safe);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create HR user.' });
+  }
+});
+
+// PUT to update an HR user (Admin edit)
+router.put('/hr/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, mobile, profilePhoto } = req.body;
+
+    const hrUser = await UserModel.findOne({ id, role: 'hr' });
+    if (!hrUser) {
+      return res.status(404).json({ error: 'HR user not found.' });
+    }
+
+    if (email && email.toLowerCase() !== hrUser.email) {
+      const clash = await UserModel.findOne({ email: email.toLowerCase(), id: { $ne: id } });
+      if (clash) {
+        return res.status(400).json({ error: 'Account with this email already exists.' });
+      }
+      hrUser.email = email.toLowerCase();
+    }
+
+    if (name) hrUser.name = name;
+    if (mobile !== undefined) hrUser.mobile = mobile;
+    if (profilePhoto !== undefined) hrUser.profilePhoto = profilePhoto;
+    if (password && password.trim()) {
+      hrUser.passwordHash = 'dummy_hash_' + password;
+    }
+
+    await hrUser.save();
+    const { passwordHash, ...safe } = hrUser.toObject();
+    res.json(safe);
+  } catch (error) {
+    console.error('Error updating HR user:', error);
+    res.status(500).json({ error: 'Failed to update HR user.' });
   }
 });
 
@@ -324,15 +362,19 @@ router.put('/hr/:id/incentives', async (req, res) => {
   }
 });
 
-// PUT update user profile (Name, Bank Details)
+// PUT update user profile (Name, Bank Details, Profile Photo)
 router.put('/:id/profile', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName } = req.body;
+    const { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName, profilePhoto, mobile } = req.body;
     
+    const updateObj = { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName };
+    if (profilePhoto !== undefined) updateObj.profilePhoto = profilePhoto;
+    if (mobile !== undefined) updateObj.mobile = mobile;
+
     const updatedUser = await UserModel.findOneAndUpdate(
       { id },
-      { $set: { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName } },
+      { $set: updateObj },
       { returnDocument: 'after' }
     ).lean();
 
