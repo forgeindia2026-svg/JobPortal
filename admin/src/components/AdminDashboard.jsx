@@ -1101,6 +1101,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <th>Date</th>
                     <th>Candidate</th>
                     <th>Job Applied</th>
+                      <th>HR Ref</th>
                     <th>Amount</th>
                     <th>Payment ID</th>
                     <th>Status</th>
@@ -1116,6 +1117,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.candidateMobile}</span>
                       </td>
                       <td>{app.jobTitle}</td>
+                      <td>
+                        {app.referredBy ? (() => {
+                          const hr = hrs.find(h => h.referralCode === app.referredBy);
+                          return (
+                            <div>
+                              <div style={{ fontWeight: 600, color: '#2563eb', fontSize: '0.85rem' }}>{hr ? hr.name : 'Unknown HR'}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
+                            </div>
+                          );
+                        })() : <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic' }}>Direct</span>}
+                      </td>
                       <td>₹{getAppPaymentAmount(app)}</td>
                       <td><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{app.paymentId || 'N/A'}</span></td>
                       <td>
