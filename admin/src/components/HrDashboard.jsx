@@ -736,6 +736,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topSourcers.map((hr, idx) => {
                         const isMe = String(hr.referralCode || '').toLowerCase() === String(currentUser?.referralCode || '').toLowerCase();
+                        const isScored = Number(hr.totalSourced || 0) > 0;
                         return (
                           <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: isMe ? '#eff6ff' : '#f8fafc', border: isMe ? '1px solid #bfdbfe' : '1px solid #f1f5f9', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -746,9 +747,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                   borderRadius: '50%',
                                   overflow: 'hidden',
                                   boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                                  border: idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0',
-                                  background: hr.profilePhoto ? '#f8fafc' : (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9'),
-                                  color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b',
+                                  border: isScored ? (idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0') : '2px solid #e2e8f0',
+                                  background: hr.profilePhoto ? '#f8fafc' : (isScored ? (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9') : '#f1f5f9'),
+                                  color: hr.profilePhoto ? '#0f172a' : (isScored ? (idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b') : '#64748b'),
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -761,26 +762,28 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                     (hr.name || 'HR').charAt(0).toUpperCase()
                                   )}
                                 </div>
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '-2px',
-                                  right: '-4px',
-                                  minWidth: '20px',
-                                  height: '20px',
-                                  padding: '0 4px',
-                                  borderRadius: '10px',
-                                  background: idx === 0 ? 'linear-gradient(135deg, #eab308, #ca8a04)' : idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#64748b',
-                                  color: '#ffffff',
-                                  fontSize: '0.65rem',
-                                  fontWeight: '800',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  border: '2px solid #ffffff',
-                                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }}>
-                                  #{idx + 1}
-                                </div>
+                                {isScored && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    bottom: '-2px',
+                                    right: '-4px',
+                                    minWidth: '20px',
+                                    height: '20px',
+                                    padding: '0 4px',
+                                    borderRadius: '10px',
+                                    background: idx === 0 ? 'linear-gradient(135deg, #eab308, #ca8a04)' : idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#64748b',
+                                    color: '#ffffff',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '800',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '2px solid #ffffff',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                  }}>
+                                    #{idx + 1}
+                                  </div>
+                                )}
                               </div>
                               <div>
                                 <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -790,8 +793,8 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
                               </div>
                             </div>
-                            <div style={{ fontWeight: '800', color: '#2563eb', fontSize: '1.25rem' }}>
-                              {hr.totalSourced}
+                            <div style={{ fontWeight: '800', color: isScored ? '#2563eb' : '#94a3b8', fontSize: '1.25rem' }}>
+                              {hr.totalSourced || 0}
                             </div>
                           </div>
                         );
@@ -807,6 +810,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topClosers.map((hr, idx) => {
                         const isMe = String(hr.referralCode || '').toLowerCase() === String(currentUser?.referralCode || '').toLowerCase();
+                        const isScored = Number(hr.totalClosed || 0) > 0;
                         return (
                           <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: isMe ? '#f0fdf4' : '#f8fafc', border: isMe ? '1px solid #bbf7d0' : '1px solid #f1f5f9', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -817,9 +821,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                   borderRadius: '50%',
                                   overflow: 'hidden',
                                   boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                                  border: idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0',
-                                  background: hr.profilePhoto ? '#f8fafc' : (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9'),
-                                  color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b',
+                                  border: isScored ? (idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0') : '2px solid #e2e8f0',
+                                  background: hr.profilePhoto ? '#f8fafc' : (isScored ? (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9') : '#f1f5f9'),
+                                  color: hr.profilePhoto ? '#0f172a' : (isScored ? (idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b') : '#64748b'),
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -832,26 +836,28 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                     (hr.name || 'HR').charAt(0).toUpperCase()
                                   )}
                                 </div>
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '-2px',
-                                  right: '-4px',
-                                  minWidth: '20px',
-                                  height: '20px',
-                                  padding: '0 4px',
-                                  borderRadius: '10px',
-                                  background: idx === 0 ? 'linear-gradient(135deg, #eab308, #ca8a04)' : idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#64748b',
-                                  color: '#ffffff',
-                                  fontSize: '0.65rem',
-                                  fontWeight: '800',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  border: '2px solid #ffffff',
-                                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }}>
-                                  #{idx + 1}
-                                </div>
+                                {isScored && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    bottom: '-2px',
+                                    right: '-4px',
+                                    minWidth: '20px',
+                                    height: '20px',
+                                    padding: '0 4px',
+                                    borderRadius: '10px',
+                                    background: idx === 0 ? 'linear-gradient(135deg, #eab308, #ca8a04)' : idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' : idx === 2 ? 'linear-gradient(135deg, #f97316, #ea580c)' : '#64748b',
+                                    color: '#ffffff',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '800',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '2px solid #ffffff',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                  }}>
+                                    #{idx + 1}
+                                  </div>
+                                )}
                               </div>
                               <div>
                                 <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -861,8 +867,8 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
                               </div>
                             </div>
-                            <div style={{ fontWeight: '800', color: '#059669', fontSize: '1.25rem' }}>
-                              {hr.totalClosed}
+                            <div style={{ fontWeight: '800', color: isScored ? '#059669' : '#94a3b8', fontSize: '1.25rem' }}>
+                              {hr.totalClosed || 0}
                             </div>
                           </div>
                         );
