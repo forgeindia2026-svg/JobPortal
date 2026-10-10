@@ -54,6 +54,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
   const [interviews, setInterviews] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [hrs, setHrs] = useState([]);
+  const [allApplications, setAllApplications] = useState([]);
+  const CLOSED_STATUSES = ['selected', 'joined'];
   
   const [showPartnerIncentiveModal, setShowPartnerIncentiveModal] = useState(false);
   const [selectedJobForIncentive, setSelectedJobForIncentive] = useState(null);
@@ -165,9 +168,25 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       .catch(err => console.error(err));
   };
 
+  const fetchLeaderboardData = () => {
+    Promise.all([
+      fetch(`${API_URL}/api/users/hr`).then(res => res.json()).catch(() => []),
+      fetch(`${API_URL}/api/applications`).then(res => res.json()).catch(() => [])
+    ])
+    .then(([hrData, appsData]) => {
+      setHrs(Array.isArray(hrData) ? hrData : []);
+      setAllApplications(Array.isArray(appsData) ? appsData : []);
+    })
+    .catch(err => console.error('Error fetching leaderboard data:', err));
+  };
+
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 30000);
+    fetchLeaderboardData();
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchLeaderboardData();
+    }, 30000);
     return () => clearInterval(interval);
   }, [API_URL, currentUser]);
 
@@ -750,6 +769,89 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 )}
               </div>
             </div>
+
+            {/* Leaderboards */}
+            {(() => {
+              const validApps = allApplications.filter(app => app.status !== 'Payment Pending');
+              const hrStats = hrs.map(hr => {
+                const hrCode = String(hr.referralCode || '').toLowerCase();
+                const hrApps = validApps.filter(app => String(app.referredBy || '').toLowerCase() === hrCode);
+                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                return {
+                  ...hr,
+                  totalSourced: hrApps.length,
+                  totalClosed: closedApps.length
+                };
+              });
+              const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed).slice(0, 5);
+              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced).slice(0, 5);
+              
+              return (
+                <div style={{ marginBottom: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  {/* Top Closers Card */}
+                  <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected/Closed)</span>
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {topClosers.map((hr, idx) => {
+                        const isMe = String(hr.referralCode || '').toLowerCase() === String(currentUser?.referralCode || '').toLowerCase();
+                        return (
+                          <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: isMe ? '#f0fdf4' : '#f8fafc', border: isMe ? '1px solid #bbf7d0' : 'none', borderRadius: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                                #{idx + 1}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {hr.name}
+                                  {isMe && <span style={{ fontSize: '0.7rem', background: '#dcfce7', color: '#15803d', padding: '2px 6px', borderRadius: '4px', fontWeight: '700' }}>You</span>}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
+                              </div>
+                            </div>
+                            <div style={{ fontWeight: '800', color: '#059669', fontSize: '1.15rem' }}>
+                              {hr.totalClosed}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Top Applications Received Card */}
+                  <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {topSourcers.map((hr, idx) => {
+                        const isMe = String(hr.referralCode || '').toLowerCase() === String(currentUser?.referralCode || '').toLowerCase();
+                        return (
+                          <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: isMe ? '#eff6ff' : '#f8fafc', border: isMe ? '1px solid #bfdbfe' : 'none', borderRadius: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9', color: idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.9rem' }}>
+                                #{idx + 1}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {hr.name}
+                                  {isMe && <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1d4ed8', padding: '2px 6px', borderRadius: '4px', fontWeight: '700' }}>You</span>}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
+                              </div>
+                            </div>
+                            <div style={{ fontWeight: '800', color: '#2563eb', fontSize: '1.15rem' }}>
+                              {hr.totalSourced}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {chartData.length > 0 && (
               <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
