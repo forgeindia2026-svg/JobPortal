@@ -924,86 +924,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
             </div>
 
-            <div className="section-header" style={{ marginTop: '2rem' }}>
-              <h3 className="section-title">Recent Applications</h3>
-              <button className="btn-secondary" onClick={() => setActiveTab('applications')}>View All</button>
-            </div>
-
-            <div className="table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>App No</th>
-                    <th>Candidate Details</th>
-                    <th>Job Title</th>
-                    <th>Company</th>
-                    <th>Date</th>
-                    <th>HR Reference</th>
-                    <th>Payment</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {validApplications.slice(0, 5).map(app => (
-                    <tr key={app.id}>
-                      <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber}</td>
-                      <td>
-                        <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.05rem', marginBottom: '6px' }}>{app.candidateName}</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.85rem' }}>
-                          <div style={{ color: '#047857', background: '#d1fae5', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                            📱 {app.candidateMobile}
-                          </div>
-                          <div style={{ color: '#1d4ed8', background: '#dbeafe', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                            ✉️ {app.candidateEmail}
-                          </div>
-                          <div style={{ color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                            🎂 DOB: {app.candidateQualification || 'N/A'}
-                          </div>
-                          <div style={{ color: '#6d28d9', background: '#f3e8ff', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                            🏙️ City: {app.candidateLocation || 'N/A'}
-                          </div>
-                          <div style={{ color: '#be185d', background: '#fce7f3', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, gridColumn: 'span 2' }}>
-                            💼 Experience: {app.candidateExperience || 'N/A'}
-                          </div>
-                        </div>
-                      </td>
-                      <td>{app.jobTitle}</td>
-                      <td>{app.companyName}</td>
-                      <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
-                      <td>
-                        {app.referredBy ? (
-                          <div>
-                            <div style={{ fontWeight: 600, color: '#2563eb', fontSize: '0.85rem' }}>
-                              {hrs.find(h => h.referralCode === app.referredBy)?.name || 'Unknown HR'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
-                          </div>
-                        ) : (
-                          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic' }}>Direct</span>
-                        )}
-                      </td>
-                      <td style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b' }}>
-                        ₹{getAppPaymentAmount(app)}
-                      </td>
-                      <td>{getStatusBadge(app.status)}</td>
-                      <td>
-                        <button
-                          className="btn-secondary"
-                          style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                          onClick={() => {
-                            setStatusModalApp(app);
-                            setNewAppStatus(app.status);
-                            setAdminNoteInput(app.adminNotes || '');
-                          }}
-                        >
-                          Manage
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center' }}>
+              <button 
+                className="btn-primary" 
+                onClick={() => setActiveTab('applications')}
+                style={{ padding: '12px 28px', fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px' }}
+              >
+                View Recent Applications ➔
+              </button>
             </div>
           </div>
         )}
