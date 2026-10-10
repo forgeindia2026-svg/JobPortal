@@ -695,3 +695,26 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 
+
+
+/* Applications Table Responsive Design (Desktop Table vs Mobile Cards) */
+.applications-desktop-table {
+  display: block;
+}
+
+.applications-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .applications-desktop-table {
+    display: none !important;
+  }
+
+  .applications-mobile-cards {
+    display: flex !important;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 2rem;
+  }
+}

@@ -1564,7 +1564,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
             </div>
 
-            <div className="table-container">
+            <div className="table-container applications-desktop-table">
               <table className="custom-table">
                 <thead>
                   <tr>
@@ -1741,6 +1741,245 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Cards View (Visible on Mobile <= 768px, Hidden on Desktop) */}
+            <div className="applications-mobile-cards">
+              {filteredApplications.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+                  No applications matching the selected filter criteria.
+                </div>
+              ) : (
+                filteredApplications.map(app => {
+                  const hr = app.referredBy ? hrs.find(h => h.referralCode === app.referredBy) : null;
+                  const paymentAmt = getAppPaymentAmount(app);
+                  return (
+                    <div
+                      key={app.id}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: '14px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      {/* Header: App ID + Status Badge + Date */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '0.95rem' }}>
+                            {app.applicationNumber}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                            • {new Date(app.appliedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div>
+                          {getStatusBadge(app.status)}
+                        </div>
+                      </div>
+
+                      {/* Candidate Name & Contact Details */}
+                      <div>
+                        <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem', marginBottom: '8px' }}>
+                          {app.candidateName}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.8rem' }}>
+                          <a
+                            href={`tel:${app.candidateMobile}`}
+                            style={{
+                              color: '#047857',
+                              background: '#d1fae5',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontWeight: 600,
+                              textDecoration: 'none'
+                            }}
+                          >
+                            📱 {app.candidateMobile}
+                          </a>
+                          <a
+                            href={`mailto:${app.candidateEmail}`}
+                            style={{
+                              color: '#1d4ed8',
+                              background: '#dbeafe',
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={app.candidateEmail}
+                          >
+                            ✉️ {app.candidateEmail}
+                          </a>
+                          <div style={{ color: '#b45309', background: '#fef3c7', padding: '6px 10px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                            🎂 DOB: {app.candidateQualification || 'N/A'}
+                          </div>
+                          <div style={{ color: '#6d28d9', background: '#f3e8ff', padding: '6px 10px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                            🏙️ City: {app.candidateLocation || 'N/A'}
+                          </div>
+                          <div style={{ color: '#be185d', background: '#fce7f3', padding: '6px 10px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, gridColumn: 'span 2' }}>
+                            💼 Experience: {app.candidateExperience || 'N/A'}
+                          </div>
+                        </div>
+
+                        {app.candidateResumeUrl && (
+                          <a
+                            href={app.candidateResumeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              fontSize: '0.825rem',
+                              color: '#2563eb',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              marginTop: '10px',
+                              fontWeight: 600,
+                              padding: '6px 12px',
+                              background: '#eff6ff',
+                              borderRadius: '6px',
+                              textDecoration: 'none',
+                              border: '1px solid #bfdbfe',
+                              width: 'fit-content'
+                            }}
+                          >
+                            <FileText size={14} /> View Resume ➔
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Job & Company + HR Referral Info Box */}
+                      <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #f1f5f9' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Applied Job</div>
+                            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>{app.jobTitle}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.companyName}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Payment</div>
+                            <div style={{ fontWeight: 700, color: paymentAmt > 100 ? '#10b981' : '#f59e0b', fontSize: '0.95rem' }}>
+                              ₹{paymentAmt}
+                            </div>
+                            {app.paymentId && (
+                              <div style={{ fontSize: '0.68rem', color: '#94a3b8', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {app.paymentId.replace('FREE_TEST_', 'Free-')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* HR Referral & Incentive Row */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px', borderTop: '1px dashed #e2e8f0', gap: '8px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>HR Ref: </span>
+                              {app.referredBy ? (
+                                <span style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.82rem' }}>
+                                  {hr ? hr.name : 'Unknown HR'} ({app.referredBy})
+                                </span>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>Direct</span>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => {
+                                setHrRefModalApp(app);
+                                setSelectedHrRef(app.referredBy || '');
+                              }}
+                              title="Edit or Assign HR Reference"
+                              style={{
+                                background: app.referredBy ? '#eff6ff' : '#f0fdf4',
+                                color: app.referredBy ? '#2563eb' : '#16a34a',
+                                border: `1px solid ${app.referredBy ? '#bfdbfe' : '#bbf7d0'}`,
+                                borderRadius: '4px',
+                                padding: '2px 6px',
+                                fontSize: '0.7rem',
+                                cursor: 'pointer',
+                                fontWeight: 700
+                              }}
+                            >
+                              <Edit size={10} /> {app.referredBy ? 'Edit' : '+ Add'}
+                            </button>
+                          </div>
+
+                          {app.referredBy && app.incentiveAmount > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>Incentive: </span>
+                              <span style={{ fontWeight: 700, color: '#10b981', fontSize: '0.85rem' }}>₹{app.incentiveAmount}</span>
+                              <button
+                                onClick={() => handleToggleIncentiveStatus(app)}
+                                style={{
+                                  background: app.incentiveStatus === 'Paid' ? '#10b981' : '#fef08a',
+                                  color: app.incentiveStatus === 'Paid' ? '#fff' : '#854d0e',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '2px 6px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {app.incentiveStatus === 'Paid' ? 'Paid ✓' : 'Pay'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div style={{ display: 'grid', gridTemplateColumns: currentUser?.role === 'admin' ? '1fr 1fr auto' : '1fr 1fr', gap: '8px', marginTop: '2px' }}>
+                        <button
+                          className="btn-primary"
+                          style={{ padding: '8px 12px', fontSize: '0.825rem', justifyContent: 'center' }}
+                          onClick={() => {
+                            setStatusModalApp(app);
+                            setNewAppStatus(app.status);
+                            setAdminNoteInput(app.adminNotes || '');
+                            setSelectedHrRef(app.referredBy || '');
+                          }}
+                        >
+                          Update Status
+                        </button>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '8px 12px', fontSize: '0.825rem', background: '#eff6ff', color: '#1d4ed8', justifyContent: 'center' }}
+                          onClick={() => {
+                            setAppToSchedule(app);
+                            setInterviewModalOpen(true);
+                          }}
+                        >
+                          <Calendar size={13} /> Interview
+                        </button>
+                        {currentUser?.role === 'admin' && (
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '8px 12px', fontSize: '0.825rem', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', justifyContent: 'center' }}
+                            onClick={() => handleDeleteApplication(app)}
+                            title="Delete this application permanently"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
