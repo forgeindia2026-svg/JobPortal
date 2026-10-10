@@ -691,83 +691,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               </div>
             </div>
 
-            {/* Recent Applicants */}
-            <div style={{ 
-              background: 'linear-gradient(135deg, rgba(238, 242, 255, 0.6) 0%, rgba(224, 231, 255, 0.4) 100%)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              padding: window.innerWidth > 768 ? '1.5rem' : '0.8rem', 
-              borderRadius: '16px', 
-              border: '1px solid rgba(255, 255, 255, 0.8)', 
-              boxShadow: '0 8px 32px rgba(31, 38, 135, 0.05)',
-              marginBottom: '2rem' 
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.2rem', color: '#1e293b', margin: 0, fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Users size={20} color="#4f46e5" /> Recent Applicants
-                </h3>
-                <button 
-                  onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }}
-                  style={{ background: '#4f46e5', border: 'none', color: 'white', fontWeight: 600, fontSize: '0.8rem', padding: '6px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)', transition: 'background 0.2s' }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#4338ca'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#4f46e5'}
-                >
-                  View All &rarr;
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {stats?.applications && stats.applications.length > 0 ? (
-                  [...stats.applications].reverse().slice(0, 5).map((app, index) => {
-                    const avatarStyles = [
-                      { bg: 'linear-gradient(135deg, #FF6B6B, #FF8E53)', shadow: 'rgba(255, 107, 107, 0.4)', cardBg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 107, 107, 0.15))' },
-                      { bg: 'linear-gradient(135deg, #4FACFE, #00F2FE)', shadow: 'rgba(79, 172, 254, 0.4)', cardBg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(79, 172, 254, 0.15))' },
-                      { bg: 'linear-gradient(135deg, #43E97B, #38F9D7)', shadow: 'rgba(67, 233, 123, 0.4)', cardBg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(67, 233, 123, 0.15))' },
-                      { bg: 'linear-gradient(135deg, #FA709A, #FEE140)', shadow: 'rgba(250, 112, 154, 0.4)', cardBg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(250, 112, 154, 0.15))' },
-                      { bg: 'linear-gradient(135deg, #667EEA, #764BA2)', shadow: 'rgba(102, 126, 234, 0.4)', cardBg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(102, 126, 234, 0.15))' },
-                      { bg: 'linear-gradient(135deg, #F77062, #FE5196)', shadow: 'rgba(247, 112, 98, 0.4)', cardBg: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(247, 112, 98, 0.15))' }
-                    ];
-                    const aStyle = avatarStyles[index % avatarStyles.length];
-                    
-                    return (
-                    <div key={app.id || index} style={{ 
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                      padding: '14px 16px', 
-                      background: aStyle.cardBg,
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 1)', 
-                      borderRadius: '12px', 
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-                      flexWrap: 'wrap', gap: '12px',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.02)'; }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '200px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: aStyle.bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: `0 4px 10px ${aStyle.shadow}, inset 0 -3px 6px rgba(0,0,0,0.2), inset 0 3px 6px rgba(255,255,255,0.4)`, border: '1px solid rgba(255,255,255,0.5)', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-                          {app.candidateName?.charAt(0)?.toUpperCase() || '?'}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{app.candidateName}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{app.candidateMobile}</div>
-                        </div>
-                      </div>
-                      <div style={{ flex: 1, minWidth: '160px' }}>
-                        <div style={{ fontWeight: 600, color: '#334155', fontSize: '0.85rem' }}>{app.jobTitle}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>{app.companyName}</div>
-                      </div>
-                      <div>
-                        {getStatusBadge(app.status)}
-                      </div>
-                    </div>
-                  );
-                })
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '2rem 0', color: '#64748b', fontSize: '0.9rem', background: 'rgba(255,255,255,0.5)', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-                    No candidates have applied yet.
-                  </div>
-                )}
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+              <button 
+                className="btn-primary" 
+                onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }}
+                style={{ padding: '12px 28px', fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px' }}
+              >
+                View Recent Applications ➔
+              </button>
             </div>
 
             {/* Leaderboards */}
@@ -787,7 +718,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced).slice(0, 5);
               
               return (
-                <div style={{ marginBottom: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ marginTop: '2.5rem', marginBottom: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                   {/* Top Closers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
