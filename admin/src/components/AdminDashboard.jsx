@@ -120,6 +120,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [savingHrRef, setSavingHrRef] = useState(false);
 
   const [appDateFilter, setAppDateFilter] = useState('all');
+  const [appCustomStartDate, setAppCustomStartDate] = useState('');
+  const [appCustomEndDate, setAppCustomEndDate] = useState('');
   const [appSearchQuery, setAppSearchQuery] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
   const [appHrFilter, setAppHrFilter] = useState('all');
@@ -485,6 +487,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
            d.getMonth() === now.getMonth();
   };
 
+  const isInCustomDateRange = (dateStr, startDateStr, endDateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    if (startDateStr) {
+      const start = new Date(startDateStr);
+      start.setHours(0, 0, 0, 0);
+      if (d < start) return false;
+    }
+    if (endDateStr) {
+      const end = new Date(endDateStr);
+      end.setHours(23, 59, 59, 999);
+      if (d > end) return false;
+    }
+    return true;
+  };
+
   const validApplications = applications.filter(app => app.status !== 'Payment Pending');
 
   const getUpcomingIncentivesData = () => {
@@ -558,12 +577,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const yesterdayAppCount = validApplications.filter(a => isYesterday(a.appliedAt)).length;
   const last7DaysAppCount = validApplications.filter(a => isLast7Days(a.appliedAt)).length;
   const thisMonthAppCount = validApplications.filter(a => isThisMonth(a.appliedAt)).length;
+  const customAppCount = validApplications.filter(a => isInCustomDateRange(a.appliedAt, appCustomStartDate, appCustomEndDate)).length;
 
   const filteredApplications = validApplications.filter(app => {
     if (appDateFilter === 'today' && !isToday(app.appliedAt)) return false;
     if (appDateFilter === 'yesterday' && !isYesterday(app.appliedAt)) return false;
     if (appDateFilter === 'last7' && !isLast7Days(app.appliedAt)) return false;
     if (appDateFilter === 'thisMonth' && !isThisMonth(app.appliedAt)) return false;
+    if (appDateFilter === 'custom' && (appCustomStartDate || appCustomEndDate) && !isInCustomDateRange(app.appliedAt, appCustomStartDate, appCustomEndDate)) return false;
 
     if (appStatusFilter !== 'all') {
       if (appStatusFilter.toLowerCase() === 'processing') {
@@ -661,7 +682,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `Admin_Candidates_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    let dateSuffix = new Date().toISOString().split('T')[0];
+    if (appDateFilter === 'custom' && (appCustomStartDate || appCustomEndDate)) {
+      dateSuffix = `${appCustomStartDate || 'start'}_to_${appCustomEndDate || 'end'}`;
+    } else if (appDateFilter !== 'all') {
+      dateSuffix = `${appDateFilter}_${dateSuffix}`;
+    }
+    link.download = `Admin_Candidates_Export_${dateSuffix}.csv`;
     link.click();
   };
 
@@ -1514,7 +1541,98 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               >
                 📆 This Month ({thisMonthAppCount})
               </button>
+
+              <button
+                onClick={() => setAppDateFilter('custom')}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'custom' ? '#0284c7' : '#f0f9ff',
+                  color: appDateFilter === 'custom' ? 'white' : '#0369a1',
+                  transition: 'all 0.2s',
+                  boxShadow: appDateFilter === 'custom' ? '0 4px 6px -1px rgba(2,132,199,0.3)' : 'none'
+                }}
+              >
+                📑 Custom Range {appDateFilter === 'custom' && (appCustomStartDate || appCustomEndDate) ? `(${customAppCount})` : ''}
+              </button>
             </div>
+
+            {/* Custom Date Range Picker (Bank Statement Style) */}
+            {appDateFilter === 'custom' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '1.25rem',
+                padding: '10px 16px',
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '12px',
+                flexWrap: 'wrap'
+              }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  📑 Bank Statement Range:
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>From Date:</label>
+                  <input
+                    type="date"
+                    value={appCustomStartDate}
+                    onChange={(e) => setAppCustomStartDate(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                      background: 'white'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>To Date:</label>
+                  <input
+                    type="date"
+                    value={appCustomEndDate}
+                    onChange={(e) => setAppCustomEndDate(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.82rem',
+                      outline: 'none',
+                      background: 'white'
+                    }}
+                  />
+                </div>
+                {(appCustomStartDate || appCustomEndDate) && (
+                  <button
+                    onClick={() => {
+                      setAppCustomStartDate('');
+                      setAppCustomEndDate('');
+                    }}
+                    style={{
+                      padding: '5px 10px',
+                      fontSize: '0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      background: '#fff',
+                      color: '#64748b',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear Dates
+                  </button>
+                )}
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0284c7', marginLeft: 'auto' }}>
+                  Total in Range: <strong>{customAppCount}</strong> applications
+                </span>
+              </div>
+            )}
 
             {/* Search and Dropdown Filters Bar */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '1.25rem', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -1697,7 +1815,100 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 >
                   This Month ({thisMonthAppCount})
                 </button>
+                <button
+                  onClick={() => setAppDateFilter('custom')}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '16px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: 'none',
+                    flexShrink: 0,
+                    background: appDateFilter === 'custom' ? '#0284c7' : '#f0f9ff',
+                    color: appDateFilter === 'custom' ? '#fff' : '#0369a1'
+                  }}
+                >
+                  Custom Range {appDateFilter === 'custom' && (appCustomStartDate || appCustomEndDate) ? `(${customAppCount})` : ''}
+                </button>
               </div>
+
+              {/* Mobile Custom Date Range Inputs */}
+              {appDateFilter === 'custom' && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  padding: '10px 12px',
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '10px',
+                  marginBottom: '10px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0369a1' }}>
+                      📑 Statement Date Range:
+                    </span>
+                    {(appCustomStartDate || appCustomEndDate) && (
+                      <button
+                        onClick={() => {
+                          setAppCustomStartDate('');
+                          setAppCustomEndDate('');
+                        }}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '0.7rem',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          background: '#fff',
+                          color: '#64748b',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#475569', marginBottom: '2px' }}>From Date</label>
+                      <input
+                        type="date"
+                        value={appCustomStartDate}
+                        onChange={(e) => setAppCustomStartDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.78rem',
+                          outline: 'none',
+                          background: 'white',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#475569', marginBottom: '2px' }}>To Date</label>
+                      <input
+                        type="date"
+                        value={appCustomEndDate}
+                        onChange={(e) => setAppCustomEndDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.78rem',
+                          outline: 'none',
+                          background: 'white',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Row 3: Compact Search Bar */}
               <div>
