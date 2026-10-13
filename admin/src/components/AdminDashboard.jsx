@@ -668,14 +668,21 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   }, [selectedHrForCandidates, hrAllCandidates, hrCandidateSearch, hrCandidateStatusFilter]);
 
   const hrCandidateStats = useMemo(() => {
-    if (!selectedHrForCandidates) return { total: 0, closed: 0, processing: 0, rejected: 0, incentives: 0 };
+    if (!selectedHrForCandidates) return { total: 0, closed: 0, processing: 0, rejected: 0, incentives: 0, upcomingAmount: 0 };
     const total = hrAllCandidates.length;
     const closed = hrAllCandidates.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
     const rejected = hrAllCandidates.filter(a => String(a.status || '').toLowerCase() === 'rejected').length;
     const processing = total - closed - rejected;
     const incentives = selectedHrForCandidates.incentives || 0;
-    return { total, closed, processing, rejected, incentives };
-  }, [selectedHrForCandidates, hrAllCandidates]);
+
+    const hrUpcoming = upcomingIncentivesData.find(u => 
+      u.hr?.id === selectedHrForCandidates.id || 
+      String(u.hr?.referralCode || '').trim().toLowerCase() === String(selectedHrForCandidates.referralCode || '').trim().toLowerCase()
+    );
+    const upcomingAmount = hrUpcoming ? hrUpcoming.upcomingAmount : 0;
+
+    return { total, closed, processing, rejected, incentives, upcomingAmount };
+  }, [selectedHrForCandidates, hrAllCandidates, upcomingIncentivesData]);
 
   const handleDeleteJob = async (id) => {
     if (!window.confirm('Are you sure you want to delete this job opening?')) return;
@@ -2548,7 +2555,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#94a3b8'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
                   >
-                    <ArrowLeft size={16} /> ← Back to HR List
+                    <ArrowLeft size={16} /> Back to HR List
                   </button>
                 </div>
 
@@ -2661,6 +2668,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase' }}>Total Incentives</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#15803d', marginTop: '4px' }}>
                       ₹{hrCandidateStats.incentives.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #99f6e4', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase' }}>Upcoming Incentive</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f766e', marginTop: '4px' }}>
+                      ₹{hrCandidateStats.upcomingAmount.toLocaleString()}
                     </div>
                   </div>
                 </div>
