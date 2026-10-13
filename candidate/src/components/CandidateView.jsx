@@ -816,7 +816,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                           {comp.name}
                         </h4>
                         <span style={{ fontSize: '0.825rem', color: 'rgba(255,255,255,0.9)', fontWeight: 700, display: 'block', marginTop: '2px' }}>
-                          🔥 {bankJobsCount > 0 ? `${bankJobsCount} Open Positions` : '1 Open Positions'}
+                          🔥 {bankJobsCount === 1 ? '1 Open Position' : `${bankJobsCount} Open Positions`}
                         </span>
                       </div>
                     </div>
@@ -1480,7 +1480,7 @@ export default function CandidateView({ API_URL, currentUser }) {
                           )}
                           <div className="comp-info">
                             <h4 className="comp-title" style={{ color: '#ffffff' }}>{comp.name}</h4>
-                            <span className="comp-count-tag" style={{ color: 'rgba(255,255,255,0.9)' }}>{compJobs.length} Open Positions</span>
+                            <span className="comp-count-tag" style={{ color: 'rgba(255,255,255,0.9)' }}>{compJobs.length === 1 ? '1 Open Position' : `${compJobs.length} Open Positions`}</span>
                           </div>
                         </div>
 
