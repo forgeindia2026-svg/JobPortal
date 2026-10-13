@@ -350,8 +350,21 @@ export default function JobDetailModal({
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1.5px solid #e2e8f0', paddingTop: '1.25rem', marginTop: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             {isAlreadyApplied ? (
-              <button className="btn-secondary" disabled style={{ opacity: 0.8, cursor: 'not-allowed', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
-                ✓ Already Applied
+              <button
+                className="btn-primary-gradient"
+                style={{
+                  padding: '12px 28px',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onClick={() => onApplyClick(job)}
+              >
+                ✓ Applied (Apply Again)
               </button>
             ) : (
               <button className="btn-primary-gradient" style={{
@@ -616,8 +629,21 @@ export default function JobDetailModal({
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1.5px solid #e2e8f0', paddingTop: '1.25rem', marginTop: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             {isAlreadyApplied ? (
-              <button className="btn-secondary" disabled style={{ opacity: 0.8, cursor: 'not-allowed', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
-                ✓ Already Applied
+              <button
+                className="btn-primary-gradient"
+                style={{
+                  padding: '12px 28px',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onClick={() => onApplyClick(job)}
+              >
+                ✓ Applied (Apply Again)
               </button>
             ) : (
               <button className="btn-primary-gradient" style={{
@@ -1345,19 +1371,34 @@ export default function JobDetailModal({
           marginTop: '1rem'
         }}>
           {isAlreadyApplied ? (
-            <div style={{
-              background: '#dcfce7',
-              color: '#15803d',
-              border: '1.5px solid #86efac',
-              padding: '12px 32px',
-              borderRadius: '12px',
-              fontWeight: 800,
-              fontSize: '1rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <CheckCircle2 size={20} color="#15803d" /> Applied Successfully
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{
+                background: '#dcfce7',
+                color: '#15803d',
+                border: '1.5px solid #86efac',
+                padding: '10px 20px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <CheckCircle2 size={18} color="#15803d" /> Applied
+              </div>
+              <button
+                onClick={() => onApplyClick && onApplyClick(job)}
+                className="btn-primary-gradient"
+                style={{
+                  padding: '10px 24px',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  borderRadius: '10px',
+                  cursor: 'pointer'
+                }}
+              >
+                Apply Again
+              </button>
             </div>
           ) : (
             <button

@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { readDBAsync, ApplicationModel, CandidateModel, JobModel } = require('../db');
 
-// GET /api/applications (supports ?candidateId=xxx & ?status=xxx & ?jobId=xxx)
+// GET /api/applications (supports ?candidateId=xxx & ?status=xxx & ?jobId=xxx & ?mobile=xxx & ?email=xxx)
 router.get('/', async (req, res) => {
   try {
-    const { candidateId, status, jobId } = req.query;
+    const { candidateId, status, jobId, mobile, email } = req.query;
     const db = await readDBAsync();
     let apps = db.applications || [];
 
@@ -14,6 +14,28 @@ router.get('/', async (req, res) => {
     }
     if (jobId) {
       apps = apps.filter(a => a.jobId === jobId);
+    }
+    if (mobile) {
+      const cleanMobile = String(mobile).replace(/\D/g, '');
+      if (cleanMobile) {
+        apps = apps.filter(a => {
+          const m = String(a.candidateDetails?.mobile || '').replace(/\D/g, '');
+          const cand = db.candidates.find(c => c.id === a.candidateId);
+          const cm = String(cand?.mobile || '').replace(/\D/g, '');
+          return m === cleanMobile || cm === cleanMobile;
+        });
+      }
+    }
+    if (email) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      if (cleanEmail) {
+        apps = apps.filter(a => {
+          const e = String(a.candidateDetails?.email || '').trim().toLowerCase();
+          const cand = db.candidates.find(c => c.id === a.candidateId);
+          const ce = String(cand?.email || '').trim().toLowerCase();
+          return e === cleanEmail || ce === cleanEmail;
+        });
+      }
     }
     if (status) {
       apps = apps.filter(a => a.status && a.status.toLowerCase() === status.toLowerCase());
@@ -159,15 +181,6 @@ router.post('/', async (req, res) => {
 
     const effectiveCandId = cand ? cand.id : (candidateId || 'cand_' + Date.now());
 
-    // Check if candidate already applied to this job (only block if not manual admin override)
-    if (!isAdminManual) {
-      const existingApp = await ApplicationModel.findOne({ candidateId: effectiveCandId, jobId });
-      if (existingApp) {
-        return res.status(400).json({ error: 'You have already applied for this position.', application: existingApp.toObject() });
-      }
-    }
-
-    const appNumber = 'JOB-' + Math.floor(100000 + Math.random() * 900000);
     let finalPaymentAmount = paymentAmount;
     if (finalPaymentAmount === undefined || finalPaymentAmount === null) {
       const title = (job && job.title) ? String(job.title).toLowerCase() : '';
@@ -219,6 +232,53 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // Check if candidate already applied to this job (only block if not manual admin override)
+    if (!isAdminManual) {
+      const cleanMobile = cDet.mobile ? String(cDet.mobile).replace(/\D/g, '') : null;
+      const cleanEmail = cDet.email ? String(cDet.email).trim().toLowerCase() : null;
+
+      const queryOr = [{ candidateId: effectiveCandId }];
+      if (cleanMobile && cleanMobile.length >= 10) {
+        queryOr.push({ 'candidateDetails.mobile': cDet.mobile });
+        queryOr.push({ 'candidateDetails.mobile': cleanMobile });
+      }
+      if (cleanEmail) {
+        queryOr.push({ 'candidateDetails.email': cDet.email });
+        queryOr.push({ 'candidateDetails.email': cleanEmail });
+      }
+
+      const existingApp = await ApplicationModel.findOne({
+        jobId,
+        $or: queryOr
+      });
+
+      if (existingApp) {
+        const isPending = existingApp.status && existingApp.status.toLowerCase() === 'payment pending';
+        if (isPending) {
+          // Re-use and update the existing Payment Pending application so candidate can retry payment seamlessly
+          existingApp.candidateId = effectiveCandId;
+          if (cDet && Object.keys(cDet).length > 0) {
+            existingApp.candidateDetails = { ...(existingApp.candidateDetails || {}), ...cDet };
+          }
+          if (resumeUrl) existingApp.resumeUrl = resumeUrl;
+          if (coverNotes) existingApp.coverNotes = coverNotes;
+          if (status) existingApp.status = status;
+          if (paymentId) existingApp.paymentId = paymentId;
+          existingApp.paymentAmount = Number(finalPaymentAmount);
+          if (referredBy) existingApp.referredBy = referredBy;
+          if (hrIncentive) existingApp.incentiveAmount = hrIncentive;
+          if (agentIncentive) existingApp.agentIncentiveAmount = agentIncentive;
+          existingApp.updatedAt = new Date().toISOString();
+
+          await existingApp.save();
+          console.log(`🔄 Reused existing Payment Pending application ${existingApp.id} for retry.`);
+          return res.status(200).json(existingApp.toObject());
+        }
+        // If already applied previously, do not block! Allow applying as many times as candidate wants.
+      }
+    }
+
+    const appNumber = 'JOB-' + Math.floor(100000 + Math.random() * 900000);
     const newApp = {
       id: 'app_' + Date.now(),
       applicationNumber: appNumber,

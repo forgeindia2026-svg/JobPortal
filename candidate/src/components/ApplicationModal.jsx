@@ -69,7 +69,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
       try {
         pendingApp = await submitApplicationToDb('PENDING_' + Date.now(), 'Payment Pending', true);
       } catch (err) {
-        throw new Error('Failed to initialize application: ' + err.message);
+        throw new Error(err.message || 'Failed to initialize application.');
       }
 
       // 1. Create order on server

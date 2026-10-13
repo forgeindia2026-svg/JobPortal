@@ -1165,9 +1165,16 @@ export default function CandidateView({ API_URL, currentUser }) {
                       View Details
                     </button>
                     {applied ? (
-                      <span className="applied-pill" onClick={(e) => e.stopPropagation()}>
-                        ✓ Applied
-                      </span>
+                      <button
+                        className="btn-primary-gradient"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApplyClick(jobObj);
+                        }}
+                      >
+                        ✓ Applied (Apply Again)
+                      </button>
                     ) : (
                       <button
                         className="btn-primary-gradient"
@@ -1268,9 +1275,13 @@ export default function CandidateView({ API_URL, currentUser }) {
                               View Details
                             </button>
                             {applied ? (
-                              <span className="applied-pill" onClick={(e) => e.stopPropagation()}>
-                                ✓ Applied
-                              </span>
+                              <button
+                                className="btn-primary-gradient"
+                                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                                onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}
+                              >
+                                ✓ Applied (Apply Again)
+                              </button>
                             ) : (
                               <button className="btn-primary-gradient" onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}>
                                 Apply Now
@@ -1916,9 +1927,13 @@ export default function CandidateView({ API_URL, currentUser }) {
                             View Details
                           </button>
                           {applied ? (
-                            <span className="applied-pill" style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)' }} onClick={(e) => e.stopPropagation()}>
-                              ✓ Applied
-                            </span>
+                            <button
+                              className="btn-primary-gradient"
+                              style={{ background: '#ffffff', color: compColor, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: '0.85rem', padding: '8px 14px' }}
+                              onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}
+                            >
+                              ✓ Applied (Apply Again)
+                            </button>
                           ) : (
                             <button className="btn-primary-gradient" style={{ background: '#ffffff', color: compColor, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => { e.stopPropagation(); handleApplyClick(job); }}>
                               Apply Now
