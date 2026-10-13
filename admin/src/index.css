@@ -750,3 +750,26 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 2rem;
   }
 }
+
+/* HR Candidates Sub-view: Strict Desktop vs Mobile Separation */
+.hr-candidates-desktop-table {
+  display: block;
+}
+
+.hr-candidates-mobile-cards {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .hr-candidates-desktop-table {
+    display: none !important;
+  }
+
+  .hr-candidates-mobile-cards {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+}
+

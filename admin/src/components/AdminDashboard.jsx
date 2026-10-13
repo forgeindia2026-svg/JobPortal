@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -38,6 +38,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
+    setSelectedHrForCandidates(null);
   };
 
   const [kpis, setKpis] = useState(null);
@@ -128,6 +129,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const [manualAppModalOpen, setManualAppModalOpen] = useState(false);
   const [selectedHrForPartners, setSelectedHrForPartners] = useState(null);
+  const [selectedHrForCandidates, setSelectedHrForCandidates] = useState(null);
+  const [hrCandidateSearch, setHrCandidateSearch] = useState('');
+  const [hrCandidateStatusFilter, setHrCandidateStatusFilter] = useState('all');
 
   useEffect(() => {
     fetchAllData();
@@ -623,6 +627,55 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
     return true;
   });
+
+  const hrAllCandidates = useMemo(() => {
+    if (!selectedHrForCandidates) return [];
+    const refCode = String(selectedHrForCandidates.referralCode || '').trim().toLowerCase();
+    return validApplications.filter(app => String(app.referredBy || '').trim().toLowerCase() === refCode);
+  }, [selectedHrForCandidates, validApplications]);
+
+  const hrFilteredCandidates = useMemo(() => {
+    if (!selectedHrForCandidates) return [];
+    return hrAllCandidates.filter(app => {
+      if (hrCandidateStatusFilter !== 'all') {
+        if (hrCandidateStatusFilter.toLowerCase() === 'processing') {
+          const procStatuses = ['applied', 'shortlisted', 'interview scheduled', 'follow up'];
+          if (!procStatuses.includes(String(app.status || '').toLowerCase())) return false;
+        } else if (hrCandidateStatusFilter.toLowerCase() === 'selected') {
+          const selStatuses = ['selected', 'converted'];
+          if (!selStatuses.includes(String(app.status || '').toLowerCase())) return false;
+        } else {
+          if (String(app.status || '').toLowerCase() !== hrCandidateStatusFilter.toLowerCase()) return false;
+        }
+      }
+
+      if (hrCandidateSearch.trim()) {
+        const q = hrCandidateSearch.toLowerCase();
+        const matchName = String(app.candidateName || '').toLowerCase().includes(q);
+        const matchEmail = String(app.candidateEmail || '').toLowerCase().includes(q);
+        const matchMobile = String(app.candidateMobile || '').toLowerCase().includes(q);
+        const matchAppNo = String(app.applicationNumber || '').toLowerCase().includes(q);
+        const matchJob = String(app.jobTitle || '').toLowerCase().includes(q);
+        const matchCompany = String(app.companyName || '').toLowerCase().includes(q);
+
+        if (!matchName && !matchEmail && !matchMobile && !matchAppNo && !matchJob && !matchCompany) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [selectedHrForCandidates, hrAllCandidates, hrCandidateSearch, hrCandidateStatusFilter]);
+
+  const hrCandidateStats = useMemo(() => {
+    if (!selectedHrForCandidates) return { total: 0, closed: 0, processing: 0, rejected: 0, incentives: 0 };
+    const total = hrAllCandidates.length;
+    const closed = hrAllCandidates.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
+    const rejected = hrAllCandidates.filter(a => String(a.status || '').toLowerCase() === 'rejected').length;
+    const processing = total - closed - rejected;
+    const incentives = selectedHrForCandidates.incentives || 0;
+    return { total, closed, processing, rejected, incentives };
+  }, [selectedHrForCandidates, hrAllCandidates]);
 
   const handleDeleteJob = async (id) => {
     if (!window.confirm('Are you sure you want to delete this job opening?')) return;
@@ -2470,6 +2523,555 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
         {activeTab === 'employees' && (
           <div>
+            {selectedHrForCandidates ? (
+              <div>
+                {/* Back to HR List Navigation Button */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <button
+                    onClick={() => setSelectedHrForCandidates(null)}
+                    className="btn-secondary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      background: '#ffffff',
+                      color: '#1e293b',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#94a3b8'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                  >
+                    <ArrowLeft size={16} /> ← Back to HR List
+                  </button>
+                </div>
+
+                {/* HR Profile Banner Card */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+                  border: '1px solid #c7d2fe',
+                  borderRadius: '14px',
+                  padding: '1.25rem 1.5rem',
+                  marginBottom: '1.5rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                  boxShadow: '0 2px 8px rgba(99, 102, 241, 0.06)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      background: '#e0e7ff',
+                      border: '2px solid #a5b4fc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {selectedHrForCandidates.profilePhoto ? (
+                        <img src={selectedHrForCandidates.profilePhoto} alt={selectedHrForCandidates.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ fontWeight: 800, color: '#4f46e5', fontSize: '1.5rem' }}>
+                          {selectedHrForCandidates.name?.charAt(0)?.toUpperCase() || 'H'}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                          {selectedHrForCandidates.name}
+                        </h2>
+                        <span style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          background: '#dbeafe',
+                          color: '#1d4ed8',
+                          padding: '3px 10px',
+                          borderRadius: '12px',
+                          border: '1px solid #bfdbfe'
+                        }}>
+                          Referral Code: {selectedHrForCandidates.referralCode}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '6px', fontSize: '0.85rem', color: '#475569' }}>
+                        <span>✉️ {selectedHrForCandidates.email}</span>
+                        {selectedHrForCandidates.mobile && <span>📱 {selectedHrForCandidates.mobile}</span>}
+                        <span style={{ color: '#2563eb', fontWeight: 600 }}>🔗 {selectedHrForCandidates.linkClicks || 0} link clicks</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Earned Incentives</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#059669' }}>
+                        ₹{(selectedHrForCandidates.incentives || 0).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* KPI Summary Cards */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: '12px',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Candidates</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+                      {hrCandidateStats.total}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #a7f3d0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Selected / Closed</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#047857', marginTop: '4px' }}>
+                      {hrCandidateStats.closed}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #fed7aa', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ea580c', textTransform: 'uppercase' }}>In Progress / Review</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#c2410c', marginTop: '4px' }}>
+                      {hrCandidateStats.processing}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #fecaca', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase' }}>Rejected</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#b91c1c', marginTop: '4px' }}>
+                      {hrCandidateStats.rejected}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase' }}>Total Incentives</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#15803d', marginTop: '4px' }}>
+                      ₹{hrCandidateStats.incentives.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Search & Filter Bar */}
+                <div style={{
+                  background: '#f8fafc',
+                  padding: '14px 16px',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 300px', maxWidth: '450px', position: 'relative' }}>
+                    <Search size={16} style={{ position: 'absolute', left: '12px', color: '#94a3b8' }} />
+                    <input
+                      type="text"
+                      placeholder="Search candidate name, mobile, email, app ID, job..."
+                      value={hrCandidateSearch}
+                      onChange={e => setHrCandidateSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px 9px 36px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <select
+                      value={hrCandidateStatusFilter}
+                      onChange={e => setHrCandidateStatusFilter(e.target.value)}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        outline: 'none',
+                        background: '#ffffff',
+                        color: '#334155'
+                      }}
+                    >
+                      <option value="all">Status: All ({hrCandidateStats.total})</option>
+                      <option value="Processing">Processing ({hrCandidateStats.processing})</option>
+                      <option value="Applied">Applied</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Shortlisted">Shortlisted</option>
+                      <option value="HR Screening">HR Screening</option>
+                      <option value="Interview Scheduled">Interview Scheduled</option>
+                      <option value="Selected">Selected ({hrCandidateStats.closed})</option>
+                      <option value="Rejected">Rejected ({hrCandidateStats.rejected})</option>
+                    </select>
+
+                    {(hrCandidateSearch || hrCandidateStatusFilter !== 'all') && (
+                      <button
+                        onClick={() => {
+                          setHrCandidateSearch('');
+                          setHrCandidateStatusFilter('all');
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          fontSize: '0.8rem',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          background: '#ffffff',
+                          color: '#64748b',
+                          cursor: 'pointer',
+                          fontWeight: 600
+                        }}
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748b' }}>
+                      Showing {hrFilteredCandidates.length} of {hrCandidateStats.total} candidates
+                    </span>
+                  </div>
+                </div>
+
+                {/* Candidate Content: Table or Cards or Empty State */}
+                {hrFilteredCandidates.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3.5rem 1rem', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+                    <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>👥</div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                      {hrAllCandidates.length === 0
+                        ? `No candidates have applied under ${selectedHrForCandidates.name}'s referral link yet.`
+                        : 'No candidates match your search or filter criteria.'}
+                    </div>
+                    {hrAllCandidates.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setHrCandidateSearch('');
+                          setHrCandidateStatusFilter('all');
+                        }}
+                        className="btn-secondary"
+                        style={{ marginTop: '10px', fontSize: '0.8rem' }}
+                      >
+                        Reset Filters
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Desktop Table View */}
+                    <div className="table-container hr-candidates-desktop-table">
+                      <table className="custom-table">
+                        <thead>
+                          <tr>
+                            <th>App ID</th>
+                            <th>Candidate Details</th>
+                            <th>Applied Job</th>
+                            <th>Company</th>
+                            <th>Applied On</th>
+                            <th>Payment</th>
+                            <th>Incentive</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {hrFilteredCandidates.map(app => (
+                            <tr key={app.id}>
+                              <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber}</td>
+                              <td>
+                                <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.05rem', marginBottom: '6px' }}>{app.candidateName}</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.85rem' }}>
+                                  <div style={{ color: '#047857', background: '#d1fae5', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                    📱 <a href={`tel:${app.candidateMobile}`} style={{ color: 'inherit', textDecoration: 'none' }}>{app.candidateMobile}</a>
+                                  </div>
+                                  <div style={{ color: '#1d4ed8', background: '#dbeafe', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                    ✉️ <a href={`mailto:${app.candidateEmail}`} style={{ color: 'inherit', textDecoration: 'none' }}>{app.candidateEmail}</a>
+                                  </div>
+                                  <div style={{ color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                    🎂 DOB: {app.candidateQualification || 'N/A'}
+                                  </div>
+                                  <div style={{ color: '#6d28d9', background: '#f3e8ff', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                    🏙️ City: {app.candidateLocation || 'N/A'}
+                                  </div>
+                                  <div style={{ color: '#be185d', background: '#fce7f3', padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, gridColumn: 'span 2' }}>
+                                    💼 Experience: {app.candidateExperience || 'N/A'}
+                                  </div>
+                                </div>
+                                {app.candidateResumeUrl && (
+                                  <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '8px', fontWeight: 600, padding: '4px 8px', background: '#eff6ff', borderRadius: '6px' }}>
+                                    <FileText size={14} /> View Resume
+                                  </a>
+                                )}
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{app.jobTitle}</td>
+                              <td>{app.companyName}</td>
+                              <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
+                                  ₹{getAppPaymentAmount(app)}
+                                </div>
+                                {app.paymentId && (
+                                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', wordBreak: 'break-all', maxWidth: '100px' }}>
+                                    {app.paymentId.replace('FREE_TEST_', 'Free-')}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                  <div style={{ fontWeight: 700, color: app.incentiveAmount > 0 ? '#10b981' : '#64748b', fontSize: '0.9rem' }}>
+                                    ₹{app.incentiveAmount || 0}
+                                  </div>
+                                  {app.incentiveAmount > 0 && (
+                                    <button
+                                      onClick={() => handleToggleIncentiveStatus(app)}
+                                      style={{
+                                        background: app.incentiveStatus === 'Paid' ? '#10b981' : '#fef08a',
+                                        color: app.incentiveStatus === 'Paid' ? '#fff' : '#854d0e',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '4px 8px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        width: 'fit-content'
+                                      }}
+                                    >
+                                      {app.incentiveStatus === 'Paid' ? 'Paid ✓' : 'Pay Now'}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                              <td>{getStatusBadge(app.status)}</td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
+                                  <button
+                                    className="btn-primary"
+                                    style={{ padding: '4px 10px', fontSize: '0.775rem' }}
+                                    onClick={() => {
+                                      setStatusModalApp(app);
+                                      setNewAppStatus(app.status);
+                                      setAdminNoteInput(app.adminNotes || '');
+                                      setSelectedHrRef(app.referredBy || '');
+                                    }}
+                                  >
+                                    Update Status
+                                  </button>
+                                  <button
+                                    className="btn-secondary"
+                                    style={{ padding: '4px 10px', fontSize: '0.775rem', background: '#eff6ff', color: '#1d4ed8' }}
+                                    onClick={() => {
+                                      setAppToSchedule(app);
+                                      setInterviewModalOpen(true);
+                                    }}
+                                  >
+                                    <Calendar size={12} /> Schedule Interview
+                                  </button>
+                                  {currentUser?.role === 'admin' && (
+                                    <button
+                                      className="btn-secondary"
+                                      style={{ padding: '4px 10px', fontSize: '0.775rem', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}
+                                      onClick={() => handleDeleteApplication(app)}
+                                      title="Delete this application permanently"
+                                    >
+                                      <Trash2 size={12} /> Delete
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Cards View */}
+                    <div className="hr-candidates-mobile-cards">
+                      {hrFilteredCandidates.map(app => (
+                        <div
+                          key={app.id}
+                          style={{
+                            background: '#ffffff',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                            padding: '14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                            <div>
+                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem', lineHeight: 1.2 }}>
+                                {app.candidateName}
+                              </div>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#2563eb', marginTop: '3px' }}>
+                                {app.jobTitle} • <span style={{ color: '#64748b', fontWeight: 500 }}>{app.companyName}</span>
+                              </div>
+                            </div>
+                            <div style={{ flexShrink: 0 }}>
+                              {getStatusBadge(app.status)}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                            <span style={{ fontWeight: 700, color: '#475569' }}>#{app.applicationNumber}</span>
+                            <span>{new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '0.78rem' }}>
+                            <a
+                              href={`tel:${app.candidateMobile}`}
+                              style={{
+                                color: '#047857',
+                                background: '#ecfdf5',
+                                border: '1px solid #a7f3d0',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontWeight: 600,
+                                textDecoration: 'none'
+                              }}
+                            >
+                              📱 {app.candidateMobile}
+                            </a>
+                            <a
+                              href={`mailto:${app.candidateEmail}`}
+                              style={{
+                                color: '#1d4ed8',
+                                background: '#eff6ff',
+                                border: '1px solid #bfdbfe',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                maxWidth: '180px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                              title={app.candidateEmail}
+                            >
+                              ✉️ {app.candidateEmail}
+                            </a>
+                            <span style={{ color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '6px', fontWeight: 500 }}>
+                              💼 {app.candidateExperience || 'Fresher'}
+                            </span>
+                            <span style={{ color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '6px', fontWeight: 500 }}>
+                              🏙️ {app.candidateLocation || 'N/A'}
+                            </span>
+                            {app.candidateQualification && (
+                              <span style={{ color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: '6px', fontWeight: 500 }}>
+                                🎂 {app.candidateQualification}
+                              </span>
+                            )}
+                            {app.candidateResumeUrl && (
+                              <a
+                                href={app.candidateResumeUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  color: '#2563eb',
+                                  background: '#eff6ff',
+                                  border: '1px solid #bfdbfe',
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontWeight: 600,
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <FileText size={12} /> Resume
+                              </a>
+                            )}
+                          </div>
+
+                          <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', border: '1px solid #f1f5f9' }}>
+                            <div>
+                              <span style={{ color: '#64748b' }}>Fee: </span>
+                              <strong style={{ color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b' }}>₹{getAppPaymentAmount(app)}</strong>
+                            </div>
+                            <div>
+                              <span style={{ color: '#64748b' }}>Incentive: </span>
+                              <strong style={{ color: '#059669' }}>₹{app.incentiveAmount || 0}</strong>
+                              {app.incentiveAmount > 0 && (
+                                <button
+                                  onClick={() => handleToggleIncentiveStatus(app)}
+                                  style={{
+                                    marginLeft: '6px',
+                                    background: app.incentiveStatus === 'Paid' ? '#10b981' : '#fef08a',
+                                    color: app.incentiveStatus === 'Paid' ? '#fff' : '#854d0e',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    padding: '2px 6px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {app.incentiveStatus === 'Paid' ? 'Paid ✓' : 'Pay'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
+                            <button
+                              className="btn-primary"
+                              style={{ padding: '7px 10px', fontSize: '0.78rem', justifyContent: 'center' }}
+                              onClick={() => {
+                                setStatusModalApp(app);
+                                setNewAppStatus(app.status);
+                                setAdminNoteInput(app.adminNotes || '');
+                                setSelectedHrRef(app.referredBy || '');
+                              }}
+                            >
+                              Update Status
+                            </button>
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '7px 10px', fontSize: '0.78rem', background: '#eff6ff', color: '#1d4ed8', justifyContent: 'center' }}
+                              onClick={() => {
+                                setAppToSchedule(app);
+                                setInterviewModalOpen(true);
+                              }}
+                            >
+                              <Calendar size={13} /> Schedule
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>HR / Employees Management</h2>
@@ -2526,10 +3128,44 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         </span>
                       </td>
                       <td style={{ fontWeight: 600, color: '#3b82f6' }}>{hr.linkClicks || 0}</td>
-                      <td style={{ fontWeight: 600, color: '#10b981' }}>
-                        {validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(hr.referralCode || '').toLowerCase()).length}
-                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>
-                          {getHrClosedApps(hr).filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length} closed
+                      <td>
+                        <div
+                          onClick={() => {
+                            setSelectedHrForCandidates(hr);
+                            setHrCandidateSearch('');
+                            setHrCandidateStatusFilter('all');
+                          }}
+                          style={{
+                            background: '#ecfdf5',
+                            color: '#065f46',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            border: '1.5px solid #a7f3d0',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = '#d1fae5';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 3px 6px rgba(16, 185, 129, 0.2)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = '#ecfdf5';
+                            e.currentTarget.style.transform = 'none';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          title={`Click to view all candidates referred by ${hr.name}`}
+                        >
+                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#047857', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            👥 {validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(hr.referralCode || '').toLowerCase()).length}
+                            <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>Candidates</span>
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>
+                            {getHrClosedApps(hr).filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length} closed ➔
+                          </div>
                         </div>
                       </td>
                       <td style={{ fontWeight: 700, color: '#059669' }}>
@@ -2677,9 +3313,30 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                           <span style={{ fontSize: '0.7rem', color: '#3b82f6', fontWeight: 600 }}>Clicks:</span>
                           <span style={{ fontWeight: 800 }}>{hr.linkClicks || 0}</span>
                         </div>
-                        <div style={{ background: '#ecfdf5', color: '#065f46', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>Candidates:</span>
-                          <span style={{ fontWeight: 800 }}>{appliedCount} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#047857' }}>({closedCount} closed)</span></span>
+                        <div 
+                          onClick={() => {
+                            setSelectedHrForCandidates(hr);
+                            setHrCandidateSearch('');
+                            setHrCandidateStatusFilter('all');
+                          }}
+                          style={{ 
+                            background: '#ecfdf5', 
+                            color: '#065f46', 
+                            padding: '6px 10px', 
+                            borderRadius: '8px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            border: '1.5px solid #a7f3d0',
+                            cursor: 'pointer'
+                          }}
+                          title={`View candidates for ${hr.name}`}
+                        >
+                          <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 700 }}>Candidates:</span>
+                          <span style={{ fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            {appliedCount} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#047857' }}>({closedCount} closed)</span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#059669' }}>›</span>
+                          </span>
                         </div>
                         <div style={{ background: '#f0fdf4', color: '#166534', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 600 }}>Earned:</span>
@@ -2747,6 +3404,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
           </div>
         )}
+      </div>
+    )}
 
         {activeTab === 'reports' && (
           <div>
