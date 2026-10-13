@@ -66,6 +66,27 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Recruitment Portal API Server is running.' });
 });
 
+// Candidate APK Download endpoint
+app.get('/api/download/candidate-apk', (req, res) => {
+  const candidateApkPath = path.join(uploadsDir, 'CandidateApp.apk');
+  const rootCandidateApkPath = path.join(__dirname, '..', 'CandidateApp.apk');
+  const cJobsAppsApkPath = 'C:\\Jobsapps\\CandidateApp.apk';
+
+  let targetPath = null;
+  if (fs.existsSync(candidateApkPath)) targetPath = candidateApkPath;
+  else if (fs.existsSync(rootCandidateApkPath)) targetPath = rootCandidateApkPath;
+  else if (fs.existsSync(cJobsAppsApkPath)) targetPath = cJobsAppsApkPath;
+
+  if (targetPath) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.download(targetPath, 'CandidateRecruitPro.apk', (err) => {
+      if (err) console.error('Error downloading Candidate APK:', err);
+    });
+  } else {
+    res.status(404).json({ error: 'Candidate APK not found. Please build or upload the APK.' });
+  }
+});
+
 const { connectMongoDB } = require('./db');
 
 // Connect to MongoDB Database
