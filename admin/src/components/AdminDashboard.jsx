@@ -716,19 +716,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const handleQuickUpdateCompanyOrder = async (companyId, newOrder) => {
     const parsedOrder = parseInt(newOrder, 10);
-    if (isNaN(parsedOrder)) return;
+    if (isNaN(parsedOrder) || parsedOrder < 1) return;
     try {
       setCompanies(prev =>
         [...prev]
           .map(c => (c.id === companyId ? { ...c, displayOrder: parsedOrder } : c))
           .sort((a, b) => (Number(a.displayOrder ?? 99) - Number(b.displayOrder ?? 99)) || (a.name || '').localeCompare(b.name || ''))
       );
-      await fetch(`${API_URL}/api/companies/${companyId}`, {
+      const res = await fetch(`${API_URL}/api/companies/${companyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ displayOrder: parsedOrder })
       });
-      fetchAllData();
+      if (res.ok) {
+        const compRes = await fetch(`${API_URL}/api/companies`);
+        const compData = await compRes.json();
+        if (Array.isArray(compData)) {
+          setCompanies(compData);
+        }
+      }
     } catch (err) {
       console.error('Failed to update company order:', err);
     }
