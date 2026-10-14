@@ -136,6 +136,7 @@ export default function JobDetailModal({
     (job.companyName && (job.companyName.includes('FIC IT') || job.companyName.includes('IT Training')));
 
   const itCategory = job.itCategory || 'Placement';
+  const isHoldOn = job?.status && job.status.toLowerCase() === 'hold on';
   
   let labelApply = 'Apply Now';
   let labelResponsibilities = 'Roles & Responsibilities';
@@ -349,7 +350,31 @@ export default function JobDetailModal({
         {/* FOOTER BAR */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1.5px solid #e2e8f0', paddingTop: '1.25rem', marginTop: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            {isAlreadyApplied ? (
+            {isHoldOn ? (
+              <div style={{
+                background: '#fffbeb',
+                border: '1.5px solid #fde68a',
+                borderRadius: '10px',
+                padding: '10px 20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#b45309',
+                fontWeight: 700,
+                fontSize: '0.925rem'
+              }}>
+                <span style={{
+                  background: '#fef3c7',
+                  color: '#d97706',
+                  border: '1px solid #f59e0b',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.78rem',
+                  fontWeight: 800
+                }}>⏸️ HOLD ON</span>
+                <span>This job is currently hold on</span>
+              </div>
+            ) : isAlreadyApplied ? (
               <button
                 className="btn-primary-gradient"
                 style={{
@@ -628,7 +653,31 @@ export default function JobDetailModal({
         {/* FOOTER BAR */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1.5px solid #e2e8f0', paddingTop: '1.25rem', marginTop: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            {isAlreadyApplied ? (
+            {isHoldOn ? (
+              <div style={{
+                background: '#fffbeb',
+                border: '1.5px solid #fde68a',
+                borderRadius: '10px',
+                padding: '10px 20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#b45309',
+                fontWeight: 700,
+                fontSize: '0.925rem'
+              }}>
+                <span style={{
+                  background: '#fef3c7',
+                  color: '#d97706',
+                  border: '1px solid #f59e0b',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.78rem',
+                  fontWeight: 800
+                }}>⏸️ HOLD ON</span>
+                <span>This job is currently hold on</span>
+              </div>
+            ) : isAlreadyApplied ? (
               <button
                 className="btn-primary-gradient"
                 style={{
@@ -701,7 +750,25 @@ export default function JobDetailModal({
             </div>
           )}
           <div>
-            <h2 style={{ fontSize: '1.25rem', color: 'var(--text-main)', lineHeight: '1.2', margin: 0 }}>{job.title}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'var(--text-main)', lineHeight: '1.2', margin: 0 }}>{job.title}</h2>
+              {isHoldOn && (
+                <span style={{
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  border: '1.5px solid #f59e0b',
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  fontWeight: 800,
+                  fontSize: '0.75rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  ⏸️ Hold On
+                </span>
+              )}
+            </div>
             <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>
               {job.companyName} • <span style={{ color: 'var(--primary)' }}>{job.categoryName}</span>
             </span>
@@ -1370,7 +1437,38 @@ export default function JobDetailModal({
           borderTop: '1px solid #e2e8f0',
           marginTop: '1rem'
         }}>
-          {isAlreadyApplied ? (
+          {isHoldOn ? (
+            <div style={{
+              background: '#fffbeb',
+              border: '1.5px solid #fde68a',
+              borderRadius: '12px',
+              padding: '14px 28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              color: '#b45309',
+              fontWeight: 700,
+              fontSize: '1rem',
+              boxShadow: '0 2px 10px rgba(245, 158, 11, 0.1)',
+              width: '100%',
+              maxWidth: '520px'
+            }}>
+              <span style={{
+                background: '#fef3c7',
+                color: '#d97706',
+                border: '1px solid #f59e0b',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                letterSpacing: '0.04em'
+              }}>
+                ⏸️ HOLD ON
+              </span>
+              <span style={{ fontWeight: 800 }}>This job is currently hold on</span>
+            </div>
+          ) : isAlreadyApplied ? (
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
               <div style={{
                 background: '#dcfce7',

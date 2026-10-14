@@ -48,6 +48,32 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
 
   if (!isOpen || !job) return null;
 
+  if (job?.status && job.status.toLowerCase() === 'hold on') {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content animate-fade" style={{ maxWidth: '440px', textAlign: 'center', padding: '2rem 1.5rem', borderRadius: '16px' }} onClick={e => e.stopPropagation()}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto', fontSize: '1.8rem', border: '2px solid #fde68a' }}>
+            ⏸️
+          </div>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>Job Currently On Hold</h3>
+          <p style={{ color: '#64748b', fontSize: '0.925rem', margin: '0 0 1.25rem 0', lineHeight: 1.5 }}>
+            Vacancies for <strong>{job.title}</strong> at {job.companyName} are temporarily paused.
+          </p>
+          <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', color: '#b45309', padding: '12px 16px', borderRadius: '10px', fontWeight: 800, fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+            This job is currently hold on
+          </div>
+          <button
+            className="btn-primary"
+            onClick={onClose}
+            style={{ width: '100%', padding: '11px', fontWeight: 700, borderRadius: '8px' }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const today = new Date();
   const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
 

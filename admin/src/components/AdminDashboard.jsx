@@ -790,6 +790,24 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const getStatusBadge = (status) => {
     const s = (status || '').toLowerCase();
+    if (s === 'hold on') {
+      return (
+        <span style={{
+          background: '#fef3c7',
+          color: '#92400e',
+          border: '1px solid #f59e0b',
+          padding: '3px 8px',
+          borderRadius: '12px',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          ⏸️ Hold On
+        </span>
+      );
+    }
     if (s === 'active' || s === 'selected') return <span className="badge badge-active">✓ {status}</span>;
     if (s.includes('interview') || s === 'shortlisted') return <span className="badge badge-shortlisted">● {status}</span>;
     if (s === 'applied' || s === 'under review') return <span className="badge badge-applied">● {status}</span>;
@@ -1594,7 +1612,41 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <td>{job.location}</td>
                       <td style={{ color: '#047857', fontWeight: 600 }}>{job.salary}</td>
                       <td style={{ fontWeight: 700 }}>{job.openings}</td>
-                      <td>{getStatusBadge(job.status)}</td>
+                      <td>
+                        <select
+                          value={job.status || 'Active'}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            try {
+                              setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: newStatus } : j));
+                              await fetch(`${API_URL}/api/jobs/${job.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: newStatus })
+                              });
+                              fetchAllData();
+                            } catch (err) {
+                              console.error('Error updating job status:', err);
+                            }
+                          }}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            border: (job.status || '').toLowerCase() === 'hold on' ? '1.5px solid #f59e0b' : (job.status || '').toLowerCase() === 'active' ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
+                            background: (job.status || '').toLowerCase() === 'hold on' ? '#fef3c7' : (job.status || '').toLowerCase() === 'active' ? '#ecfdf5' : '#f8fafc',
+                            color: (job.status || '').toLowerCase() === 'hold on' ? '#92400e' : (job.status || '').toLowerCase() === 'active' ? '#047857' : '#475569',
+                            outline: 'none'
+                          }}
+                        >
+                          <option value="Active">Active</option>
+                          <option value="Hold On">⏸️ Hold On</option>
+                          <option value="Draft">Draft</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </td>
                       <td>
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <button

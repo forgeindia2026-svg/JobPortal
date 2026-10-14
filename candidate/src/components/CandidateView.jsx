@@ -672,7 +672,7 @@ export default function CandidateView({ API_URL, currentUser }) {
   });
 
   const filteredJobs = jobs.filter(job => {
-    if (job.status && job.status.toLowerCase() !== 'active') return false;
+    if (job.status && !['active', 'hold on'].includes(job.status.toLowerCase())) return false;
     if (selectedCategory && job.categoryId !== selectedCategory.id) return false;
     if (selectedCompany && job.companyId !== selectedCompany.id) return false;
     if (searchQuery.trim()) {
@@ -703,6 +703,10 @@ export default function CandidateView({ API_URL, currentUser }) {
   });
 
   const handleApplyClick = (job) => {
+    if (job?.status && job.status.toLowerCase() === 'hold on') {
+      alert('This job is currently hold on. Applications are temporarily paused.');
+      return;
+    }
     setViewingJob(null);
     setApplyingJob({ ...job, isFicFlow: !!ficView || !!selectedCompany?.isFicFlow });
   };
@@ -1918,6 +1922,23 @@ export default function CandidateView({ API_URL, currentUser }) {
                           </div>
 
                           <div className="job-tags-container">
+                            {job.status && job.status.toLowerCase() === 'hold on' && (
+                              <span style={{
+                                background: '#fef3c7',
+                                color: '#92400e',
+                                border: '1.5px solid #f59e0b',
+                                padding: '3px 10px',
+                                borderRadius: '20px',
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
+                              }}>
+                                ⏸️ Hold On
+                              </span>
+                            )}
                             <span className="tag-pill tag-exp" style={{ background: 'rgba(255,255,255,0.15)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)' }}>
                               <Briefcase size={13} /> {job.experience}
                             </span>
@@ -1936,11 +1957,27 @@ export default function CandidateView({ API_URL, currentUser }) {
                           )}
                         </div>
 
-                        <div className="job-card-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>
+                        <div className="job-card-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.2)', position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                           <button className="btn-secondary" style={{ background: 'rgba(255,255,255,0.15)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(4px)' }} onClick={(e) => { e.stopPropagation(); handleViewJobDetails(job); }}>
                             View Details
                           </button>
-                          {applied ? (
+                          {job.status && job.status.toLowerCase() === 'hold on' ? (
+                            <span style={{
+                              background: '#fef3c7',
+                              color: '#92400e',
+                              border: '1.5px solid #f59e0b',
+                              padding: '8px 14px',
+                              borderRadius: '8px',
+                              fontWeight: 800,
+                              fontSize: '0.825rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                            }}>
+                              ⏸️ Hold On
+                            </span>
+                          ) : applied ? (
                             <button
                               className="btn-primary-gradient"
                               style={{ background: '#ffffff', color: compColor, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: '0.85rem', padding: '8px 14px' }}

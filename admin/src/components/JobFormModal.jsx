@@ -739,6 +739,7 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
               <label className="form-label">Publishing Status</label>
               <select className="form-select" value={status} onChange={e => setStatus(e.target.value)}>
                 <option value="Active">Active (Visible on Candidate Portal)</option>
+                <option value="Hold On">⏸️ Hold On (Vacancy Paused - Applications Blocked)</option>
                 <option value="Draft">Draft</option>
                 <option value="Closed">Closed</option>
               </select>

@@ -144,6 +144,10 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Job post not found.' });
     }
 
+    if (!isAdminManual && job.status && job.status.toLowerCase() === 'hold on') {
+      return res.status(400).json({ error: 'This job is currently hold on. Applications are temporarily paused.' });
+    }
+
     let cand = candidateId ? db.candidates.find(c => c.id === candidateId) : null;
     const cDet = req.body.candidateDetails || {};
 
