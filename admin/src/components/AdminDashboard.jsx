@@ -3315,7 +3315,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Email / Mobile</th>
                     <th>Referral Code</th>
                     <th>Link Clicks</th>
                     <th>Candidates Applied</th>
@@ -3340,11 +3340,24 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                           </div>
                           <div>
                             <div style={{ fontWeight: 700, color: '#1e293b' }}>{hr.name}</div>
-                            {hr.mobile && <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{hr.mobile}</div>}
                           </div>
                         </div>
                       </td>
-                      <td>{hr.email}</td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#1e293b' }}>{hr.email}</div>
+                        {(hr.mobile || hr.phone) ? (
+                          <div style={{ fontSize: '0.78rem', color: '#047857', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                            <span style={{ fontSize: '0.85rem' }}>📱</span>
+                            <a href={`tel:${hr.mobile || hr.phone}`} style={{ color: '#047857', textDecoration: 'none' }}>
+                              {hr.mobile || hr.phone}
+                            </a>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>📱</span> <span>—</span>
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
                           {hr.referralCode}
