@@ -74,14 +74,18 @@ router.post('/register', async (req, res) => {
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, mobile, identifier, password } = req.body;
+    const loginInput = String(identifier || email || mobile || '').trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    if (!loginInput || !password) {
+      return res.status(400).json({ error: 'Email or Mobile number and password are required.' });
     }
 
     // Fixed Admin Credentials
-    if (email.toLowerCase() === 'admin@forgeindiaconnect.in' && password === 'Admin@123') {
+    if (
+      (loginInput.toLowerCase() === 'admin@forgeindiaconnect.in' || loginInput.toLowerCase() === 'admin') &&
+      password === 'Admin@123'
+    ) {
       return res.json({
         message: 'Login successful',
         user: {
@@ -101,11 +105,24 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = await UserModel.findOne({ email: email.toLowerCase() }).lean();
+    const cleanedDigits = loginInput.replace(/[^0-9]/g, '');
+    const searchConditions = [
+      { email: loginInput.toLowerCase() },
+      { mobile: loginInput }
+    ];
+
+    if (cleanedDigits.length >= 10) {
+      const last10 = cleanedDigits.slice(-10);
+      searchConditions.push({ mobile: { $regex: last10 + '$' } });
+    }
+
+    const user = await UserModel.findOne({
+      $or: searchConditions
+    }).lean();
 
     // Check if user exists and password matches
     if (!user || user.passwordHash !== 'dummy_hash_' + password) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid email, mobile number or password.' });
     }
 
     const candProfile = await CandidateModel.findOne({

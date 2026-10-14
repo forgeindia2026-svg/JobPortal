@@ -37,7 +37,7 @@ export default function App() {
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: email.trim(), password })
       });
       const data = await res.json();
       if (res.ok) {
@@ -87,16 +87,16 @@ export default function App() {
             {error && <div style={{ color: '#ef4444', background: '#fef2f2', padding: '12px', borderRadius: '8px', fontSize: '0.9rem', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>{error}</div>}
             
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#334155', fontWeight: '600', fontSize: '0.9rem' }}>Email Address</label>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#334155', fontWeight: '600', fontSize: '0.9rem' }}>Email Address or Mobile Number</label>
               <input 
-                type="email" 
+                type="text" 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
                 required 
                 style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', transition: 'all 0.2s', outline: 'none' }}
                 onFocus={e => e.target.style.borderColor = '#3b82f6'}
                 onBlur={e => e.target.style.borderColor = '#cbd5e1'}
-                placeholder="admin@example.com"
+                placeholder="Enter email or mobile number"
               />
             </div>
             <div style={{ position: 'relative' }}>

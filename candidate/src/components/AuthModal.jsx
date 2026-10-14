@@ -186,11 +186,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, API_URL }) {
             )}
 
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label">{isLogin ? 'Email Address or Mobile Number' : 'Email Address'}</label>
               <input
-                type="email"
+                type={isLogin ? 'text' : 'email'}
                 className="form-input"
-                placeholder="candidate@example.com"
+                placeholder={isLogin ? 'Enter email or mobile number' : 'candidate@example.com'}
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
