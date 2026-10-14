@@ -1174,11 +1174,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
                               </div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
                               <div style={{ fontWeight: '800', color: isScored ? '#2563eb' : '#94a3b8', fontSize: '1.25rem' }}>
                                 {hr.totalSourced || 0}
                               </div>
-                              <span style={{ fontSize: '0.85rem', color: isScored ? '#2563eb' : '#94a3b8', fontWeight: 700 }}>➔</span>
                             </div>
                           </div>
                         );
@@ -1278,11 +1277,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
                               </div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
                               <div style={{ fontWeight: '800', color: isScored ? '#059669' : '#94a3b8', fontSize: '1.25rem' }}>
                                 {hr.totalClosed || 0}
                               </div>
-                              <span style={{ fontSize: '0.85rem', color: isScored ? '#059669' : '#94a3b8', fontWeight: 700 }}>➔</span>
                             </div>
                           </div>
                         );
