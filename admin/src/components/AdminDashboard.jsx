@@ -133,6 +133,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [hrCandidateSearch, setHrCandidateSearch] = useState('');
   const [hrCandidateStatusFilter, setHrCandidateStatusFilter] = useState('all');
 
+  const handleOpenHrCandidates = (hr) => {
+    setActiveTab('employees');
+    setSidebarOpen(false);
+    setSelectedHrForCandidates(hr);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -1074,14 +1081,45 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                   {/* Top Sourcers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
-                    </h3>
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
+                      </h3>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Click on any HR or count to view their candidates</p>
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topSourcers.map((hr, idx) => {
                         const isScored = Number(hr.totalSourced || 0) > 0;
                         return (
-                          <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                          <div
+                            key={hr.id || idx}
+                            onClick={() => handleOpenHrCandidates(hr)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '12px 14px',
+                              background: '#f8fafc',
+                              borderRadius: '12px',
+                              border: '1px solid #f1f5f9',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              userSelect: 'none'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#eff6ff';
+                              e.currentTarget.style.borderColor = '#bfdbfe';
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.08)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#f8fafc';
+                              e.currentTarget.style.borderColor = '#f1f5f9';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                            title={`Click to view all ${hr.totalSourced || 0} candidates of ${hr.name}`}
+                          >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                               <div style={{ position: 'relative', flexShrink: 0 }}>
                                 <div style={{
@@ -1133,8 +1171,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
                               </div>
                             </div>
-                            <div style={{ fontWeight: '800', color: isScored ? '#2563eb' : '#94a3b8', fontSize: '1.25rem' }}>
-                              {hr.totalSourced || 0}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ fontWeight: '800', color: isScored ? '#2563eb' : '#94a3b8', fontSize: '1.25rem' }}>
+                                {hr.totalSourced || 0}
+                              </div>
+                              <span style={{ fontSize: '0.85rem', color: isScored ? '#2563eb' : '#94a3b8', fontWeight: 700 }}>➔</span>
                             </div>
                           </div>
                         );
@@ -1144,14 +1185,45 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
                   {/* Top Closers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected/Closed)</span>
-                    </h3>
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected/Closed)</span>
+                      </h3>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Click on any HR or count to view their candidates</p>
+                    </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topClosers.map((hr, idx) => {
                         const isScored = Number(hr.totalClosed || 0) > 0;
                         return (
-                          <div key={hr.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                          <div
+                            key={hr.id || idx}
+                            onClick={() => handleOpenHrCandidates(hr)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '12px 14px',
+                              background: '#f8fafc',
+                              borderRadius: '12px',
+                              border: '1px solid #f1f5f9',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              userSelect: 'none'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#ecfdf5';
+                              e.currentTarget.style.borderColor = '#a7f3d0';
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.08)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#f8fafc';
+                              e.currentTarget.style.borderColor = '#f1f5f9';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                            title={`Click to view all closed candidates of ${hr.name}`}
+                          >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                               <div style={{ position: 'relative', flexShrink: 0 }}>
                                 <div style={{
@@ -1203,8 +1275,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{hr.referralCode}</div>
                               </div>
                             </div>
-                            <div style={{ fontWeight: '800', color: isScored ? '#059669' : '#94a3b8', fontSize: '1.25rem' }}>
-                              {hr.totalClosed || 0}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ fontWeight: '800', color: isScored ? '#059669' : '#94a3b8', fontSize: '1.25rem' }}>
+                                {hr.totalClosed || 0}
+                              </div>
+                              <span style={{ fontSize: '0.85rem', color: isScored ? '#059669' : '#94a3b8', fontWeight: 700 }}>➔</span>
                             </div>
                           </div>
                         );
@@ -2594,8 +2669,31 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           <div>
             {selectedHrForCandidates ? (
               <div>
-                {/* Back to HR List Navigation Button */}
-                <div style={{ marginBottom: '1.25rem' }}>
+                {/* Back Navigation Buttons */}
+                <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => handleTabChange('dashboard')}
+                    className="btn-secondary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      background: '#ffffff',
+                      color: '#2563eb',
+                      border: '1.5px solid #bfdbfe',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(37, 99, 235, 0.08)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.borderColor = '#93c5fd'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#bfdbfe'; }}
+                  >
+                    <ArrowLeft size={16} /> Back to Dashboard
+                  </button>
                   <button
                     onClick={() => setSelectedHrForCandidates(null)}
                     className="btn-secondary"
@@ -2607,7 +2705,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       fontSize: '0.875rem',
                       fontWeight: 700,
                       background: '#ffffff',
-                      color: '#1e293b',
+                      color: '#475569',
                       border: '1.5px solid #cbd5e1',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -2617,7 +2715,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#94a3b8'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
                   >
-                    <ArrowLeft size={16} /> Back to HR List
+                    All HRs List
                   </button>
                 </div>
 
