@@ -133,10 +133,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [hrCandidateSearch, setHrCandidateSearch] = useState('');
   const [hrCandidateStatusFilter, setHrCandidateStatusFilter] = useState('all');
 
-  const handleOpenHrCandidates = (hr) => {
+  const handleOpenHrCandidates = (hr, initialFilter = 'all') => {
     setActiveTab('employees');
     setSidebarOpen(false);
     setSelectedHrForCandidates(hr);
+    setHrCandidateStatusFilter(initialFilter);
+    setHrCandidateSearch('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -645,14 +647,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     if (!selectedHrForCandidates) return [];
     return hrAllCandidates.filter(app => {
       if (hrCandidateStatusFilter !== 'all') {
-        if (hrCandidateStatusFilter.toLowerCase() === 'processing') {
-          const procStatuses = ['applied', 'shortlisted', 'interview scheduled', 'follow up'];
+        const filterLower = hrCandidateStatusFilter.toLowerCase();
+        if (filterLower === 'processing') {
+          const procStatuses = ['applied', 'shortlisted', 'interview scheduled', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
           if (!procStatuses.includes(String(app.status || '').toLowerCase())) return false;
-        } else if (hrCandidateStatusFilter.toLowerCase() === 'selected') {
-          const selStatuses = ['selected', 'converted'];
+        } else if (filterLower === 'selected' || filterLower === 'closed') {
+          const selStatuses = ['selected', 'joined', 'converted', 'closed', 'hired'];
           if (!selStatuses.includes(String(app.status || '').toLowerCase())) return false;
         } else {
-          if (String(app.status || '').toLowerCase() !== hrCandidateStatusFilter.toLowerCase()) return false;
+          if (String(app.status || '').toLowerCase() !== filterLower) return false;
         }
       }
 
@@ -1093,7 +1096,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         return (
                           <div
                             key={hr.id || idx}
-                            onClick={() => handleOpenHrCandidates(hr)}
+                            onClick={() => handleOpenHrCandidates(hr, 'all')}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -1197,7 +1200,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         return (
                           <div
                             key={hr.id || idx}
-                            onClick={() => handleOpenHrCandidates(hr)}
+                            onClick={() => handleOpenHrCandidates(hr, 'Selected')}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -1222,7 +1225,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                               e.currentTarget.style.transform = 'translateY(0)';
                               e.currentTarget.style.boxShadow = 'none';
                             }}
-                            title={`Click to view all closed candidates of ${hr.name}`}
+                            title={`Click to view all closed/selected candidates of ${hr.name}`}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                               <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -2796,28 +2799,76 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   gap: '12px',
                   marginBottom: '1.5rem'
                 }}>
-                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                  <div
+                    onClick={() => setHrCandidateStatusFilter('all')}
+                    style={{
+                      background: '#ffffff',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: hrCandidateStatusFilter === 'all' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                      boxShadow: hrCandidateStatusFilter === 'all' ? '0 4px 12px rgba(37, 99, 235, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Click to view all candidates"
+                  >
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Candidates</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
                       {hrCandidateStats.total}
                     </div>
                   </div>
 
-                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #a7f3d0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                  <div
+                    onClick={() => setHrCandidateStatusFilter('Selected')}
+                    style={{
+                      background: '#ffffff',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: (hrCandidateStatusFilter.toLowerCase() === 'selected' || hrCandidateStatusFilter.toLowerCase() === 'closed') ? '2px solid #059669' : '1px solid #a7f3d0',
+                      boxShadow: (hrCandidateStatusFilter.toLowerCase() === 'selected' || hrCandidateStatusFilter.toLowerCase() === 'closed') ? '0 4px 12px rgba(5, 150, 105, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Click to filter Selected / Closed candidates"
+                  >
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Selected / Closed</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#047857', marginTop: '4px' }}>
                       {hrCandidateStats.closed}
                     </div>
                   </div>
 
-                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #fed7aa', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                  <div
+                    onClick={() => setHrCandidateStatusFilter('Processing')}
+                    style={{
+                      background: '#ffffff',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: hrCandidateStatusFilter.toLowerCase() === 'processing' ? '2px solid #ea580c' : '1px solid #fed7aa',
+                      boxShadow: hrCandidateStatusFilter.toLowerCase() === 'processing' ? '0 4px 12px rgba(234, 88, 12, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Click to filter In Progress / Review candidates"
+                  >
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ea580c', textTransform: 'uppercase' }}>In Progress / Review</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#c2410c', marginTop: '4px' }}>
                       {hrCandidateStats.processing}
                     </div>
                   </div>
 
-                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #fecaca', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                  <div
+                    onClick={() => setHrCandidateStatusFilter('Rejected')}
+                    style={{
+                      background: '#ffffff',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: hrCandidateStatusFilter.toLowerCase() === 'rejected' ? '2px solid #dc2626' : '1px solid #fecaca',
+                      boxShadow: hrCandidateStatusFilter.toLowerCase() === 'rejected' ? '0 4px 12px rgba(220, 38, 38, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Click to filter Rejected candidates"
+                  >
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase' }}>Rejected</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#b91c1c', marginTop: '4px' }}>
                       {hrCandidateStats.rejected}
@@ -2893,7 +2944,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       <option value="Shortlisted">Shortlisted</option>
                       <option value="HR Screening">HR Screening</option>
                       <option value="Interview Scheduled">Interview Scheduled</option>
-                      <option value="Selected">Selected ({hrCandidateStats.closed})</option>
+                      <option value="Selected">Selected / Closed ({hrCandidateStats.closed})</option>
                       <option value="Rejected">Rejected ({hrCandidateStats.rejected})</option>
                     </select>
 
