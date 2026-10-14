@@ -46,9 +46,10 @@ const companySchema = new mongoose.Schema({
   description: String,
   website: String,
   status: { type: String, default: 'Active' },
+  displayOrder: { type: Number, default: 99 },
   createdAt: { type: String, default: () => new Date().toISOString() },
   updatedAt: String
-});
+}, { strict: false });
 
 const jobSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },

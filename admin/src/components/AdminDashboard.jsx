@@ -714,6 +714,26 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     }
   };
 
+  const handleQuickUpdateCompanyOrder = async (companyId, newOrder) => {
+    const parsedOrder = parseInt(newOrder, 10);
+    if (isNaN(parsedOrder)) return;
+    try {
+      setCompanies(prev =>
+        [...prev]
+          .map(c => (c.id === companyId ? { ...c, displayOrder: parsedOrder } : c))
+          .sort((a, b) => (Number(a.displayOrder ?? 99) - Number(b.displayOrder ?? 99)) || (a.name || '').localeCompare(b.name || ''))
+      );
+      await fetch(`${API_URL}/api/companies/${companyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayOrder: parsedOrder })
+      });
+      fetchAllData();
+    } catch (err) {
+      console.error('Failed to update company order:', err);
+    }
+  };
+
   const exportToCSV = () => {
     if (!filteredApplications || !filteredApplications.length) return;
     const headers = ['App ID', 'Name', 'Mobile', 'Email', 'City', 'Experience', 'Job Title', 'Company', 'HR Reference', 'Status', 'Applied At'];
@@ -1353,7 +1373,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Company Management</h2>
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Add hiring partner companies and upload logos.</p>
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Add hiring partner companies and arrange display order (1, 2, 3...) for website and mobile app.</p>
               </div>
               <button className="btn-primary" onClick={() => { setCompanyToEdit(null); setCompanyModalOpen(true); }}>
                 <Plus size={16} /> Add Company
@@ -1364,6 +1384,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               <table className="custom-table">
                 <thead>
                   <tr>
+                    <th style={{ width: '90px' }}>Order #</th>
                     <th>Logo</th>
                     <th>Company Name</th>
                     <th>Category</th>
@@ -1373,10 +1394,43 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   </tr>
                 </thead>
                 <tbody>
-                  {companies.map(comp => {
+                  {[...companies]
+                    .sort((a, b) => (Number(a.displayOrder ?? 99) - Number(b.displayOrder ?? 99)) || (a.name || '').localeCompare(b.name || ''))
+                    .map(comp => {
                     const cat = categories.find(c => c.id === comp.categoryId);
                     return (
                       <tr key={comp.id}>
+                        <td style={{ width: '90px' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            defaultValue={comp.displayOrder ?? 99}
+                            key={`${comp.id}_${comp.displayOrder}`}
+                            onBlur={(e) => {
+                              const val = e.target.value;
+                              if (val && Number(val) !== comp.displayOrder) {
+                                handleQuickUpdateCompanyOrder(comp.id, val);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.target.blur();
+                              }
+                            }}
+                            style={{
+                              width: '56px',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              border: '1.5px solid #cbd5e1',
+                              fontWeight: 700,
+                              textAlign: 'center',
+                              fontSize: '0.9rem',
+                              color: '#1e293b',
+                              backgroundColor: '#f8fafc'
+                            }}
+                            title="Edit order number (e.g. 1, 2, 3). Press Enter or click outside to save"
+                          />
+                        </td>
                         <td>
                           {comp.logo ? (
                             <img src={comp.logo} alt={comp.name} style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'contain', backgroundColor: '#ffffff', padding: '2px', border: '1px solid #e2e8f0' }} />
@@ -1400,6 +1454,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                               className="btn-secondary"
                               style={{ padding: '4px 8px' }}
                               onClick={() => { setCompanyToEdit(comp); setCompanyModalOpen(true); }}
+                              title="Edit Company Details & Order"
                             >
                               <Edit size={14} />
                             </button>
@@ -1407,6 +1462,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                               className="btn-secondary"
                               style={{ padding: '4px 8px', color: '#ef4444' }}
                               onClick={() => handleDeleteCompany(comp.id)}
+                              title="Delete Company"
                             >
                               <Trash2 size={14} />
                             </button>

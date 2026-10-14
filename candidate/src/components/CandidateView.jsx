@@ -661,9 +661,14 @@ export default function CandidateView({ API_URL, currentUser }) {
     : companies;
 
   const filteredCompanies = [...rawCompanies].sort((a, b) => {
-    const pA = companyPriorityMap[a.name] !== undefined ? companyPriorityMap[a.name] : 99;
-    const pB = companyPriorityMap[b.name] !== undefined ? companyPriorityMap[b.name] : 99;
-    return pA - pB;
+    const orderA = a.displayOrder !== undefined && a.displayOrder !== null && a.displayOrder !== ''
+      ? Number(a.displayOrder)
+      : (companyPriorityMap[a.name] !== undefined ? companyPriorityMap[a.name] : 99);
+    const orderB = b.displayOrder !== undefined && b.displayOrder !== null && b.displayOrder !== ''
+      ? Number(b.displayOrder)
+      : (companyPriorityMap[b.name] !== undefined ? companyPriorityMap[b.name] : 99);
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.name || '').localeCompare(b.name || '');
   });
 
   const filteredJobs = jobs.filter(job => {
@@ -764,13 +769,22 @@ export default function CandidateView({ API_URL, currentUser }) {
 
             {/* BANK LIST CARDS */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {(companies && companies.length > 0 ? companies : [
+              {[...(companies && companies.length > 0 ? companies : [
                 { id: 'b1', name: 'Axis Bank', description: 'Major Indian banking institution.' },
                 { id: 'b2', name: 'IDFC First Bank', description: 'Leading Indian private sector bank offering personal and business banking.' },
                 { id: 'b3', name: 'Kotak Mahindra Bank', description: 'Top Indian banking and financial services firm.' },
                 { id: 'b4', name: 'Bandhan Bank', description: 'Premier private bank with nationwide commercial network.' },
                 { id: 'b5', name: 'Aditya Birla Capital', description: 'Leading financial services provider across insurance, wealth and loans.' }
-              ]).map(comp => {
+              ])].sort((a, b) => {
+                const orderA = a.displayOrder !== undefined && a.displayOrder !== null && a.displayOrder !== ''
+                  ? Number(a.displayOrder)
+                  : (companyPriorityMap[a.name] !== undefined ? companyPriorityMap[a.name] : 99);
+                const orderB = b.displayOrder !== undefined && b.displayOrder !== null && b.displayOrder !== ''
+                  ? Number(b.displayOrder)
+                  : (companyPriorityMap[b.name] !== undefined ? companyPriorityMap[b.name] : 99);
+                if (orderA !== orderB) return orderA - orderB;
+                return (a.name || '').localeCompare(b.name || '');
+              }).map(comp => {
                 const cn = comp.name.toLowerCase();
                 const matchKey = cn.includes('mahindra finance') ? 'mahindra finance' : cn.includes('kotak') ? 'kotak' : cn.includes('aditya') ? 'aditya' : cn.includes('idfc') ? 'idfc' : cn.split(' ')[0];
                 const bankJobsCount = jobs.filter(j => j.companyId === comp.id || (j.companyName || '').toLowerCase().includes(matchKey)).length;

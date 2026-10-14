@@ -8,6 +8,7 @@ export default function CompanyFormModal({ isOpen, onClose, companyToEdit, categ
   const [description, setDescription] = useState('');
   const [website, setWebsite] = useState('');
   const [status, setStatus] = useState('Active');
+  const [displayOrder, setDisplayOrder] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -19,6 +20,7 @@ export default function CompanyFormModal({ isOpen, onClose, companyToEdit, categ
       setDescription(companyToEdit.description || '');
       setWebsite(companyToEdit.website || '');
       setStatus(companyToEdit.status || 'Active');
+      setDisplayOrder(companyToEdit.displayOrder !== undefined && companyToEdit.displayOrder !== null ? companyToEdit.displayOrder : 99);
     } else {
       if (categories.length > 0) setCategoryId(categories[0].id);
       setName('');
@@ -26,6 +28,7 @@ export default function CompanyFormModal({ isOpen, onClose, companyToEdit, categ
       setDescription('');
       setWebsite('');
       setStatus('Active');
+      setDisplayOrder(99);
     }
   }, [companyToEdit, categories]);
 
@@ -40,10 +43,12 @@ export default function CompanyFormModal({ isOpen, onClose, companyToEdit, categ
       const url = companyToEdit ? `${API_URL}/api/companies/${companyToEdit.id}` : `${API_URL}/api/companies`;
       const method = companyToEdit ? 'PUT' : 'POST';
 
+      const orderNum = displayOrder !== '' && !isNaN(Number(displayOrder)) ? Number(displayOrder) : 99;
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId, name, logo, description, website, status })
+        body: JSON.stringify({ categoryId, name, logo, description, website, status, displayOrder: orderNum })
       });
 
       const data = await res.json();
@@ -80,6 +85,21 @@ export default function CompanyFormModal({ isOpen, onClose, companyToEdit, categ
             <div className="form-group">
               <label className="form-label">Company Name *</label>
               <input type="text" className="form-input" placeholder="e.g. Axis Bank, Infosys" required value={name} onChange={e => setName(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Display Order (Priority) *</label>
+              <input
+                type="number"
+                min="1"
+                className="form-input"
+                placeholder="e.g. 1, 2, 3..."
+                value={displayOrder}
+                onChange={e => setDisplayOrder(e.target.value)}
+                required
+              />
+              <small style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
+                Lower number appears first on Website & App (e.g., 1 for TATA AIG, 2 for HDFC Bank).
+              </small>
             </div>
             <div className="form-group">
               <label className="form-label">Company Logo URL</label>
