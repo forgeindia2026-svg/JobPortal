@@ -61,7 +61,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   
   const [showPartnerIncentiveModal, setShowPartnerIncentiveModal] = useState(false);
   const [selectedJobForIncentive, setSelectedJobForIncentive] = useState(null);
-  const [partnerIncentiveForm, setPartnerIncentiveForm] = useState({ freeJobIncentive: 0, paidJobIncentive: 0, processIncentives: {} });
+  const [partnerIncentiveForm, setPartnerIncentiveForm] = useState({ freeJobIncentive: '', paidJobIncentive: '', processIncentives: {} });
 
   // Modals for HR Actions
   const [statusModalApp, setStatusModalApp] = useState(null);
@@ -316,10 +316,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
   const handleSavePartnerIncentive = async () => {
     try {
+      const sanitizedProcesses = {};
+      Object.entries(partnerIncentiveForm.processIncentives || {}).forEach(([k, v]) => {
+        sanitizedProcesses[k] = Number(v) || 0;
+      });
+
       const payload = {
         hrId: currentUser.id,
         jobId: selectedJobForIncentive.id,
-        ...partnerIncentiveForm
+        freeJobIncentive: Number(partnerIncentiveForm.freeJobIncentive) || 0,
+        paidJobIncentive: Number(partnerIncentiveForm.paidJobIncentive) || 0,
+        processIncentives: sanitizedProcesses
       };
       const res = await fetch(`${API_URL}/api/partner-incentives`, {
         method: 'POST',
@@ -333,9 +340,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         setJobs(prevJobs => prevJobs.map(j => {
           if (j.id === selectedJobForIncentive.id) {
             if (j.isCombinedItTraining) {
-              return { ...j, partnerProcessIncentives: { ...partnerIncentiveForm.processIncentives } };
+              return { ...j, partnerProcessIncentives: sanitizedProcesses };
             } else {
-              return { ...j, partnerIncentiveFree: partnerIncentiveForm.freeJobIncentive, partnerIncentivePaid: partnerIncentiveForm.paidJobIncentive };
+              return { ...j, partnerIncentiveFree: payload.freeJobIncentive, partnerIncentivePaid: payload.paidJobIncentive };
             }
           }
           return j;
@@ -1260,10 +1267,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                           <button
                             onClick={() => {
                               setSelectedJobForIncentive(job);
+                              const initialProc = {};
+                              if (job.partnerProcessIncentives) {
+                                Object.entries(job.partnerProcessIncentives).forEach(([k, v]) => {
+                                  if (Number(v) > 0) initialProc[k] = v;
+                                });
+                              }
                               setPartnerIncentiveForm({
-                                freeJobIncentive: 0,
-                                paidJobIncentive: 0,
-                                processIncentives: job.partnerProcessIncentives || {}
+                                freeJobIncentive: '',
+                                paidJobIncentive: '',
+                                processIncentives: initialProc
                               });
                               setShowPartnerIncentiveModal(true);
                             }}
@@ -1312,8 +1325,8 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         onClick={() => {
                           setSelectedJobForIncentive(job);
                           setPartnerIncentiveForm({
-                            freeJobIncentive: job.partnerIncentiveFree || 0,
-                            paidJobIncentive: job.partnerIncentivePaid || 0,
+                            freeJobIncentive: (job.partnerIncentiveFree && Number(job.partnerIncentiveFree) > 0) ? job.partnerIncentiveFree : '',
+                            paidJobIncentive: (job.partnerIncentivePaid && Number(job.partnerIncentivePaid) > 0) ? job.partnerIncentivePaid : '',
                             processIncentives: {}
                           });
                           setShowPartnerIncentiveModal(true);
@@ -1882,12 +1895,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <input
                           type="number"
                           className="form-input"
-                          value={partnerIncentiveForm.processIncentives[p.processName] || 0}
+                          value={partnerIncentiveForm.processIncentives[p.processName] ?? ''}
+                          placeholder="Enter incentive amount (Rs.)"
                           onChange={(e) => setPartnerIncentiveForm({
                             ...partnerIncentiveForm,
                             processIncentives: {
                               ...partnerIncentiveForm.processIncentives,
-                              [p.processName]: Number(e.target.value) || 0
+                              [p.processName]: e.target.value === '' ? '' : e.target.value
                             }
                           })}
                           min="0"
@@ -1905,8 +1919,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       <input
                         type="number"
                         className="form-input"
-                        value={partnerIncentiveForm.freeJobIncentive}
-                        onChange={(e) => setPartnerIncentiveForm({...partnerIncentiveForm, freeJobIncentive: Number(e.target.value) || 0})}
+                        value={partnerIncentiveForm.freeJobIncentive ?? ''}
+                        placeholder="Enter incentive amount (Rs.)"
+                        onChange={(e) => setPartnerIncentiveForm({...partnerIncentiveForm, freeJobIncentive: e.target.value === '' ? '' : e.target.value})}
                         min="0"
                       />
                     </div>
@@ -1918,8 +1933,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       <input
                         type="number"
                         className="form-input"
-                        value={partnerIncentiveForm.paidJobIncentive}
-                        onChange={(e) => setPartnerIncentiveForm({...partnerIncentiveForm, paidJobIncentive: Number(e.target.value) || 0})}
+                        value={partnerIncentiveForm.paidJobIncentive ?? ''}
+                        placeholder="Enter incentive amount (Rs.)"
+                        onChange={(e) => setPartnerIncentiveForm({...partnerIncentiveForm, paidJobIncentive: e.target.value === '' ? '' : e.target.value})}
                         min="0"
                       />
                     </div>

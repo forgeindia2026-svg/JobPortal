@@ -4717,7 +4717,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                   type="number"
                                   className="form-input"
                                   style={{ width: '90px', fontWeight: 700, padding: '8px 10px' }}
-                                  value={incentiveInput[app.id] ?? 0}
+                                  value={incentiveInput[app.id] !== undefined && Number(incentiveInput[app.id]) !== 0 ? incentiveInput[app.id] : ''}
                                   onChange={e => setIncentiveInput(prev => ({ ...prev, [app.id]: e.target.value }))}
                                   min="0"
                                   placeholder="0"
