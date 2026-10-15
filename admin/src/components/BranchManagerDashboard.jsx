@@ -298,144 +298,152 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
         ) : activeTab === 'overview' ? (
           /* TAB 1: OVERVIEW SUMMARY */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* KPI Cards Row (Exact Match of User's Image 2 with 8 Rich KPI Cards) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1.25rem' }}>
+            {/* KPI Cards Row (2 Grid on Mobile, Auto-fit on Desktop) */}
+            <div className="dashboard-kpi-grid">
               {/* 1. Applications Received (First) */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fffbeb', border: '1px solid #fcd34d', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => handleTabChange('applications')}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase' }}>Applications Received</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase' }}>Applications Received</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FileText size={18} color="#d97706" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#78350f' }}>{validApplications.length}</div>
-                <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Branch Pipeline</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#78350f' }}>{validApplications.length}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Branch Pipeline</span>
               </div>
 
               {/* 2. Total Candidates */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#f0fdfa', border: '1px solid #5eead4', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => handleTabChange('applications')}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#134e4a', textTransform: 'uppercase' }}>Total Candidates</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#134e4a', textTransform: 'uppercase' }}>Total Candidates</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Users size={18} color="#0d9488" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#134e4a' }}>{branchCandidatesCount}</div>
-                <span style={{ fontSize: '0.75rem', color: '#0f766e', fontWeight: 600 }}>In Branch Talent Pool</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#134e4a' }}>{branchCandidatesCount}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#0f766e', fontWeight: 600 }}>In Branch Talent Pool</span>
               </div>
 
               {/* 3. Processing */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#e0e7ff', border: '1px solid #a5b4fc', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => { handleTabChange('applications'); setAppStatusFilter('Processing'); }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#312e81', textTransform: 'uppercase' }}>Processing</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#312e81', textTransform: 'uppercase' }}>Processing</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <RefreshCw size={18} color="#4f46e5" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#312e81' }}>{branchProcessingCount}</div>
-                <span style={{ fontSize: '0.75rem', color: '#4338ca', fontWeight: 600 }}>Active in Pipeline</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#312e81' }}>{branchProcessingCount}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#4338ca', fontWeight: 600 }}>Active in Pipeline</span>
               </div>
 
               {/* 4. Interviews Scheduled */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fdf4ff', border: '1px solid #f0abfc', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => handleTabChange('interviews')}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#701a75', textTransform: 'uppercase' }}>Interviews Scheduled</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fae8ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#701a75', textTransform: 'uppercase' }}>Interviews Scheduled</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fae8ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CalendarDays size={18} color="#c026d3" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#701a75' }}>{branchInterviews.length}</div>
-                <span style={{ fontSize: '0.75rem', color: '#a21caf', fontWeight: 600 }}>Interviews Lineup</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#701a75' }}>{branchInterviews.length}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#a21caf', fontWeight: 600 }}>Interviews Lineup</span>
               </div>
 
               {/* 5. Selected / Placed */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => { handleTabChange('applications'); setAppStatusFilter('Selected'); }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#064e3b', textTransform: 'uppercase' }}>Selected</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#064e3b', textTransform: 'uppercase' }}>Selected</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CheckCircle size={18} color="#059669" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#064e3b' }}>{branchClosedApps.length}</div>
-                <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Successful Placements</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#064e3b' }}>{branchClosedApps.length}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>Successful Placements</span>
               </div>
 
               {/* 6. Rejected */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => { handleTabChange('applications'); setAppStatusFilter('Rejected'); }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#991b1b', textTransform: 'uppercase' }}>Rejected</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#991b1b', textTransform: 'uppercase' }}>Rejected</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <X size={18} color="#dc2626" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#991b1b' }}>{branchRejectedCount}</div>
-                <span style={{ fontSize: '0.75rem', color: '#b91c1c', fontWeight: 600 }}>Archived / Rejected</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#991b1b' }}>{branchRejectedCount}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#b91c1c', fontWeight: 600 }}>Archived / Rejected</span>
               </div>
 
               {/* 7. Team Leaders */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#f0f9ff', border: '1px solid #bae6fd', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => handleTabChange('team_leaders')}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase' }}>Team Leaders</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase' }}>Team Leaders</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Users size={18} color="#0284c7" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0369a1' }}>{kpis.totalTls}</div>
-                <div style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 600 }}>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0369a1' }}>{kpis.totalTls}</div>
+                <div className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 600 }}>
                   {kpis.approvedTls} Approved • {kpis.totalHrs} HRs
                 </div>
               </div>
 
               {/* 8. HR Upcoming Incentives */}
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
                 onClick={() => handleTabChange('incentives')}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase' }}>Upcoming Pool</span>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase' }}>Upcoming Pool</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Gift size={18} color="#b45309" />
                   </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#78350f' }}>₹{totalBranchIncentives.toLocaleString('en-IN')}</div>
-                <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Branch Expected</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#78350f' }}>₹{totalBranchIncentives.toLocaleString('en-IN')}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Branch Expected</span>
               </div>
             </div>
 

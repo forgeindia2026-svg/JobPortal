@@ -249,46 +249,54 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
-        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+      {/* KPI Cards (2 Grid on Mobile, Auto-fit on Desktop) */}
+      <div className="dashboard-kpi-grid" style={{ marginBottom: '1.75rem' }}>
+        <div className="dashboard-kpi-card" style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Branch Managers</span>
-            <Building2 size={18} color="#3b82f6" />
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Branch Managers</span>
+            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Building2 size={18} color="#3b82f6" />
+            </div>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalBms}</div>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Managing company branches</span>
+          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalBms}</div>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Managing company branches</span>
         </div>
 
-        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+        <div className="dashboard-kpi-card" style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Team Leaders</span>
-            <Users size={18} color="#0284c7" />
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Team Leaders</span>
+            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={18} color="#0284c7" />
+            </div>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalTls}</div>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Added across all branches</span>
+          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalTls}</div>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Added across all branches</span>
         </div>
 
-        <div style={{ background: pendingTls.length > 0 ? '#fffbeb' : '#fff', padding: '1.25rem', borderRadius: '14px', border: pendingTls.length > 0 ? '2px solid #f59e0b' : '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+        <div className="dashboard-kpi-card" style={{ background: pendingTls.length > 0 ? '#fffbeb' : '#fff', padding: '1.25rem', borderRadius: '14px', border: pendingTls.length > 0 ? '2px solid #f59e0b' : '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: pendingTls.length > 0 ? '#b45309' : '#64748b', textTransform: 'uppercase' }}>
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: pendingTls.length > 0 ? '#b45309' : '#64748b', textTransform: 'uppercase' }}>
               Pending Admin Approvals
             </span>
-            <Clock size={18} color="#d97706" />
+            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Clock size={18} color="#d97706" />
+            </div>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#d97706' }}>{pendingTls.length}</div>
-          <span style={{ fontSize: '0.75rem', color: pendingTls.length > 0 ? '#92400e' : '#94a3b8' }}>
-            {pendingTls.length > 0 ? '⚠️ Action Required: Review & Approve' : 'All Team Leaders Approved'}
+          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#d97706' }}>{pendingTls.length}</div>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: pendingTls.length > 0 ? '#92400e' : '#94a3b8' }}>
+            {pendingTls.length > 0 ? '⚠️ Action Required: Review' : 'All Team Leaders Approved'}
           </span>
         </div>
 
-        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+        <div className="dashboard-kpi-card" style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Approved Team Leaders</span>
-            <CheckCircle2 size={18} color="#16a34a" />
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Approved Team Leaders</span>
+            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle2 size={18} color="#16a34a" />
+            </div>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#16a34a' }}>{approvedTls.length}</div>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Active with login rights</span>
+          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#16a34a' }}>{approvedTls.length}</div>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Active with login rights</span>
         </div>
       </div>
 
@@ -524,23 +532,23 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </button>
               </div>
 
-              {/* KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginTop: '1.25rem' }}>
-                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>{kpis.totalHrs}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Assigned HRs</div>
+              {/* KPI Cards (2 Grid on Mobile, Auto-fit on Desktop) */}
+              <div className="dashboard-kpi-grid" style={{ marginTop: '1.25rem', gap: '10px' }}>
+                <div className="dashboard-kpi-card" style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div className="dashboard-kpi-val" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>{kpis.totalHrs}</div>
+                  <div className="dashboard-kpi-title" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Assigned HRs</div>
                 </div>
-                <div style={{ background: '#eff6ff', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#2563eb' }}>{kpis.totalCandidates}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Total Candidates</div>
+                <div className="dashboard-kpi-card" style={{ background: '#eff6ff', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div className="dashboard-kpi-val" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#2563eb' }}>{kpis.totalCandidates}</div>
+                  <div className="dashboard-kpi-title" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Total Candidates</div>
                 </div>
-                <div style={{ background: '#f0fdf4', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#16a34a' }}>₹{(kpis.totalAmount || 0).toLocaleString()}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Total Team Amount</div>
+                <div className="dashboard-kpi-card" style={{ background: '#f0fdf4', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div className="dashboard-kpi-val" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#16a34a' }}>₹{(kpis.totalAmount || 0).toLocaleString()}</div>
+                  <div className="dashboard-kpi-title" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Total Team Amount</div>
                 </div>
-                <div style={{ background: '#fdf4ff', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#a855f7' }}>{kpis.selectedCount}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Selected / Placed</div>
+                <div className="dashboard-kpi-card" style={{ background: '#fdf4ff', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div className="dashboard-kpi-val" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#a855f7' }}>{kpis.selectedCount}</div>
+                  <div className="dashboard-kpi-title" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>Selected / Placed</div>
                 </div>
               </div>
             </div>

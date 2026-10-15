@@ -174,54 +174,66 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
         ) : activeTab === 'overview' ? (
           /* TAB 1: OVERVIEW SUMMARY */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* KPI Cards Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1.25rem' }}>
+            {/* KPI Cards Row (2 Grid on Mobile, Auto-fit on Desktop) */}
+            <div className="dashboard-kpi-grid">
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', cursor: 'pointer' }}
                 onClick={() => handleTabChange('team_hrs')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Assigned HRs</span>
-                  <Users size={18} color="#059669" />
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Assigned HRs</span>
+                  <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={18} color="#059669" />
+                  </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{kpis.totalHrs}</div>
-                <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600 }}>Active in your team</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{kpis.totalHrs}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600 }}>Active in your team</span>
               </div>
 
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', cursor: 'pointer' }}
                 onClick={() => handleTabChange('applications')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Candidates Recruited</span>
-                  <FileText size={18} color="#3b82f6" />
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Candidates Recruited</span>
+                  <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <FileText size={18} color="#3b82f6" />
+                  </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#3b82f6' }}>{validApplications.length}</div>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Total candidate applications</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#3b82f6' }}>{validApplications.length}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Total candidate applications</span>
               </div>
 
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', cursor: 'pointer' }}
                 onClick={() => handleTabChange('incentives')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Expected Incentives</span>
-                  <Gift size={18} color="#10b981" />
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Expected Incentives</span>
+                  <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Gift size={18} color="#10b981" />
+                  </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#10b981' }}>₹{kpis.totalAmount?.toLocaleString('en-IN') || 0}</div>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Total upcoming team pool</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#10b981' }}>₹{kpis.totalAmount?.toLocaleString('en-IN') || 0}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Total upcoming team pool</span>
               </div>
 
               <div 
+                className="dashboard-kpi-card"
                 style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', cursor: 'pointer' }}
                 onClick={() => handleTabChange('incentives')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Selected / Placed</span>
-                  <CheckCircle2 size={18} color="#f59e0b" />
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Selected / Placed</span>
+                  <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle2 size={18} color="#f59e0b" />
+                  </div>
                 </div>
-                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#f59e0b' }}>{kpis.selectedCount || 0}</div>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Successful placements</span>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#f59e0b' }}>{kpis.selectedCount || 0}</div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Successful placements</span>
               </div>
             </div>
 
