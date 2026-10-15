@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   Building2, Users, UserPlus, CheckCircle2, XCircle, Clock, ShieldCheck,
   Edit, Trash2, Mail, Phone, MapPin, RefreshCw, UserCheck, AlertCircle, ChevronRight,
-  Eye, ArrowLeft, Briefcase, FileText
+  Eye, ArrowLeft, Briefcase, FileText, ExternalLink
 } from 'lucide-react';
+import BranchManagerDashboard from './BranchManagerDashboard';
 
 export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRefresh }) {
   const [subTab, setSubTab] = useState('team_leaders'); // default to team_leaders so approvals are front & center
@@ -338,71 +339,16 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
       </div>
 
       {/* SUB-TAB 1: TEAM LEADERS & APPROVALS */}
-      {/* BRANCH DETAIL VIEW */}
-      {selectedBm && (() => {
-        const bmTls = tls.filter(t => t.branchManagerId === selectedBm.id);
-        const bmTlIds = bmTls.map(t => t.id);
-        const bmHrs = hrs.filter(h => bmTlIds.includes(h.teamLeaderId));
-        return (
-          <div>
-            <button
-              onClick={() => setSelectedBmId(null)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', marginBottom: '1.25rem' }}
-            >
-              ← Back to Branch Managers
-            </button>
-
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>{selectedBm.name}</h3>
-                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '6px' }}>✉ {selectedBm.email}{selectedBm.mobile ? `  •  📱 ${selectedBm.mobile}` : ''}</div>
-                </div>
-                <span style={{ alignSelf: 'flex-start', background: '#e0f2fe', color: '#0369a1', padding: '6px 14px', borderRadius: '8px', fontWeight: 800 }}>
-                  🏢 {selectedBm.branch || selectedBm.location || 'Main Branch'}
-                </span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginTop: '1.25rem' }}>
-                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{bmTls.length}</div><div style={{ fontSize: '0.75rem', color: '#64748b' }}>Team Leaders</div></div>
-                <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>{bmTls.filter(t => t.approvalStatus === 'approved').length}</div><div style={{ fontSize: '0.75rem', color: '#64748b' }}>Approved</div></div>
-                <div style={{ background: '#fffbeb', padding: '12px', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#d97706' }}>{bmTls.filter(t => t.approvalStatus === 'pending').length}</div><div style={{ fontSize: '0.75rem', color: '#64748b' }}>Pending</div></div>
-                <div style={{ background: '#f5f3ff', padding: '12px', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#7c3aed' }}>{bmHrs.length}</div><div style={{ fontSize: '0.75rem', color: '#64748b' }}>HRs in Branch</div></div>
-              </div>
-            </div>
-
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 12px 0' }}>Team Leaders & their HRs</h4>
-            {bmTls.length === 0 ? (
-              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-                No Team Leaders added under this branch yet.
-              </div>
-            ) : bmTls.map(tl => {
-              const tlHrs = hrs.filter(h => h.teamLeaderId === tl.id);
-              return (
-                <div key={tl.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                    <div>
-                      <div style={{ fontWeight: 800, color: '#0f172a' }}>{tl.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{tl.email}{tl.mobile ? ` • ${tl.mobile}` : ''}</div>
-                    </div>
-                    <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, background: tl.approvalStatus === 'approved' ? '#ecfdf5' : tl.approvalStatus === 'rejected' ? '#fef2f2' : '#fffbeb', color: tl.approvalStatus === 'approved' ? '#059669' : tl.approvalStatus === 'rejected' ? '#dc2626' : '#b45309' }}>
-                      {tl.approvalStatus === 'approved' ? '✓ Approved' : tl.approvalStatus === 'rejected' ? '✕ Rejected' : '⏳ Pending Approval'}
-                    </span>
-                  </div>
-                  <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {tlHrs.length === 0 ? (
-                      <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>No HRs assigned</span>
-                    ) : tlHrs.map(hr => (
-                      <span key={hr.id} style={{ background: '#f1f5f9', padding: '6px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>
-                        👤 {hr.name} <span style={{ color: '#94a3b8' }}>({hr.referralCode})</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })()}
+      {/* FULL BRANCH DETAIL VIEW (Matching user's Image 2 with 8 Rich KPI cards & full branch tabs) */}
+      {selectedBm && (
+        <div style={{ marginTop: '0.25rem' }}>
+          <BranchManagerDashboard
+            API_URL={API_URL}
+            currentUser={selectedBm}
+            onBack={() => setSelectedBmId(null)}
+          />
+        </div>
+      )}
 
       {/* TEAM LEADER DRILLDOWN VIEW (Matching user Image 2 & Image 3) */}
       {selectedTlId && (() => {
@@ -903,7 +849,13 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                   bms.map((bm) => (
                     <tr key={bm.id} onClick={() => setSelectedBmId(bm.id)} title="Click to view branch details" style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f0f9ff'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{bm.name}</div>
+                        <div 
+                          onClick={() => setSelectedBmId(bm.id)}
+                          style={{ fontWeight: 800, color: '#0284c7', fontSize: '1rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                          title="Click to view branch details & dashboard"
+                        >
+                          {bm.name} <ExternalLink size={14} color="#0284c7" />
+                        </div>
                         <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                           <Mail size={12} /> {bm.email}
                         </div>
@@ -931,7 +883,15 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                         {bm.createdAt ? new Date(bm.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedBmId(bm.id); }}
+                            className="btn-primary"
+                            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#0284c7', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                            title="View Branch Details"
+                          >
+                            <Eye size={14} /> View Branch
+                          </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleOpenBmModal(bm); }}
                             style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }}
