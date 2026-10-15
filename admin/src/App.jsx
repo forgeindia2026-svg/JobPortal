@@ -3,6 +3,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import AdminNavbar from './components/AdminNavbar';
 import AdminDashboard from './components/AdminDashboard';
 import HrDashboard from './components/HrDashboard';
+import BranchManagerDashboard from './components/BranchManagerDashboard';
+import TeamLeaderDashboard from './components/TeamLeaderDashboard';
 
 const envApiUrl = import.meta.env.VITE_API_URL;
 const API_URL = (envApiUrl && !envApiUrl.includes('3.109.202.254')) ? envApiUrl : 'https://api.jobs.forgeindiaconnect.in';
@@ -41,11 +43,12 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.user.role === 'admin' || data.user.role === 'hr' || data.user.role === 'agent') {
+        const allowedRoles = ['admin', 'hr', 'agent', 'branch_manager', 'team_leader'];
+        if (allowedRoles.includes(data.user.role)) {
           localStorage.setItem('admin_user', JSON.stringify(data.user));
           setCurrentUser(data.user);
         } else {
-          setError('Access denied. Only Admins, HRs and Agents can access this portal.');
+          setError('Access denied. Only authorized staff can access this portal.');
         }
       } else {
         setError(data.error || 'Login failed');
@@ -163,6 +166,12 @@ export default function App() {
         )}
         {currentUser.role === 'agent' && (
           <HrDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isAgent />
+        )}
+        {currentUser.role === 'branch_manager' && (
+          <BranchManagerDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        )}
+        {currentUser.role === 'team_leader' && (
+          <TeamLeaderDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         )}
       </main>
     </div>

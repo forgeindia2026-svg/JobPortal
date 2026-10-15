@@ -11,6 +11,7 @@ import ScheduleInterviewModal from './ScheduleInterviewModal';
 import ItTrainingModal from './ItTrainingModal';
 import ManualApplicationModal from './ManualApplicationModal';
 import AgentsManager from './AgentsManager';
+import HierarchyManager from './HierarchyManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
@@ -856,6 +857,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           onClick={() => handleTabChange('employees')}
         >
           <Users size={18} /> HR ({hrs.length})
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'hierarchy' ? 'active' : ''}`}
+          onClick={() => handleTabChange('hierarchy')}
+        >
+          <Building2 size={18} /> Branch & Teams
         </button>
 
         <button
@@ -3414,6 +3422,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
                           {hr.referralCode}
                         </span>
+                        {hr.teamLeaderName && (
+                          <div style={{ marginTop: '4px' }}>
+                            <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
+                              TL: {hr.teamLeaderName}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td style={{ fontWeight: 600, color: '#3b82f6' }}>{hr.linkClicks || 0}</td>
                       <td>
@@ -4021,6 +4036,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
             )}
           </div>
+        )}
+        {activeTab === 'hierarchy' && (
+          <HierarchyManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+            hrs={hrs}
+            onRefresh={fetchAllData}
+          />
         )}
         {activeTab === 'partners_admin' && (
           <div>

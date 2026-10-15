@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema({
   incentives: { type: Number, default: 0 },
   parentHrId: String, // for role 'agent' — the HR who owns this agent's network
   parentAgentId: String, // for role 'agent' — the immediate Partner who referred them (for MLM)
+  branch: String, // Branch name / location
+  branchManagerId: String, // for TL: which Branch Manager added them
+  teamLeaderId: String, // for HR: which Team Leader they are assigned to
+  approvalStatus: { type: String, default: 'approved' }, // 'pending' | 'approved' | 'rejected'
+  approvedBy: String,
+  approvedAt: String,
   bankAccountNumber: String,
   bankIfscCode: String,
   createdAt: { type: String, default: () => new Date().toISOString() }

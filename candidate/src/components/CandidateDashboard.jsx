@@ -18,7 +18,8 @@ export default function CandidateDashboard({ candidate, API_URL, onBrowseJobs })
       const appsData = await appRes.json();
       const intsData = await intRes.json();
 
-      setApplications(Array.isArray(appsData) ? appsData : []);
+      const validApps = (Array.isArray(appsData) ? appsData : []).filter(a => a.status !== 'Payment Pending');
+      setApplications(validApps);
       setInterviews(Array.isArray(intsData) ? intsData : []);
     } catch (err) {
       console.error('Error loading candidate dashboard:', err);

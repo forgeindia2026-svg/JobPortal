@@ -712,7 +712,7 @@ export default function CandidateView({ API_URL, currentUser }) {
   };
 
   const isAlreadyApplied = (jobId) => {
-    return userApplications.some(a => a.jobId === jobId);
+    return userApplications.some(a => a.jobId === jobId && a.status !== 'Payment Pending');
   };
 
   const goToCategoriesPage = () => {

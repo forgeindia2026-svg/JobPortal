@@ -125,6 +125,16 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email, mobile number or password.' });
     }
 
+    // If Team Leader, verify Admin approval
+    if (user.role === 'team_leader') {
+      if (user.approvalStatus === 'pending') {
+        return res.status(403).json({ error: 'Your Team Leader account is pending Admin approval. Please contact administrator.' });
+      }
+      if (user.approvalStatus === 'rejected') {
+        return res.status(403).json({ error: 'Your Team Leader account has been rejected by Admin.' });
+      }
+    }
+
     const candProfile = await CandidateModel.findOne({
       $or: [{ userId: user.id }, { email: user.email }]
     }).lean();
@@ -144,7 +154,11 @@ router.post('/login', async (req, res) => {
         skills: user.skills || (candProfile ? candProfile.skills : []),
         resumeUrl: candProfile ? candProfile.resumeUrl : '',
         referralCode: user.referralCode || '',
-        parentHrId: user.parentHrId || null
+        parentHrId: user.parentHrId || null,
+        branch: user.branch || '',
+        branchManagerId: user.branchManagerId || null,
+        teamLeaderId: user.teamLeaderId || null,
+        approvalStatus: user.approvalStatus || 'approved'
       }
     });
   } catch (err) {

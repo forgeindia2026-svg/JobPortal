@@ -394,6 +394,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
     return stats.applications.filter(app => {
+      // Exclude Payment Pending from Applied tab
+      if (app.status === 'Payment Pending') return false;
+
       const matchesSearch = app.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             (app.candidateMobile && app.candidateMobile.includes(searchTerm));
       let matchesStatus = true;

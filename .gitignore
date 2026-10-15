@@ -9,3 +9,4 @@ data_store.json
 
 *.apk
 server/uploads/
+scratch/
