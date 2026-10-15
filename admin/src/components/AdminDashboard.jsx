@@ -602,8 +602,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
     if (appStatusFilter !== 'all') {
       if (appStatusFilter.toLowerCase() === 'processing') {
-        const procStatuses = ['applied', 'shortlisted', 'interview scheduled', 'follow up'];
-        if (!procStatuses.includes((app.status || '').toLowerCase())) return false;
+        const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
+        const s = (app.status || '').toLowerCase();
+        if (!procStatuses.includes(s) || s.includes('interview')) return false;
       } else if (appStatusFilter.toLowerCase() === 'selected') {
         const selStatuses = ['selected', 'converted'];
         if (!selStatuses.includes((app.status || '').toLowerCase())) return false;
@@ -650,8 +651,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       if (hrCandidateStatusFilter !== 'all') {
         const filterLower = hrCandidateStatusFilter.toLowerCase();
         if (filterLower === 'processing') {
-          const procStatuses = ['applied', 'shortlisted', 'interview scheduled', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
-          if (!procStatuses.includes(String(app.status || '').toLowerCase())) return false;
+          const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
+          const s = String(app.status || '').toLowerCase();
+          if (!procStatuses.includes(s) || s.includes('interview')) return false;
         } else if (filterLower === 'selected' || filterLower === 'closed') {
           const selStatuses = ['selected', 'joined', 'converted', 'closed', 'hired'];
           if (!selStatuses.includes(String(app.status || '').toLowerCase())) return false;
@@ -930,25 +932,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
 
             <div className="kpi-grid">
-              <div 
-                className="kpi-card" 
-                onClick={() => setActiveTab('applications')}
-                style={{
-                  background: '#f0fdfa', border: '1px solid #5eead4', cursor: 'pointer',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
-              >
-                <div className="kpi-icon" style={{ background: '#ccfbf1', color: '#0d9488' }}>
-                  <Users size={22} />
-                </div>
-                <div>
-                  <div className="kpi-val" style={{ color: '#134e4a' }}>{kpis ? kpis.kpis.totalCandidates : 1}</div>
-                  <div className="kpi-label" style={{ color: '#134e4a', opacity: 0.8, fontWeight: 600 }}>Total Candidates</div>
-                </div>
-              </div>
-
+              {/* 1. Applications Received (First as requested) */}
               <div 
                 className="kpi-card" 
                 onClick={() => setActiveTab('applications')}
@@ -968,6 +952,27 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
               </div>
 
+              {/* 2. Total Candidates */}
+              <div 
+                className="kpi-card" 
+                onClick={() => setActiveTab('applications')}
+                style={{
+                  background: '#f0fdfa', border: '1px solid #5eead4', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#ccfbf1', color: '#0d9488' }}>
+                  <Users size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#134e4a' }}>{kpis ? kpis.kpis.totalCandidates : 1}</div>
+                  <div className="kpi-label" style={{ color: '#134e4a', opacity: 0.8, fontWeight: 600 }}>Total Candidates</div>
+                </div>
+              </div>
+
+              {/* 3. Processing (Excluding Interview Scheduled, Selected, Rejected) */}
               <div 
                 className="kpi-card" 
                 onClick={() => { setActiveTab('applications'); setAppStatusFilter('Processing'); }}
@@ -982,7 +987,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <RefreshCw size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#312e81' }}>{validApplications.filter(a => !['Selected', 'Converted', 'Rejected', 'Not Interested'].includes(a.status)).length}</div>
+                  <div className="kpi-val" style={{ color: '#312e81' }}>
+                    {validApplications.filter(a => {
+                      const s = String(a.status || '').toLowerCase();
+                      return !['selected', 'converted', 'rejected', 'not interested', 'interview scheduled'].includes(s) && !s.includes('interview');
+                    }).length}
+                  </div>
                   <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
                 </div>
               </div>
