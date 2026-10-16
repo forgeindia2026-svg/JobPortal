@@ -874,3 +874,127 @@ h1, h2, h3, h4, h5, h6 {
   cursor: pointer;
   transition: all 0.15s ease;
 }
+
+/* Tab responsive label helpers (Preserves exact desktop view) */
+.desktop-tab-label {
+  display: inline;
+}
+
+.mobile-tab-label {
+  display: none;
+}
+
+/* STRICT MOBILE ADAPTATIONS ONLY (max-width: 768px) */
+@media (max-width: 768px) {
+  .desktop-tab-label {
+    display: none !important;
+  }
+
+  .mobile-tab-label {
+    display: inline !important;
+  }
+
+  /* Branch Workspace Header on Mobile */
+  .branch-workspace-header {
+    padding: 1rem 0.85rem !important;
+    border-radius: 14px !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .branch-header-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .branch-header-top-box {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .branch-back-row {
+    width: 100% !important;
+  }
+
+  .branch-back-row button {
+    width: auto !important;
+    padding: 7px 12px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .branch-title-block {
+    width: 100% !important;
+  }
+
+  .branch-title-heading {
+    font-size: 1.2rem !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+
+  .branch-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+  }
+
+  .branch-header-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 8px 6px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Smooth horizontal pill swipe for tabs on mobile */
+  .branch-nav-pills {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 6px !important;
+    padding: 2px 2px 6px 2px !important;
+    margin-bottom: 1rem !important;
+    scrollbar-width: none !important;
+  }
+
+  .branch-pill-btn {
+    padding: 7px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* IT Projects Header Banner on Mobile */
+  .it-projects-header-banner {
+    padding: 1rem 0.85rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .it-projects-header-banner h2 {
+    font-size: 1.15rem !important;
+  }
+
+  .it-projects-actions {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .it-projects-actions button:first-child {
+    flex: 0 0 auto !important;
+    padding: 8px 12px !important;
+  }
+
+  .it-projects-actions button:last-child {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    font-size: 0.82rem !important;
+  }
+}

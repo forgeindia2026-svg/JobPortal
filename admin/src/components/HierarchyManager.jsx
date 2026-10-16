@@ -574,18 +574,20 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
       {selectedBm && !selectedTlId && (
         <div>
           {/* Branch Workspace Header */}
-          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.25rem 1.5rem', marginBottom: '1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button
-                  onClick={() => setSelectedBmId(null)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 15px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#334155', fontSize: '0.88rem' }}
-                >
-                  <ArrowLeft size={16} /> All Branches
-                </button>
-                <div>
+          <div className="branch-workspace-header" style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.25rem 1.5rem', marginBottom: '1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+            <div className="branch-header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div className="branch-header-top-box" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="branch-back-row">
+                  <button
+                    onClick={() => setSelectedBmId(null)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 15px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#334155', fontSize: '0.88rem' }}
+                  >
+                    <ArrowLeft size={16} /> All Branches
+                  </button>
+                </div>
+                <div className="branch-title-block">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                    <h2 className="branch-title-heading" style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
                       📍 {selectedBm.branch ? selectedBm.branch.toUpperCase() : 'MAIN'} BRANCH
                     </h2>
                     <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid #a7f3d0' }}>
@@ -600,7 +602,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="branch-header-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => handleOpenBmModal(selectedBm)}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.85rem' }}
@@ -631,7 +633,9 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 border: branchTab === 'team_leaders' ? '1px solid #2563eb' : '1px solid #cbd5e1'
               }}
             >
-              <Users size={16} /> Team Leaders & Approvals ({branchTls.length})
+              <Users size={16} />
+              <span className="desktop-tab-label">Team Leaders & Approvals ({branchTls.length})</span>
+              <span className="mobile-tab-label">Team Leaders ({branchTls.length})</span>
               {branchPendingTls.length > 0 && (
                 <span style={{ background: '#f59e0b', color: '#fff', padding: '1px 7px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 800 }}>
                   {branchPendingTls.length} Pending
@@ -648,7 +652,9 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 border: branchTab === 'it_projects' ? '1px solid #2563eb' : '1px solid #cbd5e1'
               }}
             >
-              <Code size={16} /> IT Team & Projects ({branchItProjects.length})
+              <Code size={16} />
+              <span className="desktop-tab-label">IT Team & Projects ({branchItProjects.length})</span>
+              <span className="mobile-tab-label">IT Projects ({branchItProjects.length})</span>
             </button>
 
             <button
@@ -660,7 +666,9 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 border: branchTab === 'branch_hrs' ? '1px solid #2563eb' : '1px solid #cbd5e1'
               }}
             >
-              <ShieldCheck size={16} /> Branch HRs ({branchHrs.length})
+              <ShieldCheck size={16} />
+              <span className="desktop-tab-label">Branch HRs ({branchHrs.length})</span>
+              <span className="mobile-tab-label">HRs ({branchHrs.length})</span>
             </button>
 
             <button
@@ -672,7 +680,9 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 border: branchTab === 'recruitment' ? '1px solid #2563eb' : '1px solid #cbd5e1'
               }}
             >
-              <Briefcase size={16} /> Branch Overview
+              <Briefcase size={16} />
+              <span className="desktop-tab-label">Branch Overview</span>
+              <span className="mobile-tab-label">Overview</span>
             </button>
           </div>
 
