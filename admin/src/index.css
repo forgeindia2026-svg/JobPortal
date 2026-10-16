@@ -886,27 +886,45 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Branch TLs & HRs Desktop vs Mobile Separation */
 .branch-tls-desktop-table,
-.branch-hrs-desktop-table {
+.branch-hrs-desktop-table,
+.tl-hrs-desktop-table,
+.hr-candidates-desktop-table {
   display: block;
 }
 
 .branch-tls-mobile-cards,
-.branch-hrs-mobile-cards {
+.branch-hrs-mobile-cards,
+.tl-hrs-mobile-cards,
+.hr-candidates-mobile-cards {
   display: none !important;
 }
 
 /* STRICT MOBILE ADAPTATIONS ONLY (max-width: 768px) */
 @media (max-width: 768px) {
   .branch-tls-desktop-table,
-  .branch-hrs-desktop-table {
+  .branch-hrs-desktop-table,
+  .tl-hrs-desktop-table,
+  .hr-candidates-desktop-table {
     display: none !important;
   }
 
   .branch-tls-mobile-cards,
-  .branch-hrs-mobile-cards {
+  .branch-hrs-mobile-cards,
+  .tl-hrs-mobile-cards,
+  .hr-candidates-mobile-cards {
     display: flex !important;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .tl-profile-header-actions {
+    width: 100% !important;
+    margin-top: 8px !important;
+  }
+
+  .tl-profile-header-actions button {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
   .desktop-tab-label {

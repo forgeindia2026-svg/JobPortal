@@ -334,7 +334,8 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
 
             {/* Candidates Table */}
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
+              {/* DESKTOP TABLE */}
+              <div className="hr-candidates-desktop-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
@@ -399,6 +400,71 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* MOBILE CARDS VIEW */}
+              <div className="hr-candidates-mobile-cards" style={{ padding: '12px', display: 'none', flexDirection: 'column', gap: '10px' }}>
+                {hrApps.length === 0 ? (
+                  <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                    No candidates have applied through {hr.name || hr.hrName} yet.
+                  </div>
+                ) : (
+                  hrApps.map((app, idx) => {
+                    const statusLower = String(app.status || 'applied').toLowerCase();
+                    const isSuccess = ['selected', 'hired', 'approved', 'closed'].includes(statusLower);
+                    const isPending = ['applied', 'pending', 'interview'].includes(statusLower);
+                    return (
+                      <div
+                        key={app.id || idx}
+                        style={{
+                          background: '#fff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '12px 14px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>{app.candidateName || 'Candidate'}</div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{app.candidateEmail}{app.candidateMobile ? ` • ${app.candidateMobile}` : ''}</div>
+                          </div>
+                          <span style={{
+                            padding: '3px 8px',
+                            borderRadius: '20px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            background: isSuccess ? '#ecfdf5' : isPending ? '#e0f2fe' : '#fef2f2',
+                            color: isSuccess ? '#059669' : isPending ? '#0369a1' : '#dc2626',
+                            border: `1px solid ${isSuccess ? '#a7f3d0' : isPending ? '#bae6fd' : '#fecaca'}`
+                          }}>
+                            {app.status || 'Applied'}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: '#f8fafc', padding: '8px 10px', borderRadius: '8px', marginTop: '6px' }}>
+                          <div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Job Role</div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>{app.jobTitle || 'Role'}</div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{app.companyName || 'Company'}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Expected Amount</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#059669' }}>₹{(Number(app.incentiveAmount) || 0).toLocaleString()}</div>
+                          </div>
+                        </div>
+
+                        {app.candidateResumeUrl && (
+                          <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
+                            <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.78rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontWeight: 700 }}>
+                              <FileText size={12} /> View Resume ➔
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -465,12 +531,14 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                   )}
                 </div>
 
-                <button
-                  onClick={() => setAssignModalTl(teamLeader)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)' }}
-                >
-                  <UserCheck size={16} /> Manage HR Assignments
-                </button>
+                <div className="tl-profile-header-actions" style={{ display: 'flex' }}>
+                  <button
+                    onClick={() => setAssignModalTl(teamLeader)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)' }}
+                  >
+                    <UserCheck size={16} /> Manage HR Assignments
+                  </button>
+                </div>
               </div>
 
               {/* KPI Cards */}
@@ -505,7 +573,8 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </p>
               </div>
 
-              <div style={{ overflowX: 'auto' }}>
+              {/* DESKTOP TABLE (100% UNCHANGED) */}
+              <div className="tl-hrs-desktop-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
@@ -562,6 +631,71 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* MOBILE CARDS VIEW (Clean, touch-friendly, no cut-off) */}
+              <div className="tl-hrs-mobile-cards" style={{ padding: '12px', display: 'none', flexDirection: 'column', gap: '10px' }}>
+                {tlHrs.length === 0 ? (
+                  <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                    No HRs currently assigned under this Team Leader. Click "Manage HR Assignments" above to assign approved HRs.
+                  </div>
+                ) : (
+                  tlHrs.map((hr) => (
+                    <div
+                      key={hr.id}
+                      style={{
+                        background: '#fff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '14px',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div>
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>{hr.name}</div>
+                          <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700 }}>HR</div>
+                        </div>
+                        <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '3px 8px', borderRadius: '10px', fontSize: '0.76rem', fontWeight: 800 }}>
+                          {hr.referralCode || 'HR'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: '#f8fafc', padding: '8px 12px', borderRadius: '8px', marginBottom: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Candidates</div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{hr.candidatesCount || 0} Candidates</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Total Upcoming</div>
+                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#059669' }}>₹{(hr.totalAmount || 0).toLocaleString()}</div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setSelectedHrForCandidateBreakdown(hr)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '10px 14px',
+                          background: '#2563eb',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                        }}
+                      >
+                        View Candidates ➔
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
