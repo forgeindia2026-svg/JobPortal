@@ -426,7 +426,22 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                           <div>
-                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>{app.candidateName || 'Candidate'}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                              <span style={{
+                                background: '#f1f5f9',
+                                color: '#1e293b',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                padding: '2px 7px',
+                                borderRadius: '6px'
+                              }}>
+                                S.No: {idx + 1}
+                              </span>
+                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.96rem' }}>
+                                {app.candidateName || 'Candidate'}
+                              </div>
+                            </div>
                             <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{app.candidateEmail}{app.candidateMobile ? ` • ${app.candidateMobile}` : ''}</div>
                           </div>
                           <span style={{
@@ -640,7 +655,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                     No HRs currently assigned under this Team Leader. Click "Manage HR Assignments" above to assign approved HRs.
                   </div>
                 ) : (
-                  tlHrs.map((hr) => (
+                  tlHrs.map((hr, idx) => (
                     <div
                       key={hr.id}
                       style={{
@@ -653,7 +668,20 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <div>
-                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>{hr.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                            <span style={{
+                              background: '#f1f5f9',
+                              color: '#1e293b',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              padding: '2px 7px',
+                              borderRadius: '6px'
+                            }}>
+                              S.No: {idx + 1}
+                            </span>
+                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>{hr.name}</div>
+                          </div>
                           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700 }}>HR</div>
                         </div>
                         <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '3px 8px', borderRadius: '10px', fontSize: '0.76rem', fontWeight: 800 }}>
