@@ -2,23 +2,39 @@ import React, { useState, useEffect } from 'react';
 import {
   Building2, Users, UserPlus, CheckCircle2, XCircle, Clock, ShieldCheck,
   Edit, Trash2, Mail, Phone, MapPin, RefreshCw, UserCheck, AlertCircle, ChevronRight,
-  Eye, ArrowLeft, Briefcase, FileText, ExternalLink, Code
+  Eye, ArrowLeft, Briefcase, FileText, ExternalLink, Code, Search, Filter
 } from 'lucide-react';
 import BranchManagerDashboard from './BranchManagerDashboard';
 import BranchItProjectsTab from './BranchItProjectsTab';
 
 export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRefresh }) {
-  const [subTab, setSubTab] = useState('team_leaders'); // default to team_leaders so approvals are front & center
+  // Navigation State
+  const [mainView, setMainView] = useState('branches'); // 'branches' | 'pending_approvals' | 'it_projects'
+  const [branchTab, setBranchTab] = useState('team_leaders'); // 'team_leaders' | 'it_projects' | 'branch_hrs' | 'recruitment'
+  const [branchSearch, setBranchSearch] = useState('');
+
+  // Core Data
   const [bms, setBms] = useState([]);
   const [tls, setTls] = useState([]);
+  const [itProjects, setItProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // BM Modal
+  // Selected Entities
+  const [selectedBmId, setSelectedBmId] = useState(null);
+  const selectedBm = bms.find(b => b.id === selectedBmId) || null;
+
+  // BM Modal (Add / Edit Branch & Manager)
   const [bmModalOpen, setBmModalOpen] = useState(false);
   const [bmToEdit, setBmToEdit] = useState(null);
   const [bmForm, setBmForm] = useState({ name: '', email: '', password: '', mobile: '', branch: '', location: '' });
   const [bmSaving, setBmSaving] = useState(false);
   const [bmError, setBmError] = useState('');
+
+  // Add Team Leader Modal (For designated branch)
+  const [tlModalOpen, setTlModalOpen] = useState(false);
+  const [tlForm, setTlForm] = useState({ name: '', email: '', password: '', mobile: '', branchManagerId: '', branch: '' });
+  const [tlSaving, setTlSaving] = useState(false);
+  const [tlError, setTlError] = useState('');
 
   // Assign HR to TL Modal
   const [assignModalTl, setAssignModalTl] = useState(null);
@@ -26,11 +42,9 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
 
   // Approval action loading
   const [actionLoading, setActionLoading] = useState(null);
-  const [selectedBmId, setSelectedBmId] = useState(null);
-  const selectedBm = bms.find(b => b.id === selectedBmId) || null;
   const [successBanner, setSuccessBanner] = useState('');
 
-  // Team Leader Drilldown states (as requested by user with Image 2 & Image 3)
+  // Team Leader Drilldown states (Views 2 & 3)
   const [selectedTlId, setSelectedTlId] = useState(null);
   const [tlOverviewData, setTlOverviewData] = useState(null);
   const [tlOverviewLoading, setTlOverviewLoading] = useState(false);
@@ -59,18 +73,20 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
 
   const showSuccess = (msg) => {
     setSuccessBanner(msg);
-    setTimeout(() => setSuccessBanner(''), 4000);
+    setTimeout(() => setSuccessBanner(''), 4500);
   };
 
   const fetchHierarchy = async () => {
     try {
       setLoading(true);
-      const [bmRes, tlRes] = await Promise.all([
+      const [bmRes, tlRes, itRes] = await Promise.all([
         fetch(`${API_URL}/api/users/branch-managers`),
-        fetch(`${API_URL}/api/users/team-leaders`)
+        fetch(`${API_URL}/api/users/team-leaders`),
+        fetch(`${API_URL}/api/branch-it-projects`)
       ]);
       if (bmRes.ok) setBms(await bmRes.json());
       if (tlRes.ok) setTls(await tlRes.json());
+      if (itRes.ok) setItProjects(await itRes.json());
     } catch (err) {
       console.error('Error fetching hierarchy data:', err);
     } finally {
@@ -115,7 +131,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
       });
       const data = await res.json();
       if (res.ok) {
-        showSuccess(bmToEdit ? 'Branch Manager updated successfully!' : 'Branch Manager created successfully!');
+        showSuccess(bmToEdit ? 'Branch updated successfully!' : 'New Branch & Manager created successfully!');
         setBmModalOpen(false);
         fetchHierarchy();
         if (onRefresh) onRefresh();
@@ -129,17 +145,52 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
     }
   };
 
-  const handleDeleteBm = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete Branch Manager "${name}"?`)) return;
+  const handleDeleteBm = async (id, name, branchName) => {
+    if (!window.confirm(`Are you sure you want to delete branch "${branchName || 'this branch'}" (Manager: ${name})?`)) return;
     try {
       const res = await fetch(`${API_URL}/api/users/branch-managers/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        showSuccess(`Branch Manager "${name}" deleted.`);
+        showSuccess(`Branch "${branchName}" deleted.`);
+        if (selectedBmId === id) setSelectedBmId(null);
         fetchHierarchy();
         if (onRefresh) onRefresh();
       }
     } catch (err) {
       console.error('Error deleting BM:', err);
+    }
+  };
+
+  // --- Team Leader Creation Handler ---
+  const handleSaveTl = async (e) => {
+    e.preventDefault();
+    setTlSaving(true);
+    setTlError('');
+
+    try {
+      const targetBm = selectedBm || bms.find(b => b.id === tlForm.branchManagerId);
+      const res = await fetch(`${API_URL}/api/users/team-leaders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...tlForm,
+          branchManagerId: targetBm ? targetBm.id : '',
+          branch: targetBm ? (targetBm.branch || targetBm.location) : tlForm.branch
+        })
+      });
+      const resData = await res.json();
+      if (res.ok) {
+        showSuccess(`Team Leader "${tlForm.name}" created for ${targetBm ? targetBm.branch : 'branch'}!`);
+        setTlModalOpen(false);
+        setTlForm({ name: '', email: '', password: '', mobile: '', branchManagerId: '', branch: '' });
+        fetchHierarchy();
+        if (onRefresh) onRefresh();
+      } else {
+        setTlError(resData.error || 'Failed to create Team Leader');
+      }
+    } catch (err) {
+      setTlError('Network error creating Team Leader');
+    } finally {
+      setTlSaving(false);
     }
   };
 
@@ -213,173 +264,151 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
   const pendingTls = tls.filter(t => t.approvalStatus === 'pending');
   const approvedTls = tls.filter(t => t.approvalStatus === 'approved');
 
+  // Filtered branches for main screen
+  const filteredBms = bms.filter(bm => {
+    if (!branchSearch.trim()) return true;
+    const q = branchSearch.toLowerCase();
+    return (
+      (bm.branch && bm.branch.toLowerCase().includes(q)) ||
+      (bm.name && bm.name.toLowerCase().includes(q)) ||
+      (bm.email && bm.email.toLowerCase().includes(q)) ||
+      (bm.location && bm.location.toLowerCase().includes(q))
+    );
+  });
+
+  // Data scoped to selected branch
+  const branchTls = selectedBm
+    ? tls.filter(t => t.branchManagerId === selectedBm.id || (t.branch && selectedBm.branch && t.branch.toLowerCase() === selectedBm.branch.toLowerCase()))
+    : [];
+  const branchPendingTls = branchTls.filter(t => t.approvalStatus === 'pending');
+  const branchTlIds = branchTls.map(t => t.id);
+  const branchHrs = hrs.filter(h => branchTlIds.includes(h.teamLeaderId));
+  const branchItProjects = selectedBm
+    ? itProjects.filter(p => p.branchManagerId === selectedBm.id || (p.branch && selectedBm.branch && p.branch.toLowerCase() === selectedBm.branch.toLowerCase()))
+    : [];
+
   return (
     <div style={{ color: '#1e293b' }}>
-      {/* Top Banner & Heading */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Building2 size={26} color="#3b82f6" /> Branch & Team Hierarchy Management
-          </h2>
-          <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '0.9rem' }}>
-            Super Admin Controls: Add Branch Managers, review & approve Team Leaders, and assign HRs under Team Leaders.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => { fetchHierarchy(); if (onRefresh) onRefresh(); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569' }}
-          >
-            <RefreshCw size={15} /> Refresh
-          </button>
-          {subTab === 'branch_managers' && (
-            <button
-              onClick={() => handleOpenBmModal()}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#fff', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)' }}
-            >
-              <UserPlus size={16} /> Add Branch Manager
-            </button>
-          )}
-        </div>
-      </div>
-
+      {/* SUCCESS NOTIFICATION BANNER */}
       {successBanner && (
-        <div style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '12px 16px', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '12px 16px', borderRadius: '10px', marginBottom: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 6px rgba(16, 185, 129, 0.15)' }}>
           <CheckCircle2 size={18} color="#059669" /> {successBanner}
         </div>
       )}
 
-      {/* KPI Cards (2 Grid on Mobile, Auto-fit on Desktop) */}
-      <div className="dashboard-kpi-grid" style={{ marginBottom: '1.75rem' }}>
-        <div className="dashboard-kpi-card" style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Branch Managers</span>
-            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Building2 size={18} color="#3b82f6" />
+      {/* ========================================================================= */}
+      {/* 1. DRILLDOWN VIEW: CANDIDATE BREAKDOWN FOR AN HR (Image 3)                 */}
+      {/* ========================================================================= */}
+      {selectedTlId && selectedHrForCandidateBreakdown && (() => {
+        const hr = selectedHrForCandidateBreakdown;
+        const hrApps = hr.applications || [];
+        return (
+          <div>
+            <button
+              onClick={() => setSelectedHrForCandidateBreakdown(null)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#475569', marginBottom: '1.25rem' }}
+            >
+              <ArrowLeft size={16} /> Back to Team HRs
+            </button>
+
+            {/* Header Box */}
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+              <div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                  Upcoming Candidates for {hr.name || hr.hrName}
+                </h3>
+                <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '6px', fontWeight: 600 }}>
+                  Referral Code: <span style={{ color: '#0f172a', fontWeight: 800 }}>{hr.referralCode || 'HR'}</span>
+                  {hr.email ? ` • ✉ ${hr.email}` : ''}
+                  {hr.mobile ? ` • 📱 ${hr.mobile}` : ''}
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#059669' }}>
+                  ₹{(hr.totalAmount || 0).toLocaleString()}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>Total Expected</div>
+              </div>
+            </div>
+
+            {/* Candidates Table */}
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                      <th style={{ padding: '14px 18px', width: '60px' }}>S.No</th>
+                      <th style={{ padding: '14px 18px' }}>Candidate Details</th>
+                      <th style={{ padding: '14px 18px' }}>Job Info</th>
+                      <th style={{ padding: '14px 18px' }}>Status</th>
+                      <th style={{ padding: '14px 18px', textAlign: 'right' }}>Expected Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hrApps.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                          No candidates have applied through {hr.name || hr.hrName} yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      hrApps.map((app, idx) => {
+                        const statusLower = String(app.status || 'applied').toLowerCase();
+                        const isSuccess = ['selected', 'hired', 'approved', 'closed'].includes(statusLower);
+                        const isPending = ['applied', 'pending', 'interview'].includes(statusLower);
+                        return (
+                          <tr key={app.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '16px 18px', color: '#64748b', fontWeight: 600 }}>{idx + 1}</td>
+                            <td style={{ padding: '16px 18px' }}>
+                              <div style={{ fontWeight: 800, color: '#0f172a' }}>{app.candidateName || 'Candidate'}</div>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                                {app.candidateEmail}{app.candidateMobile ? ` • ${app.candidateMobile}` : ''}
+                              </div>
+                              {app.candidateResumeUrl && (
+                                <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '4px', textDecoration: 'none', fontWeight: 600 }}>
+                                  <FileText size={12} /> View Resume
+                                </a>
+                              )}
+                            </td>
+                            <td style={{ padding: '16px 18px' }}>
+                              <div style={{ fontWeight: 700, color: '#0f172a' }}>{app.jobTitle || 'Job Role'}</div>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>{app.companyName || 'Company'}</div>
+                            </td>
+                            <td style={{ padding: '16px 18px' }}>
+                              <span style={{
+                                padding: '4px 10px',
+                                borderRadius: '20px',
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                                background: isSuccess ? '#ecfdf5' : isPending ? '#e0f2fe' : '#fef2f2',
+                                color: isSuccess ? '#059669' : isPending ? '#0369a1' : '#dc2626',
+                                border: `1px solid ${isSuccess ? '#a7f3d0' : isPending ? '#bae6fd' : '#fecaca'}`
+                              }}>
+                                {app.status || 'Applied'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '16px 18px', textAlign: 'right' }}>
+                              <span style={{ fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>
+                                ₹{(Number(app.incentiveAmount) || 0).toLocaleString()}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalBms}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Managing company branches</span>
-        </div>
+        );
+      })()}
 
-        <div className="dashboard-kpi-card" style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Team Leaders</span>
-            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Users size={18} color="#0284c7" />
-            </div>
-          </div>
-          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalTls}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Added across all branches</span>
-        </div>
-
-        <div className="dashboard-kpi-card" style={{ background: pendingTls.length > 0 ? '#fffbeb' : '#fff', padding: '1.25rem', borderRadius: '14px', border: pendingTls.length > 0 ? '2px solid #f59e0b' : '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: pendingTls.length > 0 ? '#b45309' : '#64748b', textTransform: 'uppercase' }}>
-              Pending Admin Approvals
-            </span>
-            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Clock size={18} color="#d97706" />
-            </div>
-          </div>
-          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#d97706' }}>{pendingTls.length}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: pendingTls.length > 0 ? '#92400e' : '#94a3b8' }}>
-            {pendingTls.length > 0 ? '⚠️ Action Required: Review' : 'All Team Leaders Approved'}
-          </span>
-        </div>
-
-        <div className="dashboard-kpi-card" style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Approved Team Leaders</span>
-            <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CheckCircle2 size={18} color="#16a34a" />
-            </div>
-          </div>
-          <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#16a34a' }}>{approvedTls.length}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Active with login rights</span>
-        </div>
-      </div>
-
-      {/* Sub-Tabs Navigation */}
-      <div style={{ display: selectedBm ? 'none' : 'flex', gap: '8px', borderBottom: '2px solid #e2e8f0', marginBottom: '1.5rem' }}>
-        <button
-          onClick={() => setSubTab('team_leaders')}
-          style={{
-            padding: '10px 18px',
-            background: 'none',
-            border: 'none',
-            borderBottom: subTab === 'team_leaders' ? '3px solid #3b82f6' : '3px solid transparent',
-            color: subTab === 'team_leaders' ? '#2563eb' : '#64748b',
-            fontWeight: 700,
-            fontSize: '0.95rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Users size={18} /> Team Leaders & Admin Approvals ({tls.length})
-          {pendingTls.length > 0 && (
-            <span style={{ background: '#f59e0b', color: '#fff', borderRadius: '12px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: 800 }}>
-              {pendingTls.length} Pending
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => setSubTab('branch_managers')}
-          style={{
-            padding: '10px 18px',
-            background: 'none',
-            border: 'none',
-            borderBottom: subTab === 'branch_managers' ? '3px solid #3b82f6' : '3px solid transparent',
-            color: subTab === 'branch_managers' ? '#2563eb' : '#64748b',
-            fontWeight: 700,
-            fontSize: '0.95rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Building2 size={18} /> Branch Managers ({bms.length})
-        </button>
-
-        <button
-          onClick={() => setSubTab('it_projects')}
-          style={{
-            padding: '10px 18px',
-            background: 'none',
-            border: 'none',
-            borderBottom: subTab === 'it_projects' ? '3px solid #3b82f6' : '3px solid transparent',
-            color: subTab === 'it_projects' ? '#2563eb' : '#64748b',
-            fontWeight: 700,
-            fontSize: '0.95rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Code size={18} /> Company IT Projects
-        </button>
-      </div>
-
-      {/* SUB-TAB 1: TEAM LEADERS & APPROVALS */}
-      {/* FULL BRANCH DETAIL VIEW (Matching user's Image 2 with 8 Rich KPI cards & full branch tabs) */}
-      {selectedBm && (
-        <div style={{ marginTop: '0.25rem' }}>
-          <BranchManagerDashboard
-            API_URL={API_URL}
-            currentUser={selectedBm}
-            onBack={() => setSelectedBmId(null)}
-          />
-        </div>
-      )}
-
-      {/* TEAM LEADER DRILLDOWN VIEW (Matching user Image 2 & Image 3) */}
-      {selectedTlId && (() => {
+      {/* ========================================================================= */}
+      {/* 2. DRILLDOWN VIEW: TL ASSIGNED HRS TABLE (Image 2)                         */}
+      {/* ========================================================================= */}
+      {selectedTlId && !selectedHrForCandidateBreakdown && (() => {
         if (tlOverviewLoading) {
           return (
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '3rem', textAlign: 'center', color: '#64748b' }}>
@@ -403,114 +432,6 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
           );
         }
 
-        // VIEW 3: CANDIDATE BREAKDOWN FOR AN HR (Matching user's Image 3)
-        if (selectedHrForCandidateBreakdown) {
-          const hr = selectedHrForCandidateBreakdown;
-          const hrApps = hr.applications || [];
-          return (
-            <div>
-              <button
-                onClick={() => setSelectedHrForCandidateBreakdown(null)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#475569', marginBottom: '1.25rem' }}
-              >
-                <ArrowLeft size={16} /> Back to Team HRs
-              </button>
-
-              {/* Header Box (Image 3) */}
-              <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
-                    Upcoming Candidates for {hr.name}
-                  </h3>
-                  <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '6px', fontWeight: 600 }}>
-                    Referral Code: <span style={{ color: '#0f172a', fontWeight: 800 }}>{hr.referralCode || 'HR'}</span>
-                    {hr.email ? ` • ✉ ${hr.email}` : ''}
-                    {hr.mobile ? ` • 📱 ${hr.mobile}` : ''}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#059669' }}>
-                    ₹{(hr.totalAmount || 0).toLocaleString()}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>Total Expected</div>
-                </div>
-              </div>
-
-              {/* Candidates Table (Image 3) */}
-              <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-                        <th style={{ padding: '14px 18px', width: '60px' }}>S.No</th>
-                        <th style={{ padding: '14px 18px' }}>Candidate Details</th>
-                        <th style={{ padding: '14px 18px' }}>Job Info</th>
-                        <th style={{ padding: '14px 18px' }}>Status</th>
-                        <th style={{ padding: '14px 18px', textAlign: 'right' }}>Expected Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {hrApps.length === 0 ? (
-                        <tr>
-                          <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                            No candidates have applied through {hr.name} yet.
-                          </td>
-                        </tr>
-                      ) : (
-                        hrApps.map((app, idx) => {
-                          const statusLower = String(app.status || 'applied').toLowerCase();
-                          const isSuccess = ['selected', 'hired', 'approved', 'closed'].includes(statusLower);
-                          const isPending = ['applied', 'pending', 'interview'].includes(statusLower);
-                          return (
-                            <tr key={app.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                              <td style={{ padding: '16px 18px', color: '#64748b', fontWeight: 600 }}>{idx + 1}</td>
-                              <td style={{ padding: '16px 18px' }}>
-                                <div style={{ fontWeight: 800, color: '#0f172a' }}>{app.candidateName || 'Candidate'}</div>
-                                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
-                                  {app.candidateEmail}{app.candidateMobile ? ` • ${app.candidateMobile}` : ''}
-                                </div>
-                                {app.candidateResumeUrl && (
-                                  <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '4px', textDecoration: 'none', fontWeight: 600 }}>
-                                    <FileText size={12} /> View Resume
-                                  </a>
-                                )}
-                              </td>
-                              <td style={{ padding: '16px 18px' }}>
-                                <div style={{ fontWeight: 700, color: '#0f172a' }}>{app.jobTitle || 'Job Role'}</div>
-                                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>{app.companyName || 'Company'}</div>
-                              </td>
-                              <td style={{ padding: '16px 18px' }}>
-                                <span style={{
-                                  padding: '4px 10px',
-                                  borderRadius: '20px',
-                                  fontSize: '0.78rem',
-                                  fontWeight: 700,
-                                  background: isSuccess ? '#ecfdf5' : isPending ? '#e0f2fe' : '#fef2f2',
-                                  color: isSuccess ? '#059669' : isPending ? '#0369a1' : '#dc2626',
-                                  border: `1px solid ${isSuccess ? '#a7f3d0' : isPending ? '#bae6fd' : '#fecaca'}`
-                                }}>
-                                  {app.status || 'Applied'}
-                                </span>
-                              </td>
-                              <td style={{ padding: '16px 18px', textAlign: 'right' }}>
-                                <span style={{ fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>
-                                  ₹{(Number(app.incentiveAmount) || 0).toLocaleString()}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        // VIEW 2: HRs TABLE UNDER TL (Matching user's Image 2)
         const { teamLeader, kpis, hrs: tlHrs } = tlOverviewData;
         return (
           <div>
@@ -518,7 +439,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               onClick={() => setSelectedTlId(null)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#475569', marginBottom: '1.25rem' }}
             >
-              <ArrowLeft size={16} /> Back to Team Leaders
+              <ArrowLeft size={16} /> Back to {selectedBm ? `${selectedBm.branch || 'Branch'} Team Leaders` : 'Team Leaders'}
             </button>
 
             {/* TL Profile Header Card */}
@@ -552,7 +473,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </button>
               </div>
 
-              {/* KPI Cards (2 Grid on Mobile, Auto-fit on Desktop) */}
+              {/* KPI Cards */}
               <div className="dashboard-kpi-grid" style={{ marginTop: '1.25rem', gap: '10px' }}>
                 <div className="dashboard-kpi-card" style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
                   <div className="dashboard-kpi-val" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>{kpis.totalHrs}</div>
@@ -573,7 +494,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               </div>
             </div>
 
-            {/* HRs Table (Exact match of user's Image 2) */}
+            {/* HRs Table */}
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
               <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
@@ -630,11 +551,8 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                                 fontWeight: 700,
                                 fontSize: '0.85rem',
                                 cursor: 'pointer',
-                                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-                                transition: 'all 0.15s ease'
+                                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
                               }}
-                              onMouseEnter={e => e.currentTarget.style.background = '#1d4ed8'}
-                              onMouseLeave={e => e.currentTarget.style.background = '#2563eb'}
                             >
                               View Candidates
                             </button>
@@ -650,315 +568,790 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
         );
       })()}
 
-      {!selectedBm && !selectedTlId && subTab === 'team_leaders' && (
-        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-          <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>Team Leaders & Approvals</h3>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                Team Leaders created by Branch Managers. Only Admin-approved Team Leaders can login and have HRs assigned to them.
-              </p>
+      {/* ========================================================================= */}
+      {/* 3. DEDICATED BRANCH WORKSPACE (When a specific branch is selected)         */}
+      {/* ========================================================================= */}
+      {selectedBm && !selectedTlId && (
+        <div>
+          {/* Branch Workspace Header */}
+          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.25rem 1.5rem', marginBottom: '1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button
+                  onClick={() => setSelectedBmId(null)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 15px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#334155', fontSize: '0.88rem' }}
+                >
+                  <ArrowLeft size={16} /> All Branches
+                </button>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                      📍 {selectedBm.branch ? selectedBm.branch.toUpperCase() : 'MAIN'} BRANCH
+                    </h2>
+                    <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid #a7f3d0' }}>
+                      Branch Command Center
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>Manager: <strong style={{ color: '#0f172a' }}>{selectedBm.name}</strong></span>
+                    {selectedBm.email && <span>• ✉ {selectedBm.email}</span>}
+                    {selectedBm.mobile && <span>• 📱 {selectedBm.mobile}</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => handleOpenBmModal(selectedBm)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.85rem' }}
+                >
+                  <Edit size={14} /> Edit Branch
+                </button>
+                <button
+                  onClick={() => {
+                    setTlForm({ name: '', email: '', password: '', mobile: '', branchManagerId: selectedBm.id, branch: selectedBm.branch || '' });
+                    setTlModalOpen(true);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)' }}
+                >
+                  <UserPlus size={15} /> Add Team Leader
+                </button>
+              </div>
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-                  <th style={{ padding: '12px 16px' }}>Team Leader</th>
-                  <th style={{ padding: '12px 16px' }}>Branch Manager</th>
-                  <th style={{ padding: '12px 16px' }}>Branch</th>
-                  <th style={{ padding: '12px 16px' }}>Admin Approval Status</th>
-                  <th style={{ padding: '12px 16px' }}>Approved HRs</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading Team Leaders...</td>
-                  </tr>
-                ) : tls.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                      No Team Leaders registered yet. Branch Managers can add Team Leaders from their Branch portal.
-                    </td>
-                  </tr>
-                ) : (
-                  tls.map((tl) => (
-                    <tr key={tl.id} style={{ borderBottom: '1px solid #f1f5f9', background: tl.approvalStatus === 'pending' ? '#fffdf7' : 'transparent' }}>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div
-                          onClick={() => handleOpenTlDetails(tl.id)}
-                          style={{ fontWeight: 800, color: '#0284c7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          title="Click to view Team HRs & Candidates"
-                        >
-                          <span>{tl.name}</span>
-                          <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0369a1', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                            View Team ➔
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                          <Mail size={12} /> {tl.email}
-                        </div>
-                        {tl.mobile && (
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                            <Phone size={12} /> {tl.mobile}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: '14px 16px', color: '#334155' }}>
-                        <div style={{ fontWeight: 600 }}>{tl.branchManagerName}</div>
-                        {tl.branchManagerEmail && <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{tl.branchManagerEmail}</div>}
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
-                          {tl.branch || 'Main Branch'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        {tl.approvalStatus === 'approved' ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, border: '1px solid #a7f3d0' }}>
-                            <CheckCircle2 size={14} /> Approved by Admin
-                          </span>
-                        ) : tl.approvalStatus === 'rejected' ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fef2f2', color: '#dc2626', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, border: '1px solid #fecaca' }}>
-                            <XCircle size={14} /> Rejected
-                          </span>
-                        ) : (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fffbeb', color: '#b45309', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, border: '1px solid #fde68a' }}>
-                            <Clock size={14} color="#d97706" /> Pending Admin Approval
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '14px 16px', cursor: 'pointer' }} onClick={() => handleOpenTlDetails(tl.id)} title="Click to view Team HRs & Candidates">
-                        {(() => {
-                          const tlHrs = hrs.filter(h => h.teamLeaderId === tl.id);
-                          return (
-                            <div>
-                              <div style={{ fontWeight: 800, color: '#0284c7', marginBottom: tlHrs.length > 0 ? '6px' : '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span>{tlHrs.length} HRs assigned</span>
-                                <span style={{ fontSize: '0.7rem', color: '#2563eb' }}>➔</span>
-                              </div>
-                              {tlHrs.length === 0 ? (
-                                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>None assigned</span>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  {tlHrs.map(h => (
-                                    <div
-                                      key={h.id}
-                                      style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        background: '#ecfdf5',
-                                        color: '#065f46',
-                                        border: '1px solid #a7f3d0',
-                                        padding: '3px 8px',
-                                        borderRadius: '6px',
-                                        fontSize: '0.78rem',
-                                        fontWeight: 600,
-                                        width: 'fit-content'
-                                      }}
-                                      title={h.email}
-                                    >
-                                      <span>👤 {h.name}</span>
-                                      <span style={{ color: '#059669', fontSize: '0.72rem', background: '#d1fae5', padding: '1px 5px', borderRadius: '4px' }}>
-                                        {h.referralCode || 'HR'}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+          {/* Branch Navigation Pills (Responsive Scroll) */}
+          <div className="branch-nav-pills" style={{ marginBottom: '1.25rem' }}>
+            <button
+              onClick={() => setBranchTab('team_leaders')}
+              className="branch-pill-btn"
+              style={{
+                background: branchTab === 'team_leaders' ? '#2563eb' : '#fff',
+                color: branchTab === 'team_leaders' ? '#fff' : '#475569',
+                border: branchTab === 'team_leaders' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <Users size={16} /> Team Leaders & Approvals ({branchTls.length})
+              {branchPendingTls.length > 0 && (
+                <span style={{ background: '#f59e0b', color: '#fff', padding: '1px 7px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 800 }}>
+                  {branchPendingTls.length} Pending
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setBranchTab('it_projects')}
+              className="branch-pill-btn"
+              style={{
+                background: branchTab === 'it_projects' ? '#2563eb' : '#fff',
+                color: branchTab === 'it_projects' ? '#fff' : '#475569',
+                border: branchTab === 'it_projects' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <Code size={16} /> IT Team & Projects ({branchItProjects.length})
+            </button>
+
+            <button
+              onClick={() => setBranchTab('branch_hrs')}
+              className="branch-pill-btn"
+              style={{
+                background: branchTab === 'branch_hrs' ? '#2563eb' : '#fff',
+                color: branchTab === 'branch_hrs' ? '#fff' : '#475569',
+                border: branchTab === 'branch_hrs' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <ShieldCheck size={16} /> Branch HRs ({branchHrs.length})
+            </button>
+
+            <button
+              onClick={() => setBranchTab('recruitment')}
+              className="branch-pill-btn"
+              style={{
+                background: branchTab === 'recruitment' ? '#2563eb' : '#fff',
+                color: branchTab === 'recruitment' ? '#fff' : '#475569',
+                border: branchTab === 'recruitment' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <Briefcase size={16} /> Branch Overview
+            </button>
+          </div>
+
+          {/* TAB 1: TEAM LEADERS UNDER THIS BRANCH */}
+          {branchTab === 'team_leaders' && (
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                    Team Leaders in {selectedBm.branch ? selectedBm.branch.toUpperCase() : 'this Branch'} ({branchTls.length})
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                    Super Admin controls: Approve or reject new Team Leaders, view their team breakdowns, and assign HRs.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setTlForm({ name: '', email: '', password: '', mobile: '', branchManagerId: selectedBm.id, branch: selectedBm.branch || '' });
+                    setTlModalOpen(true);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  <UserPlus size={15} /> Add Team Leader
+                </button>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                      <th style={{ padding: '12px 16px' }}>Team Leader</th>
+                      <th style={{ padding: '12px 16px' }}>Approval Status</th>
+                      <th style={{ padding: '12px 16px' }}>Assigned HRs</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {branchTls.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                          <Users size={32} color="#94a3b8" style={{ margin: '0 auto 10px auto', display: 'block' }} />
+                          <div style={{ fontWeight: 700, color: '#334155' }}>No Team Leaders added in this branch yet.</div>
+                          <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Click <strong>+ Add Team Leader</strong> above to assign a TL to {selectedBm.branch}.</div>
+                        </td>
+                      </tr>
+                    ) : (
+                      branchTls.map((tl) => (
+                        <tr key={tl.id} style={{ borderBottom: '1px solid #f1f5f9', background: tl.approvalStatus === 'pending' ? '#fffdf7' : 'transparent' }}>
+                          <td style={{ padding: '14px 16px' }}>
+                            <div
+                              onClick={() => handleOpenTlDetails(tl.id)}
+                              style={{ fontWeight: 800, color: '#0284c7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              title="Click to view Team HRs & Candidates"
+                            >
+                              <span>{tl.name}</span>
+                              <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0369a1', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                View Team ➔
+                              </span>
                             </div>
-                          );
-                        })()}
-                      </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
-                          {tl.approvalStatus === 'pending' ? (
-                            <>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                              <Mail size={12} /> {tl.email}
+                            </div>
+                            {tl.mobile && (
+                              <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                <Phone size={12} /> {tl.mobile}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            {tl.approvalStatus === 'approved' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, border: '1px solid #a7f3d0' }}>
+                                <CheckCircle2 size={14} /> Approved by Admin
+                              </span>
+                            ) : tl.approvalStatus === 'rejected' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fef2f2', color: '#dc2626', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, border: '1px solid #fecaca' }}>
+                                <XCircle size={14} /> Rejected
+                              </span>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fffbeb', color: '#b45309', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, border: '1px solid #fde68a' }}>
+                                <Clock size={14} color="#d97706" /> Pending Admin Approval
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            {(() => {
+                              const tlHrs = hrs.filter(h => h.teamLeaderId === tl.id);
+                              return (
+                                <div>
+                                  <div
+                                    onClick={() => handleOpenTlDetails(tl.id)}
+                                    style={{ fontWeight: 800, color: '#0284c7', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    <span>{tlHrs.length} HRs assigned</span>
+                                    <span style={{ fontSize: '0.7rem' }}>➔</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </td>
+                          <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+                              {tl.approvalStatus === 'pending' ? (
+                                <>
+                                  <button
+                                    disabled={actionLoading === tl.id}
+                                    onClick={() => handleTlApproval(tl.id, tl.name, 'approved')}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)' }}
+                                  >
+                                    <CheckCircle2 size={14} /> Approve TL
+                                  </button>
+                                  <button
+                                    disabled={actionLoading === tl.id}
+                                    onClick={() => handleTlApproval(tl.id, tl.name, 'rejected')}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}
+                                  >
+                                    <XCircle size={14} /> Reject
+                                  </button>
+                                </>
+                              ) : tl.approvalStatus === 'approved' ? (
+                                <>
+                                  <button
+                                    onClick={() => handleOpenTlDetails(tl.id)}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)' }}
+                                    title="Click to view Team HRs & Candidates"
+                                  >
+                                    <Eye size={14} /> View Team ➔
+                                  </button>
+                                  <button
+                                    onClick={() => setAssignModalTl(tl)}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                                    title="Assign HRs under this Team Leader"
+                                  >
+                                    <UserCheck size={14} /> Assign HRs
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => handleTlApproval(tl.id, tl.name, 'approved')}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: '#f1f5f9', color: '#16a34a', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}
+                                >
+                                  Re-Approve
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => handleDeleteTl(tl.id, tl.name)}
+                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                                title="Delete Team Leader"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: IT TEAM & PROJECTS SPECIFIC TO THIS BRANCH */}
+          {branchTab === 'it_projects' && (
+            <BranchItProjectsTab
+              API_URL={API_URL}
+              currentUser={selectedBm}
+              onRefresh={fetchHierarchy}
+            />
+          )}
+
+          {/* TAB 3: BRANCH HRS */}
+          {branchTab === 'branch_hrs' && (
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                  Branch HRs in {selectedBm.branch ? selectedBm.branch.toUpperCase() : 'this Branch'} ({branchHrs.length})
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                  HRs assigned to Team Leaders of this branch.
+                </p>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                      <th style={{ padding: '14px 20px' }}>HR Name</th>
+                      <th style={{ padding: '14px 20px' }}>Contact</th>
+                      <th style={{ padding: '14px 20px' }}>Referral Code</th>
+                      <th style={{ padding: '14px 20px' }}>Team Leader</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {branchHrs.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                          No HRs currently assigned under this branch's Team Leaders.
+                        </td>
+                      </tr>
+                    ) : (
+                      branchHrs.map((hr) => {
+                        const assignedTl = tls.find(t => t.id === hr.teamLeaderId);
+                        return (
+                          <tr key={hr.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '14px 20px', fontWeight: 800, color: '#0f172a' }}>
+                              {hr.name}
+                            </td>
+                            <td style={{ padding: '14px 20px', color: '#64748b', fontSize: '0.85rem' }}>
+                              {hr.email}
+                              {hr.mobile && ` • ${hr.mobile}`}
+                            </td>
+                            <td style={{ padding: '14px 20px', fontWeight: 800, color: '#0284c7' }}>
+                              {hr.referralCode || 'HR'}
+                            </td>
+                            <td style={{ padding: '14px 20px' }}>
+                              <span style={{ background: '#eff6ff', color: '#1e40af', padding: '3px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700 }}>
+                                👤 {assignedTl ? assignedTl.name : 'Unassigned'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: BRANCH RECRUITMENT OVERVIEW */}
+          {branchTab === 'recruitment' && (
+            <BranchManagerDashboard
+              API_URL={API_URL}
+              currentUser={selectedBm}
+              onBack={() => setBranchTab('team_leaders')}
+            />
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. MAIN SCREEN: COMPANY BRANCHES DIRECTORY (When no branch is selected)    */}
+      {/* ========================================================================= */}
+      {!selectedBm && !selectedTlId && (
+        <div>
+          {/* Top Banner & Heading */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Building2 size={26} color="#3b82f6" /> Branch & Regional Operations
+              </h2>
+              <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+                Select any branch to manage its Team Leaders, approve new TLs, assign HRs, and track branch IT projects.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => { fetchHierarchy(); if (onRefresh) onRefresh(); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569' }}
+              >
+                <RefreshCw size={15} /> Refresh
+              </button>
+              <button
+                onClick={() => handleOpenBmModal()}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#fff', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)' }}
+              >
+                <UserPlus size={16} /> Add New Branch
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Cards (2 Grid on Mobile, Auto-fit on Desktop) */}
+          <div className="dashboard-kpi-grid" style={{ marginBottom: '1.5rem' }}>
+            <div
+              className="dashboard-kpi-card"
+              onClick={() => setMainView('branches')}
+              style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: mainView === 'branches' ? '2px solid #3b82f6' : '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Company Branches</span>
+                <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 size={18} color="#3b82f6" />
+                </div>
+              </div>
+              <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalBms}</div>
+              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Active regional branches</span>
+            </div>
+
+            <div
+              className="dashboard-kpi-card"
+              style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Team Leaders</span>
+                <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Users size={18} color="#0284c7" />
+                </div>
+              </div>
+              <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalTls}</div>
+              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Across all company branches</span>
+            </div>
+
+            <div
+              className="dashboard-kpi-card"
+              onClick={() => setMainView('pending_approvals')}
+              style={{
+                background: pendingTls.length > 0 ? '#fffbeb' : '#fff',
+                padding: '1.25rem',
+                borderRadius: '14px',
+                border: pendingTls.length > 0 ? '2px solid #f59e0b' : mainView === 'pending_approvals' ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: pendingTls.length > 0 ? '#b45309' : '#64748b', textTransform: 'uppercase' }}>
+                  Pending TL Approvals
+                </span>
+                <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Clock size={18} color="#d97706" />
+                </div>
+              </div>
+              <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#d97706' }}>{pendingTls.length}</div>
+              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: pendingTls.length > 0 ? '#92400e' : '#94a3b8' }}>
+                {pendingTls.length > 0 ? '⚠️ Action Required (Click to review)' : 'All Team Leaders Approved'}
+              </span>
+            </div>
+
+            <div
+              className="dashboard-kpi-card"
+              onClick={() => setMainView('it_projects')}
+              style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: mainView === 'it_projects' ? '2px solid #3b82f6' : '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)', cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>IT Projects</span>
+                <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Code size={18} color="#10b981" />
+                </div>
+              </div>
+              <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{itProjects.length}</div>
+              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Branch projects & countdowns</span>
+            </div>
+          </div>
+
+          {/* Pending Approval High-Priority Banner */}
+          {pendingTls.length > 0 && mainView !== 'pending_approvals' && (
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 18px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertCircle size={20} color="#d97706" />
+                <span style={{ color: '#92400e', fontWeight: 700, fontSize: '0.9rem' }}>
+                  You have <strong>{pendingTls.length}</strong> Team Leader(s) waiting for Admin Approval.
+                </span>
+              </div>
+              <button
+                onClick={() => setMainView('pending_approvals')}
+                style={{ padding: '6px 14px', background: '#d97706', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+              >
+                Review Approvals Now ➔
+              </button>
+            </div>
+          )}
+
+          {/* View Filter Pill Bar */}
+          <div className="branch-nav-pills" style={{ marginBottom: '1.5rem' }}>
+            <button
+              onClick={() => setMainView('branches')}
+              className="branch-pill-btn"
+              style={{
+                background: mainView === 'branches' ? '#2563eb' : '#fff',
+                color: mainView === 'branches' ? '#fff' : '#475569',
+                border: mainView === 'branches' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <Building2 size={16} /> All Branches ({bms.length})
+            </button>
+
+            <button
+              onClick={() => setMainView('pending_approvals')}
+              className="branch-pill-btn"
+              style={{
+                background: mainView === 'pending_approvals' ? '#2563eb' : '#fff',
+                color: mainView === 'pending_approvals' ? '#fff' : '#475569',
+                border: mainView === 'pending_approvals' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <Clock size={16} /> Pending Admin Approvals ({pendingTls.length})
+            </button>
+
+            <button
+              onClick={() => setMainView('it_projects')}
+              className="branch-pill-btn"
+              style={{
+                background: mainView === 'it_projects' ? '#2563eb' : '#fff',
+                color: mainView === 'it_projects' ? '#fff' : '#475569',
+                border: mainView === 'it_projects' ? '1px solid #2563eb' : '1px solid #cbd5e1'
+              }}
+            >
+              <Code size={16} /> Company IT Projects ({itProjects.length})
+            </button>
+          </div>
+
+          {/* --------------------------------------------------------------------- */}
+          {/* VIEW A: ALL BRANCHES CARDS DIRECTORY                                  */}
+          {/* --------------------------------------------------------------------- */}
+          {mainView === 'branches' && (
+            <div>
+              {/* Search Bar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '1rem' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '450px' }}>
+                  <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by branch name, manager, email..."
+                    value={branchSearch}
+                    onChange={e => setBranchSearch(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>
+                  Showing {filteredBms.length} of {bms.length} Branches
+                </div>
+              </div>
+
+              {filteredBms.length === 0 ? (
+                <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '4rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                  <Building2 size={42} color="#94a3b8" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>No Branches Found</div>
+                  <p style={{ margin: '6px 0 16px 0', fontSize: '0.88rem' }}>
+                    {branchSearch ? 'Try a different search query or clear the filter.' : 'Click below to register the first branch for your company.'}
+                  </p>
+                  <button
+                    onClick={() => handleOpenBmModal()}
+                    style={{ padding: '10px 20px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    + Add New Branch
+                  </button>
+                </div>
+              ) : (
+                <div className="branch-cards-grid">
+                  {filteredBms.map((bm) => {
+                    const bmTls = tls.filter(t => t.branchManagerId === bm.id || (t.branch && bm.branch && t.branch.toLowerCase() === bm.branch.toLowerCase()));
+                    const bmPendingCount = bmTls.filter(t => t.approvalStatus === 'pending').length;
+                    const bmTlIds = bmTls.map(t => t.id);
+                    const bmHrsCount = hrs.filter(h => bmTlIds.includes(h.teamLeaderId)).length;
+                    const bmItCount = itProjects.filter(p => p.branchManagerId === bm.id || (p.branch && bm.branch && p.branch.toLowerCase() === bm.branch.toLowerCase())).length;
+
+                    return (
+                      <div
+                        key={bm.id}
+                        style={{
+                          background: '#fff',
+                          borderRadius: '16px',
+                          border: bmPendingCount > 0 ? '2px solid #f59e0b' : '1px solid #e2e8f0',
+                          padding: '1.25rem',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                        }}
+                      >
+                        <div>
+                          {/* Card Top: Branch Header */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Branch Location
+                              </span>
+                              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0f172a' }}>
+                                📍 {bm.branch ? bm.branch.toUpperCase() : 'MAIN BRANCH'}
+                              </h3>
+                            </div>
+                            <span style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '3px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                              Active
+                            </span>
+                          </div>
+
+                          {/* Branch Manager Details */}
+                          <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '10px', marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                                {(bm.name || 'B')[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>{bm.name}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Branch Manager</div>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '6px' }}>
+                              ✉ {bm.email}
+                              {bm.mobile && ` • 📱 ${bm.mobile}`}
+                            </div>
+                          </div>
+
+                          {/* 3 Metric Chips */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '14px' }}>
+                            <div style={{ background: bmPendingCount > 0 ? '#fffbeb' : '#f1f5f9', border: bmPendingCount > 0 ? '1px solid #fde68a' : '1px solid #e2e8f0', padding: '6px 4px', borderRadius: '8px', textAlign: 'center' }}>
+                              <div style={{ fontWeight: 800, fontSize: '1rem', color: bmPendingCount > 0 ? '#d97706' : '#0f172a' }}>
+                                {bmTls.length}
+                              </div>
+                              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: bmPendingCount > 0 ? '#b45309' : '#64748b' }}>
+                                {bmPendingCount > 0 ? `⚠️ ${bmPendingCount} Pending` : 'Team Leaders'}
+                              </div>
+                            </div>
+
+                            <div style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '6px 4px', borderRadius: '8px', textAlign: 'center' }}>
+                              <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>
+                                {bmHrsCount}
+                              </div>
+                              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b' }}>
+                                Branch HRs
+                              </div>
+                            </div>
+
+                            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '6px 4px', borderRadius: '8px', textAlign: 'center' }}>
+                              <div style={{ fontWeight: 800, fontSize: '1rem', color: '#16a34a' }}>
+                                {bmItCount}
+                              </div>
+                              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#15803d' }}>
+                                IT Projects
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Actions */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                          <button
+                            onClick={() => { setSelectedBmId(bm.id); setBranchTab('team_leaders'); }}
+                            style={{
+                              flex: 1,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              padding: '10px 14px',
+                              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontWeight: 700,
+                              fontSize: '0.88rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                            }}
+                          >
+                            Manage Branch & Teams ➔
+                          </button>
+                          <button
+                            onClick={() => handleOpenBmModal(bm)}
+                            style={{ padding: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', color: '#475569' }}
+                            title="Edit Branch Manager"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBm(bm.id, bm.name, bm.branch)}
+                            style={{ padding: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', color: '#ef4444' }}
+                            title="Delete Branch"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* --------------------------------------------------------------------- */}
+          {/* VIEW B: PENDING APPROVALS TABLE (Across all branches)                 */}
+          {/* --------------------------------------------------------------------- */}
+          {mainView === 'pending_approvals' && (
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#fffbeb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#92400e' }}>
+                    Pending Admin Approvals ({pendingTls.length})
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#b45309' }}>
+                    These Team Leaders were created by Branch Managers and require Super Admin approval to activate.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                      <th style={{ padding: '12px 16px' }}>Team Leader</th>
+                      <th style={{ padding: '12px 16px' }}>Branch</th>
+                      <th style={{ padding: '12px 16px' }}>Branch Manager</th>
+                      <th style={{ padding: '12px 16px' }}>Status</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right' }}>Admin Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingTls.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#059669', fontWeight: 700 }}>
+                          ✓ All Team Leaders across all branches are approved! No pending requests.
+                        </td>
+                      </tr>
+                    ) : (
+                      pendingTls.map((tl) => (
+                        <tr key={tl.id} style={{ borderBottom: '1px solid #f1f5f9', background: '#fffdf7' }}>
+                          <td style={{ padding: '14px 16px' }}>
+                            <div style={{ fontWeight: 800, color: '#0f172a' }}>{tl.name}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{tl.email}{tl.mobile ? ` • ${tl.mobile}` : ''}</div>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ background: '#eff6ff', color: '#1e40af', padding: '4px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem' }}>
+                              📍 {tl.branch || 'Branch'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 16px', color: '#334155' }}>
+                            <div style={{ fontWeight: 600 }}>{tl.branchManagerName}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{tl.branchManagerEmail}</div>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fffbeb', color: '#b45309', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, border: '1px solid #fde68a' }}>
+                              <Clock size={13} color="#d97706" /> Pending Approval
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                               <button
                                 disabled={actionLoading === tl.id}
                                 onClick={() => handleTlApproval(tl.id, tl.name, 'approved')}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)' }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '7px 14px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)' }}
                               >
                                 <CheckCircle2 size={14} /> Approve TL
                               </button>
                               <button
                                 disabled={actionLoading === tl.id}
                                 onClick={() => handleTlApproval(tl.id, tl.name, 'rejected')}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '7px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}
                               >
                                 <XCircle size={14} /> Reject
                               </button>
-                            </>
-                          ) : tl.approvalStatus === 'approved' ? (
-                            <>
-                              <button
-                                onClick={() => handleOpenTlDetails(tl.id)}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)' }}
-                                title="Click to view Team HRs & Candidates"
-                              >
-                                <Eye size={14} /> View Team ➔
-                              </button>
-                              <button
-                                onClick={() => setAssignModalTl(tl)}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
-                                title="Click to view and manage HRs under this Team Leader"
-                              >
-                                <UserCheck size={14} /> Assign HRs ({tl.assignedHrsCount || 0})
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => handleTlApproval(tl.id, tl.name, 'approved')}
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: '#f1f5f9', color: '#16a34a', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}
-                            >
-                              Re-Approve
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => handleDeleteTl(tl.id, tl.name)}
-                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
-                            title="Delete Team Leader"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 2: BRANCH MANAGERS */}
-      {!selectedBm && subTab === 'branch_managers' && (
-        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-          <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>Registered Branch Managers</h3>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                Branch Managers oversee branches and recruit Team Leaders under them.
-              </p>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-                  <th style={{ padding: '12px 16px' }}>Branch Manager</th>
-                  <th style={{ padding: '12px 16px' }}>Branch / Location</th>
-                  <th style={{ padding: '12px 16px' }}>Total TLs</th>
-                  <th style={{ padding: '12px 16px' }}>Approved TLs</th>
-                  <th style={{ padding: '12px 16px' }}>Total HRs</th>
-                  <th style={{ padding: '12px 16px' }}>Created Date</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading Branch Managers...</td>
-                  </tr>
-                ) : bms.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                      No Branch Managers created yet. Click <strong>+ Add Branch Manager</strong> to create one!
-                    </td>
-                  </tr>
-                ) : (
-                  bms.map((bm) => (
-                    <tr key={bm.id} onClick={() => setSelectedBmId(bm.id)} title="Click to view branch details" style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f0f9ff'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div 
-                          onClick={() => setSelectedBmId(bm.id)}
-                          style={{ fontWeight: 800, color: '#0284c7', fontSize: '1rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                          title="Click to view branch details & dashboard"
-                        >
-                          {bm.name} <ExternalLink size={14} color="#0284c7" />
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                          <Mail size={12} /> {bm.email}
-                        </div>
-                        {bm.mobile && (
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                            <Phone size={12} /> {bm.mobile}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#0369a1' }}>
-                          {bm.branch || bm.location || 'Main Branch'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0f172a' }}>
-                        {bm.tlsCount || 0}
-                      </td>
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: '#16a34a' }}>
-                        {bm.approvedTlsCount || 0}
-                      </td>
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: '#8b5cf6' }}>
-                        {bm.hrsCount || 0}
-                      </td>
-                      <td style={{ padding: '14px 16px', color: '#94a3b8', fontSize: '0.85rem' }}>
-                        {bm.createdAt ? new Date(bm.createdAt).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setSelectedBmId(bm.id); }}
-                            className="btn-primary"
-                            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#0284c7', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                            title="View Branch Details"
-                          >
-                            <Eye size={14} /> View Branch
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleOpenBmModal(bm); }}
-                            style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }}
-                            title="Edit Branch Manager"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteBm(bm.id, bm.name); }}
-                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
-                            title="Delete Branch Manager"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* --------------------------------------------------------------------- */}
+          {/* VIEW C: COMPANY-WIDE IT PROJECTS                                     */}
+          {/* --------------------------------------------------------------------- */}
+          {mainView === 'it_projects' && (
+            <BranchItProjectsTab
+              API_URL={API_URL}
+              currentUser={currentUser || { role: 'admin', name: 'Super Admin' }}
+              onRefresh={fetchHierarchy}
+            />
+          )}
         </div>
       )}
 
-      {/* SUB-TAB 3: COMPANY-WIDE IT PROJECTS */}
-      {subTab === 'it_projects' && !selectedBm && !selectedTlId && (
-        <BranchItProjectsTab API_URL={API_URL} currentUser={currentUser || { role: 'admin', name: 'Super Admin' }} />
-      )}
-
-      {/* MODAL: ADD/EDIT BRANCH MANAGER */}
+      {/* ========================================================================= */}
+      {/* MODAL 1: ADD / EDIT BRANCH & MANAGER                                      */}
+      {/* ========================================================================= */}
       {bmModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
           <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '480px', padding: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
-              {bmToEdit ? 'Edit Branch Manager' : 'Add New Branch Manager'}
+              {bmToEdit ? 'Edit Branch & Manager' : 'Add New Branch & Manager'}
             </h2>
             <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1.5rem 0' }}>
-              Branch Managers have authorization to add Team Leaders under their designated branch.
+              Branch Managers oversee local branch operations and create Team Leaders.
             </p>
 
             {bmError && (
@@ -969,7 +1362,19 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
 
             <form onSubmit={handleSaveBm} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Full Name *</label>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Branch Name / Region *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Chennai - Guindy or Bangalore"
+                  value={bmForm.branch}
+                  onChange={e => setBmForm({ ...bmForm, branch: e.target.value, location: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Branch Manager Full Name *</label>
                 <input
                   type="text"
                   required
@@ -1017,18 +1422,6 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Branch Name / Region *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Chennai - Guindy Branch"
-                  value={bmForm.branch}
-                  onChange={e => setBmForm({ ...bmForm, branch: e.target.value, location: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
-                />
-              </div>
-
               <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
                 <button
                   type="button"
@@ -1042,7 +1435,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                   disabled={bmSaving}
                   style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#fff', fontWeight: 700, cursor: bmSaving ? 'not-allowed' : 'pointer' }}
                 >
-                  {bmSaving ? 'Saving...' : bmToEdit ? 'Update Manager' : 'Create Manager'}
+                  {bmSaving ? 'Saving...' : bmToEdit ? 'Update Branch' : 'Create Branch'}
                 </button>
               </div>
             </form>
@@ -1050,11 +1443,110 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
         </div>
       )}
 
-      {/* MODAL: ASSIGN HRs TO APPROVED TL */}
+      {/* ========================================================================= */}
+      {/* MODAL 2: ADD TEAM LEADER (For selected branch)                            */}
+      {/* ========================================================================= */}
+      {tlModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '480px', padding: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+              Add Team Leader
+            </h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1.5rem 0' }}>
+              Assign a new Team Leader to <strong style={{ color: '#0284c7' }}>{selectedBm?.branch || 'Branch'}</strong>.
+            </p>
+
+            {tlError && (
+              <div style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                {tlError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveTl} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Branch</label>
+                <input
+                  type="text"
+                  disabled
+                  value={selectedBm ? `${selectedBm.branch ? selectedBm.branch.toUpperCase() : 'MAIN'} (${selectedBm.name})` : tlForm.branch}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#334155', fontWeight: 700 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Team Leader Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Moorthy"
+                  value={tlForm.name}
+                  onChange={e => setTlForm({ ...tlForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. moorthy@gmail.com"
+                  value={tlForm.email}
+                  onChange={e => setTlForm({ ...tlForm, email: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Login Password *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={tlForm.password}
+                  onChange={e => setTlForm({ ...tlForm, password: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Mobile Number</label>
+                <input
+                  type="tel"
+                  placeholder="10 digit mobile number"
+                  value={tlForm.mobile}
+                  onChange={e => setTlForm({ ...tlForm, mobile: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setTlModalOpen(false)}
+                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={tlSaving}
+                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', fontWeight: 700, cursor: tlSaving ? 'not-allowed' : 'pointer' }}
+                >
+                  {tlSaving ? 'Creating...' : 'Create Team Leader'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: ASSIGN HRs TO APPROVED TL                                        */}
+      {/* ========================================================================= */}
       {assignModalTl && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
           <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '640px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-            {/* Modal Header */}
             <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
@@ -1074,7 +1566,6 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               </div>
             </div>
 
-            {/* Modal Body - HR List */}
             <div style={{ padding: '1.25rem', overflowY: 'auto', flex: 1 }}>
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px 14px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', color: '#166534' }}>
                 Only HRs approved by Admin will be mapped to this Team Leader. Toggle the button to assign or unassign.
@@ -1137,7 +1628,6 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               )}
             </div>
 
-            {/* Modal Footer */}
             <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setAssignModalTl(null)}

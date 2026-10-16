@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { UserModel, ApplicationModel, PartnerIncentiveModel, GlobalSettingsModel, readDBAsync, JobModel, CandidateModel, CompanyModel, InterviewModel } = require('../db');
+const { UserModel, ApplicationModel, PartnerIncentiveModel, GlobalSettingsModel, readDBAsync, JobModel, CandidateModel, CompanyModel, InterviewModel, BranchItProjectModel } = require('../db');
 
 // GET all HRs / Employees
 router.get('/hr', async (req, res) => {
@@ -579,6 +579,7 @@ router.get('/branch-managers', async (req, res) => {
     const bms = await UserModel.find({ role: 'branch_manager' }).sort({ createdAt: -1 }).lean();
     const tls = await UserModel.find({ role: 'team_leader' }).lean();
     const hrs = await UserModel.find({ role: 'hr' }).lean();
+    const itProjects = await BranchItProjectModel.find({}).lean();
 
     const tlMap = {};
     tls.forEach(tl => {
@@ -592,13 +593,18 @@ router.get('/branch-managers', async (req, res) => {
       const approvedTls = myTls.filter(t => t.approvalStatus === 'approved');
       const myTlIds = myTls.map(t => t.id);
       const myHrs = hrs.filter(h => myTlIds.includes(h.teamLeaderId));
+      const myItProjects = itProjects.filter(p => (
+        (p.branchManagerId && p.branchManagerId === bm.id) ||
+        (p.branch && bm.branch && p.branch.toLowerCase() === bm.branch.toLowerCase())
+      ));
 
       return {
         ...safe,
         tlsCount: myTls.length,
         approvedTlsCount: approvedTls.length,
         pendingTlsCount: myTls.length - approvedTls.length,
-        hrsCount: myHrs.length
+        hrsCount: myHrs.length,
+        itProjectsCount: myItProjects.length
       };
     });
 
