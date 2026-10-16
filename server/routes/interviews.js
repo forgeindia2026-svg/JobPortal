@@ -177,6 +177,15 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Interview schedule not found.' });
     }
 
+    // Automatically sync application status if interview status was changed
+    if (updated.applicationId && req.body.status) {
+      await ApplicationModel.findOneAndUpdate(
+        { id: updated.applicationId },
+        { $set: { status: req.body.status, updatedAt: new Date().toISOString() } }
+      );
+      console.log(`🔄 Synced application ${updated.applicationId} status to '${req.body.status}' from interview.`);
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update interview schedule in MongoDB Atlas.' });

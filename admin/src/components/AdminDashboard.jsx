@@ -520,6 +520,23 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const validApplications = applications.filter(app => app.status !== 'Payment Pending');
 
+  const docSubmissionCount = useMemo(() => {
+    const ids = new Set();
+    validApplications.forEach(a => {
+      const s = String(a.status || '').toLowerCase().trim();
+      if (['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document')) {
+        ids.add(a.id);
+      }
+    });
+    (interviews || []).forEach(int => {
+      const s = String(int.status || '').toLowerCase().trim();
+      if (['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document')) {
+        if (int.applicationId) ids.add(int.applicationId);
+      }
+    });
+    return ids.size;
+  }, [validApplications, interviews]);
+
   const getUpcomingIncentivesData = () => {
     const allReferrers = [...hrs, ...allAgents];
     const results = [];
@@ -604,14 +621,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       if (appStatusFilter.toLowerCase() === 'processing') {
         const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
         const s = (app.status || '').toLowerCase();
-        if (!procStatuses.includes(s) || s.includes('interview')) return false;
+        if (!procStatuses.includes(s) || s.includes('interview') || s.includes('document')) return false;
       } else if (appStatusFilter.toLowerCase() === 'selected') {
         const selStatuses = ['selected', 'converted'];
         if (!selStatuses.includes((app.status || '').toLowerCase())) return false;
       } else if (appStatusFilter.toLowerCase() === 'document submission') {
         const s = (app.status || '').toLowerCase().trim();
         const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
-        if (!isDoc) return false;
+        const hasDocInterview = (interviews || []).some(int => int.applicationId === app.id && String(int.status || '').toLowerCase().includes('document'));
+        if (!isDoc && !hasDocInterview) return false;
       } else {
         if ((app.status || '').toLowerCase() !== appStatusFilter.toLowerCase()) return false;
       }
@@ -815,6 +833,24 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </span>
       );
     }
+    if (s.includes('document')) {
+      return (
+        <span style={{
+          background: '#ecfeff',
+          color: '#0e7490',
+          border: '1px solid #67e8f9',
+          padding: '3px 8px',
+          borderRadius: '12px',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          📄 {status}
+        </span>
+      );
+    }
     if (s === 'active' || s === 'selected') return <span className="badge badge-active">✓ {status}</span>;
     if (s.includes('interview') || s === 'shortlisted') return <span className="badge badge-shortlisted">● {status}</span>;
     if (s === 'applied' || s === 'under review') return <span className="badge badge-applied">● {status}</span>;
@@ -994,7 +1030,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <div className="kpi-val" style={{ color: '#312e81' }}>
                     {validApplications.filter(a => {
                       const s = String(a.status || '').toLowerCase();
-                      return !['selected', 'converted', 'rejected', 'not interested', 'interview scheduled'].includes(s) && !s.includes('interview');
+                      return !['selected', 'converted', 'rejected', 'not interested', 'interview scheduled'].includes(s) && !s.includes('interview') && !s.includes('document');
                     }).length}
                   </div>
                   <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
@@ -1036,10 +1072,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
                 <div>
                   <div className="kpi-val" style={{ color: '#164e63' }}>
-                    {validApplications.filter(a => {
-                      const s = String(a.status || '').toLowerCase().trim();
-                      return ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
-                    }).length}
+                    {docSubmissionCount}
                   </div>
                   <div className="kpi-label" style={{ color: '#164e63', opacity: 0.8, fontWeight: 600 }}>Document Submission</div>
                 </div>

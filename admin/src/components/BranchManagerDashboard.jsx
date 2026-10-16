@@ -399,7 +399,9 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                 <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#164e63' }}>
                   {validApplications.filter(a => {
                     const s = String(a.status || '').toLowerCase().trim();
-                    return ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+                    const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+                    const hasDocInt = (branchInterviews || []).some(int => int.applicationId === a.id && String(int.status || '').toLowerCase().includes('document'));
+                    return isDoc || hasDocInt;
                   }).length}
                 </div>
                 <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#0e7490', fontWeight: 600 }}>Verification Stage</span>

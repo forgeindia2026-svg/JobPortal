@@ -1799,6 +1799,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   <option value="Applied">Applied</option>
                   <option value="Shortlisted">Shortlisted</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
                   <option value="Converted">Converted</option>
                   <option value="Follow up">Follow up</option>
