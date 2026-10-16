@@ -1175,8 +1175,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   totalClosed: closedApps.length
                 };
               });
-              const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed).slice(0, 5);
-              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced).slice(0, 5);
+              const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed);
+              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced);
               
               return (
                 <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -1184,11 +1184,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <div style={{ marginBottom: '1.25rem' }}>
                       <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                        🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
+                        🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>({topSourcers.length} HRs)</span>
                       </h3>
                       <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Click on any HR or count to view their candidates</p>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '520px', overflowY: 'auto', paddingRight: '6px' }}>
                       {topSourcers.map((hr, idx) => {
                         const isScored = Number(hr.totalSourced || 0) > 0;
                         return (
@@ -1287,11 +1287,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <div style={{ marginBottom: '1.25rem' }}>
                       <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected/Closed)</span>
+                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>({topClosers.length} HRs)</span>
                       </h3>
                       <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Click on any HR or count to view their candidates</p>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '520px', overflowY: 'auto', paddingRight: '6px' }}>
                       {topClosers.map((hr, idx) => {
                         const isScored = Number(hr.totalClosed || 0) > 0;
                         return (
