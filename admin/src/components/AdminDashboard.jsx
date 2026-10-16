@@ -671,16 +671,29 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     if (!selectedHrForCandidates) return [];
     return hrAllCandidates.filter(app => {
       if (hrCandidateStatusFilter !== 'all') {
-        const filterLower = hrCandidateStatusFilter.toLowerCase();
+        const filterLower = hrCandidateStatusFilter.toLowerCase().trim();
+        const s = String(app.status || '').toLowerCase().trim();
+
         if (filterLower === 'processing') {
-          const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
-          const s = String(app.status || '').toLowerCase();
-          if (!procStatuses.includes(s) || s.includes('interview')) return false;
-        } else if (filterLower === 'selected' || filterLower === 'closed') {
-          const selStatuses = ['selected', 'joined', 'converted', 'closed', 'hired'];
-          if (!selStatuses.includes(String(app.status || '').toLowerCase())) return false;
+          const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending', 'interview scheduled', 'scheduled'];
+          const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+          const isFinal = ['selected', 'closed', 'joined', 'converted', 'hired', 'rejected', 'not interested'].includes(s);
+          if (isDoc || isFinal) return false;
+        } else if (filterLower === 'document submission' || filterLower === 'document submitted' || filterLower === 'document') {
+          const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+          const hasDocInt = (interviews || []).some(int => (String(int.candidateId) === String(app.candidateId) || String(int.applicationId) === String(app.id)) && String(int.status || '').toLowerCase().includes('document'));
+          if (!isDoc && !hasDocInt) return false;
+        } else if (filterLower === 'selected') {
+          const isSel = ['selected', 'l1 selected', 'l2 selected'].includes(s);
+          if (!isSel) return false;
+        } else if (filterLower === 'closed') {
+          const isClo = ['closed', 'joined', 'converted', 'hired', 'enrollment'].includes(s);
+          if (!isClo) return false;
+        } else if (filterLower === 'rejected') {
+          const isRej = ['rejected', 'not interested'].includes(s);
+          if (!isRej) return false;
         } else {
-          if (String(app.status || '').toLowerCase() !== filterLower) return false;
+          if (s !== filterLower) return false;
         }
       }
 
@@ -700,14 +713,29 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
       return true;
     });
-  }, [selectedHrForCandidates, hrAllCandidates, hrCandidateSearch, hrCandidateStatusFilter]);
+  }, [selectedHrForCandidates, hrAllCandidates, hrCandidateSearch, hrCandidateStatusFilter, interviews]);
 
   const hrCandidateStats = useMemo(() => {
-    if (!selectedHrForCandidates) return { total: 0, closed: 0, processing: 0, rejected: 0, incentives: 0, upcomingAmount: 0 };
+    if (!selectedHrForCandidates) return { total: 0, closed: 0, selected: 0, documentSubmitted: 0, processing: 0, rejected: 0, incentives: 0, upcomingAmount: 0 };
     const total = hrAllCandidates.length;
-    const closed = hrAllCandidates.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
-    const rejected = hrAllCandidates.filter(a => String(a.status || '').toLowerCase() === 'rejected').length;
-    const processing = total - closed - rejected;
+
+    const isDoc = (app) => {
+      const s = String(app.status || '').toLowerCase().trim();
+      const isDocStatus = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+      const hasDocInt = (interviews || []).some(int => (String(int.candidateId) === String(app.candidateId) || String(int.applicationId) === String(app.id)) && String(int.status || '').toLowerCase().includes('document'));
+      return isDocStatus || hasDocInt;
+    };
+
+    const isSel = (app) => ['selected', 'l1 selected', 'l2 selected'].includes(String(app.status || '').toLowerCase().trim());
+    const isClo = (app) => ['closed', 'joined', 'converted', 'hired', 'enrollment'].includes(String(app.status || '').toLowerCase().trim());
+    const isRej = (app) => ['rejected', 'not interested'].includes(String(app.status || '').toLowerCase().trim());
+
+    const documentSubmitted = hrAllCandidates.filter(a => isDoc(a) && !isSel(a) && !isClo(a) && !isRej(a)).length;
+    const selected = hrAllCandidates.filter(a => isSel(a)).length;
+    const closed = hrAllCandidates.filter(a => isClo(a)).length;
+    const rejected = hrAllCandidates.filter(a => isRej(a)).length;
+    const processing = hrAllCandidates.filter(a => !isDoc(a) && !isSel(a) && !isClo(a) && !isRej(a)).length;
+
     const incentives = selectedHrForCandidates.incentives || 0;
 
     const hrUpcoming = upcomingIncentivesData.find(u => 
@@ -716,8 +744,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     );
     const upcomingAmount = hrUpcoming ? hrUpcoming.upcomingAmount : 0;
 
-    return { total, closed, processing, rejected, incentives, upcomingAmount };
-  }, [selectedHrForCandidates, hrAllCandidates, upcomingIncentivesData]);
+    return { total, closed, selected, documentSubmitted, processing, rejected, incentives, upcomingAmount };
+  }, [selectedHrForCandidates, hrAllCandidates, upcomingIncentivesData, interviews]);
 
   const handleDeleteJob = async (id) => {
     if (!window.confirm('Are you sure you want to delete this job opening?')) return;
@@ -2930,6 +2958,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   gap: '12px',
                   marginBottom: '1.5rem'
                 }}>
+                  {/* 1. UPCOMING INCENTIVE (FIRST) */}
+                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1.5px solid #99f6e4', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase' }}>Upcoming Incentive</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f766e', marginTop: '4px' }}>
+                      ₹{hrCandidateStats.upcomingAmount.toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* 2. TOTAL CANDIDATES */}
                   <div
                     onClick={() => setHrCandidateStatusFilter('all')}
                     style={{
@@ -2949,25 +2986,27 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     </div>
                   </div>
 
+                  {/* 3. DOCUMENT SUBMITTED */}
                   <div
-                    onClick={() => setHrCandidateStatusFilter('Selected')}
+                    onClick={() => setHrCandidateStatusFilter('document submission')}
                     style={{
                       background: '#ffffff',
                       padding: '14px 16px',
                       borderRadius: '12px',
-                      border: (hrCandidateStatusFilter.toLowerCase() === 'selected' || hrCandidateStatusFilter.toLowerCase() === 'closed') ? '2px solid #059669' : '1px solid #a7f3d0',
-                      boxShadow: (hrCandidateStatusFilter.toLowerCase() === 'selected' || hrCandidateStatusFilter.toLowerCase() === 'closed') ? '0 4px 12px rgba(5, 150, 105, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      border: (hrCandidateStatusFilter.toLowerCase().includes('document')) ? '2px solid #0891b2' : '1px solid #a5f3fc',
+                      boxShadow: (hrCandidateStatusFilter.toLowerCase().includes('document')) ? '0 4px 12px rgba(8, 145, 178, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
-                    title="Click to filter Selected / Closed candidates"
+                    title="Click to filter Document Submitted candidates"
                   >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Selected / Closed</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#047857', marginTop: '4px' }}>
-                      {hrCandidateStats.closed}
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0891b2', textTransform: 'uppercase' }}>Document Submitted</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0e7490', marginTop: '4px' }}>
+                      {hrCandidateStats.documentSubmitted}
                     </div>
                   </div>
 
+                  {/* 4. IN PROGRESS / REVIEW */}
                   <div
                     onClick={() => setHrCandidateStatusFilter('Processing')}
                     style={{
@@ -2987,6 +3026,47 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     </div>
                   </div>
 
+                  {/* 5. SELECTED (SEPARATE) */}
+                  <div
+                    onClick={() => setHrCandidateStatusFilter('selected')}
+                    style={{
+                      background: '#ffffff',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: hrCandidateStatusFilter.toLowerCase() === 'selected' ? '2px solid #059669' : '1px solid #a7f3d0',
+                      boxShadow: hrCandidateStatusFilter.toLowerCase() === 'selected' ? '0 4px 12px rgba(5, 150, 105, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Click to filter Selected candidates"
+                  >
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Selected</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#047857', marginTop: '4px' }}>
+                      {hrCandidateStats.selected}
+                    </div>
+                  </div>
+
+                  {/* 6. CLOSED (SEPARATE) */}
+                  <div
+                    onClick={() => setHrCandidateStatusFilter('closed')}
+                    style={{
+                      background: '#ffffff',
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: hrCandidateStatusFilter.toLowerCase() === 'closed' ? '2px solid #4f46e5' : '1px solid #c7d2fe',
+                      boxShadow: hrCandidateStatusFilter.toLowerCase() === 'closed' ? '0 4px 12px rgba(79, 70, 229, 0.15)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Click to filter Closed / Joined candidates"
+                  >
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4f46e5', textTransform: 'uppercase' }}>Closed</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#4338ca', marginTop: '4px' }}>
+                      {hrCandidateStats.closed}
+                    </div>
+                  </div>
+
+                  {/* 7. REJECTED */}
                   <div
                     onClick={() => setHrCandidateStatusFilter('Rejected')}
                     style={{
@@ -3006,17 +3086,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     </div>
                   </div>
 
+                  {/* 8. TOTAL INCENTIVES */}
                   <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase' }}>Total Incentives</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#15803d', marginTop: '4px' }}>
                       ₹{hrCandidateStats.incentives.toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div style={{ background: '#ffffff', padding: '14px 16px', borderRadius: '12px', border: '1px solid #99f6e4', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase' }}>Upcoming Incentive</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f766e', marginTop: '4px' }}>
-                      ₹{hrCandidateStats.upcomingAmount.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -3070,12 +3144,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     >
                       <option value="all">Status: All ({hrCandidateStats.total})</option>
                       <option value="Processing">Processing ({hrCandidateStats.processing})</option>
+                      <option value="document submission">Document Submitted ({hrCandidateStats.documentSubmitted})</option>
                       <option value="Applied">Applied</option>
                       <option value="Under Review">Under Review</option>
                       <option value="Shortlisted">Shortlisted</option>
                       <option value="HR Screening">HR Screening</option>
                       <option value="Interview Scheduled">Interview Scheduled</option>
-                      <option value="Selected">Selected / Closed ({hrCandidateStats.closed})</option>
+                      <option value="selected">Selected ({hrCandidateStats.selected})</option>
+                      <option value="closed">Closed ({hrCandidateStats.closed})</option>
                       <option value="Rejected">Rejected ({hrCandidateStats.rejected})</option>
                     </select>
 
