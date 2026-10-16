@@ -1133,8 +1133,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       <th>Process</th>
                       <th>Date & Time</th>
                       <th>Mode & Details</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th style={{ minWidth: '180px' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1147,6 +1146,26 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                           {(relatedApp?.candidateMobile || int.candidateMobile) && (
                             <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
                               📱 {relatedApp?.candidateMobile || int.candidateMobile}
+                            </div>
+                          )}
+                          {(relatedApp?.candidateResumeUrl || int.candidateResumeUrl) && (
+                            <div style={{ marginTop: '4px' }}>
+                              <a
+                                href={relatedApp?.candidateResumeUrl || int.candidateResumeUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  fontSize: '0.75rem',
+                                  color: '#059669',
+                                  textDecoration: 'none',
+                                  fontWeight: 700
+                                }}
+                              >
+                                <FileText size={12} /> View Resume ➔
+                              </a>
                             </div>
                           )}
                         </td>
@@ -1184,14 +1203,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                             value={int.status || 'Scheduled'}
                             onChange={(e) => handleInterviewStatusChange(int.id || int._id, e.target.value)}
                             style={{
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              border: '1px solid #cbd5e1',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1.5px solid #cbd5e1',
+                              fontSize: '0.82rem',
+                              fontWeight: 700,
                               backgroundColor: '#f8fafc',
                               color: '#0f172a',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              outline: 'none'
                             }}
                           >
                             <option value="Scheduled">Scheduled</option>
@@ -1203,32 +1223,6 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                             <option value="2 Times re-scheduled interview">2 Times re-scheduled interview</option>
                             <option value="Enrollment">Enrollment</option>
                           </select>
-                        </td>
-                        <td>
-                          {relatedApp?.candidateResumeUrl || int.candidateResumeUrl ? (
-                            <a
-                              href={relatedApp?.candidateResumeUrl || int.candidateResumeUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '6px 12px',
-                                fontSize: '0.78rem',
-                                color: '#059669',
-                                background: '#ecfdf5',
-                                border: '1px solid #a7f3d0',
-                                borderRadius: '6px',
-                                textDecoration: 'none',
-                                fontWeight: 700
-                              }}
-                            >
-                              <FileText size={13} /> View Resume
-                            </a>
-                          ) : (
-                            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>-</span>
-                          )}
                         </td>
                       </tr>
                       );
