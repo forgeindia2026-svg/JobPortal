@@ -40,10 +40,30 @@ router.get('/', async (req, res) => {
     const { branchManagerId, branch } = req.query;
     const filter = {};
     if (branchManagerId) filter.branchManagerId = branchManagerId;
-    if (branch) filter.branch = new RegExp('^' + branch + '$', 'i');
+    if (branch && branch !== 'all') filter.branch = new RegExp('^' + branch + '$', 'i');
 
     const projects = await BranchItProjectModel.find(filter).sort({ createdAt: -1 }).lean();
-    res.json(projects);
+
+    // Fetch all branch managers to enrich projects with branch manager name & email
+    const bms = await UserModel.find({ role: 'branch_manager' }).lean();
+    const bmMap = {};
+    const branchToBmMap = {};
+    bms.forEach(bm => {
+      bmMap[bm.id] = bm;
+      if (bm.branch) branchToBmMap[bm.branch.toLowerCase()] = bm;
+    });
+
+    const enriched = projects.map(p => {
+      const bm = bmMap[p.branchManagerId] || branchToBmMap[(p.branch || '').toLowerCase()];
+      return {
+        ...p,
+        branch: p.branch || (bm ? bm.branch : 'Main Branch'),
+        branchManagerName: bm ? bm.name : (p.createdByName || 'Branch Manager'),
+        branchManagerEmail: bm ? bm.email : ''
+      };
+    });
+
+    res.json(enriched);
   } catch (error) {
     console.error('Error fetching Branch IT Projects:', error);
     res.status(500).json({ error: 'Failed to fetch Branch IT projects.' });
@@ -84,6 +104,20 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Member name, project name, and deadline are required.' });
     }
 
+    let finalBranch = (branch || '').trim();
+    let finalBmId = (branchManagerId || '').trim();
+
+    // Link Branch Manager and Branch
+    if (finalBmId) {
+      const bm = await UserModel.findOne({ id: finalBmId, role: 'branch_manager' }).lean();
+      if (bm && bm.branch) finalBranch = bm.branch;
+    } else if (finalBranch) {
+      const bm = await UserModel.findOne({ branch: new RegExp('^' + finalBranch + '$', 'i'), role: 'branch_manager' }).lean();
+      if (bm) finalBmId = bm.id;
+    }
+
+    if (!finalBranch) finalBranch = 'Main Branch';
+
     let emailProofUrl = '';
     if (emailProofImage) {
       emailProofUrl = saveBase64Image(emailProofImage);
@@ -91,8 +125,8 @@ router.post('/', async (req, res) => {
 
     const newProject = new BranchItProjectModel({
       id: `it_proj_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      branchManagerId: branchManagerId || '',
-      branch: branch || 'Main Branch',
+      branchManagerId: finalBmId,
+      branch: finalBranch,
       memberName: memberName.trim(),
       memberRole: memberRole ? memberRole.trim() : 'Developer',
       projectName: projectName.trim(),

@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import {
   Code, Plus, Search, Calendar, Clock, AlertTriangle, CheckCircle,
   FileText, Eye, Trash2, Edit2, X, Upload, Image, RefreshCw, CheckCircle2,
-  ExternalLink, User, Layers
+  ExternalLink, User, Layers, Building2, MapPin
 } from 'lucide-react';
 
 export default function BranchItProjectsTab({ API_URL, currentUser }) {
   const resolvedApi = API_URL || import.meta.env.VITE_API_URL || '';
+  const isAdmin = currentUser?.role === 'admin' || !currentUser?.role || currentUser?.role === 'superadmin';
+  const isBranchManager = currentUser?.role === 'branch_manager';
+
   const [projects, setProjects] = useState([]);
+  const [availableBms, setAvailableBms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [branchFilter, setBranchFilter] = useState('all');
 
   // Add / Edit Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,7 +27,9 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
     description: '',
     deadline: '',
     status: 'In Progress',
-    emailProofImage: ''
+    emailProofImage: '',
+    branch: currentUser?.branch || '',
+    branchManagerId: isBranchManager ? (currentUser?.id || '') : ''
   });
   const [previewImage, setPreviewImage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -32,10 +39,11 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
   // Proof Lightbox Modal
   const [viewProofModal, setViewProofModal] = useState(null);
 
+  // Fetch IT Projects
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const query = currentUser?.id && currentUser?.role === 'branch_manager'
+      const query = isBranchManager && currentUser?.id
         ? `?branchManagerId=${currentUser.id}`
         : currentUser?.branch
         ? `?branch=${encodeURIComponent(currentUser.branch)}`
@@ -51,6 +59,16 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
       setLoading(false);
     }
   };
+
+  // Fetch Branch Managers for Admin dropdown
+  useEffect(() => {
+    fetch(`${resolvedApi}/api/users/branch-managers`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setAvailableBms(data);
+      })
+      .catch(err => console.error('Error loading branch managers:', err));
+  }, [resolvedApi]);
 
   useEffect(() => {
     fetchProjects();
@@ -89,7 +107,9 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
       description: '',
       deadline: '',
       status: 'In Progress',
-      emailProofImage: ''
+      emailProofImage: '',
+      branch: isBranchManager ? (currentUser?.branch || 'Main Branch') : (availableBms[0]?.branch || 'bangalore'),
+      branchManagerId: isBranchManager ? (currentUser?.id || '') : (availableBms[0]?.id || '')
     });
     setPreviewImage('');
     setError('');
@@ -105,7 +125,9 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
       description: proj.description || '',
       deadline: proj.deadline || '',
       status: proj.status || 'In Progress',
-      emailProofImage: ''
+      emailProofImage: '',
+      branch: proj.branch || currentUser?.branch || 'Main Branch',
+      branchManagerId: proj.branchManagerId || ''
     });
     setPreviewImage(proj.emailProofUrl ? `${resolvedApi}${proj.emailProofUrl}` : '');
     setError('');
@@ -116,6 +138,11 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
     e.preventDefault();
     if (!form.memberName.trim() || !form.projectName.trim() || !form.deadline) {
       setError('Please provide Member Name, Project Name, and Deadline.');
+      return;
+    }
+
+    if (!form.branch) {
+      setError('Please assign this IT project to a Branch.');
       return;
     }
 
@@ -136,8 +163,8 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
 
       const payload = {
         ...form,
-        branchManagerId: currentUser?.id || '',
-        branch: currentUser?.branch || 'Main Branch',
+        branchManagerId: form.branchManagerId || (isBranchManager ? currentUser?.id : ''),
+        branch: form.branch || currentUser?.branch || 'Main Branch',
         createdByName: currentUser?.name || 'Manager',
         createdByRole: currentUser?.role || 'branch_manager'
       };
@@ -202,8 +229,7 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
         color: '#059669',
         bg: '#ecfdf5',
         border: '#a7f3d0',
-        text: '✅ Completed',
-        badgeClass: 'status-completed'
+        text: '✅ Completed'
       };
     }
     if (!deadlineStr) {
@@ -219,7 +245,6 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Parse 'YYYY-MM-DD'
     const parts = deadlineStr.split('-');
     const deadline = new Date(parts[0], parts[1] - 1, parts[2]);
     deadline.setHours(0, 0, 0, 0);
@@ -271,12 +296,20 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
     }
   };
 
+  // Get list of unique branches for filter dropdown
+  const uniqueBranches = Array.from(new Set([
+    ...projects.map(p => (p.branch || '').trim()),
+    ...availableBms.map(b => (b.branch || '').trim())
+  ])).filter(Boolean);
+
   // Filter projects
   const filteredProjects = projects.filter(p => {
     const matchesSearch =
       (p.memberName || '').toLowerCase().includes(search.toLowerCase()) ||
       (p.projectName || '').toLowerCase().includes(search.toLowerCase()) ||
       (p.memberRole || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.branch || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.branchManagerName || '').toLowerCase().includes(search.toLowerCase()) ||
       (p.description || '').toLowerCase().includes(search.toLowerCase());
 
     const isOverdue = (() => {
@@ -292,7 +325,11 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
       statusFilter === 'all' ||
       (statusFilter === 'overdue' ? isOverdue : String(p.status || '').toLowerCase() === statusFilter.toLowerCase());
 
-    return matchesSearch && matchesStatus;
+    const matchesBranch =
+      branchFilter === 'all' ||
+      (p.branch || '').toLowerCase() === branchFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus && matchesBranch;
   });
 
   // KPI calculations
@@ -319,10 +356,12 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
             </div>
             <div>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
-                Branch IT Team & Projects
+                {isAdmin ? '🏢 Company IT Projects & Branch Operations' : '💻 Branch IT Team & Projects'}
               </h2>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
-                Track IT member projects, delivery deadlines, email proof, and live remaining time.
+                {isAdmin
+                  ? 'All branches IT projects, delivery deadlines, assigned branch manager & email communication proofs.'
+                  : `Managing IT team and project deadlines for ${currentUser?.branch || 'this'} branch.`}
               </p>
             </div>
           </div>
@@ -361,7 +400,9 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
             </div>
           </div>
           <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalMembers}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#64748b' }}>Assigned in this branch</span>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            {isAdmin ? 'Across all branches' : 'Assigned in this branch'}
+          </span>
         </div>
 
         <div className="dashboard-kpi-card" style={{ background: '#eff6ff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #bfdbfe' }}>
@@ -406,11 +447,12 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
 
       {/* Search & Filter Bar */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', background: '#fff', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', alignItems: 'center' }}>
+        {/* Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', flex: 1, minWidth: '220px' }}>
           <Search size={16} color="#64748b" />
           <input
             type="text"
-            placeholder="Search IT Member, Project, or Role..."
+            placeholder="Search Member, Project, Branch, or Manager..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.88rem' }}
@@ -420,6 +462,24 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
           )}
         </div>
 
+        {/* Branch Filter (Crucial for Admin to avoid confusion) */}
+        {isAdmin && uniqueBranches.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Branch:</span>
+            <select
+              value={branchFilter}
+              onChange={e => setBranchFilter(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', background: '#fff', fontWeight: 700, color: '#0369a1' }}
+            >
+              <option value="all">All Branches ({projects.length})</option>
+              {uniqueBranches.map(b => (
+                <option key={b} value={b}>{b.toUpperCase()}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Status Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Status:</span>
           <select
@@ -427,7 +487,7 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
             onChange={e => setStatusFilter(e.target.value)}
             style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', background: '#fff', fontWeight: 600 }}
           >
-            <option value="all">All Projects ({projects.length})</option>
+            <option value="all">All Statuses</option>
             <option value="In Progress">In Progress</option>
             <option value="Under Review">Under Review</option>
             <option value="Completed">Completed</option>
@@ -444,7 +504,9 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
               IT Projects Directory ({filteredProjects.length})
             </h3>
             <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              Showing assignments and live countdown deadlines
+              {isAdmin
+                ? 'Showing IT members clearly organized with their assigned Branch & Branch Manager'
+                : 'Assignments and live countdown deadlines for this branch'}
             </span>
           </div>
         </div>
@@ -459,7 +521,9 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
             <Code size={42} style={{ opacity: 0.25, margin: '0 auto 12px auto' }} />
             <h4 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#0f172a' }}>No IT Projects Found</h4>
             <p style={{ margin: 0, fontSize: '0.85rem' }}>
-              {search || statusFilter !== 'all' ? 'No projects match your filter query.' : 'Click "+ Add IT Member / Project" to register your first IT project with email proof.'}
+              {search || statusFilter !== 'all' || branchFilter !== 'all'
+                ? 'No projects match your filter query.'
+                : 'Click "+ Add IT Member / Project" to register your first IT project with email proof.'}
             </p>
           </div>
         ) : (
@@ -470,6 +534,8 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     <th style={{ padding: '14px 18px' }}>IT Member</th>
+                    {/* DEDICATED BRANCH & MANAGER COLUMN (Eliminates Admin Confusion!) */}
+                    <th style={{ padding: '14px 18px' }}>Branch & Manager</th>
                     <th style={{ padding: '14px 18px' }}>Project & Scope</th>
                     <th style={{ padding: '14px 18px' }}>Target Deadline</th>
                     <th style={{ padding: '14px 18px' }}>Remaining Time (Live)</th>
@@ -500,8 +566,23 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                           </div>
                         </td>
 
+                        {/* BRANCH & MANAGER COLUMN */}
+                        <td style={{ padding: '16px 18px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '3px 9px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 800, width: 'fit-content', textTransform: 'capitalize' }}>
+                              <Building2 size={12} color="#2563eb" />
+                              {proj.branch || 'Main Branch'}
+                            </span>
+                            {proj.branchManagerName && (
+                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                Mgr: <strong style={{ color: '#334155' }}>{proj.branchManagerName}</strong>
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
                         {/* Project */}
-                        <td style={{ padding: '16px 18px', maxWidth: '260px' }}>
+                        <td style={{ padding: '16px 18px', maxWidth: '240px' }}>
                           <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '2px' }}>{proj.projectName}</div>
                           {proj.description && (
                             <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -591,9 +672,16 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                       <div>
                         <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>{proj.memberName}</div>
-                        <span style={{ fontSize: '0.75rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
-                          {proj.memberRole || 'Developer'}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                            {proj.memberRole || 'Developer'}
+                          </span>
+                          {/* Mobile Branch Tag */}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '2px 7px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'capitalize' }}>
+                            <Building2 size={11} color="#2563eb" /> {proj.branch || 'Branch'}
+                            {proj.branchManagerName && ` • ${proj.branchManagerName}`}
+                          </span>
+                        </div>
                       </div>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: deadlineInfo.bg, color: deadlineInfo.color, border: `1px solid ${deadlineInfo.border}`, padding: '4px 10px', borderRadius: '20px', fontWeight: 700, fontSize: '0.75rem' }}>
                         {deadlineInfo.text}
@@ -672,7 +760,7 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                   {editingProject ? 'Edit IT Project' : 'Add IT Member & Project'}
                 </h3>
                 <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                  Assign deadline and upload email communication proof screenshot
+                  Assign branch, deadline, and upload email communication proof screenshot
                 </p>
               </div>
               <button
@@ -689,6 +777,42 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                   ⚠️ {error}
                 </div>
               )}
+
+              {/* BRANCH SELECTION (Especially for Super Admin) */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Assign to Branch & Manager *
+                </label>
+                {isAdmin ? (
+                  <select
+                    required
+                    value={form.branchManagerId}
+                    onChange={e => {
+                      const selBm = availableBms.find(b => b.id === e.target.value);
+                      setForm({
+                        ...form,
+                        branchManagerId: e.target.value,
+                        branch: selBm ? selBm.branch : ''
+                      });
+                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none', background: '#fff', fontWeight: 600 }}
+                  >
+                    <option value="">-- Select Branch & Manager --</option>
+                    {availableBms.map(bm => (
+                      <option key={bm.id} value={bm.id}>
+                        {bm.branch ? bm.branch.toUpperCase() : 'MAIN'} — {bm.name} ({bm.email})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    disabled
+                    value={`${currentUser?.branch ? currentUser.branch.toUpperCase() : 'MAIN BRANCH'} (${currentUser?.name || 'Branch Manager'})`}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#334155', fontSize: '0.9rem', fontWeight: 700 }}
+                  />
+                )}
+              </div>
 
               {/* Member Name & Role */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
@@ -846,9 +970,11 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                 <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
                   Email Communication Proof
                 </h4>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  Project: <strong>{viewProofModal.projectName}</strong> | Member: <strong>{viewProofModal.memberName}</strong>
-                </span>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', display: 'flex', gap: '10px', marginTop: '3px' }}>
+                  <span>Project: <strong>{viewProofModal.projectName}</strong></span>
+                  <span>Member: <strong>{viewProofModal.memberName}</strong></span>
+                  <span style={{ color: '#1e40af' }}>Branch: <strong>{viewProofModal.branch}</strong> ({viewProofModal.branchManagerName || 'Manager'})</span>
+                </div>
               </div>
               <button
                 onClick={() => setViewProofModal(null)}
