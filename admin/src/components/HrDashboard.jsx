@@ -304,6 +304,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       });
       if (res.ok) {
         fetchInterviews();
+        if (typeof fetchStats === 'function') fetchStats();
         showToast('Interview status updated');
       } else {
         showToast('Failed to update interview status', 'error');
@@ -1143,6 +1144,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       <tr key={int.id}>
                         <td>
                           <div style={{ fontWeight: 700, color: '#1e293b' }}>{relatedApp ? relatedApp.candidateName : int.candidateName}</div>
+                          {(relatedApp?.candidateMobile || int.candidateMobile) && (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                              📱 {relatedApp?.candidateMobile || int.candidateMobile}
+                            </div>
+                          )}
                         </td>
                         <td>
                           <div style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 600 }}>{relatedApp ? relatedApp.jobTitle : int.jobTitle}</div>
@@ -1199,22 +1205,30 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                           </select>
                         </td>
                         <td>
-                          <button
-                            className="btn-primary"
-                            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-                            onClick={() => {
-                              const relatedApp = stats?.applications?.find(a => a.id === int.applicationId);
-                              if (relatedApp) {
-                                setStatusModalApp(relatedApp);
-                                setNewAppStatus(relatedApp.status);
-                                setAdminNoteInput(relatedApp.adminNotes || '');
-                              } else {
-                                alert("Application details not found for this interview.");
-                              }
-                            }}
-                          >
-                            Update Status
-                          </button>
+                          {relatedApp?.candidateResumeUrl || int.candidateResumeUrl ? (
+                            <a
+                              href={relatedApp?.candidateResumeUrl || int.candidateResumeUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '6px 12px',
+                                fontSize: '0.78rem',
+                                color: '#059669',
+                                background: '#ecfdf5',
+                                border: '1px solid #a7f3d0',
+                                borderRadius: '6px',
+                                textDecoration: 'none',
+                                fontWeight: 700
+                              }}
+                            >
+                              <FileText size={13} /> View Resume
+                            </a>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>-</span>
+                          )}
                         </td>
                       </tr>
                       );
