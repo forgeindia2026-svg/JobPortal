@@ -709,7 +709,8 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </button>
               </div>
 
-              <div style={{ overflowX: 'auto' }}>
+              {/* DESKTOP TABLE (100% UNCHANGED) */}
+              <div className="branch-tls-desktop-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
@@ -842,6 +843,136 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                   </tbody>
                 </table>
               </div>
+
+              {/* MOBILE CARDS VIEW (Clean, touch-friendly, no cut-off) */}
+              <div className="branch-tls-mobile-cards" style={{ padding: '12px', flexDirection: 'column', gap: '12px' }}>
+                {branchTls.length === 0 ? (
+                  <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                    <Users size={28} color="#94a3b8" style={{ margin: '0 auto 8px auto', display: 'block' }} />
+                    <div style={{ fontWeight: 700, color: '#334155' }}>No Team Leaders in this branch yet.</div>
+                  </div>
+                ) : (
+                  branchTls.map((tl) => {
+                    const tlHrs = hrs.filter(h => h.teamLeaderId === tl.id);
+                    return (
+                      <div
+                        key={tl.id}
+                        style={{
+                          background: '#fff',
+                          border: tl.approvalStatus === 'pending' ? '2px solid #f59e0b' : '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '12px 14px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                        }}
+                      >
+                        {/* Top: Name & Status */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                          <div>
+                            <div
+                              onClick={() => handleOpenTlDetails(tl.id)}
+                              style={{ fontWeight: 800, color: '#0284c7', fontSize: '1rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <span>{tl.name}</span>
+                              <span style={{ fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                View Team ➔
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                              ✉ {tl.email}
+                            </div>
+                            {tl.mobile && (
+                              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '1px' }}>
+                                📱 {tl.mobile}
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            {tl.approvalStatus === 'approved' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 700, border: '1px solid #a7f3d0' }}>
+                                <CheckCircle2 size={12} /> Approved
+                              </span>
+                            ) : tl.approvalStatus === 'rejected' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fef2f2', color: '#dc2626', padding: '3px 8px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 700, border: '1px solid #fecaca' }}>
+                                <XCircle size={12} /> Rejected
+                              </span>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fffbeb', color: '#b45309', padding: '3px 8px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 800, border: '1px solid #fde68a' }}>
+                                <Clock size={12} color="#d97706" /> Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Assigned HRs Box */}
+                        <div
+                          onClick={() => handleOpenTlDetails(tl.id)}
+                          style={{
+                            background: '#f8fafc',
+                            border: '1px solid #f1f5f9',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            marginBottom: '10px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>Assigned HRs:</span>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0284c7' }}>
+                            {tlHrs.length} HRs assigned ➔
+                          </span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                          {tl.approvalStatus === 'pending' ? (
+                            <>
+                              <button
+                                disabled={actionLoading === tl.id}
+                                onClick={() => handleTlApproval(tl.id, tl.name, 'approved')}
+                                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                              >
+                                <CheckCircle2 size={13} /> Approve
+                              </button>
+                              <button
+                                disabled={actionLoading === tl.id}
+                                onClick={() => handleTlApproval(tl.id, tl.name, 'rejected')}
+                                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}
+                              >
+                                <XCircle size={13} /> Reject
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleOpenTlDetails(tl.id)}
+                                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 10px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                              >
+                                <Eye size={13} /> View Team
+                              </button>
+                              <button
+                                onClick={() => setAssignModalTl(tl)}
+                                style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 10px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                              >
+                                <UserCheck size={13} /> Assign HRs
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => handleDeleteTl(tl.id, tl.name)}
+                            style={{ padding: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}
+                            title="Delete Team Leader"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
 
@@ -866,7 +997,8 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </p>
               </div>
 
-              <div style={{ overflowX: 'auto' }}>
+              {/* DESKTOP TABLE */}
+              <div className="branch-hrs-desktop-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
@@ -909,6 +1041,45 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* MOBILE CARDS VIEW */}
+              <div className="branch-hrs-mobile-cards" style={{ padding: '12px', flexDirection: 'column', gap: '10px' }}>
+                {branchHrs.length === 0 ? (
+                  <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                    No HRs currently assigned under this branch's Team Leaders.
+                  </div>
+                ) : (
+                  branchHrs.map((hr) => {
+                    const assignedTl = tls.find(t => t.id === hr.teamLeaderId);
+                    return (
+                      <div
+                        key={hr.id}
+                        style={{
+                          background: '#fff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '12px 14px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>{hr.name}</div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{hr.email}</div>
+                            {hr.mobile && <div style={{ fontSize: '0.78rem', color: '#64748b' }}>📱 {hr.mobile}</div>}
+                          </div>
+                          <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800 }}>
+                            {hr.referralCode || 'HR'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#475569', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
+                          Team Leader: <strong style={{ color: '#1e40af' }}>{assignedTl ? assignedTl.name : 'Unassigned'}</strong>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
