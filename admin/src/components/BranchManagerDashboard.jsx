@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, UserPlus, Clock, CheckCircle2, ShieldCheck, Mail, Phone, MapPin, Building2,
   RefreshCw, FileText, CheckCircle, Briefcase, Filter, Search, Award, TrendingUp, ChevronRight,
-  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code
+  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck
 } from 'lucide-react';
 import BranchItProjectsTab from './BranchItProjectsTab';
 
@@ -128,7 +128,9 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
 
     const matchesStatus =
       appStatusFilter === 'all' ||
-      String(app.status || '').toLowerCase() === appStatusFilter.toLowerCase();
+      (appStatusFilter.toLowerCase() === 'document submission'
+        ? (['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().includes('document'))
+        : String(app.status || '').toLowerCase() === appStatusFilter.toLowerCase());
 
     return matchesSearch && matchesStatus;
   });
@@ -380,7 +382,30 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                 <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#a21caf', fontWeight: 600 }}>Interviews Lineup</span>
               </div>
 
-              {/* 5. Selected / Placed */}
+              {/* 5. Document Submission */}
+              <div 
+                className="dashboard-kpi-card"
+                style={{ background: '#ecfeff', border: '1px solid #67e8f9', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
+                onClick={() => { handleTabChange('applications'); setAppStatusFilter('Document Submission'); }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#164e63', textTransform: 'uppercase' }}>Document Submission</span>
+                  <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#cffafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <FileCheck size={18} color="#0891b2" />
+                  </div>
+                </div>
+                <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#164e63' }}>
+                  {validApplications.filter(a => {
+                    const s = String(a.status || '').toLowerCase().trim();
+                    return ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+                  }).length}
+                </div>
+                <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#0e7490', fontWeight: 600 }}>Verification Stage</span>
+              </div>
+
+              {/* 6. Selected / Placed */}
               <div 
                 className="dashboard-kpi-card"
                 style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', padding: '1.25rem', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'transform 0.2s ease' }}
@@ -988,6 +1013,7 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                   <option value="applied">Applied</option>
                   <option value="under review">Under Review</option>
                   <option value="interview scheduled">Interview Scheduled</option>
+                  <option value="Document Submission">Document Submission</option>
                   <option value="selected">Selected / Joined</option>
                   <option value="rejected">Rejected</option>
                 </select>

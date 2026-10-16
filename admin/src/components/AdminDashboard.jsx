@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -608,6 +608,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       } else if (appStatusFilter.toLowerCase() === 'selected') {
         const selStatuses = ['selected', 'converted'];
         if (!selStatuses.includes((app.status || '').toLowerCase())) return false;
+      } else if (appStatusFilter.toLowerCase() === 'document submission') {
+        const s = (app.status || '').toLowerCase().trim();
+        const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+        if (!isDoc) return false;
       } else {
         if ((app.status || '').toLowerCase() !== appStatusFilter.toLowerCase()) return false;
       }
@@ -1013,6 +1017,31 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <div>
                   <div className="kpi-val" style={{ color: '#701a75' }}>{interviews.length}</div>
                   <div className="kpi-label" style={{ color: '#701a75', opacity: 0.8, fontWeight: 600 }}>Interviews Scheduled</div>
+                </div>
+              </div>
+
+              {/* 5. Document Submission */}
+              <div 
+                className="kpi-card" 
+                onClick={() => { setActiveTab('applications'); setAppStatusFilter('Document Submission'); }}
+                style={{
+                  background: '#ecfeff', border: '1px solid #67e8f9', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+              >
+                <div className="kpi-icon" style={{ background: '#cffafe', color: '#0891b2' }}>
+                  <FileCheck size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#164e63' }}>
+                    {validApplications.filter(a => {
+                      const s = String(a.status || '').toLowerCase().trim();
+                      return ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+                    }).length}
+                  </div>
+                  <div className="kpi-label" style={{ color: '#164e63', opacity: 0.8, fontWeight: 600 }}>Document Submission</div>
                 </div>
               </div>
 
@@ -1929,6 +1958,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="Shortlisted">Shortlisted</option>
                   <option value="HR Screening">HR Screening</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
                   <option value="Rejected">Rejected</option>
                 </select>
@@ -4411,6 +4441,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="Shortlisted">Shortlisted</option>
                   <option value="HR Screening">HR Screening</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
                   <option value="Rejected">Rejected</option>
                 </select>
