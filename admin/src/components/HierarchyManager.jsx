@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Building2, Users, UserPlus, CheckCircle2, XCircle, Clock, ShieldCheck,
   Edit, Trash2, Mail, Phone, MapPin, RefreshCw, UserCheck, AlertCircle, ChevronRight,
-  Eye, ArrowLeft, Briefcase, FileText, ExternalLink
+  Eye, ArrowLeft, Briefcase, FileText, ExternalLink, Code
 } from 'lucide-react';
 import BranchManagerDashboard from './BranchManagerDashboard';
+import BranchItProjectsTab from './BranchItProjectsTab';
 
 export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRefresh }) {
   const [subTab, setSubTab] = useState('team_leaders'); // default to team_leaders so approvals are front & center
@@ -343,6 +344,25 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
           }}
         >
           <Building2 size={18} /> Branch Managers ({bms.length})
+        </button>
+
+        <button
+          onClick={() => setSubTab('it_projects')}
+          style={{
+            padding: '10px 18px',
+            background: 'none',
+            border: 'none',
+            borderBottom: subTab === 'it_projects' ? '3px solid #3b82f6' : '3px solid transparent',
+            color: subTab === 'it_projects' ? '#2563eb' : '#64748b',
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Code size={18} /> Company IT Projects
         </button>
       </div>
 
@@ -923,6 +943,11 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
             </table>
           </div>
         </div>
+      )}
+
+      {/* SUB-TAB 3: COMPANY-WIDE IT PROJECTS */}
+      {subTab === 'it_projects' && !selectedBm && !selectedTlId && (
+        <BranchItProjectsTab API_URL={API_URL} currentUser={currentUser || { role: 'admin', name: 'Super Admin' }} />
       )}
 
       {/* MODAL: ADD/EDIT BRANCH MANAGER */}

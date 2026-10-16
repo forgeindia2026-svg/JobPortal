@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, UserPlus, Clock, CheckCircle2, ShieldCheck, Mail, Phone, MapPin, Building2,
   RefreshCw, FileText, CheckCircle, Briefcase, Filter, Search, Award, TrendingUp, ChevronRight,
-  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X
+  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code
 } from 'lucide-react';
+import BranchItProjectsTab from './BranchItProjectsTab';
 
 export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onBack }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_leaders' | 'branch_hrs' | 'applications' | 'interviews' | 'incentives'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_leaders' | 'branch_hrs' | 'applications' | 'interviews' | 'incentives' | 'it_projects'
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -215,6 +216,13 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
           onClick={() => handleTabChange('interviews')}
         >
           <CalendarDays size={18} /> Interviews ({branchInterviews.length})
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'it_projects' ? 'active' : ''}`}
+          onClick={() => handleTabChange('it_projects')}
+        >
+          <Code size={18} /> IT Team & Projects
         </button>
 
         <button
@@ -1102,7 +1110,7 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
               </table>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'incentives' ? (
           /* TAB 6: INCENTIVES & PAYOUTS */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Header Stats */}
@@ -1176,7 +1184,10 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
               </div>
             </div>
           </div>
-        )}
+        ) : activeTab === 'it_projects' ? (
+          /* TAB 6: IT TEAM & PROJECTS WITH EMAIL PROOF & COUNTDOWN */
+          <BranchItProjectsTab API_URL={API_URL} currentUser={currentUser} />
+        ) : null}
       </div>
 
       {/* CREATE TEAM LEADER MODAL */}

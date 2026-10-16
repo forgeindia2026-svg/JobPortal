@@ -60,6 +60,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/partner-incentives', partnerIncentivesRoutes);
+app.use('/api/branch-it-projects', require('./routes/branchItProjects'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

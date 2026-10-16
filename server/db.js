@@ -235,6 +235,24 @@ const partnerIncentiveSchema = new mongoose.Schema({
 });
 const PartnerIncentiveModel = mongoose.model('PartnerIncentive', partnerIncentiveSchema);
 
+const branchItProjectSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  branchManagerId: { type: String, required: true },
+  branch: { type: String, required: true },
+  memberName: { type: String, required: true },
+  memberRole: { type: String, default: 'Developer' },
+  projectName: { type: String, required: true },
+  description: String,
+  deadline: { type: String, required: true }, // 'YYYY-MM-DD'
+  emailProofUrl: { type: String, default: '' },
+  status: { type: String, default: 'In Progress' }, // 'In Progress' | 'Completed' | 'Delayed'
+  createdByName: String,
+  createdByRole: String,
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: String
+}, { strict: false });
+const BranchItProjectModel = mongoose.model('BranchItProject', branchItProjectSchema);
+
 const initialData = {
   users: [
     {
@@ -875,6 +893,7 @@ module.exports = {
   GlobalSettingsModel,
   PartnerIncentiveModel,
   WithdrawalRequestModel,
-  InterviewModel
+  InterviewModel,
+  BranchItProjectModel
 };
 
