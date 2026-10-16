@@ -431,12 +431,17 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                                 background: '#f1f5f9',
                                 color: '#1e293b',
                                 border: '1px solid #cbd5e1',
-                                fontSize: '0.74rem',
+                                fontSize: '0.78rem',
                                 fontWeight: 800,
-                                padding: '2px 7px',
-                                borderRadius: '6px'
+                                minWidth: '22px',
+                                height: '22px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '6px',
+                                padding: '0 4px'
                               }}>
-                                S.No: {idx + 1}
+                                {idx + 1}
                               </span>
                               <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.96rem' }}>
                                 {app.candidateName || 'Candidate'}
@@ -673,12 +678,17 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                               background: '#f1f5f9',
                               color: '#1e293b',
                               border: '1px solid #cbd5e1',
-                              fontSize: '0.72rem',
+                              fontSize: '0.78rem',
                               fontWeight: 800,
-                              padding: '2px 7px',
-                              borderRadius: '6px'
+                              minWidth: '22px',
+                              height: '22px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '6px',
+                              padding: '0 4px'
                             }}>
-                              S.No: {idx + 1}
+                              {idx + 1}
                             </span>
                             <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>{hr.name}</div>
                           </div>
