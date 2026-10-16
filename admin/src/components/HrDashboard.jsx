@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -200,7 +200,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   }, [API_URL, currentUser]);
 
   useEffect(() => {
-    if (activeTab === 'interviews' && stats) {
+    if (stats) {
       fetchInterviews();
     }
   }, [activeTab, stats]);
@@ -387,6 +387,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     }
   };
 
+  const docSubmissionCount = useMemo(() => {
+    if (!stats?.applications) return 0;
+    return stats.applications.filter(a => {
+      const s = String(a.status || '').toLowerCase().trim();
+      const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+      const hasDocInt = (interviews || []).some(int => (String(int.candidateId) === String(a.candidateId) || String(int.applicationId) === String(a.id)) && String(int.status || '').toLowerCase().includes('document'));
+      return isDoc || hasDocInt;
+    }).length;
+  }, [stats?.applications, interviews]);
+
   // Filter Data
   const filteredApps = useMemo(() => {
     if (!stats?.applications) return [];
@@ -403,6 +413,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       let matchesStatus = true;
       if (statusFilter === 'Processing') {
         matchesStatus = !app.status || ['Applied', 'Shortlisted', 'Follow up'].includes(app.status);
+      } else if (statusFilter === 'Document Submission' || statusFilter === 'Document Submitted') {
+        const s = String(app.status || '').toLowerCase().trim();
+        const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+        const hasDocInt = (interviews || []).some(int => (String(int.candidateId) === String(app.candidateId) || String(int.applicationId) === String(app.id)) && String(int.status || '').toLowerCase().includes('document'));
+        matchesStatus = isDoc || hasDocInt;
       } else if (statusFilter !== 'All') {
         matchesStatus = app.status === statusFilter;
       }
@@ -689,6 +704,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Interview Scheduled'); }} style={{ borderLeft: '4px solid #f59e0b', background: '#fffbeb', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#fde68a', color: '#d97706' }}><CalendarDays size={20} /></div>
                 <div><div className="kpi-val">{stats?.applications?.filter(a => a.status === 'Interview Scheduled').length || 0}</div><div className="kpi-label">Interview Scheduled</div></div>
+              </div>
+              <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Document Submission'); }} style={{ borderLeft: '4px solid #06b6d4', background: '#ecfeff', cursor: 'pointer' }}>
+                <div className="kpi-icon" style={{ background: '#cffafe', color: '#0891b2' }}><FileCheck size={20} /></div>
+                <div><div className="kpi-val">{docSubmissionCount}</div><div className="kpi-label">Document Submission</div></div>
               </div>
               <div className="kpi-card" onClick={() => { setActiveTab('applied'); setStatusFilter('Selected'); }} style={{ borderLeft: '4px solid #059669', background: '#ecfdf5', cursor: 'pointer' }}>
                 <div className="kpi-icon" style={{ background: '#a7f3d0', color: '#047857' }}><CheckCircle size={20} /></div>
@@ -988,6 +1007,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   <option value="Processing">Processing</option>
                   <option value="Applied">Applied</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
                   <option value="Rejected">Rejected</option>
                 </select>
