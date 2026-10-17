@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -823,7 +823,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         app.companyName,
         hrRef,
         app.status,
-        new Date(app.appliedAt).toLocaleDateString('en-IN')
+        app.appliedAt ? `${new Date(app.appliedAt).toLocaleDateString('en-IN')} ${new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` : 'N/A'
       ];
     });
 
@@ -1522,7 +1522,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <tbody>
                   {applications.filter(app => getAppPaymentAmount(app) > 0 && (paymentSubTab === 'pending' ? app.status === 'Payment Pending' : app.status !== 'Payment Pending')).map(app => (
                     <tr key={app.id}>
-                      <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#1e293b' }}>
+                          {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-GB') : '-'}
+                        </div>
+                        {app.appliedAt && (
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
+                            <Clock size={11} color="#94a3b8" />
+                            {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <strong>{app.candidateName}</strong><br/>
                         <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.candidateMobile}</span>
@@ -2396,7 +2406,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       </td>
                       <td style={{ fontWeight: 600 }}>{app.jobTitle}</td>
                       <td>{app.companyName}</td>
-                      <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#1e293b' }}>
+                          {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-GB') : '-'}
+                        </div>
+                        {app.appliedAt && (
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', fontWeight: 500 }}>
+                            <Clock size={12} color="#94a3b8" />
+                            {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minWidth: '135px' }}>
                           <div>
@@ -2563,7 +2583,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       {/* Meta sub-line: App ID & Date */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
                         <span style={{ fontWeight: 700, color: '#475569' }}>#{app.applicationNumber}</span>
-                        <span>{new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#475569', fontWeight: 600 }}>
+                          <span>{app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</span>
+                          {app.appliedAt && (
+                            <span style={{ color: '#64748b', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                              • <Clock size={11} /> {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                            </span>
+                          )}
+                        </span>
                       </div>
 
                       {/* Contact & Bio Info */}
@@ -3252,7 +3279,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                               </td>
                               <td style={{ fontWeight: 600 }}>{app.jobTitle}</td>
                               <td>{app.companyName}</td>
-                              <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: '#1e293b' }}>
+                                  {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-GB') : '-'}
+                                </div>
+                                {app.appliedAt && (
+                                  <div style={{ fontSize: '0.78rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', fontWeight: 500 }}>
+                                    <Clock size={12} color="#94a3b8" />
+                                    {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                  </div>
+                                )}
+                              </td>
                               <td>
                                 <div style={{ fontWeight: 600, color: getAppPaymentAmount(app) > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
                                   ₹{getAppPaymentAmount(app)}
@@ -3366,8 +3403,15 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
                             <span style={{ fontWeight: 700, color: '#475569' }}>#{app.applicationNumber}</span>
-                            <span>{new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                          </div>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#475569', fontWeight: 600 }}>
+                              <span>{app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</span>
+                              {app.appliedAt && (
+                                <span style={{ color: '#64748b', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                              • <Clock size={11} /> {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                            </span>
+                          )}
+                        </span>
+                      </div>
 
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '0.78rem' }}>
                             <a
