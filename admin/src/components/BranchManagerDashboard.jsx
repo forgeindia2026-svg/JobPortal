@@ -164,6 +164,22 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
     if (setSidebarOpen) setSidebarOpen(false);
   };
 
+  const handleOpenHrCandidates = (hr, statusFilter = 'all') => {
+    let hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hr.referralCode || '').toUpperCase());
+    if (statusFilter === 'Selected') {
+      const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired'];
+      hrApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+    }
+    setActiveTab('team_leaders');
+    setSelectedTlId(null);
+    setSelectedHrForCandidateBreakdown({
+      ...hr,
+      hrName: hr.name,
+      applications: hrApps
+    });
+    if (setSidebarOpen) setSidebarOpen(false);
+  };
+
   return (
     <div className="admin-layout">
       {/* Mobile Sidebar Overlay */}
@@ -509,6 +525,270 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                 </div>
               </div>
             </div>
+
+            {/* 2 Leadership Boards: Top Applications Received & Top Closers (Branch HRs Only) */}
+            {(() => {
+              const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired'];
+              const hrStats = hrs.map(hr => {
+                const hrCode = hr.referralCode;
+                const hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hrCode || '').toUpperCase());
+                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                return {
+                  ...hr,
+                  name: hr.name || hr.hrName,
+                  totalSourced: hrApps.length,
+                  totalClosed: closedApps.length
+                };
+              });
+              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced);
+              const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed);
+
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                  {/* Top Applications Received Card */}
+                  <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0' }}>
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({topSourcers.length} Branch HRs)</span>
+                      </h3>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Ranked by total applications sourced from this branch</p>
+                    </div>
+                    {topSourcers.length === 0 ? (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>No HRs found in this branch yet.</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
+                        {topSourcers.map((hr, idx) => {
+                          const isScored = Number(hr.totalSourced || 0) > 0;
+                          return (
+                            <div
+                              key={hr.id || idx}
+                              onClick={() => handleOpenHrCandidates(hr, 'all')}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px 14px',
+                                background: '#f8fafc',
+                                borderRadius: '12px',
+                                border: '1px solid #f1f5f9',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                userSelect: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#eff6ff';
+                                e.currentTarget.style.borderColor = '#bfdbfe';
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.08)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#f8fafc';
+                                e.currentTarget.style.borderColor = '#f1f5f9';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                              title={`Click to view all ${hr.totalSourced || 0} candidates of ${hr.name}`}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                  <div style={{
+                                    width: '46px',
+                                    height: '46px',
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                                    border: isScored ? (idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0') : '2px solid #e2e8f0',
+                                    background: hr.profilePhoto ? '#f8fafc' : (isScored ? (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9') : '#f1f5f9'),
+                                    color: hr.profilePhoto ? '#0f172a' : (isScored ? (idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b') : '#64748b'),
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: '800',
+                                    fontSize: '1.1rem'
+                                  }}>
+                                    {hr.profilePhoto ? (
+                                      <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                      (hr.name || 'H').substring(0, 2).toUpperCase()
+                                    )}
+                                  </div>
+                                  {isScored && idx < 3 && (
+                                    <span style={{
+                                      position: 'absolute',
+                                      bottom: '-4px',
+                                      right: '-4px',
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: idx === 0 ? '#eab308' : idx === 1 ? '#94a3b8' : '#f97316',
+                                      color: '#fff',
+                                      fontSize: '0.68rem',
+                                      fontWeight: '800',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      border: '2px solid #fff',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                    }}>
+                                      {idx + 1}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>{hr.name}</span>
+                                    {isScored && idx === 0 && <span title="Top Sourced">👑</span>}
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600, color: '#475569' }}>
+                                      {hr.referralCode}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                <span style={{
+                                  fontSize: '1.05rem',
+                                  fontWeight: 800,
+                                  color: isScored ? '#0284c7' : '#94a3b8',
+                                  background: isScored ? '#e0f2fe' : '#f1f5f9',
+                                  padding: '4px 10px',
+                                  borderRadius: '8px'
+                                }}>
+                                  {hr.totalSourced}
+                                </span>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>Applied</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Top Closers Card */}
+                  <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0' }}>
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({topClosers.length} Branch HRs)</span>
+                      </h3>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Ranked by successful selections and closures</p>
+                    </div>
+                    {topClosers.length === 0 ? (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>No HRs found in this branch yet.</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
+                        {topClosers.map((hr, idx) => {
+                          const isScored = Number(hr.totalClosed || 0) > 0;
+                          return (
+                            <div
+                              key={hr.id || idx}
+                              onClick={() => handleOpenHrCandidates(hr, 'Selected')}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '12px 14px',
+                                background: '#f8fafc',
+                                borderRadius: '12px',
+                                border: '1px solid #f1f5f9',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                userSelect: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#ecfdf5';
+                                e.currentTarget.style.borderColor = '#a7f3d0';
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.08)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = '#f8fafc';
+                                e.currentTarget.style.borderColor = '#f1f5f9';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                              title={`Click to view all closed/selected candidates of ${hr.name}`}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                  <div style={{
+                                    width: '46px',
+                                    height: '46px',
+                                    borderRadius: '50%',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                                    border: isScored ? (idx === 0 ? '2px solid #eab308' : idx === 1 ? '2px solid #94a3b8' : idx === 2 ? '2px solid #f97316' : '2px solid #e2e8f0') : '2px solid #e2e8f0',
+                                    background: hr.profilePhoto ? '#f8fafc' : (isScored ? (idx === 0 ? '#fef08a' : idx === 1 ? '#e2e8f0' : idx === 2 ? '#fed7aa' : '#f1f5f9') : '#f1f5f9'),
+                                    color: hr.profilePhoto ? '#0f172a' : (isScored ? (idx === 0 ? '#a16207' : idx === 1 ? '#475569' : idx === 2 ? '#9a3412' : '#64748b') : '#64748b'),
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: '800',
+                                    fontSize: '1.1rem'
+                                  }}>
+                                    {hr.profilePhoto ? (
+                                      <img src={hr.profilePhoto} alt={hr.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                      (hr.name || 'H').substring(0, 2).toUpperCase()
+                                    )}
+                                  </div>
+                                  {isScored && idx < 3 && (
+                                    <span style={{
+                                      position: 'absolute',
+                                      bottom: '-4px',
+                                      right: '-4px',
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      background: idx === 0 ? '#eab308' : idx === 1 ? '#94a3b8' : '#f97316',
+                                      color: '#fff',
+                                      fontSize: '0.68rem',
+                                      fontWeight: '800',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      border: '2px solid #fff',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                    }}>
+                                      {idx + 1}
+                                    </span>
+                                  )}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>{hr.name}</span>
+                                    {isScored && idx === 0 && <span title="Top Closer">⭐</span>}
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600, color: '#475569' }}>
+                                      {hr.referralCode}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                <span style={{
+                                  fontSize: '1.05rem',
+                                  fontWeight: 800,
+                                  color: isScored ? '#059669' : '#94a3b8',
+                                  background: isScored ? '#d1fae5' : '#f1f5f9',
+                                  padding: '4px 10px',
+                                  borderRadius: '8px'
+                                }}>
+                                  {hr.totalClosed}
+                                </span>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>Closed</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Quick Action & Hierarchy Preview */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
