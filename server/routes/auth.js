@@ -109,7 +109,6 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const cleanedDigits = loginInput.replace(/[^0-9]/g, '');
     const searchConditions = [
       { email: loginInput.toLowerCase() },
       { mobile: loginInput }
