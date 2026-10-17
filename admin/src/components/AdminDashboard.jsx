@@ -5184,12 +5184,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       {showClickStatsModal && (
         <div className="modal-overlay" onClick={() => setShowClickStatsModal(false)} style={{ zIndex: 9999 }}>
           <div 
-            className="modal-content animate-fade" 
+            className="modal-content animate-fade click-stats-modal" 
             style={{ maxWidth: '820px', width: '95%', borderRadius: '16px', overflow: 'hidden', padding: 0, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} 
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', padding: '1.25rem 1.5rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="click-stats-header" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', padding: '1.25rem 1.5rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <MousePointerClick size={22} /> Link Click Analytics & Tracking
@@ -5200,38 +5200,38 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
               <button 
                 onClick={() => setShowClickStatsModal(false)} 
-                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', flexShrink: 0 }}
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Content body */}
-            <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1 }}>
+            <div className="click-stats-body" style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1 }}>
               {/* Summary stat cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '1.25rem' }}>
+              <div className="click-stats-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '1.25rem' }}>
                 <div style={{ background: '#eef2ff', border: '1px solid #c7d2fe', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#3730a3' }}>{grandTotalClicks}</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Link Clicks</div>
+                  <div className="stat-num" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#3730a3' }}>{grandTotalClicks}</div>
+                  <div className="stat-label" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Link Clicks</div>
                 </div>
                 <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#065f46' }}>{effectiveDirectClicks}</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Direct Portal Visits</div>
+                  <div className="stat-num" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#065f46' }}>{effectiveDirectClicks}</div>
+                  <div className="stat-label" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Direct Portal Visits</div>
                 </div>
                 <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e40af' }}>{totalHrClicks}</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>HR Referral Clicks</div>
+                  <div className="stat-num" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e40af' }}>{totalHrClicks}</div>
+                  <div className="stat-label" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>HR Referral Clicks</div>
                 </div>
                 <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#92400e' }}>{totalAgentClicks}</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Partner Referral Clicks</div>
+                  <div className="stat-num" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#92400e' }}>{totalAgentClicks}</div>
+                  <div className="stat-label" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Partner Referral Clicks</div>
                 </div>
               </div>
 
               {/* Direct visits card banner */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="click-stats-direct-card" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
                     🌐
                   </div>
                   <div>
@@ -5239,8 +5239,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                     <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Visitors who opened candidate portal directly via search or direct link</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#059669', background: '#d1fae5', padding: '4px 12px', borderRadius: '20px' }}>
+                <div className="click-stats-direct-right" style={{ textAlign: 'right' }}>
+                  <span className="click-stats-direct-pill" style={{ fontSize: '1.15rem', fontWeight: 800, color: '#059669', background: '#d1fae5', padding: '4px 12px', borderRadius: '20px', whiteSpace: 'nowrap', display: 'inline-block' }}>
                     {effectiveDirectClicks} clicks
                   </span>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
@@ -5250,9 +5250,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
 
               {/* Search HRs */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+              <div className="click-stats-search-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a', fontWeight: 700 }}>HR & Partner Referral Breakdown</h4>
-                <div style={{ position: 'relative', width: '240px' }}>
+                <div className="click-stats-search-input-wrap" style={{ position: 'relative', width: '240px' }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                   <input
                     type="text"
@@ -5271,8 +5271,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               </div>
 
               {/* Table */}
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <div className="click-stats-table-wrap" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table className="click-stats-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                   <thead>
                     <tr style={{ background: '#f8fafc', color: '#475569', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>
                       <th style={{ padding: '10px 14px' }}>HR / Partner</th>
