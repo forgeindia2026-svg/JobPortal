@@ -82,9 +82,13 @@ router.post('/login', async (req, res) => {
     }
 
     // Fixed Admin Credentials
+    const cleanedDigits = loginInput.replace(/[^0-9]/g, '');
+    const isAdminMobile = cleanedDigits === '6369406416';
+    const isAdminEmail = (loginInput.toLowerCase() === 'admin@forgeindiaconnect.in' || loginInput.toLowerCase() === 'admin');
+
     if (
-      (loginInput.toLowerCase() === 'admin@forgeindiaconnect.in' || loginInput.toLowerCase() === 'admin') &&
-      password === 'Admin@123'
+      (isAdminEmail || isAdminMobile) &&
+      (password === '6369406416' || password === 'Admin@123')
     ) {
       return res.json({
         message: 'Login successful',
@@ -94,7 +98,7 @@ router.post('/login', async (req, res) => {
           name: 'Super Admin',
           email: 'admin@forgeindiaconnect.in',
           role: 'admin',
-          mobile: '',
+          mobile: '6369406416',
           location: '',
           qualification: '',
           experience: '',
