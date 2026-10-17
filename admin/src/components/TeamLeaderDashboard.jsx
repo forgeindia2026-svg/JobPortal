@@ -622,7 +622,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                 <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0' }}>
                   <div>
                     <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                      Upcoming Candidates for {selectedHrForCandidateBreakdown.hrName}
+                      Upcoming Candidates for {selectedHrForCandidateBreakdown.hrName || selectedHrForCandidateBreakdown.name || 'HR'}
                     </h2>
                     <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#64748b' }}>
                       Referral Code: <strong style={{ color: '#0f172a' }}>{selectedHrForCandidateBreakdown.referralCode}</strong>
@@ -682,7 +682,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                               </span>
                             </td>
                             <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, color: '#0d9488', fontSize: '1rem' }}>
-                              ₹{app.incentiveAmount?.toLocaleString('en-IN') || '1,000'}
+                              ₹{(Number(app.incentiveAmount) || 1000).toLocaleString('en-IN')}
                             </td>
                             <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                               {app.resumeUrl ? (

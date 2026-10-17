@@ -720,9 +720,19 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
       const job = jobMap[app.jobId] || {};
       const comp = compMap[job.companyId] || {};
       const refHr = hrMap[String(app.referredBy || '').toLowerCase()];
+      let computedIncentive = Number(app.incentiveAmount) || 0;
+      if (!computedIncentive && job) {
+        if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job.isFicFlow) {
+          computedIncentive = Number(job.hrIncentivePaid) || 0;
+        } else {
+          computedIncentive = job.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job.hrIncentiveAmount) || 0);
+        }
+      }
+      if (!computedIncentive) computedIncentive = 1000;
 
       return {
         ...app,
+        incentiveAmount: computedIncentive,
         candidateName: cand.name || app.candidateName || 'Anonymous',
         candidateEmail: cand.email || app.candidateEmail || '',
         candidateMobile: cand.mobile || app.candidateMobile || '',
@@ -1137,8 +1147,19 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
       const cand = candMap[app.candidateId];
       const job = jobMap[app.jobId];
       const referringHr = hrCodeMap[String(app.referredBy).toUpperCase()];
+      let computedIncentive = Number(app.incentiveAmount) || 0;
+      if (!computedIncentive && job) {
+        if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job.isFicFlow) {
+          computedIncentive = Number(job.hrIncentivePaid) || 0;
+        } else {
+          computedIncentive = job.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job.hrIncentiveAmount) || 0);
+        }
+      }
+      if (!computedIncentive) computedIncentive = 1000;
+
       return {
         ...app,
+        incentiveAmount: computedIncentive,
         candidateName: app.candidateName || cand?.name || 'Applicant',
         candidateEmail: app.candidateEmail || cand?.email || '',
         candidateMobile: app.candidateMobile || cand?.mobile || '',
