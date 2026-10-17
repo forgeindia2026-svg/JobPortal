@@ -720,15 +720,22 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
       const job = jobMap[app.jobId] || {};
       const comp = compMap[job.companyId] || {};
       const refHr = hrMap[String(app.referredBy || '').toLowerCase()];
+      let fallbackHrIncentive = 0;
+      if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job.isFicFlow) {
+        fallbackHrIncentive = Number(job.hrIncentivePaid) || 0;
+      } else {
+        fallbackHrIncentive = job.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job.hrIncentiveAmount) || 0);
+      }
+      if (!fallbackHrIncentive) fallbackHrIncentive = 1000;
+
       let computedIncentive = Number(app.incentiveAmount) || 0;
-      if (!computedIncentive && job) {
-        if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job.isFicFlow) {
-          computedIncentive = Number(job.hrIncentivePaid) || 0;
-        } else {
-          computedIncentive = job.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job.hrIncentiveAmount) || 0);
+      if (!computedIncentive) {
+        computedIncentive = fallbackHrIncentive;
+      } else if (Number(app.paymentAmount || app.feeAmount) < 1499 && !job.isFicFlow) {
+        if (computedIncentive > fallbackHrIncentive) {
+          computedIncentive = fallbackHrIncentive;
         }
       }
-      if (!computedIncentive) computedIncentive = 1000;
 
       return {
         ...app,
@@ -1148,15 +1155,22 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
       const cand = candMap[app.candidateId];
       const job = jobMap[app.jobId];
       const referringHr = hrCodeMap[String(app.referredBy).toUpperCase()];
+      let fallbackHrIncentive = 0;
+      if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job?.isFicFlow) {
+        fallbackHrIncentive = Number(job?.hrIncentivePaid) || 0;
+      } else {
+        fallbackHrIncentive = job?.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job?.hrIncentiveAmount) || 0);
+      }
+      if (!fallbackHrIncentive) fallbackHrIncentive = 1000;
+
       let computedIncentive = Number(app.incentiveAmount) || 0;
-      if (!computedIncentive && job) {
-        if (Number(app.paymentAmount || app.feeAmount) >= 1499 || job.isFicFlow) {
-          computedIncentive = Number(job.hrIncentivePaid) || 0;
-        } else {
-          computedIncentive = job.hrIncentiveFree !== undefined ? Number(job.hrIncentiveFree) : (Number(job.hrIncentiveAmount) || 0);
+      if (!computedIncentive) {
+        computedIncentive = fallbackHrIncentive;
+      } else if (Number(app.paymentAmount || app.feeAmount) < 1499 && !job?.isFicFlow) {
+        if (computedIncentive > fallbackHrIncentive) {
+          computedIncentive = fallbackHrIncentive;
         }
       }
-      if (!computedIncentive) computedIncentive = 1000;
 
       return {
         ...app,
@@ -1173,11 +1187,17 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
       };
     });
 
+    const isUpcomingApp = (a) => {
+      const s = String(a.status || '').toLowerCase().trim();
+      return a.status !== 'Payment Pending' && !['selected', 'hired', 'converted', 'closed', 'rejected', 'not interested'].includes(s);
+    };
+
     const populatedHrs = hrs.map(h => {
       const { passwordHash, ...safe } = h;
       const hrApps = enrichedApps.filter(a => String(a.referredBy).toUpperCase() === String(h.referralCode).toUpperCase());
-      const totalAmount = hrApps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
-      const cnt = hrApps.filter(a => a.status !== 'Payment Pending').length;
+      const upcomingApps = hrApps.filter(isUpcomingApp);
+      const totalAmount = upcomingApps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
+      const cnt = upcomingApps.length;
       return {
         ...safe,
         id: h.id,
@@ -1191,7 +1211,8 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
       };
     });
 
-    const totalTeamAmount = enrichedApps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
+    const activeUpcomingApps = enrichedApps.filter(isUpcomingApp);
+    const totalTeamAmount = activeUpcomingApps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
     const { passwordHash, ...safeTl } = tl;
 
     res.json({
@@ -1202,7 +1223,7 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
       },
       kpis: {
         totalHrs: hrs.length,
-        totalCandidates: enrichedApps.filter(a => a.status !== 'Payment Pending').length,
+        totalCandidates: activeUpcomingApps.length,
         totalAmount: totalTeamAmount,
         selectedCount: enrichedApps.filter(a => ['selected', 'hired', 'closed'].includes(String(a.status).toLowerCase())).length
       },
