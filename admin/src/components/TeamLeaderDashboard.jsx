@@ -552,21 +552,24 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                         </td>
                       </tr>
                     ) : (
-                      hrs.map((hrItem) => (
-                        <tr key={hrItem.hrId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontWeight: 700, color: '#0f172a' }}>{hrItem.hrName}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>HR</div>
-                          </td>
-                          <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0f172a' }}>
-                            {hrItem.referralCode}
-                          </td>
-                          <td style={{ padding: '14px 16px', color: '#334155', fontWeight: 600 }}>
-                            {hrItem.candidateCount} Candidates
-                          </td>
-                          <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0d9488', fontSize: '1rem' }}>
-                            ₹{hrItem.totalAmount?.toLocaleString('en-IN') || 0}
-                          </td>
+                      hrs.map((hrItem) => {
+                        const hrDisplayName = hrItem.name || hrItem.hrName || 'HR';
+                        const hrCandidateCount = hrItem.candidateCount ?? hrItem.candidatesCount ?? hrItem.candidatesApplied ?? (hrItem.applications?.length || 0);
+                        return (
+                          <tr key={hrItem.id || hrItem.hrId} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '14px 16px' }}>
+                              <div style={{ fontWeight: 700, color: '#0f172a' }}>{hrDisplayName}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>HR</div>
+                            </td>
+                            <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0f172a' }}>
+                              {hrItem.referralCode}
+                            </td>
+                            <td style={{ padding: '14px 16px', color: '#334155', fontWeight: 600 }}>
+                              {hrCandidateCount} Candidates
+                            </td>
+                            <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0d9488', fontSize: '1rem' }}>
+                              ₹{(hrItem.totalAmount || 0).toLocaleString('en-IN')}
+                            </td>
                           <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                             <button
                               onClick={() => {
@@ -589,8 +592,8 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                             </button>
                           </td>
                         </tr>
-                      ))
-                    )}
+                      );
+                    }))}
                   </tbody>
                 </table>
               </div>
@@ -732,21 +735,24 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                           </td>
                         </tr>
                       ) : (
-                        hrs.map((hrItem) => (
-                          <tr key={hrItem.hrId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '14px 16px' }}>
-                              <div style={{ fontWeight: 700, color: '#0f172a' }}>{hrItem.hrName}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>HR</div>
-                            </td>
-                            <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0f172a' }}>
-                              {hrItem.referralCode}
-                            </td>
-                            <td style={{ padding: '14px 16px', color: '#334155', fontWeight: 600 }}>
-                              {hrItem.candidateCount} Candidates
-                            </td>
-                            <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0d9488', fontSize: '1rem' }}>
-                              ₹{hrItem.totalAmount?.toLocaleString('en-IN') || 0}
-                            </td>
+                        hrs.map((hrItem) => {
+                          const hrDisplayName = hrItem.name || hrItem.hrName || 'HR';
+                          const hrCandidateCount = hrItem.candidateCount ?? hrItem.candidatesCount ?? hrItem.candidatesApplied ?? (hrItem.applications?.length || 0);
+                          return (
+                            <tr key={hrItem.id || hrItem.hrId} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ fontWeight: 700, color: '#0f172a' }}>{hrDisplayName}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>HR</div>
+                              </td>
+                              <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0f172a' }}>
+                                {hrItem.referralCode}
+                              </td>
+                              <td style={{ padding: '14px 16px', color: '#334155', fontWeight: 600 }}>
+                                {hrCandidateCount} Candidates
+                              </td>
+                              <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0d9488', fontSize: '1rem' }}>
+                                ₹{(hrItem.totalAmount || 0).toLocaleString('en-IN')}
+                              </td>
                             <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                               <button
                                 onClick={() => setSelectedHrForCandidateBreakdown(hrItem)}
@@ -766,8 +772,8 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                               </button>
                             </td>
                           </tr>
-                        ))
-                      )}
+                        );
+                      }))}
                     </tbody>
                   </table>
                 </div>

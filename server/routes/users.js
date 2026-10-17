@@ -1155,9 +1155,15 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
       const { passwordHash, ...safe } = h;
       const hrApps = enrichedApps.filter(a => String(a.referredBy).toUpperCase() === String(h.referralCode).toUpperCase());
       const totalAmount = hrApps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 0), 0);
+      const cnt = hrApps.filter(a => a.status !== 'Payment Pending').length;
       return {
         ...safe,
-        candidatesCount: hrApps.filter(a => a.status !== 'Payment Pending').length,
+        id: h.id,
+        hrId: h.id,
+        name: h.name,
+        hrName: h.name,
+        candidateCount: cnt,
+        candidatesCount: cnt,
         totalAmount,
         applications: hrApps
       };
