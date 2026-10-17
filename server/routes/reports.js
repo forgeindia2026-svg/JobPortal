@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { readDBAsync } = require('../db');
+const { readDBAsync, GlobalSettingsModel } = require('../db');
 
 // GET /api/reports/dashboard
 router.get('/dashboard', async (req, res) => {
   try {
     const db = await readDBAsync();
+    const platformStats = await GlobalSettingsModel.findOne({ type: 'platform_stats' }).lean().catch(() => null);
+    const directLinkClicks = platformStats?.data?.directLinkClicks || 0;
 
     const validApps = db.applications.filter(a => a.status !== 'Payment Pending');
     const candidateIdsWithValidApps = new Set(validApps.map(a => String(a.candidateId)));
@@ -90,7 +92,8 @@ router.get('/dashboard', async (req, res) => {
         totalCandidates,
         totalApplications,
         scheduledInterviews,
-        selectedCandidates
+        selectedCandidates,
+        directLinkClicks
       },
       charts: {
         appsByCategory,

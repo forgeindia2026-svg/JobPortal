@@ -160,6 +160,57 @@ router.post('/hr/:referralCode/visit', async (req, res) => {
   }
 });
 
+// POST track direct visitor (no referral code)
+router.post('/visit/direct', async (req, res) => {
+  try {
+    const updated = await GlobalSettingsModel.findOneAndUpdate(
+      { type: 'platform_stats' },
+      { $inc: { 'data.directLinkClicks': 1 } },
+      { new: true, upsert: true }
+    );
+    res.json({ success: true, directLinkClicks: updated?.data?.directLinkClicks || 1 });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to record direct visit.' });
+  }
+});
+
+// GET aggregated link click statistics (direct + all HRs + agents)
+router.get('/stats/clicks', async (req, res) => {
+  try {
+    const platformStats = await GlobalSettingsModel.findOne({ type: 'platform_stats' }).lean();
+    const directClicks = platformStats?.data?.directLinkClicks || 0;
+
+    const hrs = await UserModel.find({ role: 'hr' }, 'id name referralCode linkClicks branch').lean();
+    const agents = await UserModel.find({ role: 'agent' }, 'id name referralCode linkClicks parentHrId').lean();
+
+    const hrClicksTotal = hrs.reduce((s, h) => s + (Number(h.linkClicks) || 0), 0);
+    const agentClicksTotal = agents.reduce((s, a) => s + (Number(a.linkClicks) || 0), 0);
+
+    res.json({
+      directClicks,
+      hrClicksTotal,
+      agentClicksTotal,
+      totalClicks: directClicks + hrClicksTotal + agentClicksTotal,
+      hrs: hrs.map(h => ({
+        id: h.id,
+        name: h.name,
+        referralCode: h.referralCode,
+        branch: h.branch,
+        linkClicks: Number(h.linkClicks) || 0
+      })).sort((a, b) => b.linkClicks - a.linkClicks),
+      agents: agents.map(a => ({
+        id: a.id,
+        name: a.name,
+        referralCode: a.referralCode,
+        linkClicks: Number(a.linkClicks) || 0,
+        parentHrId: a.parentHrId
+      })).sort((a, b) => b.linkClicks - a.linkClicks)
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch click stats.' });
+  }
+});
+
 // ================= AGENTS (owned by an HR) =================
 
 // GET all agents (for admin)

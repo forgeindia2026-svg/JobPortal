@@ -17,6 +17,14 @@ export default function App() {
       // Track this click on the backend
       fetch(`${API_URL}/api/users/hr/${ref}/visit`, { method: 'POST' })
         .catch(() => {}); // Silently fail if error
+    } else {
+      // Direct visit (no referral code) - track once per session
+      const hasTrackedDirect = sessionStorage.getItem('tracked_direct_visit');
+      if (!hasTrackedDirect) {
+        sessionStorage.setItem('tracked_direct_visit', '1');
+        fetch(`${API_URL}/api/users/visit/direct`, { method: 'POST' })
+          .catch(() => {});
+      }
     }
   }, []);
 

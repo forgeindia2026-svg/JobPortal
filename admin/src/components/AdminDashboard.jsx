@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -133,6 +133,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [selectedHrForCandidates, setSelectedHrForCandidates] = useState(null);
   const [hrCandidateSearch, setHrCandidateSearch] = useState('');
   const [hrCandidateStatusFilter, setHrCandidateStatusFilter] = useState('all');
+  const [clickStats, setClickStats] = useState(null);
+  const [showClickStatsModal, setShowClickStatsModal] = useState(false);
+  const [clickStatsSearch, setClickStatsSearch] = useState('');
 
   const handleOpenHrCandidates = (hr, initialFilter = 'all') => {
     setActiveTab('employees');
@@ -196,11 +199,12 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
     // HR fetch - separate so it doesn't break main dashboard if endpoint is missing
     try {
-      const [hrRes, agentsRes] = await Promise.all([
+      const [hrRes, agentsRes, clicksRes] = await Promise.all([
         fetch(`${API_URL}/api/users/hr`),
-        fetch(`${API_URL}/api/users/agents/all`)
+        fetch(`${API_URL}/api/users/agents/all`),
+        fetch(`${API_URL}/api/users/stats/clicks`).catch(() => null)
       ]);
-            if (hrRes.ok) {
+      if (hrRes.ok) {
         const hrData = await hrRes.json();
         const storedPhotos = (() => {
           try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
@@ -214,6 +218,10 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       if (agentsRes.ok) {
         const agentsData = await agentsRes.json();
         setAllAgents(Array.isArray(agentsData) ? agentsData : []);
+      }
+      if (clicksRes && clicksRes.ok) {
+        const clicksData = await clicksRes.json();
+        setClickStats(clicksData);
       }
     } catch (err) {
       console.warn('User endpoints not available yet:', err.message);
@@ -601,6 +609,22 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
   const upcomingIncentivesData = useMemo(() => getUpcomingIncentivesData(), [validApplications, hrs, allAgents, jobs]);
   const globalUpcomingIncentiveTotal = upcomingIncentivesData.reduce((sum, item) => sum + item.upcomingAmount, 0);
+
+  const totalHrClicks = useMemo(() => {
+    return hrs.reduce((sum, h) => sum + (Number(h.linkClicks) || 0), 0);
+  }, [hrs]);
+
+  const totalAgentClicks = useMemo(() => {
+    return allAgents.reduce((sum, a) => sum + (Number(a.linkClicks) || 0), 0);
+  }, [allAgents]);
+
+  const directAppsCount = useMemo(() => {
+    return validApplications.filter(a => !a.referredBy || a.referredBy === 'DIRECT').length;
+  }, [validApplications]);
+
+  const recordedDirectClicks = clickStats?.directClicks ?? (kpis?.kpis?.directLinkClicks || 0);
+  const effectiveDirectClicks = Math.max(recordedDirectClicks, directAppsCount);
+  const grandTotalClicks = totalHrClicks + totalAgentClicks + effectiveDirectClicks;
 
   const [selectedHrForUpcomingDetails, setSelectedHrForUpcomingDetails] = useState(null);
 
@@ -1179,6 +1203,30 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <div>
                   <div className="kpi-val" style={{ color: '#92400e' }}>₹{globalUpcomingIncentiveTotal.toLocaleString()}</div>
                   <div className="kpi-label" style={{ color: '#92400e', opacity: 0.8, fontWeight: 600 }}>HR Upcoming Incentives</div>
+                </div>
+              </div>
+
+              {/* 10. Total Link Clicks (HR + Direct) */}
+              <div 
+                className="kpi-card" 
+                onClick={() => setShowClickStatsModal(true)}
+                style={{
+                  background: '#eef2ff', border: '1px solid #c7d2fe', cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                title="Click to view full link click analytics"
+              >
+                <div className="kpi-icon" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                  <MousePointerClick size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#312e81' }}>{grandTotalClicks}</div>
+                  <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Total Link Clicks</div>
+                  <div style={{ fontSize: '0.72rem', color: '#4f46e5', marginTop: '2px', fontWeight: 600 }}>
+                    HRs: {totalHrClicks + totalAgentClicks} • Direct: {effectiveDirectClicks}
+                  </div>
                 </div>
               </div>
             </div>
@@ -5127,6 +5175,165 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <p style={{ color: '#64748b', margin: 0, fontSize: '0.9rem' }}>This user has not updated their bank details in their Profile Settings yet.</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Link Click Analytics Breakdown Modal */}
+      {showClickStatsModal && (
+        <div className="modal-overlay" onClick={() => setShowClickStatsModal(false)} style={{ zIndex: 9999 }}>
+          <div 
+            className="modal-content animate-fade" 
+            style={{ maxWidth: '820px', width: '95%', borderRadius: '16px', overflow: 'hidden', padding: 0, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }} 
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', padding: '1.25rem 1.5rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MousePointerClick size={22} /> Link Click Analytics & Tracking
+                </h3>
+                <p style={{ margin: '4px 0 0 0', opacity: 0.85, fontSize: '0.85rem' }}>
+                  Live breakdown of all HR referral links and direct candidate portal visits.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowClickStatsModal(false)} 
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content body */}
+            <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1 }}>
+              {/* Summary stat cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '1.25rem' }}>
+                <div style={{ background: '#eef2ff', border: '1px solid #c7d2fe', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#3730a3' }}>{grandTotalClicks}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Link Clicks</div>
+                </div>
+                <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#065f46' }}>{effectiveDirectClicks}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Direct Portal Visits</div>
+                </div>
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e40af' }}>{totalHrClicks}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>HR Referral Clicks</div>
+                </div>
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '12px 14px', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#92400e' }}>{totalAgentClicks}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Partner Referral Clicks</div>
+                </div>
+              </div>
+
+              {/* Direct visits card banner */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                    🌐
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>Direct Candidates (No Referral Code)</div>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Visitors who opened candidate portal directly via search or direct link</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#059669', background: '#d1fae5', padding: '4px 12px', borderRadius: '20px' }}>
+                    {effectiveDirectClicks} clicks
+                  </span>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                    {directAppsCount} applications submitted
+                  </div>
+                </div>
+              </div>
+
+              {/* Search HRs */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a', fontWeight: 700 }}>HR & Partner Referral Breakdown</h4>
+                <div style={{ position: 'relative', width: '240px' }}>
+                  <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="text"
+                    placeholder="Search HR name or code..."
+                    value={clickStatsSearch}
+                    onChange={e => setClickStatsSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '6px 10px 6px 30px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Table */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', color: '#475569', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>
+                      <th style={{ padding: '10px 14px' }}>HR / Partner</th>
+                      <th style={{ padding: '10px 14px' }}>Branch</th>
+                      <th style={{ padding: '10px 14px' }}>Referral Code</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'center' }}>Link Clicks</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'center' }}>Applications</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'center' }}>Conversion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hrs
+                      .filter(h => {
+                        if (!clickStatsSearch) return true;
+                        const q = clickStatsSearch.toLowerCase();
+                        return (h.name || '').toLowerCase().includes(q) || (h.referralCode || '').toLowerCase().includes(q) || (h.branch || '').toLowerCase().includes(q);
+                      })
+                      .sort((a, b) => (Number(b.linkClicks) || 0) - (Number(a.linkClicks) || 0))
+                      .map(h => {
+                        const hrApps = validApplications.filter(a => a.referredBy === h.referralCode);
+                        const clicks = Number(h.linkClicks) || 0;
+                        const convRate = clicks > 0 ? ((hrApps.length / clicks) * 100).toFixed(1) : (hrApps.length > 0 ? '100' : '0');
+                        return (
+                          <tr key={h.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '10px 14px', fontWeight: 600, color: '#0f172a' }}>
+                              {h.name}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#64748b' }}>
+                              {h.branch || 'Head Office'}
+                            </td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <span style={{ background: '#eff6ff', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>
+                                {h.referralCode}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 800, color: '#4f46e5' }}>
+                              {clicks}
+                            </td>
+                            <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: '#059669' }}>
+                              {hrApps.length}
+                            </td>
+                            <td style={{ padding: '10px 14px', textAlign: 'center', color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}>
+                              {convRate}%
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div style={{ padding: '1rem 1.5rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={() => setShowClickStatsModal(false)}
+                style={{ padding: '8px 20px', borderRadius: '6px', fontWeight: 600 }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
