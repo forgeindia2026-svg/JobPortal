@@ -740,7 +740,8 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
         jobTitle: job.title || app.jobTitle || 'Job Role',
         companyName: comp.name || job.companyName || 'Company',
         referringHrName: refHr ? refHr.name : (app.referredBy || 'Direct'),
-        referringTlName: refHr && tlMap[refHr.teamLeaderId] ? tlMap[refHr.teamLeaderId].name : ''
+        referringTlName: refHr && tlMap[refHr.teamLeaderId] ? tlMap[refHr.teamLeaderId].name : '',
+        referringTlId: refHr ? refHr.teamLeaderId : ''
       };
     });
 

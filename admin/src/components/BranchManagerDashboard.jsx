@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, UserPlus, Clock, CheckCircle2, ShieldCheck, Mail, Phone, MapPin, Building2,
   RefreshCw, FileText, CheckCircle, Briefcase, Filter, Search, Award, TrendingUp, ChevronRight,
-  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck
+  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar
 } from 'lucide-react';
 import BranchItProjectsTab from './BranchItProjectsTab';
 
@@ -18,9 +18,14 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Application search and filter
+  // Application search and filters (Admin-style)
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
+  const [appTlFilter, setAppTlFilter] = useState('all');
+  const [appHrFilter, setAppHrFilter] = useState('all');
+  const [appDateFilter, setAppDateFilter] = useState('all'); // 'all' | 'today' | 'yesterday' | 'last7' | 'thisMonth' | 'custom'
+  const [appCustomStartDate, setAppCustomStartDate] = useState('');
+  const [appCustomEndDate, setAppCustomEndDate] = useState('');
 
   // Drilldown states for Team Leader (matching Image 2 & Image 3)
   const [selectedTlId, setSelectedTlId] = useState(null);
@@ -117,23 +122,154 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
   // Exclude Payment Pending from Applied tab (they belong in Incentives & Payouts)
   const validApplications = applications.filter(app => app.status !== 'Payment Pending');
 
-  // Filtered applications
+  // Date filtering helper functions
+  const isToday = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth() &&
+           d.getDate() === now.getDate();
+  };
+
+  const isYesterday = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return d.getFullYear() === yesterday.getFullYear() &&
+           d.getMonth() === yesterday.getMonth() &&
+           d.getDate() === yesterday.getDate();
+  };
+
+  const isLast7Days = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return d >= sevenDaysAgo;
+  };
+
+  const isThisMonth = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth();
+  };
+
+  const isInCustomDateRange = (dateStr, startDateStr, endDateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    if (startDateStr) {
+      const start = new Date(startDateStr);
+      start.setHours(0, 0, 0, 0);
+      if (d < start) return false;
+    }
+    if (endDateStr) {
+      const end = new Date(endDateStr);
+      end.setHours(23, 59, 59, 999);
+      if (d > end) return false;
+    }
+    return true;
+  };
+
+  const todayAppCount = validApplications.filter(a => isToday(a.appliedAt)).length;
+  const yesterdayAppCount = validApplications.filter(a => isYesterday(a.appliedAt)).length;
+  const last7DaysAppCount = validApplications.filter(a => isLast7Days(a.appliedAt)).length;
+  const thisMonthAppCount = validApplications.filter(a => isThisMonth(a.appliedAt)).length;
+  const customAppCount = validApplications.filter(a => isInCustomDateRange(a.appliedAt, appCustomStartDate, appCustomEndDate)).length;
+
+  // Filtered applications (Admin-style full suite)
   const filteredApps = validApplications.filter(app => {
-    const matchesSearch =
-      (app.candidateName || '').toLowerCase().includes(appSearch.toLowerCase()) ||
-      (app.candidateEmail || '').toLowerCase().includes(appSearch.toLowerCase()) ||
-      (app.jobTitle || '').toLowerCase().includes(appSearch.toLowerCase()) ||
-      (app.companyName || '').toLowerCase().includes(appSearch.toLowerCase()) ||
-      (app.referringHrName || '').toLowerCase().includes(appSearch.toLowerCase());
+    // 1. Date Filter
+    if (appDateFilter === 'today' && !isToday(app.appliedAt)) return false;
+    if (appDateFilter === 'yesterday' && !isYesterday(app.appliedAt)) return false;
+    if (appDateFilter === 'last7' && !isLast7Days(app.appliedAt)) return false;
+    if (appDateFilter === 'thisMonth' && !isThisMonth(app.appliedAt)) return false;
+    if (appDateFilter === 'custom' && (appCustomStartDate || appCustomEndDate) && !isInCustomDateRange(app.appliedAt, appCustomStartDate, appCustomEndDate)) return false;
 
-    const matchesStatus =
-      appStatusFilter === 'all' ||
-      (appStatusFilter.toLowerCase() === 'document submission'
-        ? (['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().includes('document'))
-        : String(app.status || '').toLowerCase() === appStatusFilter.toLowerCase());
+    // 2. Status Filter
+    if (appStatusFilter !== 'all') {
+      const s = String(app.status || '').toLowerCase().trim();
+      const f = appStatusFilter.toLowerCase().trim();
+      if (f === 'processing') {
+        const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending'];
+        if (!procStatuses.includes(s) || s.includes('interview') || s.includes('document')) return false;
+      } else if (f === 'selected') {
+        if (!['selected', 'converted', 'joined'].includes(s)) return false;
+      } else if (f === 'document submission') {
+        const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
+        if (!isDoc) return false;
+      } else {
+        if (s !== f) return false;
+      }
+    }
 
-    return matchesSearch && matchesStatus;
+    // 3. Team Leader Filter
+    if (appTlFilter !== 'all') {
+      const tl = tls.find(t => t.id === appTlFilter || t.name === appTlFilter);
+      const matchesTl = tl && (app.referringTlId === tl.id || app.referringTlName === tl.name);
+      if (!matchesTl) return false;
+    }
+
+    // 4. Branch HR Filter
+    if (appHrFilter !== 'all') {
+      const ref = String(app.referredBy || '').toLowerCase();
+      const hr = hrs.find(h => String(h.referralCode || '').toLowerCase() === appHrFilter.toLowerCase() || h.id === appHrFilter);
+      const matchesHr = hr && (ref === String(hr.referralCode || '').toLowerCase());
+      if (!matchesHr) return false;
+    }
+
+    // 5. Search Filter
+    if (appSearch.trim()) {
+      const q = appSearch.toLowerCase().trim();
+      const matchName = (app.candidateName || '').toLowerCase().includes(q);
+      const matchEmail = (app.candidateEmail || '').toLowerCase().includes(q);
+      const matchMobile = (app.candidateMobile || '').toLowerCase().includes(q);
+      const matchAppNo = (app.applicationNumber || app.id || '').toLowerCase().includes(q);
+      const matchJob = (app.jobTitle || '').toLowerCase().includes(q);
+      const matchCompany = (app.companyName || '').toLowerCase().includes(q);
+      const matchHr = (app.referringHrName || '').toLowerCase().includes(q);
+      const matchTl = (app.referringTlName || '').toLowerCase().includes(q);
+      const matchRef = (app.referredBy || '').toLowerCase().includes(q);
+
+      if (!matchName && !matchEmail && !matchMobile && !matchAppNo && !matchJob && !matchCompany && !matchHr && !matchTl && !matchRef) {
+        return false;
+      }
+    }
+
+    return true;
   });
+
+  const exportToCSV = () => {
+    if (!filteredApps || !filteredApps.length) return;
+    const headers = ['App ID', 'Candidate Name', 'Mobile', 'Email', 'Job Title', 'Company', 'Referred By (HR)', 'Team Leader', 'Status', 'Incentive', 'Date Applied'];
+    const rows = filteredApps.map(app => [
+      app.applicationNumber || app.id,
+      app.candidateName,
+      app.candidateMobile || 'N/A',
+      app.candidateEmail || 'N/A',
+      app.jobTitle,
+      app.companyName,
+      app.referringHrName || 'Direct',
+      app.referringTlName || 'N/A',
+      app.status,
+      `₹${(Number(app.incentiveAmount) || 1000).toLocaleString('en-IN')}`,
+      app.appliedAt ? `${new Date(app.appliedAt).toLocaleDateString('en-IN')} ${new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` : 'N/A'
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `branch_applications_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const branchInterviews = applications.filter(app => {
     const s = String(app.status || '').toLowerCase();
@@ -1265,39 +1401,264 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
         ) : activeTab === 'applications' ? (
           /* TAB 4: BRANCH APPLICATIONS */
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+            {/* Header with Title, Counts, and Export */}
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>Branch Candidate Applications ({validApplications.length})</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                    Branch Candidate Applications
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, background: '#dbeafe', color: '#1d4ed8', padding: '3px 10px', borderRadius: '14px' }}>
+                    {filteredApps.length} shown
+                  </span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#64748b' }}>
+                    (Total: {validApplications.length})
+                  </span>
+                </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
                   All candidate applications referred through your branch HRs & Team Leaders.
                 </p>
               </div>
 
-              {/* Filters */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 12px' }}>
+              <button
+                onClick={exportToCSV}
+                className="btn-primary"
+                style={{
+                  background: '#0f172a',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 14px',
+                  display: 'flex',
+                  gap: '6px',
+                  alignItems: 'center',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <Download size={15} /> Export CSV
+              </button>
+            </div>
+
+            {/* Date Range Filter Chips Bar */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '12px 1.5rem', background: '#fafafa', borderBottom: '1px solid #f1f5f9' }}>
+              <button
+                onClick={() => setAppDateFilter('all')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'all' ? '#0f172a' : '#f1f5f9',
+                  color: appDateFilter === 'all' ? 'white' : '#475569',
+                  transition: 'all 0.2s'
+                }}
+              >
+                🌐 All Time ({validApplications.length})
+              </button>
+              <button
+                onClick={() => setAppDateFilter('today')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'today' ? '#059669' : '#ecfdf5',
+                  color: appDateFilter === 'today' ? 'white' : '#047857',
+                  transition: 'all 0.2s',
+                  boxShadow: appDateFilter === 'today' ? '0 4px 6px -1px rgba(5,150,105,0.3)' : 'none'
+                }}
+              >
+                📅 Today ({todayAppCount})
+              </button>
+              <button
+                onClick={() => setAppDateFilter('yesterday')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'yesterday' ? '#d97706' : '#fffbeb',
+                  color: appDateFilter === 'yesterday' ? 'white' : '#b45309',
+                  transition: 'all 0.2s',
+                  boxShadow: appDateFilter === 'yesterday' ? '0 4px 6px -1px rgba(217,119,6,0.3)' : 'none'
+                }}
+              >
+                📅 Yesterday ({yesterdayAppCount})
+              </button>
+              <button
+                onClick={() => setAppDateFilter('last7')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'last7' ? '#7c3aed' : '#f5f3ff',
+                  color: appDateFilter === 'last7' ? 'white' : '#6d28d9',
+                  transition: 'all 0.2s'
+                }}
+              >
+                🗓️ Last 7 Days ({last7DaysAppCount})
+              </button>
+              <button
+                onClick={() => setAppDateFilter('thisMonth')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'thisMonth' ? '#0891b2' : '#ecfeff',
+                  color: appDateFilter === 'thisMonth' ? 'white' : '#0e7490',
+                  transition: 'all 0.2s'
+                }}
+              >
+                📆 This Month ({thisMonthAppCount})
+              </button>
+              <button
+                onClick={() => setAppDateFilter('custom')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: appDateFilter === 'custom' ? '#0284c7' : '#f0f9ff',
+                  color: appDateFilter === 'custom' ? 'white' : '#0369a1',
+                  transition: 'all 0.2s',
+                  boxShadow: appDateFilter === 'custom' ? '0 4px 6px -1px rgba(2,132,199,0.3)' : 'none'
+                }}
+              >
+                📑 Custom Range {appDateFilter === 'custom' && (appCustomStartDate || appCustomEndDate) ? `(${customAppCount})` : ''}
+              </button>
+            </div>
+
+            {/* Custom Date Range Picker (Bank Statement Style) */}
+            {appDateFilter === 'custom' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 1.5rem',
+                background: '#f0f9ff',
+                borderBottom: '1px solid #bae6fd',
+                flexWrap: 'wrap'
+              }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0369a1', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  📑 Bank Statement Range:
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>From Date:</label>
+                  <input
+                    type="date"
+                    value={appCustomStartDate}
+                    onChange={(e) => setAppCustomStartDate(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem', outline: 'none', background: 'white' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}>To Date:</label>
+                  <input
+                    type="date"
+                    value={appCustomEndDate}
+                    onChange={(e) => setAppCustomEndDate(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem', outline: 'none', background: 'white' }}
+                  />
+                </div>
+                {(appCustomStartDate || appCustomEndDate) && (
+                  <button
+                    onClick={() => {
+                      setAppCustomStartDate('');
+                      setAppCustomEndDate('');
+                    }}
+                    style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#64748b', cursor: 'pointer' }}
+                  >
+                    Clear Dates
+                  </button>
+                )}
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0284c7', marginLeft: 'auto' }}>
+                  Total in Range: <strong>{customAppCount}</strong> applications
+                </span>
+              </div>
+            )}
+
+            {/* Advanced Search & Dropdown Filters Bar */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', padding: '14px 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Search Candidate / App</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px 12px' }}>
                   <Search size={14} color="#94a3b8" />
                   <input
                     type="text"
-                    placeholder="Search candidate, job, HR..."
+                    placeholder="Search name, phone, job..."
                     value={appSearch}
                     onChange={e => setAppSearch(e.target.value)}
-                    style={{ border: 'none', background: 'none', outline: 'none', fontSize: '0.85rem', width: '180px' }}
+                    style={{ border: 'none', background: 'none', outline: 'none', fontSize: '0.85rem', width: '100%' }}
                   />
                 </div>
+              </div>
 
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Filter By Status</label>
                 <select
                   value={appStatusFilter}
                   onChange={e => setAppStatusFilter(e.target.value)}
-                  style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.85rem', fontWeight: 600, color: '#334155', outline: 'none' }}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.85rem', fontWeight: 600, color: '#334155', outline: 'none' }}
                 >
                   <option value="all">All Statuses</option>
+                  <option value="processing">Processing</option>
                   <option value="applied">Applied</option>
                   <option value="under review">Under Review</option>
                   <option value="interview scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="selected">Selected / Joined</option>
                   <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Filter By Team Leader</label>
+                <select
+                  value={appTlFilter}
+                  onChange={e => {
+                    setAppTlFilter(e.target.value);
+                    setAppHrFilter('all');
+                  }}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.85rem', fontWeight: 600, color: '#334155', outline: 'none' }}
+                >
+                  <option value="all">All Team Leaders ({tls.length})</option>
+                  {tls.map(t => (
+                    <option key={t.id} value={t.id}>
+                      👔 {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Filter By Branch HR</label>
+                <select
+                  value={appHrFilter}
+                  onChange={e => setAppHrFilter(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.85rem', fontWeight: 600, color: '#334155', outline: 'none' }}
+                >
+                  <option value="all">All Branch HRs ({hrs.length})</option>
+                  {(appTlFilter === 'all' ? hrs : hrs.filter(h => h.teamLeaderId === appTlFilter)).map(h => (
+                    <option key={h.id} value={h.referralCode || h.id}>
+                      👤 {h.name} ({h.referralCode})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
