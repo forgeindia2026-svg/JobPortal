@@ -349,7 +349,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       return true;
     });
 
-    if (s.includes('interview') || s === 'interview scheduled' || s === 'shortlisted' || hasActiveInterview) {
+    if (hasActiveInterview) {
       return 'interview';
     }
 
