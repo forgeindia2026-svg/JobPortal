@@ -142,6 +142,11 @@ const applicationSchema = new mongoose.Schema({
   agentIncentiveAmount: { type: Number, default: 0 },
   incentiveStatus: { type: String, default: 'Pending' },
   incentiveUpdatedAt: String,
+  manipalPayoutStatus: { type: String, default: 'Pending' },
+  manipalPayoutAmount: { type: Number, default: 0 },
+  manipalPayoutDate: String,
+  manipalPayoutNotes: String,
+  manipalPayoutUpdatedAt: String,
   updatedAt: String
 });
 

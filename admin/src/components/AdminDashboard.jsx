@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
-  Copy, Lock, Eye, EyeOff
+  Copy, Lock, Eye, EyeOff, Wallet
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -14,6 +14,7 @@ import ManualApplicationModal from './ManualApplicationModal';
 import AgentsManager from './AgentsManager';
 import HierarchyManager from './HierarchyManager';
 import ClientDashboard from './ClientDashboard';
+import ManipalPayoutManager from './ManipalPayoutManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
@@ -112,8 +113,26 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [incentiveSaving, setIncentiveSaving] = useState(false);
   const [incentiveError, setIncentiveError] = useState('');
 
-  // Closed candidates (Selected / Joined) referred by an HR — incentive is given per candidate
-  const CLOSED_STATUSES = ['selected', 'joined'];
+  // Candidate is closed for incentive: Banking requires 'Joined Manipal' or 'Joined', other sectors allow 'Selected'/'Hired'/'Converted'
+  const isCandidateClosedForIncentive = (app) => {
+    if (!app) return false;
+    const s = String(app.status || '').toLowerCase().trim();
+    if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+
+    const catId = String(app.categoryId || '').toLowerCase();
+    const compName = String(app.companyName || '').toLowerCase();
+    const jobTitle = String(app.jobTitle || '').toLowerCase();
+    const isBanking = catId === 'cat_banking' ||
+      /bank|banking|nbfc|kotak|axis|idfc|hdfc|icici|bandhan|yes bank|mahindra finance|aditya birla|tata aig/i.test(compName) ||
+      /bank|banking|relationship officer|relationship executive|branch manager|branch|casa|banca/i.test(jobTitle);
+
+    if (isBanking) {
+      return s === 'joined manipal' || s === 'joined';
+    }
+    return ['selected', 'joined', 'converted', 'hired'].includes(s);
+  };
+
+  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal'];
   const getHrClosedApps = (hr) => {
     if (!hr) return [];
     const code = String(hr.referralCode || '').toLowerCase();
@@ -122,7 +141,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     
     return applications.filter(app => {
       const ref = String(app.referredBy || '').toLowerCase();
-      return allCodes.includes(ref) && CLOSED_STATUSES.includes(String(app.status || '').toLowerCase());
+      return allCodes.includes(ref) && isCandidateClosedForIncentive(app);
     });
   };
 
@@ -771,6 +790,27 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     return activeInterviews;
   }, [interviews, activeInterviews, interviewFilter, applications]);
 
+  const manipalPayoutCandidates = useMemo(() => {
+    return (applications || []).filter(app => {
+      const s = String(app.status || '').toLowerCase().trim();
+      if (s === 'payment pending' || s === 'unpaid') return false;
+
+      const isJoinedManipal = s === 'joined manipal' || s.includes('joined manipal');
+      const isExplicitlyPaid = String(app.manipalPayoutStatus || '').toLowerCase() === 'paid';
+
+      // Count candidate in Manipal payout pipeline if Joined Manipal status or explicitly marked Paid
+      return isJoinedManipal || isExplicitlyPaid;
+    });
+  }, [applications]);
+
+  const manipalPaidCount = useMemo(() => {
+    return manipalPayoutCandidates.filter(a => String(a.manipalPayoutStatus || '').toLowerCase() === 'paid').length;
+  }, [manipalPayoutCandidates]);
+
+  const manipalPendingCount = useMemo(() => {
+    return manipalPayoutCandidates.filter(a => String(a.manipalPayoutStatus || 'pending').toLowerCase() !== 'paid').length;
+  }, [manipalPayoutCandidates]);
+
   const getUpcomingIncentivesData = () => {
     const allReferrers = [...hrs, ...allAgents];
     const results = [];
@@ -809,7 +849,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         }
         const val = Number(amt) || 0;
         
-        const isClosed = ['selected', 'converted', 'hired'].includes(String(app.status||'').toLowerCase());
+        const isClosed = isCandidateClosedForIncentive(app);
         const isRejected = ['rejected', 'not interested'].includes(String(app.status||'').toLowerCase());
         
         if (!isClosed && !isRejected) {
@@ -1215,6 +1255,13 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </button>
 
         <button
+          className={`nav-item ${activeTab === 'manipal-payout-status' ? 'active' : ''}`}
+          onClick={() => handleTabChange('manipal-payout-status')}
+        >
+          <Wallet size={18} /> Manipal Payout
+        </button>
+
+        <button
           className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`}
           onClick={() => handleTabChange('jobs')}
         >
@@ -1459,6 +1506,40 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Total Link Clicks</div>
                   <div style={{ fontSize: '0.72rem', color: '#4f46e5', marginTop: '2px', fontWeight: 600 }}>
                     HRs: {totalHrClicks + totalAgentClicks} • Direct: {effectiveDirectClicks}
+                  </div>
+                </div>
+              </div>
+
+              {/* 11. Manipal Payout Status */}
+              <div 
+                className="kpi-card" 
+                onClick={() => handleTabChange('manipal-payout-status')}
+                style={{
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
+                  border: '1px solid #a7f3d0',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(16, 185, 129, 0.15)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                title="Click to view bank-wise Manipal Payout Status"
+              >
+                <div className="kpi-icon" style={{ background: '#d1fae5', color: '#059669' }}>
+                  <Wallet size={22} />
+                </div>
+                <div>
+                  <div className="kpi-val" style={{ color: '#065f46' }}>{manipalPayoutCandidates.length}</div>
+                  <div className="kpi-label" style={{ color: '#065f46', opacity: 0.9, fontWeight: 700 }}>Manipal Payout Status</div>
+                  <div style={{ fontSize: '0.72rem', marginTop: '3px', fontWeight: 600, display: 'flex', gap: '8px' }}>
+                    <span style={{ color: '#059669', background: '#d1fae5', padding: '1px 6px', borderRadius: '4px' }}>
+                      ✓ Paid: {manipalPaidCount}
+                    </span>
+                    <span style={{ color: '#d97706', background: '#fef3c7', padding: '1px 6px', borderRadius: '4px' }}>
+                      ⏳ Pending: {manipalPendingCount}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2312,6 +2393,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
+                  <option value="Joined Manipal">Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>
@@ -2604,6 +2686,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="HR Screening">HR Screening</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Selected">Selected</option>
+                  <option value="Joined Manipal">Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
 
@@ -4618,6 +4701,22 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             )}
           </div>
         )}
+        {activeTab === 'manipal-payout-status' && (
+          <ManipalPayoutManager
+            API_URL={API_URL}
+            applications={applications}
+            interviews={interviews}
+            companies={companies}
+            onUpdateApplication={(updatedApp) => {
+              setApplications(prev => prev.map(a => 
+                (String(a.id) === String(updatedApp.id) || String(a._id) === String(updatedApp._id) || (updatedApp.id && String(a._id) === String(updatedApp.id)))
+                  ? { ...a, ...updatedApp }
+                  : a
+              ));
+            }}
+            onBack={() => handleTabChange('dashboard')}
+          />
+        )}
         {activeTab === 'hierarchy' && (
           <HierarchyManager
             API_URL={API_URL}
@@ -5299,6 +5398,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
+                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal (Payout & Incentive)</option>
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>

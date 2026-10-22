@@ -9,6 +9,29 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
   const [overviewData, setOverviewData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedHrForCandidateBreakdown, setSelectedHrForCandidateBreakdown] = useState(null);
+  const [statusModalApp, setStatusModalApp] = useState(null);
+  const [newAppStatus, setNewAppStatus] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
+
+  const handleUpdateStatus = async () => {
+    if (!statusModalApp || !newAppStatus) return;
+    try {
+      setSavingStatus(true);
+      const res = await fetch(`${API_URL}/api/applications/${statusModalApp.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newAppStatus })
+      });
+      if (res.ok) {
+        setStatusModalApp(null);
+        fetchTlOverview();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingStatus(false);
+    }
+  };
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
 
@@ -858,15 +881,24 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                           <span style={{ fontWeight: 700, color: '#0284c7' }}>{app.referringHrName}</span>
                         </td>
                         <td style={{ padding: '14px 16px' }}>
-                          <span style={{
-                            padding: '4px 10px',
-                            borderRadius: '20px',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            background: ['selected', 'joined'].includes(String(app.status || '').toLowerCase()) ? '#ecfdf5' : '#eff6ff',
-                            color: ['selected', 'joined'].includes(String(app.status || '').toLowerCase()) ? '#059669' : '#1e40af'
-                          }}>
-                            {app.status || 'Applied'}
+                          <span 
+                            onClick={() => { setStatusModalApp(app); setNewAppStatus(app.status || 'Applied'); }}
+                            style={{
+                              cursor: 'pointer',
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              background: String(app.status || '').toLowerCase() === 'joined manipal' ? '#dcfce7' : (['selected', 'joined'].includes(String(app.status || '').toLowerCase()) ? '#ecfdf5' : '#eff6ff'),
+                              color: String(app.status || '').toLowerCase() === 'joined manipal' ? '#047857' : (['selected', 'joined'].includes(String(app.status || '').toLowerCase()) ? '#059669' : '#1e40af'),
+                              border: String(app.status || '').toLowerCase() === 'joined manipal' ? '1px solid #86efac' : 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Click to update status"
+                          >
+                            {app.status === 'Joined Manipal' ? '🎓 Joined Manipal' : (app.status || 'Applied')} ✎
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px', color: '#94a3b8', fontSize: '0.85rem' }}>
@@ -1012,6 +1044,49 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
           </div>
         )}
       </div>
+
+      {/* Quick Status Update Modal for Team Leader */}
+      {statusModalApp && (
+        <div className="modal-overlay" onClick={() => setStatusModalApp(null)}>
+          <div className="modal-content animate-fade" style={{ maxWidth: '420px', background: '#fff', borderRadius: '12px', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a' }}>Update Application Status</h3>
+              <button className="btn-close" style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setStatusModalApp(null)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ padding: '1.25rem' }}>
+              <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
+                Candidate: <strong style={{ color: '#0f172a' }}>{statusModalApp.candidateName}</strong><br />
+                Job: <strong>{statusModalApp.jobTitle}</strong> ({statusModalApp.companyName})
+              </div>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>Select Status</label>
+                <select 
+                  className="form-select"
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                  value={newAppStatus}
+                  onChange={e => setNewAppStatus(e.target.value)}
+                >
+                  <option value="Applied">Applied</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Shortlisted">Shortlisted</option>
+                  <option value="HR Screening">HR Screening</option>
+                  <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Document Submission">Document Submission</option>
+                  <option value="Selected">Selected</option>
+                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal (Payout & Incentive)</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button className="btn-secondary" style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }} onClick={() => setStatusModalApp(null)} disabled={savingStatus}>Cancel</button>
+                <button className="btn-primary" style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#0284c7', color: '#fff', fontWeight: 700, cursor: savingStatus ? 'not-allowed' : 'pointer' }} onClick={handleUpdateStatus} disabled={savingStatus}>
+                  {savingStatus ? 'Saving...' : 'Save Status'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

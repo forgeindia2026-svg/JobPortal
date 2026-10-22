@@ -402,6 +402,45 @@ router.put('/:id/incentive-status', async (req, res) => {
   }
 });
 
+// PUT /api/applications/:id/manipal-payout (Update Manipal payout status)
+router.put('/:id/manipal-payout', async (req, res) => {
+  try {
+    const { status, amount, date, notes } = req.body;
+    const { id } = req.params;
+
+    const updateFields = {
+      manipalPayoutStatus: status || 'Pending',
+      manipalPayoutUpdatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    if (amount !== undefined) updateFields.manipalPayoutAmount = Number(amount) || 0;
+    if (date !== undefined) updateFields.manipalPayoutDate = date;
+    if (notes !== undefined) updateFields.manipalPayoutNotes = notes;
+
+    const query = {
+      $or: [
+        { id: id },
+        ...(id && id.length === 24 ? [{ _id: id }] : [])
+      ]
+    };
+
+    const app = await ApplicationModel.findOneAndUpdate(
+      query,
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!app) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    res.json({ message: 'Manipal payout status updated successfully', application: app });
+  } catch (err) {
+    console.error('Error updating Manipal payout status:', err);
+    res.status(500).json({ error: 'Server error updating Manipal payout' });
+  }
+});
+
 module.exports = router;
 
 

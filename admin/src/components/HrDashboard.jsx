@@ -57,7 +57,26 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [jobs, setJobs] = useState([]);
   const [hrs, setHrs] = useState([]);
   const [allApplications, setAllApplications] = useState([]);
-  const CLOSED_STATUSES = ['selected', 'joined'];
+  // Closed condition: Banking requires 'Joined Manipal' or 'Joined', other sectors allow 'Selected'/'Converted'/'Hired'
+  const isCandidateClosedForIncentive = (app) => {
+    if (!app) return false;
+    const s = String(app.status || '').toLowerCase().trim();
+    if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+
+    const catId = String(app.categoryId || '').toLowerCase();
+    const compName = String(app.companyName || '').toLowerCase();
+    const jobTitle = String(app.jobTitle || '').toLowerCase();
+    const isBanking = catId === 'cat_banking' ||
+      /bank|banking|nbfc|kotak|axis|idfc|hdfc|icici|bandhan|yes bank|mahindra finance|aditya birla|tata aig/i.test(compName) ||
+      /bank|banking|relationship officer|relationship executive|branch manager|branch|casa|banca/i.test(jobTitle);
+
+    if (isBanking) {
+      return s === 'joined manipal' || s === 'joined';
+    }
+    return ['selected', 'joined', 'converted', 'hired'].includes(s);
+  };
+
+  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal'];
   
   const [showPartnerIncentiveModal, setShowPartnerIncentiveModal] = useState(false);
   const [selectedJobForIncentive, setSelectedJobForIncentive] = useState(null);
@@ -478,7 +497,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         }
         const val = Number(amt) || 0;
         
-        const isClosed = ['Selected', 'Converted', 'Hired'].includes(app.status);
+        const isClosed = isCandidateClosedForIncentive(app);
         const isRejected = ['Rejected', 'Not Interested'].includes(app.status);
         
         if (isClosed) {
@@ -549,6 +568,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     if (status === 'Applied') return <span style={{ color: '#0f172a', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Applied</span>;
     if (status === 'Shortlisted') return <span style={{ color: '#047857', background: '#d1fae5', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Shortlisted</span>;
     if (status === 'Interview Scheduled') return <span style={{ color: '#1d4ed8', background: '#dbeafe', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Interview Scheduled</span>;
+    if (status === 'Joined Manipal') return <span style={{ color: '#047857', background: '#dcfce7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid #86efac' }}>🎓 Joined Manipal</span>;
     if (status === 'Selected' || status === 'Converted') return <span style={{ color: '#047857', background: '#ecfdf5', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid #10b981' }}>{status}</span>;
     if (status === 'Rejected' || status === 'Not Interested') return <span style={{ color: '#be123c', background: '#ffe4e6', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>{status}</span>;
     if (status === 'Follow up') return <span style={{ color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Follow up</span>;
@@ -746,7 +766,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               const hrStats = hrs.map(hr => {
                 const hrCode = String(hr.referralCode || '').toLowerCase();
                 const hrApps = validApps.filter(app => String(app.referredBy || '').toLowerCase() === hrCode);
-                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                const closedApps = hrApps.filter(app => isCandidateClosedForIncentive(app));
                 return {
                   ...hr,
                   totalSourced: hrApps.length,
@@ -1575,10 +1595,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {activeTab === 'incentives' && (
           <div className="animate-fade">
             {(() => {
-              const closedStatuses = ['selected', 'joined'];
-              const closedApps = (stats?.applications || []).filter(a =>
-                closedStatuses.includes(String(a.status || '').toLowerCase())
-              );
+              const closedApps = (stats?.applications || []).filter(a => isCandidateClosedForIncentive(a));
               
               const totalEarned = closedApps.reduce((sum, app) => {
                  const amt = Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
