@@ -31,8 +31,9 @@ const userSchema = new mongoose.Schema({
   approvedAt: String,
   bankAccountNumber: String,
   bankIfscCode: String,
+  canAccessManipalPayout: { type: Boolean, default: false },
   createdAt: { type: String, default: () => new Date().toISOString() }
-});
+}, { strict: false });
 
 const categorySchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },

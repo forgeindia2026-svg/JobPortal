@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Building2, Users, UserPlus, CheckCircle2, XCircle, Clock, ShieldCheck,
   Edit, Trash2, Mail, Phone, MapPin, RefreshCw, UserCheck, AlertCircle, ChevronRight,
-  Eye, ArrowLeft, Briefcase, FileText, ExternalLink, Code, Search, Filter
+  Eye, ArrowLeft, Briefcase, FileText, ExternalLink, Code, Search, Filter, Wallet
 } from 'lucide-react';
 import BranchManagerDashboard from './BranchManagerDashboard';
 import BranchItProjectsTab from './BranchItProjectsTab';
@@ -26,7 +26,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
   // BM Modal (Add / Edit Branch & Manager)
   const [bmModalOpen, setBmModalOpen] = useState(false);
   const [bmToEdit, setBmToEdit] = useState(null);
-  const [bmForm, setBmForm] = useState({ name: '', email: '', password: '', mobile: '', branch: '', location: '' });
+  const [bmForm, setBmForm] = useState({ name: '', email: '', password: '', mobile: '', branch: '', location: '', canAccessManipalPayout: false });
   const [bmSaving, setBmSaving] = useState(false);
   const [bmError, setBmError] = useState('');
 
@@ -107,10 +107,29 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
       password: '',
       mobile: bm ? (bm.mobile || '') : '',
       branch: bm ? (bm.branch || '') : '',
-      location: bm ? (bm.location || '') : ''
+      location: bm ? (bm.location || '') : '',
+      canAccessManipalPayout: Boolean(bm?.canAccessManipalPayout)
     });
     setBmError('');
     setBmModalOpen(true);
+  };
+
+  const handleToggleManipalAccess = async (bm) => {
+    try {
+      const newStatus = !bm.canAccessManipalPayout;
+      const res = await fetch(`${API_URL}/api/users/branch-managers/${bm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canAccessManipalPayout: newStatus })
+      });
+      if (res.ok) {
+        showSuccess(`Manipal Payout access ${newStatus ? 'granted to' : 'revoked from'} ${bm.name}`);
+        fetchHierarchy();
+        if (onRefresh) onRefresh();
+      }
+    } catch (err) {
+      console.error('Error toggling Manipal access:', err);
+    }
   };
 
   const handleSaveBm = async (e) => {
@@ -1551,6 +1570,47 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                               </div>
                             </div>
                           </div>
+
+                          {/* Manipal Payout Access Control Banner */}
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '12px',
+                            padding: '8px 10px',
+                            background: bm.canAccessManipalPayout ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8fafc',
+                            border: `1.5px solid ${bm.canAccessManipalPayout ? '#86efac' : '#e2e8f0'}`,
+                            borderRadius: '10px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                              <Wallet size={15} style={{ color: bm.canAccessManipalPayout ? '#15803d' : '#94a3b8' }} />
+                              <div>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: bm.canAccessManipalPayout ? '#14532d' : '#475569' }}>
+                                  Manipal Payout Access
+                                </div>
+                                <div style={{ fontSize: '0.68rem', color: bm.canAccessManipalPayout ? '#166534' : '#94a3b8', fontWeight: 600 }}>
+                                  {bm.canAccessManipalPayout ? '✓ Access Granted' : '✕ No Access'}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleToggleManipalAccess(bm); }}
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                background: bm.canAccessManipalPayout ? '#ef4444' : '#16a34a',
+                                color: '#ffffff',
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                boxShadow: bm.canAccessManipalPayout ? '0 2px 6px rgba(239,68,68,0.2)' : '0 2px 6px rgba(22,163,74,0.2)'
+                              }}
+                            >
+                              {bm.canAccessManipalPayout ? 'Revoke Access' : 'Grant Access'}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Card Actions */}
@@ -1773,6 +1833,37 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                   onChange={e => setBmForm({ ...bmForm, mobile: e.target.value })}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
                 />
+              </div>
+
+              {/* Manipal Payout Access Permission Toggle */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 14px',
+                  background: bmForm.canAccessManipalPayout ? '#f0fdf4' : '#f8fafc',
+                  border: `1.5px solid ${bmForm.canAccessManipalPayout ? '#86efac' : '#cbd5e1'}`,
+                  borderRadius: '10px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setBmForm({ ...bmForm, canAccessManipalPayout: !bmForm.canAccessManipalPayout })}
+              >
+                <input
+                  type="checkbox"
+                  id="canAccessManipalPayout"
+                  checked={bmForm.canAccessManipalPayout}
+                  onChange={e => setBmForm({ ...bmForm, canAccessManipalPayout: e.target.checked })}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <label htmlFor="canAccessManipalPayout" style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Wallet size={16} color="#c026d3" /> Grant Manipal Payout Status Access
+                  </label>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                    Allows this Branch Manager to track, view, and manage candidate Manipal payouts.
+                  </p>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>

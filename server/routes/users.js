@@ -914,7 +914,7 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
 // POST create Branch Manager (Admin only)
 router.post('/branch-managers', async (req, res) => {
   try {
-    const { name, email, password, mobile, branch, location } = req.body;
+    const { name, email, password, mobile, branch, location, canAccessManipalPayout } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -935,6 +935,7 @@ router.post('/branch-managers', async (req, res) => {
       passwordHash: 'dummy_hash_' + password,
       role: 'branch_manager',
       approvalStatus: 'approved',
+      canAccessManipalPayout: Boolean(canAccessManipalPayout || false),
       createdAt: new Date().toISOString()
     });
 
@@ -950,7 +951,7 @@ router.post('/branch-managers', async (req, res) => {
 router.put('/branch-managers/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, password, mobile, branch, location } = req.body;
+    const { name, email, password, mobile, branch, location, canAccessManipalPayout } = req.body;
 
     const bm = await UserModel.findOne({ id, role: 'branch_manager' });
     if (!bm) {
@@ -969,6 +970,9 @@ router.put('/branch-managers/:id', async (req, res) => {
     if (mobile !== undefined) bm.mobile = mobile;
     if (branch !== undefined) bm.branch = branch;
     if (location !== undefined) bm.location = location;
+    if (canAccessManipalPayout !== undefined) {
+      bm.canAccessManipalPayout = Boolean(canAccessManipalPayout);
+    }
     if (password && password.trim()) {
       bm.passwordHash = 'dummy_hash_' + password;
     }

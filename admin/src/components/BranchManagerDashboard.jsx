@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users, UserPlus, Clock, CheckCircle2, ShieldCheck, Mail, Phone, MapPin, Building2,
   RefreshCw, FileText, CheckCircle, Briefcase, Filter, Search, Award, TrendingUp, ChevronRight,
-  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar
+  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar, Wallet
 } from 'lucide-react';
 import BranchItProjectsTab from './BranchItProjectsTab';
+import ManipalPayoutManager from './ManipalPayoutManager';
 
 export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onBack }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_leaders' | 'branch_hrs' | 'applications' | 'interviews' | 'incentives' | 'it_projects'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_leaders' | 'branch_hrs' | 'applications' | 'interviews' | 'incentives' | 'it_projects' | 'manipal_payout'
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -141,6 +142,42 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
   const tls = data?.teamLeaders || [];
   const hrs = data?.hrs || [];
   const applications = data?.applications || [];
+
+  const canAccessManipalPayout = Boolean(
+    currentUser?.canAccessManipalPayout ||
+    data?.branchManager?.canAccessManipalPayout
+  );
+
+  const [allApplications, setAllApplications] = useState([]);
+
+  useEffect(() => {
+    if (canAccessManipalPayout) {
+      fetch(`${API_URL}/api/applications`)
+        .then(res => res.ok ? res.json() : [])
+        .then(apps => setAllApplications(apps))
+        .catch(err => console.error('Error fetching all applications for Manipal Payout:', err));
+    }
+  }, [canAccessManipalPayout, API_URL]);
+
+  const payoutApps = allApplications.length > 0 ? allApplications : applications;
+
+  const manipalPayoutCandidates = useMemo(() => {
+    return payoutApps.filter(app => {
+      const s = String(app.status || '').toLowerCase().trim();
+      if (s === 'payment pending' || s === 'unpaid') return false;
+      const isJoinedManipal = s === 'joined manipal' || s.includes('joined manipal');
+      const isExplicitlyPaid = String(app.manipalPayoutStatus || '').toLowerCase() === 'paid';
+      return isJoinedManipal || isExplicitlyPaid;
+    });
+  }, [payoutApps]);
+
+  const manipalPaidCount = useMemo(() => {
+    return manipalPayoutCandidates.filter(a => String(a.manipalPayoutStatus || '').toLowerCase() === 'paid').length;
+  }, [manipalPayoutCandidates]);
+
+  const manipalPendingCount = useMemo(() => {
+    return manipalPayoutCandidates.filter(a => String(a.manipalPayoutStatus || 'pending').toLowerCase() !== 'paid').length;
+  }, [manipalPayoutCandidates]);
 
   // Exclude Payment Pending from Applied tab (they belong in Incentives & Payouts)
   const validApplications = applications.filter(app => app.status !== 'Payment Pending');
@@ -410,6 +447,15 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
         >
           <Gift size={18} /> Incentives & Payouts
         </button>
+
+        {canAccessManipalPayout && (
+          <button
+            className={`nav-item ${activeTab === 'manipal_payout' ? 'active' : ''}`}
+            onClick={() => handleTabChange('manipal_payout')}
+          >
+            <Wallet size={18} /> Manipal Payout ({manipalPayoutCandidates.length})
+          </button>
+        )}
       </div>
 
       {/* MAIN CONTENT AREA */}
@@ -657,6 +703,45 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                 <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#78350f' }}>₹{totalBranchIncentives.toLocaleString('en-IN')}</div>
                 <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 600 }}>Branch Expected</span>
               </div>
+
+              {/* 9. Manipal Payout Status (Only if Admin gave permission) */}
+              {canAccessManipalPayout && (
+                <div 
+                  className="dashboard-kpi-card"
+                  style={{
+                    background: '#f0fdf4',
+                    border: '1.5px solid #86efac',
+                    padding: '1.25rem',
+                    borderRadius: '14px',
+                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.08)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease'
+                  }}
+                  onClick={() => handleTabChange('manipal_payout')}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 800, color: '#14532d', textTransform: 'uppercase' }}>
+                      Manipal Payout Status
+                    </span>
+                    <div className="dashboard-kpi-icon-box" style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Wallet size={18} color="#15803d" />
+                    </div>
+                  </div>
+                  <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#14532d' }}>
+                    {manipalPayoutCandidates.length}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                      ✓ Paid: {manipalPaidCount}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                      ⏳ Pending: {manipalPendingCount}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Branch Health Banner */}
@@ -1890,6 +1975,23 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
         ) : activeTab === 'it_projects' ? (
           /* TAB 6: IT TEAM & PROJECTS WITH EMAIL PROOF & COUNTDOWN */
           <BranchItProjectsTab API_URL={API_URL} currentUser={currentUser} />
+        ) : activeTab === 'manipal_payout' && canAccessManipalPayout ? (
+          /* TAB 7: MANIPAL PAYOUT STATUS */
+          <ManipalPayoutManager
+            API_URL={API_URL}
+            applications={payoutApps}
+            interviews={branchInterviews}
+            companies={[]}
+            onUpdateApplication={() => {
+              fetchOverview();
+              if (canAccessManipalPayout) {
+                fetch(`${API_URL}/api/applications`)
+                  .then(r => r.ok ? r.json() : [])
+                  .then(a => setAllApplications(a));
+              }
+            }}
+            onBack={() => handleTabChange('overview')}
+          />
         ) : null}
       </div>
 
