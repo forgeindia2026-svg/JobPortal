@@ -1486,7 +1486,6 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Bank & Role</th>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Applied Date</th>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Status</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1554,33 +1553,6 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                               <div style={{ fontSize: '0.72rem', color: '#7e22ce', marginTop: '4px', fontWeight: 600 }}>
                                 🗓 {latestInt.round || 'Round 1'} ({latestInt.interviewDate || 'Scheduled'})
                               </div>
-                            )}
-                          </td>
-
-                          <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                            {app.candidateResumeUrl ? (
-                              <a
-                                href={app.candidateResumeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  background: '#eff6ff',
-                                  color: '#2563eb',
-                                  border: '1px solid #bfdbfe',
-                                  padding: '5px 10px',
-                                  borderRadius: '6px',
-                                  fontSize: '0.78rem',
-                                  fontWeight: 700,
-                                  textDecoration: 'none',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                              >
-                                <ExternalLink size={12} /> Resume
-                              </a>
-                            ) : (
-                              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>No Resume</span>
                             )}
                           </td>
                         </tr>
