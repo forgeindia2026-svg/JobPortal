@@ -488,11 +488,10 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       const q = searchQuery.toLowerCase();
       list = list.filter(app =>
         String(app.candidateName || '').toLowerCase().includes(q) ||
-        String(app.candidateMobile || '').toLowerCase().includes(q) ||
-        String(app.candidateEmail || '').toLowerCase().includes(q) ||
         String(app.applicationNumber || '').toLowerCase().includes(q) ||
         String(app.jobTitle || '').toLowerCase().includes(q) ||
-        String(app.companyName || '').toLowerCase().includes(q)
+        String(app.companyName || '').toLowerCase().includes(q) ||
+        String(app.candidateLocation || '').toLowerCase().includes(q)
       );
     }
 
@@ -508,12 +507,11 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       return;
     }
 
-    const headers = ['App ID', 'Candidate Name', 'Mobile', 'Email', 'City', 'Bank / Company', 'Job Role', 'Status', 'Applied Date'];
+    const headers = ['App ID', 'Candidate Name', 'Qualification', 'Location', 'Bank / Company', 'Job Role', 'Status', 'Applied Date'];
     const rows = listToExport.map(app => [
       `"${app.applicationNumber || app.id || ''}"`,
       `"${app.candidateName || ''}"`,
-      `"${app.candidateMobile || ''}"`,
-      `"${app.candidateEmail || ''}"`,
+      `"${app.candidateQualification || ''}"`,
       `"${app.candidateLocation || ''}"`,
       `"${app.companyName || ''}"`,
       `"${app.jobTitle || ''}"`,
@@ -1484,7 +1482,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                     <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>APP ID</th>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Candidate Name</th>
-                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Contact Info</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Location</th>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Bank & Role</th>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Applied Date</th>
                       <th style={{ padding: '12px 16px', fontWeight: 700 }}>Status</th>
@@ -1525,10 +1523,12 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                           </td>
 
                           <td style={{ padding: '14px 16px', color: '#334155' }}>
-                            <div>{app.candidateMobile || 'No Mobile'}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                              {app.candidateLocation || app.candidateEmail || 'N/A'}
-                            </div>
+                            <div style={{ fontWeight: 600 }}>📍 {app.candidateLocation || 'Tamil Nadu'}</div>
+                            {app.candidateExperience && (
+                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                Exp: {app.candidateExperience}
+                              </div>
+                            )}
                           </td>
 
                           <td style={{ padding: '14px 16px' }}>
@@ -1627,7 +1627,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                           {app.candidateName || 'Anonymous Candidate'}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '2px' }}>
-                          📱 {app.candidateMobile || 'No Mobile'} {app.candidateLocation ? `· 📍 ${app.candidateLocation}` : ''}
+                          📍 {app.candidateLocation || 'Tamil Nadu'} {app.candidateExperience ? `· 💼 ${app.candidateExperience}` : ''}
                         </div>
                       </div>
 
