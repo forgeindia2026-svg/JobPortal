@@ -216,6 +216,51 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
   const [customEndDate, setCustomEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const navigateToDetail = (bank = null, kpiStatus = null) => {
+    setSelectedBank(bank);
+    setSelectedKpiStatus(kpiStatus);
+    setStatusFilter(kpiStatus || 'all');
+    setDateFilter('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setSearchQuery('');
+
+    try {
+      const q = bank ? `bank=${encodeURIComponent(bank)}` : `status=${encodeURIComponent(kpiStatus || 'all')}`;
+      window.history.pushState({ clientView: 'detail', bank, kpiStatus }, '', `#client-view?${q}`);
+    } catch (e) {}
+  };
+
+  const navigateBackToOverview = (fromPopState = false) => {
+    setSelectedBank(null);
+    setSelectedKpiStatus(null);
+    setStatusFilter('all');
+    setDateFilter('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setSearchQuery('');
+
+    if (!fromPopState) {
+      if (window.history.state && window.history.state.clientView === 'detail') {
+        window.history.back();
+      } else {
+        try {
+          window.history.pushState({ clientView: 'overview' }, '', '#client-dashboard');
+        } catch (e) {}
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (selectedBank || selectedKpiStatus) {
+        navigateBackToOverview(true);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedBank, selectedKpiStatus]);
+
   // Fetch all live data
   const fetchData = async () => {
     setLoading(true);
@@ -571,13 +616,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <button
               type="button"
               onClick={() => {
-                setSelectedBank(null);
-                setSelectedKpiStatus(null);
-                setStatusFilter('all');
-                setDateFilter('all');
-                setCustomStartDate('');
-                setCustomEndDate('');
-                setSearchQuery('');
+                navigateBackToOverview();
                 setSidebarOpen && setSidebarOpen(false);
               }}
               style={{
@@ -607,9 +646,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <button
               type="button"
               onClick={() => {
-                setSelectedBank(null);
-                setSelectedKpiStatus('processing');
-                setStatusFilter('all');
+                navigateToDetail(null, 'processing');
                 setSidebarOpen && setSidebarOpen(false);
               }}
               style={{
@@ -637,9 +674,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <button
               type="button"
               onClick={() => {
-                setSelectedBank(null);
-                setSelectedKpiStatus('interview');
-                setStatusFilter('all');
+                navigateToDetail(null, 'interview');
                 setSidebarOpen && setSidebarOpen(false);
               }}
               style={{
@@ -667,9 +702,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <button
               type="button"
               onClick={() => {
-                setSelectedBank(null);
-                setSelectedKpiStatus('document');
-                setStatusFilter('all');
+                navigateToDetail(null, 'document');
                 setSidebarOpen && setSidebarOpen(false);
               }}
               style={{
@@ -697,9 +730,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <button
               type="button"
               onClick={() => {
-                setSelectedBank(null);
-                setSelectedKpiStatus('selected');
-                setStatusFilter('all');
+                navigateToDetail(null, 'selected');
                 setSidebarOpen && setSidebarOpen(false);
               }}
               style={{
@@ -727,9 +758,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <button
               type="button"
               onClick={() => {
-                setSelectedBank(null);
-                setSelectedKpiStatus('rejected');
-                setStatusFilter('all');
+                navigateToDetail(null, 'rejected');
                 setSidebarOpen && setSidebarOpen(false);
               }}
               style={{
@@ -765,13 +794,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                   key={b.bankName}
                   type="button"
                   onClick={() => {
-                    setSelectedBank(b.bankName);
-                    setSelectedKpiStatus(null);
-                    setStatusFilter('all');
-                    setDateFilter('all');
-                    setCustomStartDate('');
-                    setCustomEndDate('');
-                    setSearchQuery('');
+                    navigateToDetail(b.bankName, null);
                     setSidebarOpen && setSidebarOpen(false);
                   }}
                   style={{
@@ -837,7 +860,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     return (
       <div className="client-dashboard-wrap" style={{ padding: isEmbedded ? '0' : '1.5rem' }}>
         {renderClientSidebar()}
-        {/* Navigation Breadcrumb / Back Header */}
+        {/* Navigation Breadcrumb / Back Header (Desktop) */}
         <div className="client-top-nav-actions" style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -847,15 +870,8 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
           marginBottom: '1.25rem'
         }}>
           <button
-            onClick={() => {
-              setSelectedBank(null);
-              setSelectedKpiStatus(null);
-              setStatusFilter('all');
-              setDateFilter('all');
-              setCustomStartDate('');
-              setCustomEndDate('');
-              setSearchQuery('');
-            }}
+            className="client-back-btn"
+            onClick={() => navigateBackToOverview()}
             style={{
               background: '#0f172a',
               color: '#ffffff',
@@ -919,6 +935,14 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <div style={{ position: 'absolute', bottom: '-30px', left: '40px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div className="client-bank-header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
+              <button
+                type="button"
+                className="client-mobile-back-icon"
+                onClick={() => navigateBackToOverview()}
+                title="Back to Overview"
+              >
+                <ArrowLeft size={18} />
+              </button>
               <img
                 src={selectedBankObj?.logo || '/logo.png'}
                 alt={selectedBank}
@@ -953,6 +977,14 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                   }}>
                     {bankCandidates.length} Candidates
                   </span>
+                  <button
+                    type="button"
+                    className="client-mobile-export-btn"
+                    onClick={() => exportToCSV(selectedBank || selectedKpiStatus)}
+                    title="Export CSV"
+                  >
+                    <Download size={13} /> Export CSV
+                  </button>
                 </div>
                 <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
                   Candidate pipeline & status for {selectedBank}.
@@ -1008,6 +1040,14 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             <div style={{ position: 'absolute', bottom: '-30px', left: '40px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             <div className="client-bank-header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
+              <button
+                type="button"
+                className="client-mobile-back-icon"
+                onClick={() => navigateBackToOverview()}
+                title="Back to Overview"
+              >
+                <ArrowLeft size={18} />
+              </button>
               <div style={{
                 width: '60px',
                 height: '60px',
@@ -1041,6 +1081,14 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                   }}>
                     {bankCandidates.length} Candidates
                   </span>
+                  <button
+                    type="button"
+                    className="client-mobile-export-btn"
+                    onClick={() => exportToCSV(selectedBank || selectedKpiStatus)}
+                    title="Export CSV"
+                  >
+                    <Download size={13} /> Export CSV
+                  </button>
                 </div>
                 <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
                   {kpiCfg.subtitle}
@@ -1817,10 +1865,9 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
               key={card.id}
               className="client-kpi-card"
               onClick={() => {
-                setSelectedKpiStatus(card.statusTarget);
-                setStatusFilter(card.statusTarget);
-                setSelectedBank(null);
-                setSearchQuery('');
+                if (card.statusTarget) {
+                  navigateToDetail(null, card.statusTarget);
+                }
               }}
               style={{
                 background: card.gradient,
@@ -1901,9 +1948,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
               <div
                 key={bank.bankName}
                 onClick={() => {
-                  setSelectedBank(bank.bankName);
-                  setStatusFilter('all');
-                  setSearchQuery('');
+                  navigateToDetail(bank.bankName, null);
                 }}
                 style={{
                   background: gradientBg,

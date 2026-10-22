@@ -1205,6 +1205,11 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
+.client-mobile-back-icon,
+.client-mobile-export-btn {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .client-dashboard-wrap {
     padding: 10px 10px !important;
@@ -1238,15 +1243,44 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.8rem !important;
   }
 
+  /* On mobile: Hide bulky top nav bar. Hardware back button / swipe or compact icon inside banner handles navigation! */
   .client-top-nav-actions {
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 8px !important;
+    display: none !important;
   }
 
-  .client-top-nav-actions button {
-    width: 100% !important;
+  .client-back-btn {
+    display: none !important;
+  }
+
+  .client-mobile-back-icon {
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .client-mobile-export-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 3px 10px !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    backdrop-filter: blur(4px) !important;
   }
 
   .client-bank-header-left {
