@@ -314,14 +314,47 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     });
   }, [applications]);
 
-  // Status classifier helper
+  // Status classifier helper (Strictly Banking applications only)
   const getAppCategoryStatus = (app) => {
+    if (!app) return 'processing';
     const s = String(app.status || '').toLowerCase().trim();
-    if (['selected', 'l1 selected', 'l2 selected', 'hired', 'converted'].includes(s)) return 'selected';
+
+    // 1. Rejected
     if (['rejected', 'not interested'].includes(s)) return 'rejected';
-    if (s.includes('interview') || s === 'interview scheduled' || s === 'shortlisted') return 'interview';
-    if (s.includes('document') || s === 'document submission' || s === 'document submitted') return 'document';
-    return 'processing'; // applied, under review, hr screening, in progress, etc.
+
+    // 2. Selected / Joined
+    if (['selected', 'l1 selected', 'l2 selected', 'hired', 'converted'].includes(s)) return 'selected';
+
+    // 3. Document Submission / Verification
+    const hasDocInterview = (interviews || []).some(i => {
+      const match = (i.applicationId && (String(i.applicationId) === String(app.id) || String(i.applicationId) === String(app._id))) ||
+                    (i.candidateId && String(i.candidateId) === String(app.candidateId));
+      if (!match) return false;
+      const intStatus = String(i.status || '').toLowerCase().trim();
+      return intStatus.includes('document');
+    });
+    if (s.includes('document') || s === 'document submission' || s === 'document submitted' || hasDocInterview) {
+      return 'document';
+    }
+
+    // 4. Interviews Scheduled / Active
+    const hasActiveInterview = (interviews || []).some(i => {
+      const match = (i.applicationId && (String(i.applicationId) === String(app.id) || String(i.applicationId) === String(app._id))) ||
+                    (i.candidateId && String(i.candidateId) === String(app.candidateId));
+      if (!match) return false;
+      const intStatus = String(i.status || '').toLowerCase().trim();
+      if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return false;
+      if (['selected', 'hired', 'converted'].includes(intStatus)) return false;
+      if (intStatus.includes('document')) return false;
+      return true;
+    });
+
+    if (s.includes('interview') || s === 'interview scheduled' || s === 'shortlisted' || hasActiveInterview) {
+      return 'interview';
+    }
+
+    // 5. Default Processing
+    return 'processing';
   };
 
   // Overall Banking Metrics
@@ -343,7 +376,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     });
 
     return { total, processing, interview, document, selected, rejected };
-  }, [bankingApplications]);
+  }, [bankingApplications, interviews]);
 
   // Group applications by Bank / Company
   const bankGroups = useMemo(() => {
@@ -395,7 +428,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     });
 
     return Object.values(map).sort((a, b) => b.totalCount - a.totalCount || a.bankName.localeCompare(b.bankName));
-  }, [bankingApplications, companies]);
+  }, [bankingApplications, companies, interviews]);
 
   // Selected Bank Object & its Candidates
   const selectedBankObj = useMemo(() => {
@@ -423,7 +456,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     }
 
     return list;
-  }, [bankingApplications, selectedBank, statusFilter, selectedKpiStatus]);
+  }, [bankingApplications, selectedBank, statusFilter, selectedKpiStatus, interviews]);
 
   // Date filter counts matching admin dashboard
   const todayCount = useMemo(() => scopedApplications.filter(a => isToday(a.appliedAt)).length, [scopedApplications]);
@@ -498,7 +531,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     document.body.removeChild(link);
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, app = null) => {
     const s = String(status || '').toLowerCase().trim();
     if (['selected', 'l1 selected', 'l2 selected', 'hired', 'converted'].includes(s)) {
       return (
@@ -507,10 +540,19 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
         </span>
       );
     }
-    if (s.includes('interview') || s === 'shortlisted') {
+
+    const hasActiveInterview = app && (interviews || []).some(i => {
+      const match = (i.applicationId && (String(i.applicationId) === String(app.id) || String(i.applicationId) === String(app._id))) ||
+                    (i.candidateId && String(i.candidateId) === String(app.candidateId));
+      if (!match) return false;
+      const intStatus = String(i.status || '').toLowerCase().trim();
+      return !['rejected', 'not interested', 'cancelled', 'selected', 'hired', 'converted'].includes(intStatus) && !intStatus.includes('document');
+    });
+
+    if (s.includes('interview') || s === 'shortlisted' || hasActiveInterview) {
       return (
         <span style={{ background: '#f3e8ff', color: '#7e22ce', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-          <CalendarDays size={13} /> {status}
+          <CalendarDays size={13} /> {s.includes('interview') ? status : 'Interview Scheduled'}
         </span>
       );
     }
@@ -1507,7 +1549,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                           </td>
 
                           <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                            {getStatusBadge(app.status)}
+                            {getStatusBadge(app.status, app)}
                             {latestInt && (
                               <div style={{ fontSize: '0.72rem', color: '#7e22ce', marginTop: '4px', fontWeight: 600 }}>
                                 🗓 {latestInt.round || 'Round 1'} ({latestInt.interviewDate || 'Scheduled'})
@@ -1576,7 +1618,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                         <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '0.875rem' }}>
                           {app.applicationNumber || `#APP-${String(app.id).slice(-4)}`}
                         </span>
-                        {getStatusBadge(app.status)}
+                        {getStatusBadge(app.status, app)}
                       </div>
 
                       {/* Candidate Name & Info */}
