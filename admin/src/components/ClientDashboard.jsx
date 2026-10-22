@@ -311,6 +311,10 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       const isBankJob = /bank|banking|relationship officer|relationship executive|branch manager|branch|casa|banca/i.test(jobTitle);
 
       return isBankCategory || isBankCompany || isBankJob;
+    }).sort((a, b) => {
+      const dateA = new Date(a.appliedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.appliedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
     });
   }, [applications]);
 
@@ -495,7 +499,11 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       );
     }
 
-    return list;
+    return list.slice().sort((a, b) => {
+      const dateA = new Date(a.appliedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.appliedAt || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
   }, [scopedApplications, selectedBank, selectedKpiStatus, dateFilter, customStartDate, customEndDate, searchQuery]);
 
   // Export to CSV
@@ -1646,9 +1654,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                           >
                             <ExternalLink size={13} /> Resume
                           </a>
-                        ) : (
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>No Resume</span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   );
