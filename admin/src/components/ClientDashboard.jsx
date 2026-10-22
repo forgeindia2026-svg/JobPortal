@@ -510,7 +510,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
   const exportToCSV = (scope = null) => {
     const listToExport = scope ? bankCandidates : bankingApplications;
 
-    if (!listToExport.length) {
+    if (!listToExport || !listToExport.length) {
       alert('No applications available to export.');
       return;
     }
@@ -527,14 +527,16 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       `"${app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-IN') : ''}"`
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${bankName ? bankName.replace(/\s+/g, '_') : 'Banking'}_Candidates_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = URL.createObjectURL(blob);
+    const bankPrefix = selectedBank ? selectedBank.replace(/\s+/g, '_') : 'Banking';
+    link.setAttribute('download', `${bankPrefix}_Candidates_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 100);
   };
 
   const getStatusBadge = (status, app = null) => {
