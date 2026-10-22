@@ -245,7 +245,122 @@ export default function ManipalPayoutManager({
   }, [candidatePool, candidateSearchQuery]);
 
   return (
-    <div className="fade-in" style={{ paddingBottom: '3rem' }}>
+    <div className="manipal-payout-container fade-in" style={{ paddingBottom: '3rem' }}>
+      {/* Mobile Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .manipal-payout-container {
+            padding: 0 4px 3rem 4px !important;
+          }
+          .payout-header-top {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+            margin-bottom: 1rem !important;
+          }
+          .payout-header-left {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+          }
+          .payout-back-btn {
+            align-self: flex-start !important;
+            padding: 7px 12px !important;
+            font-size: 0.8rem !important;
+          }
+          .payout-title-h1 {
+            font-size: 1.25rem !important;
+            line-height: 1.25 !important;
+          }
+          .payout-subtitle {
+            font-size: 0.78rem !important;
+          }
+          .payout-header-actions {
+            display: flex !important;
+            width: 100% !important;
+            gap: 8px !important;
+          }
+          .payout-action-btn {
+            flex: 1 !important;
+            justify-content: center !important;
+            padding: 9px 8px !important;
+            font-size: 0.76rem !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+          }
+          .payout-kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+            margin-bottom: 1rem !important;
+          }
+          .payout-kpi-card {
+            padding: 0.85rem !important;
+            border-radius: 12px !important;
+          }
+          .payout-kpi-label {
+            font-size: 0.68rem !important;
+          }
+          .payout-kpi-value {
+            font-size: 1.45rem !important;
+            margin: 2px 0 !important;
+          }
+          .payout-kpi-sub {
+            font-size: 0.66rem !important;
+            line-height: 1.2 !important;
+          }
+          .payout-filter-bar {
+            padding: 0.85rem !important;
+            gap: 10px !important;
+            margin-bottom: 1rem !important;
+          }
+          .payout-filter-search {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+          }
+          .payout-filter-bank {
+            width: 100% !important;
+            justify-content: space-between !important;
+          }
+          .payout-filter-bank select {
+            flex: 1 !important;
+          }
+          .payout-filter-tabs {
+            width: 100% !important;
+            display: flex !important;
+          }
+          .payout-filter-tab-btn {
+            flex: 1 !important;
+            text-align: center !important;
+            padding: 7px 4px !important;
+            font-size: 0.74rem !important;
+          }
+          .payout-bank-header {
+            padding: 10px 14px !important;
+          }
+          .payout-desktop-table {
+            display: none !important;
+          }
+          .payout-mobile-cards {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 12px !important;
+          }
+          .payout-mobile-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+          }
+        }
+        @media (min-width: 769px) {
+          .payout-mobile-cards {
+            display: none !important;
+          }
+        }
+      `}</style>
+
       {/* Toast Notification */}
       {toastMessage && (
         <div style={{
@@ -267,7 +382,7 @@ export default function ManipalPayoutManager({
       )}
 
       {/* Top Header / Breadcrumb */}
-      <div style={{
+      <div className="payout-header-top" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -275,9 +390,10 @@ export default function ManipalPayoutManager({
         gap: '12px',
         marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="payout-header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={onBack}
+            className="payout-back-btn"
             style={{
               background: '#0f172a',
               color: '#ffffff',
@@ -290,24 +406,26 @@ export default function ManipalPayoutManager({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 2px 8px rgba(15,23,42,0.15)'
+              boxShadow: '0 2px 8px rgba(15,23,42,0.15)',
+              whiteSpace: 'nowrap'
             }}
           >
             <ArrowLeft size={16} /> Back to Overview
           </button>
-          <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="payout-title-box">
+            <h1 className="payout-title-h1" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Wallet style={{ color: '#c026d3' }} size={26} /> Manipal Payout Status
             </h1>
-            <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '3px 0 0 0' }}>
+            <p className="payout-subtitle" style={{ color: '#64748b', fontSize: '0.875rem', margin: '3px 0 0 0' }}>
               Track candidate payouts received from Manipal for selected candidates across all partner banks.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="payout-header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             onClick={() => setShowAddModal(true)}
+            className="payout-action-btn"
             style={{
               background: '#2563eb',
               color: '#ffffff',
@@ -328,6 +446,7 @@ export default function ManipalPayoutManager({
 
           <button
             onClick={exportPayoutCSV}
+            className="payout-action-btn"
             style={{
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: '#ffffff',
@@ -349,14 +468,14 @@ export default function ManipalPayoutManager({
       </div>
 
       {/* KPI Cards Row */}
-      <div style={{
+      <div className="payout-kpi-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '14px',
         marginBottom: '1.5rem'
       }}>
         {/* Total Selected */}
-        <div style={{
+        <div className="payout-kpi-card" style={{
           background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
           border: '1.5px solid #f0abfc',
           borderRadius: '14px',
@@ -364,23 +483,23 @@ export default function ManipalPayoutManager({
           boxShadow: '0 4px 12px rgba(192, 38, 211, 0.1)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#701a75', textTransform: 'uppercase' }}>
+            <span className="payout-kpi-label" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#701a75', textTransform: 'uppercase' }}>
               Total Selected
             </span>
             <div style={{ background: '#f5d0fe', color: '#a21caf', padding: '6px', borderRadius: '8px' }}>
               <Wallet size={16} />
             </div>
           </div>
-          <div style={{ fontSize: '1.95rem', fontWeight: 800, color: '#701a75', lineHeight: 1.15 }}>
+          <div className="payout-kpi-value" style={{ fontSize: '1.95rem', fontWeight: 800, color: '#701a75', lineHeight: 1.15 }}>
             {totalCount}
           </div>
-          <span style={{ fontSize: '0.75rem', color: '#86198f', fontWeight: 600 }}>
+          <span className="payout-kpi-sub" style={{ fontSize: '0.75rem', color: '#86198f', fontWeight: 600 }}>
             Candidates in Payout Pipeline
           </span>
         </div>
 
         {/* Payout Paid */}
-        <div style={{
+        <div className="payout-kpi-card" style={{
           background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
           border: '1.5px solid #86efac',
           borderRadius: '14px',
@@ -388,18 +507,18 @@ export default function ManipalPayoutManager({
           boxShadow: '0 4px 12px rgba(22, 163, 74, 0.1)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#14532d', textTransform: 'uppercase' }}>
+            <span className="payout-kpi-label" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#14532d', textTransform: 'uppercase' }}>
               Payout Paid
             </span>
             <div style={{ background: '#bbf7d0', color: '#15803d', padding: '6px', borderRadius: '8px' }}>
               <CheckCircle size={16} />
             </div>
           </div>
-          <div style={{ fontSize: '1.95rem', fontWeight: 800, color: '#14532d', lineHeight: 1.15 }}>
+          <div className="payout-kpi-value" style={{ fontSize: '1.95rem', fontWeight: 800, color: '#14532d', lineHeight: 1.15 }}>
             {paidCandidates.length}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-            <span style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 700 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px', flexWrap: 'wrap', gap: '4px' }}>
+            <span className="payout-kpi-sub" style={{ fontSize: '0.75rem', color: '#15803d', fontWeight: 700 }}>
               ✓ Received from Manipal
             </span>
             {totalPaidAmount > 0 && (
@@ -411,7 +530,7 @@ export default function ManipalPayoutManager({
         </div>
 
         {/* Payout Pending */}
-        <div style={{
+        <div className="payout-kpi-card" style={{
           background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
           border: '1.5px solid #fde68a',
           borderRadius: '14px',
@@ -419,18 +538,18 @@ export default function ManipalPayoutManager({
           boxShadow: '0 4px 12px rgba(217, 119, 6, 0.1)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase' }}>
+            <span className="payout-kpi-label" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#78350f', textTransform: 'uppercase' }}>
               Payout Pending
             </span>
             <div style={{ background: '#fef08a', color: '#b45309', padding: '6px', borderRadius: '8px' }}>
               <Clock size={16} />
             </div>
           </div>
-          <div style={{ fontSize: '1.95rem', fontWeight: 800, color: '#78350f', lineHeight: 1.15 }}>
+          <div className="payout-kpi-value" style={{ fontSize: '1.95rem', fontWeight: 800, color: '#78350f', lineHeight: 1.15 }}>
             {pendingCandidates.length}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-            <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 700 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px', flexWrap: 'wrap', gap: '4px' }}>
+            <span className="payout-kpi-sub" style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 700 }}>
               ⏳ Awaiting Manipal Transfer
             </span>
             {totalPendingAmount > 0 && (
@@ -442,7 +561,7 @@ export default function ManipalPayoutManager({
         </div>
 
         {/* Banks Involved */}
-        <div style={{
+        <div className="payout-kpi-card" style={{
           background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
           border: '1.5px solid #bfdbfe',
           borderRadius: '14px',
@@ -450,24 +569,24 @@ export default function ManipalPayoutManager({
           boxShadow: '0 4px 12px rgba(37, 99, 235, 0.1)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e3a8a', textTransform: 'uppercase' }}>
+            <span className="payout-kpi-label" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e3a8a', textTransform: 'uppercase' }}>
               Partner Banks
             </span>
             <div style={{ background: '#bfdbfe', color: '#2563eb', padding: '6px', borderRadius: '8px' }}>
               <Building2 size={16} />
             </div>
           </div>
-          <div style={{ fontSize: '1.95rem', fontWeight: 800, color: '#1e3a8a', lineHeight: 1.15 }}>
+          <div className="payout-kpi-value" style={{ fontSize: '1.95rem', fontWeight: 800, color: '#1e3a8a', lineHeight: 1.15 }}>
             {bankGroups.length}
           </div>
-          <span style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 600 }}>
+          <span className="payout-kpi-sub" style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 600 }}>
             Active Banking Placements
           </span>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div style={{
+      <div className="payout-filter-bar" style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: '14px',
@@ -480,7 +599,7 @@ export default function ManipalPayoutManager({
         gap: '12px'
       }}>
         {/* Search */}
-        <div style={{ position: 'relative', flex: '1 1 260px' }}>
+        <div className="payout-filter-search" style={{ position: 'relative', flex: '1 1 260px' }}>
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
           <input
             type="text"
@@ -500,7 +619,7 @@ export default function ManipalPayoutManager({
         </div>
 
         {/* Bank Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="payout-filter-bank" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>Bank:</span>
           <select
             value={selectedBankFilter}
@@ -523,9 +642,10 @@ export default function ManipalPayoutManager({
         </div>
 
         {/* Status Filter Tabs */}
-        <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
+        <div className="payout-filter-tabs" style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
           <button
             onClick={() => setStatusFilter('all')}
+            className="payout-filter-tab-btn"
             style={{
               padding: '6px 14px',
               borderRadius: '7px',
@@ -542,6 +662,7 @@ export default function ManipalPayoutManager({
           </button>
           <button
             onClick={() => setStatusFilter('pending')}
+            className="payout-filter-tab-btn"
             style={{
               padding: '6px 14px',
               borderRadius: '7px',
@@ -558,6 +679,7 @@ export default function ManipalPayoutManager({
           </button>
           <button
             onClick={() => setStatusFilter('paid')}
+            className="payout-filter-tab-btn"
             style={{
               padding: '6px 14px',
               borderRadius: '7px',
@@ -622,7 +744,7 @@ export default function ManipalPayoutManager({
               }}
             >
               {/* Bank Header Bar */}
-              <div style={{
+              <div className="payout-bank-header" style={{
                 background: '#f8fafc',
                 borderBottom: '1px solid #e2e8f0',
                 padding: '14px 20px',
@@ -681,8 +803,8 @@ export default function ManipalPayoutManager({
                 </div>
               </div>
 
-              {/* Table of Candidates */}
-              <div style={{ overflowX: 'auto' }}>
+              {/* Desktop Table of Candidates */}
+              <div className="payout-desktop-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ background: '#fdfdfe', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -891,6 +1013,219 @@ export default function ManipalPayoutManager({
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card View of Candidates */}
+              <div className="payout-mobile-cards">
+                {bg.candidates.map((app, idx) => {
+                  const isPaid = String(app.manipalPayoutStatus || '').toLowerCase() === 'paid';
+                  const isEditing = editingAppId === (app.id || app._id);
+                  const isSaving = savingId === (app.id || app._id);
+
+                  return (
+                    <div
+                      key={app.id || app._id || idx}
+                      className="payout-mobile-card"
+                      style={{
+                        background: isPaid ? 'rgba(240, 253, 244, 0.6)' : '#ffffff',
+                        border: `1px solid ${isPaid ? '#bbf7d0' : '#e2e8f0'}`,
+                        borderRadius: '12px',
+                        padding: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}
+                    >
+                      {/* Top Bar: ID and Status Pill */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '0.85rem' }}>
+                          {app.applicationNumber || `#APP-${String(app.id || app._id).slice(-4)}`}
+                        </span>
+                        <span style={{
+                          background: isPaid ? '#dcfce7' : '#fef3c7',
+                          color: isPaid ? '#15803d' : '#b45309',
+                          border: `1px solid ${isPaid ? '#86efac' : '#fde68a'}`,
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          {isPaid ? <CheckCircle size={12} /> : <Clock size={12} />}
+                          {isPaid ? 'Paid' : 'Pending'}
+                        </span>
+                      </div>
+
+                      {/* Candidate Name & Role */}
+                      <div>
+                        <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.96rem' }}>
+                          {app.candidateName || 'Anonymous Candidate'}
+                        </div>
+                        <div style={{ color: '#475569', fontSize: '0.8rem', fontWeight: 600, marginTop: '2px' }}>
+                          {app.jobTitle || 'Banking Executive'}
+                        </div>
+                        <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '3px' }}>
+                          📱 {app.candidateMobile || 'N/A'} {app.candidateLocation ? `· 📍 ${app.candidateLocation}` : ''}
+                        </div>
+                      </div>
+
+                      {/* Details row: Applied Date & Payout Amount */}
+                      <div style={{
+                        background: '#f8fafc',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '0.78rem'
+                      }}>
+                        <div>
+                          <span style={{ color: '#64748b' }}>Selected: </span>
+                          <span style={{ fontWeight: 600, color: '#334155' }}>
+                            {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: '#64748b' }}>Payout: </span>
+                          <span style={{ fontWeight: 800, color: isPaid ? '#15803d' : '#0f172a' }}>
+                            ₹{Number(app.manipalPayoutAmount || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Payout Date & Notes if exists */}
+                      {(app.manipalPayoutDate || app.manipalPayoutNotes) && !isEditing && (
+                        <div style={{ fontSize: '0.72rem', color: '#64748b', background: '#fdfdfe', padding: '4px 6px', borderRadius: '6px' }}>
+                          {app.manipalPayoutDate && <span>Paid on: {new Date(app.manipalPayoutDate).toLocaleDateString('en-IN')} </span>}
+                          {app.manipalPayoutNotes && <span style={{ fontStyle: 'italic' }}>({app.manipalPayoutNotes})</span>}
+                        </div>
+                      )}
+
+                      {/* Edit Mode Inline Inputs */}
+                      {isEditing && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Amount (₹)</label>
+                              <input
+                                type="number"
+                                value={editAmount}
+                                onChange={e => setEditAmount(e.target.value)}
+                                placeholder="Amount"
+                                style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Date</label>
+                              <input
+                                type="date"
+                                value={editDate}
+                                onChange={e => setEditDate(e.target.value)}
+                                style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>UTR / Notes</label>
+                            <input
+                              type="text"
+                              value={editNotes}
+                              onChange={e => setEditNotes(e.target.value)}
+                              placeholder="e.g. UTR123456"
+                              style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                            <button
+                              onClick={() => handleSavePayout(app, app.manipalPayoutStatus || 'Pending', editAmount, editDate, editNotes)}
+                              disabled={isSaving}
+                              style={{
+                                flex: 1,
+                                background: '#16a34a',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                fontWeight: 700,
+                                fontSize: '0.78rem',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => setEditingAppId(null)}
+                              style={{
+                                flex: 1,
+                                background: '#e2e8f0',
+                                color: '#475569',
+                                border: 'none',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                fontSize: '0.78rem',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons (when not editing) */}
+                      {!isEditing && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
+                          <button
+                            onClick={() => handleQuickToggle(app)}
+                            disabled={isSaving}
+                            style={{
+                              flex: 1,
+                              background: isPaid ? '#fef3c7' : '#dcfce7',
+                              color: isPaid ? '#92400e' : '#15803d',
+                              border: `1px solid ${isPaid ? '#fde68a' : '#86efac'}`,
+                              padding: '8px',
+                              borderRadius: '8px',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            {isSaving ? 'Updating...' : (isPaid ? 'Mark as Pending' : '✓ Mark as Paid')}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingAppId(app.id || app._id);
+                              setEditAmount(app.manipalPayoutAmount || '');
+                              setEditDate(app.manipalPayoutDate || new Date().toISOString().slice(0, 10));
+                              setEditNotes(app.manipalPayoutNotes || '');
+                            }}
+                            title="Edit Details"
+                            style={{
+                              background: '#f1f5f9',
+                              color: '#475569',
+                              border: '1px solid #cbd5e1',
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <Edit size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
