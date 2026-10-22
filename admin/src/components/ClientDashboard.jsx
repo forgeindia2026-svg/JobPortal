@@ -490,6 +490,343 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     );
   };
 
+  const renderClientSidebar = () => {
+    if (!sidebarOpen) return null;
+
+    const banksList = Object.values(bankGroups);
+
+    return (
+      <>
+        {/* Mobile Backdrop */}
+        <div
+          onClick={() => setSidebarOpen && setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 9998,
+            transition: 'opacity 0.2s'
+          }}
+        />
+
+        {/* Slide-out Sidebar Drawer */}
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: '280px',
+            maxWidth: '85vw',
+            background: '#0f172a',
+            color: '#94a3b8',
+            boxShadow: '-6px 0 24px rgba(0,0,0,0.4)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            padding: '1.25rem 1rem',
+            animation: 'slideInRight 0.25s ease-out'
+          }}
+        >
+          {/* Header with Close Button */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '1rem' }}>
+            <div>
+              <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f59e0b', fontWeight: 800 }}>
+                Corporate Portal
+              </div>
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
+                {currentUser?.name || 'Client Partner'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                All Banking Sectors
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen && setSidebarOpen(false)}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                color: '#cbd5e1',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <XCircle size={18} />
+            </button>
+          </div>
+
+          {/* Quick Nav Links */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBank(null);
+                setSelectedKpiStatus(null);
+                setStatusFilter('all');
+                setDateFilter('all');
+                setCustomStartDate('');
+                setCustomEndDate('');
+                setSearchQuery('');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                background: (selectedBank === null && selectedKpiStatus === null) ? '#2563eb' : 'rgba(255,255,255,0.04)',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <Building2 size={18} />
+              <span>All Banks Overview</span>
+            </button>
+
+            {/* Stages Section */}
+            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 800, letterSpacing: '0.05em', marginTop: '14px', marginBottom: '4px', paddingLeft: '4px' }}>
+              Candidate Stages
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBank(null);
+                setSelectedKpiStatus('processing');
+                setStatusFilter('all');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: selectedKpiStatus === 'processing' ? 'rgba(217, 119, 6, 0.25)' : 'transparent',
+                color: '#fef08a',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.84rem',
+                fontWeight: 600
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Clock size={16} /> <span>Processing</span>
+              </div>
+              <span style={{ background: 'rgba(234, 179, 8, 0.25)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                {bankingStats.processing}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBank(null);
+                setSelectedKpiStatus('interview');
+                setStatusFilter('all');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: selectedKpiStatus === 'interview' ? 'rgba(126, 34, 206, 0.25)' : 'transparent',
+                color: '#e9d5ff',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.84rem',
+                fontWeight: 600
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CalendarDays size={16} /> <span>Interviews</span>
+              </div>
+              <span style={{ background: 'rgba(168, 85, 247, 0.25)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                {bankingStats.interview}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBank(null);
+                setSelectedKpiStatus('document');
+                setStatusFilter('all');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: selectedKpiStatus === 'document' ? 'rgba(8, 145, 178, 0.25)' : 'transparent',
+                color: '#a5f3fc',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.84rem',
+                fontWeight: 600
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileCheck size={16} /> <span>Documents</span>
+              </div>
+              <span style={{ background: 'rgba(6, 182, 212, 0.25)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                {bankingStats.document}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBank(null);
+                setSelectedKpiStatus('selected');
+                setStatusFilter('all');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: selectedKpiStatus === 'selected' ? 'rgba(22, 163, 74, 0.25)' : 'transparent',
+                color: '#bbf7d0',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.84rem',
+                fontWeight: 600
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle size={16} /> <span>Selected</span>
+              </div>
+              <span style={{ background: 'rgba(34, 197, 94, 0.25)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                {bankingStats.selected}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBank(null);
+                setSelectedKpiStatus('rejected');
+                setStatusFilter('all');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                background: selectedKpiStatus === 'rejected' ? 'rgba(225, 29, 72, 0.25)' : 'transparent',
+                color: '#fca5a5',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.84rem',
+                fontWeight: 600
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <XCircle size={16} /> <span>Rejected</span>
+              </div>
+              <span style={{ background: 'rgba(239, 68, 68, 0.25)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                {bankingStats.rejected}
+              </span>
+            </button>
+
+            {/* Banks List Section */}
+            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 800, letterSpacing: '0.05em', marginTop: '14px', marginBottom: '4px', paddingLeft: '4px' }}>
+              Partner Banks ({banksList.length})
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '200px', overflowY: 'auto' }}>
+              {banksList.map(b => (
+                <button
+                  key={b.bankName}
+                  type="button"
+                  onClick={() => {
+                    setSelectedBank(b.bankName);
+                    setSelectedKpiStatus(null);
+                    setStatusFilter('all');
+                    setDateFilter('all');
+                    setCustomStartDate('');
+                    setCustomEndDate('');
+                    setSearchQuery('');
+                    setSidebarOpen && setSidebarOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    background: selectedBank === b.bankName ? 'rgba(59, 130, 246, 0.25)' : 'transparent',
+                    color: selectedBank === b.bankName ? '#60a5fa' : '#cbd5e1',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    textAlign: 'left'
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>
+                    {b.bankName}
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>
+                    {b.totalCount}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                fetchData();
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 14px', borderRadius: '8px', color: '#93c5fd', background: 'rgba(59,130,246,0.15)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}
+            >
+              <RefreshCw size={15} /> Refresh Stats
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                exportToCSV(selectedBank || selectedKpiStatus);
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 14px', borderRadius: '8px', color: '#86efac', background: 'rgba(34,197,94,0.15)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}
+            >
+              <Download size={15} /> Export CSV
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   // ==========================================
   // VIEW 2: INSIDE SPECIFIC BANK OR KPI STATUS PAGE ("Ulla Pokanum")
   // ==========================================
@@ -499,6 +836,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
 
     return (
       <div className="client-dashboard-wrap" style={{ padding: isEmbedded ? '0' : '1.5rem' }}>
+        {renderClientSidebar()}
         {/* Navigation Breadcrumb / Back Header */}
         <div className="client-top-nav-actions" style={{
           display: 'flex',
@@ -1266,6 +1604,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
   // ==========================================
   return (
     <div className="client-dashboard-wrap" style={{ padding: isEmbedded ? '0' : '1.5rem' }}>
+      {renderClientSidebar()}
       {/* Header Banner */}
       <div className="client-banner" style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
