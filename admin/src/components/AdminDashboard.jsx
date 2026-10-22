@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
-  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick
+  Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
+  Copy, Lock, Eye, EyeOff
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -12,6 +13,7 @@ import ItTrainingModal from './ItTrainingModal';
 import ManualApplicationModal from './ManualApplicationModal';
 import AgentsManager from './AgentsManager';
 import HierarchyManager from './HierarchyManager';
+import ClientDashboard from './ClientDashboard';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
@@ -48,11 +50,21 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [interviews, setInterviews] = useState([]);
+  const [interviewFilter, setInterviewFilter] = useState('active'); // 'active' | 'all' | 'document' | 'selected' | 'rejected'
   const [itProcesses, setItProcesses] = useState([]);
   const [globalItIncentives, setGlobalItIncentives] = useState({});
   const [hrs, setHrs] = useState([]);
   const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clients, setClients] = useState([]);
+  const [clientSubTab, setClientSubTab] = useState('pipeline'); // 'pipeline' | 'accounts'
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [clientToEdit, setClientToEdit] = useState(null);
+  const [clientForm, setClientForm] = useState({ name: '', email: '', mobile: '', password: '' });
+  const [clientShowPassword, setClientShowPassword] = useState(false);
+  const [clientError, setClientError] = useState('');
+  const [clientSaving, setClientSaving] = useState(false);
+  const [copiedClientId, setCopiedClientId] = useState(null);
 
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
@@ -225,6 +237,53 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       }
     } catch (err) {
       console.warn('User endpoints not available yet:', err.message);
+    }
+
+    // Clients fetch
+    try {
+      const clientRes = await fetch(`${API_URL}/api/users/clients`);
+      if (clientRes.ok) {
+        const clientData = await clientRes.json();
+        if (Array.isArray(clientData) && clientData.length > 0) {
+          setClients(clientData);
+          localStorage.setItem('admin_clients_cache', JSON.stringify(clientData));
+        } else {
+          const cached = JSON.parse(localStorage.getItem('admin_clients_cache') || '[]');
+          if (cached.length > 0) {
+            setClients(cached);
+          } else {
+            const defaultClient = [{
+              id: 'usr_client_default',
+              name: 'Banking Client Partner',
+              email: 'client@forgeindiaconnect.in',
+              mobile: '9876543210',
+              role: 'client',
+              createdAt: '2026-10-22T00:00:00.000Z'
+            }];
+            setClients(defaultClient);
+            localStorage.setItem('admin_clients_cache', JSON.stringify(defaultClient));
+          }
+        }
+      } else {
+        const cached = JSON.parse(localStorage.getItem('admin_clients_cache') || '[]');
+        if (cached.length > 0) {
+          setClients(cached);
+        } else {
+          const defaultClient = [{
+            id: 'usr_client_default',
+            name: 'Banking Client Partner',
+            email: 'client@forgeindiaconnect.in',
+            mobile: '9876543210',
+            role: 'client',
+            createdAt: '2026-10-22T00:00:00.000Z'
+          }];
+          setClients(defaultClient);
+          localStorage.setItem('admin_clients_cache', JSON.stringify(defaultClient));
+        }
+      }
+    } catch (err) {
+      const cached = JSON.parse(localStorage.getItem('admin_clients_cache') || '[]');
+      if (cached.length > 0) setClients(cached);
     }
   };
 
@@ -473,6 +532,111 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     }
   };
 
+  const handleSaveClient = async (e) => {
+    e.preventDefault();
+    setClientSaving(true);
+    setClientError('');
+
+    try {
+      const payload = {
+        name: clientForm.name.trim(),
+        email: clientForm.email.trim().toLowerCase(),
+        mobile: clientForm.mobile.trim(),
+        password: clientForm.password
+      };
+
+      if (!payload.name || !payload.email) {
+        setClientError('Name and Email ID are required.');
+        setClientSaving(false);
+        return;
+      }
+
+      if (!clientToEdit && !payload.password) {
+        setClientError('Password is required for new client.');
+        setClientSaving(false);
+        return;
+      }
+
+      let res;
+      let newOrUpdatedClient = null;
+
+      if (clientToEdit) {
+        res = await fetch(`${API_URL}/api/users/client/${clientToEdit.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(`${API_URL}/api/users/client`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (res && res.ok) {
+        newOrUpdatedClient = await res.json();
+      } else if (res && !res.ok && res.status !== 404) {
+        const errData = await res.json().catch(() => ({}));
+        setClientError(errData.error || 'Failed to save client.');
+        setClientSaving(false);
+        return;
+      } else {
+        // Fallback for offline/local cache
+        newOrUpdatedClient = {
+          id: clientToEdit ? clientToEdit.id : 'usr_client_' + Date.now(),
+          name: payload.name,
+          email: payload.email,
+          mobile: payload.mobile,
+          role: 'client',
+          createdAt: clientToEdit ? clientToEdit.createdAt : new Date().toISOString()
+        };
+      }
+
+      // Update state and cache
+      if (newOrUpdatedClient) {
+        setClients(prev => {
+          let updated;
+          if (clientToEdit) {
+            updated = prev.map(c => c.id === clientToEdit.id ? { ...c, ...newOrUpdatedClient } : c);
+          } else {
+            updated = [newOrUpdatedClient, ...prev.filter(c => c.email !== newOrUpdatedClient.email)];
+          }
+          localStorage.setItem('admin_clients_cache', JSON.stringify(updated));
+          return updated;
+        });
+      }
+
+      setClientModalOpen(false);
+      setClientToEdit(null);
+      setClientForm({ name: '', email: '', mobile: '', password: '' });
+      alert(clientToEdit ? 'Client updated successfully!' : `Client account created successfully!\n\nUser ID: ${payload.email}\nPassword: ${payload.password}\n\nClient can now log in at the portal.`);
+    } catch (err) {
+      console.error('Error saving client:', err);
+      setClientError('Error saving client: ' + err.message);
+    } finally {
+      setClientSaving(false);
+    }
+  };
+
+  const handleDeleteClient = async (client) => {
+    if (!window.confirm(`Are you sure you want to delete client account "${client.name}" (${client.email})?`)) {
+      return;
+    }
+
+    try {
+      await fetch(`${API_URL}/api/users/client/${client.id}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn('API delete client failed, removing locally:', e);
+    }
+
+    setClients(prev => {
+      const updated = prev.filter(c => c.id !== client.id);
+      localStorage.setItem('admin_clients_cache', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const isToday = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
@@ -544,6 +708,68 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     });
     return ids.size;
   }, [validApplications, interviews]);
+
+  const activeInterviews = useMemo(() => {
+    return (interviews || []).filter(int => {
+      const intStatus = String(int.status || '').toLowerCase().trim();
+      if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return false;
+      if (['selected', 'hired', 'converted'].includes(intStatus)) return false;
+      if (intStatus.includes('document')) return false;
+
+      const app = applications.find(a => 
+        (int.applicationId && String(a.id) === String(int.applicationId)) ||
+        (int.candidateId && String(a.candidateId) === String(int.candidateId))
+      );
+
+      if (app) {
+        const appStatus = String(app.status || '').toLowerCase().trim();
+        if (appStatus === 'payment pending' || appStatus === 'unpaid') return false;
+        if (['rejected', 'not interested'].includes(appStatus)) return false;
+        if (appStatus.includes('document')) return false;
+        if (['selected', 'converted', 'hired'].includes(appStatus)) return false;
+      }
+      return true;
+    });
+  }, [interviews, applications]);
+
+  const displayedInterviews = useMemo(() => {
+    if (interviewFilter === 'all') return interviews || [];
+    if (interviewFilter === 'active') return activeInterviews;
+    if (interviewFilter === 'document') {
+      return (interviews || []).filter(int => {
+        const intStatus = String(int.status || '').toLowerCase().trim();
+        if (intStatus.includes('document')) return true;
+        const app = applications.find(a => 
+          (int.applicationId && String(a.id) === String(int.applicationId)) ||
+          (int.candidateId && String(a.candidateId) === String(int.candidateId))
+        );
+        return app && String(app.status || '').toLowerCase().trim().includes('document');
+      });
+    }
+    if (interviewFilter === 'selected') {
+      return (interviews || []).filter(int => {
+        const intStatus = String(int.status || '').toLowerCase().trim();
+        if (['selected', 'hired', 'converted'].includes(intStatus)) return true;
+        const app = applications.find(a => 
+          (int.applicationId && String(a.id) === String(int.applicationId)) ||
+          (int.candidateId && String(a.candidateId) === String(int.candidateId))
+        );
+        return app && ['selected', 'hired', 'converted'].includes(String(app.status || '').toLowerCase().trim());
+      });
+    }
+    if (interviewFilter === 'rejected') {
+      return (interviews || []).filter(int => {
+        const intStatus = String(int.status || '').toLowerCase().trim();
+        if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return true;
+        const app = applications.find(a => 
+          (int.applicationId && String(a.id) === String(int.applicationId)) ||
+          (int.candidateId && String(a.candidateId) === String(int.candidateId))
+        );
+        return app && ['rejected', 'not interested'].includes(String(app.status || '').toLowerCase().trim());
+      });
+    }
+    return activeInterviews;
+  }, [interviews, activeInterviews, interviewFilter, applications]);
 
   const getUpcomingIncentivesData = () => {
     const allReferrers = [...hrs, ...allAgents];
@@ -940,10 +1166,17 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         </button>
 
         <button
+          className={`nav-item ${activeTab === 'client_dashboard' ? 'active' : ''}`}
+          onClick={() => handleTabChange('client_dashboard')}
+        >
+          <Building2 size={18} /> Client Dashboard ({clients.length})
+        </button>
+
+        <button
           className={`nav-item ${activeTab === 'interviews' ? 'active' : ''}`}
           onClick={() => handleTabChange('interviews')}
         >
-          <CalendarDays size={18} /> Interviews ({interviews.length})
+          <CalendarDays size={18} /> Interviews ({activeInterviews.length})
         </button>
 
         <button
@@ -1091,7 +1324,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
               <div 
                 className="kpi-card" 
-                onClick={() => setActiveTab('interviews')}
+                onClick={() => { setActiveTab('interviews'); setInterviewFilter('active'); }}
                 style={{
                   background: '#fdf4ff', border: '1px solid #f0abfc', cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
@@ -1103,7 +1336,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <Calendar size={22} />
                 </div>
                 <div>
-                  <div className="kpi-val" style={{ color: '#701a75' }}>{interviews.length}</div>
+                  <div className="kpi-val" style={{ color: '#701a75' }}>{activeInterviews.length}</div>
                   <div className="kpi-label" style={{ color: '#701a75', opacity: 0.8, fontWeight: 600 }}>Interviews Scheduled</div>
                 </div>
               </div>
@@ -2797,6 +3030,98 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>Scheduled Interviews</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Upcoming HR, Technical, and Branch interviews.</p>
               </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setInterviewFilter('active')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: interviewFilter === 'active' ? '#a855f7' : '#e2e8f0',
+                    background: interviewFilter === 'active' ? '#f3e8ff' : '#ffffff',
+                    color: interviewFilter === 'active' ? '#7e22ce' : '#64748b',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Active Scheduled ({activeInterviews.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInterviewFilter('all')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: interviewFilter === 'all' ? '#3b82f6' : '#e2e8f0',
+                    background: interviewFilter === 'all' ? '#eff6ff' : '#ffffff',
+                    color: interviewFilter === 'all' ? '#1d4ed8' : '#64748b',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  All History ({interviews.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInterviewFilter('document')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: interviewFilter === 'document' ? '#06b6d4' : '#e2e8f0',
+                    background: interviewFilter === 'document' ? '#ecfeff' : '#ffffff',
+                    color: interviewFilter === 'document' ? '#0e7490' : '#64748b',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Document Stage
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInterviewFilter('selected')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: interviewFilter === 'selected' ? '#10b981' : '#e2e8f0',
+                    background: interviewFilter === 'selected' ? '#ecfdf5' : '#ffffff',
+                    color: interviewFilter === 'selected' ? '#047857' : '#64748b',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInterviewFilter('rejected')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: interviewFilter === 'rejected' ? '#ef4444' : '#e2e8f0',
+                    background: interviewFilter === 'rejected' ? '#fef2f2' : '#ffffff',
+                    color: interviewFilter === 'rejected' ? '#b91c1c' : '#64748b',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Rejected
+                </button>
+              </div>
             </div>
 
             <div className="table-container">
@@ -2814,88 +3139,103 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   </tr>
                 </thead>
                 <tbody>
-                  {interviews.map(int => {
-                    const app = applications.find(a => a.id === int.applicationId);
-                    const referrer = app && app.referredBy ? [...hrs, ...allAgents].find(r => r.referralCode === app.referredBy) : null;
-                    return (
-                      <tr key={int.id}>
-                        <td style={{ fontWeight: 700 }}>{int.candidateName}</td>
-                        <td>
-                          {referrer ? (
-                            <div>
-                              <div style={{ fontWeight: 600, color: '#334155' }}>{referrer.name}</div>
-                              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{referrer.referralCode}</div>
-                            </div>
-                          ) : (
-                            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>
-                          )}
-                        </td>
-                        <td>{int.jobTitle}</td>
-                      <td>{int.companyName}</td>
-                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        <div style={{ color: '#334155' }}>
-                          {int.date ? new Date(int.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD'}
-                        </div>
-                        {int.time && (
-                          <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '2px' }}>
-                            {(() => {
-                              const p = int.time.split(':');
-                              let h = parseInt(p[0], 10);
-                              const m = p[1] || '00';
-                              const ampm = h >= 12 ? 'PM' : 'AM';
-                              h = h % 12 || 12;
-                              return `${h}:${m} ${ampm}`;
-                            })()}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {int.mode === 'Online' ? (
-                          <div>
-                            <span style={{ color: '#059669', fontWeight: 600 }}>Online</span>
-                            {int.meetingLink && (
-                              <div><a href={int.meetingLink} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb' }}>Meeting Link</a></div>
-                            )}
-                          </div>
-                        ) : (
-                          <div>
-                            <span style={{ color: '#d97706', fontWeight: 600 }}>Offline</span>
-                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{int.location}</div>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {(() => {
-                          const status = int.status || 'Scheduled';
-                          let bg = '#e0f2fe';
-                          let color = '#0284c7';
-                          if (status.toLowerCase() === 'rejected') {
-                            bg = '#fee2e2';
-                            color = '#dc2626';
-                          } else if (status.toLowerCase() === 'selected' || status.toLowerCase() === 'hired') {
-                            bg = '#dcfce7';
-                            color = '#16a34a';
-                          }
-                          return (
-                            <span className="badge" style={{ background: bg, color: color, padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
-                              {status}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td>
-                        <button
-                          className="btn-secondary"
-                          style={{ padding: '4px 8px', color: '#ef4444' }}
-                          title="Delete Interview Schedule"
-                          onClick={() => handleDeleteInterview(int)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                  {displayedInterviews.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                        No interviews found for the selected view.
                       </td>
                     </tr>
-                  );
-                  })}
+                  ) : (
+                    displayedInterviews.map(int => {
+                      const app = applications.find(a => a.id === int.applicationId);
+                      const referrer = app && app.referredBy ? [...hrs, ...allAgents].find(r => r.referralCode === app.referredBy) : null;
+                      return (
+                        <tr key={int.id}>
+                          <td style={{ fontWeight: 700 }}>{int.candidateName}</td>
+                          <td>
+                            {referrer ? (
+                              <div>
+                                <div style={{ fontWeight: 600, color: '#334155' }}>{referrer.name}</div>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{referrer.referralCode}</div>
+                              </div>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Direct</span>
+                            )}
+                          </td>
+                          <td>{int.jobTitle}</td>
+                        <td>{int.companyName}</td>
+                        <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                          <div style={{ color: '#334155' }}>
+                            {int.date ? new Date(int.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD'}
+                          </div>
+                          {int.time && (
+                            <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '2px' }}>
+                              {(() => {
+                                const p = int.time.split(':');
+                                let h = parseInt(p[0], 10);
+                                const m = p[1] || '00';
+                                const ampm = h >= 12 ? 'PM' : 'AM';
+                                h = h % 12 || 12;
+                                return `${h}:${m} ${ampm}`;
+                              })()}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {int.mode === 'Online' ? (
+                            <div>
+                              <span style={{ color: '#059669', fontWeight: 600 }}>Online</span>
+                              {int.meetingLink && (
+                                <div><a href={int.meetingLink} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb' }}>Meeting Link</a></div>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <span style={{ color: '#d97706', fontWeight: 600 }}>Offline</span>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{int.location}</div>
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {(() => {
+                            let status = int.status || 'Scheduled';
+                            if (app && app.status && !['interview scheduled', 'applied', 'pending'].includes(String(app.status).toLowerCase())) {
+                              status = app.status;
+                            }
+                            let bg = '#e0f2fe';
+                            let color = '#0284c7';
+                            const sLower = status.toLowerCase();
+                            if (sLower.includes('reject') || sLower.includes('not interested')) {
+                              bg = '#fee2e2';
+                              color = '#dc2626';
+                            } else if (sLower.includes('select') || sLower.includes('hired')) {
+                              bg = '#dcfce7';
+                              color = '#16a34a';
+                            } else if (sLower.includes('document')) {
+                              bg = '#ecfeff';
+                              color = '#0891b2';
+                            }
+                            return (
+                              <span className="badge" style={{ background: bg, color: color, padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                {status}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '4px 8px', color: '#ef4444' }}
+                            title="Delete Interview Schedule"
+                            onClick={() => handleDeleteInterview(int)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -4574,7 +4914,322 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
           </div>
         )}
+
+        {activeTab === 'client_dashboard' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Building2 size={24} color="#2563eb" /> Client Portal & Accounts
+                </h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                  Manage corporate client logins and view real-time banking pipelines.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <button
+                    type="button"
+                    onClick={() => setClientSubTab('pipeline')}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      background: clientSubTab === 'pipeline' ? '#ffffff' : 'transparent',
+                      color: clientSubTab === 'pipeline' ? '#1e293b' : '#64748b',
+                      boxShadow: clientSubTab === 'pipeline' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    Live Pipeline View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClientSubTab('accounts')}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      background: clientSubTab === 'accounts' ? '#ffffff' : 'transparent',
+                      color: clientSubTab === 'accounts' ? '#1e293b' : '#64748b',
+                      boxShadow: clientSubTab === 'accounts' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    Client Accounts ({clients.length})
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => {
+                    setClientToEdit(null);
+                    setClientForm({ name: '', email: '', mobile: '', password: '' });
+                    setClientError('');
+                    setClientModalOpen(true);
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', fontWeight: 600 }}
+                >
+                  <Plus size={16} /> Add Client
+                </button>
+              </div>
+            </div>
+
+            {clientSubTab === 'pipeline' ? (
+              <ClientDashboard
+                API_URL={API_URL}
+                currentUser={currentUser}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                isEmbedded={true}
+              />
+            ) : (
+              <div className="table-container">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Client Name</th>
+                      <th>Email (Login User ID)</th>
+                      <th>Mobile Number</th>
+                      <th>Portal Access</th>
+                      <th>Created Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                          No client accounts created yet. Click "+ Add Client" to create one.
+                        </td>
+                      </tr>
+                    ) : (
+                      clients.map(cl => (
+                        <tr key={cl.id || cl.email}>
+                          <td style={{ fontWeight: 700, color: '#0f172a' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.95rem', border: '1px solid #bfdbfe' }}>
+                                {(cl.name || 'C').charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div>{cl.name || 'Client Partner'}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>ID: {cl.id || 'usr_client'}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontWeight: 600, color: '#1e293b' }}>{cl.email}</span>
+                              <button
+                                type="button"
+                                title="Copy Email / User ID"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(cl.email);
+                                  setCopiedClientId(cl.id || cl.email);
+                                  setTimeout(() => setCopiedClientId(null), 2000);
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: copiedClientId === (cl.id || cl.email) ? '#10b981' : '#94a3b8' }}
+                              >
+                                {copiedClientId === (cl.id || cl.email) ? <Check size={14} /> : <Copy size={14} />}
+                              </button>
+                            </div>
+                          </td>
+                          <td>
+                            {cl.mobile ? (
+                              <span style={{ color: '#334155', fontWeight: 500 }}>{cl.mobile}</span>
+                            ) : (
+                              <span style={{ color: '#94a3b8' }}>—</span>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                              <CheckCircle size={12} /> All Banks & Candidates
+                            </span>
+                          </td>
+                          <td style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                            {cl.createdAt ? new Date(cl.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Active'}
+                          </td>
+                          <td>
+                            <span className="badge badge-active">Active</span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                className="btn-secondary"
+                                style={{ padding: '5px 9px', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
+                                title="Edit Client"
+                                onClick={() => {
+                                  setClientToEdit(cl);
+                                  setClientForm({
+                                    name: cl.name || '',
+                                    email: cl.email || '',
+                                    mobile: cl.mobile || '',
+                                    password: ''
+                                  });
+                                  setClientError('');
+                                  setClientModalOpen(true);
+                                }}
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button
+                                className="btn-secondary"
+                                style={{ padding: '5px 9px', color: '#ef4444' }}
+                                title="Delete Client Account"
+                                onClick={() => handleDeleteClient(cl)}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Client Account Form Modal */}
+      {clientModalOpen && (
+        <div className="modal-overlay" onClick={() => setClientModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', borderRadius: '16px', overflow: 'hidden' }}>
+            <div className="modal-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 700 }}>
+                    {clientToEdit ? 'Edit Client Account' : 'Add New Client Account'}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                    {clientToEdit ? 'Update client details or reset password' : 'Create client login to access Client Dashboard'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClientModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveClient} style={{ padding: '1.5rem' }}>
+              {clientError && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <XCircle size={16} /> {clientError}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Client Name / Representative Name <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Banking Client Partner"
+                  value={clientForm.name}
+                  onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Email ID (Client User ID) <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. client@bankingpartner.in"
+                  value={clientForm.email}
+                  onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+                <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  This email is used as the User ID to log in to the Client Portal.
+                </span>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Mobile Number (Optional Login ID)
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={clientForm.mobile}
+                  onChange={(e) => setClientForm({ ...clientForm, mobile: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Password {clientToEdit ? '(Leave blank to keep existing)' : <span style={{ color: '#ef4444' }}>*</span>}
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={clientShowPassword ? 'text' : 'password'}
+                    required={!clientToEdit}
+                    placeholder={clientToEdit ? 'Enter new password if changing' : 'Enter login password (e.g. Client@123)'}
+                    value={clientForm.password}
+                    onChange={(e) => setClientForm({ ...clientForm, password: e.target.value })}
+                    style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setClientShowPassword(!clientShowPassword)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                  >
+                    {clientShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '1.5rem', fontSize: '0.78rem', color: '#475569' }}>
+                ℹ️ <strong>Client Portal Access:</strong> This client will automatically have access to view all banking partner candidate pipelines, interviews, verification, and live candidate statuses across all banks.
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setClientModalOpen(false)}
+                  disabled={clientSaving}
+                  style={{ padding: '8px 18px', borderRadius: '8px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={clientSaving}
+                  style={{ padding: '8px 22px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                >
+                  {clientSaving ? 'Saving...' : (clientToEdit ? 'Update Client' : 'Create Client')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <JobFormModal
         isOpen={jobModalOpen}

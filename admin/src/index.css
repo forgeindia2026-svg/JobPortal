@@ -1186,3 +1186,140 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.8rem !important;
   }
 }
+
+/* ============================================================
+   CLIENT DASHBOARD RESPONSIVE STYLES
+   ============================================================ */
+.client-dashboard-wrap {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.client-desktop-table {
+  display: block;
+}
+
+.client-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .client-dashboard-wrap {
+    padding: 10px 10px !important;
+  }
+
+  .client-desktop-table {
+    display: none !important;
+  }
+
+  .client-mobile-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .client-banner {
+    padding: 1.25rem 1rem !important;
+    border-radius: 12px !important;
+    margin-bottom: 1.25rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+
+  .client-banner h1 {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .client-banner p {
+    font-size: 0.8rem !important;
+  }
+
+  .client-top-nav-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .client-top-nav-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .client-bank-header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .client-bank-header-left img {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .client-bank-title-wrap {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .client-bank-title-wrap h1 {
+    font-size: 1.25rem !important;
+    word-break: break-word !important;
+    line-height: 1.2 !important;
+  }
+
+  .client-bank-chips-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+  }
+
+  .client-bank-chips-grid > div {
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .client-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .client-kpi-card {
+    padding: 1rem 0.85rem !important;
+    border-radius: 10px !important;
+  }
+
+  .client-kpi-card .kpi-num {
+    font-size: 1.45rem !important;
+  }
+
+  .client-kpi-card .kpi-title {
+    font-size: 0.75rem !important;
+  }
+
+  .client-filter-box {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .client-filter-controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .client-filter-controls > div,
+  .client-filter-controls select {
+    width: 100% !important;
+  }
+}
+

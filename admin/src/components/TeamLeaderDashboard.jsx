@@ -82,8 +82,10 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
   });
 
   const tlInterviews = applications.filter(app => {
-    const s = String(app.status || '').toLowerCase();
-    return s.includes('interview') || app.interviewDate;
+    const s = String(app.status || '').toLowerCase().trim();
+    if (['rejected', 'not interested', 'cancelled', 'payment pending', 'unpaid', 'selected', 'joined', 'converted'].includes(s)) return false;
+    if (s.includes('document')) return false;
+    return s.includes('interview') || (app.interviewDate && !s.includes('reject') && !s.includes('select'));
   });
 
   const tlClosedApps = applications.filter(app => {

@@ -120,6 +120,100 @@ router.delete('/hr/:id', async (req, res) => {
   }
 });
 
+// GET all Client users
+router.get('/clients', async (req, res) => {
+  try {
+    const clientUsers = await UserModel.find({ role: 'client' }).lean();
+    const safeUsers = clientUsers.map(({ passwordHash, ...user }) => user);
+    res.json(safeUsers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch Client users' });
+  }
+});
+
+// POST to create Client
+router.post('/client', async (req, res) => {
+  try {
+    const { name, email, password, mobile } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const existingUser = await UserModel.findOne({ email: cleanEmail });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Account with this email already exists.' });
+    }
+
+    const userId = 'usr_client_' + Date.now();
+
+    const newUser = {
+      id: userId,
+      name: name.trim(),
+      email: cleanEmail,
+      mobile: (mobile || '').trim(),
+      passwordHash: 'dummy_hash_' + password,
+      role: 'client',
+      approvalStatus: 'approved',
+      createdAt: new Date().toISOString()
+    };
+
+    const savedUser = await UserModel.create(newUser);
+    const { passwordHash, ...safe } = savedUser.toObject();
+    res.status(201).json(safe);
+  } catch (error) {
+    console.error('Error creating client user:', error);
+    res.status(500).json({ error: 'Failed to create Client user.' });
+  }
+});
+
+// PUT to update a Client user
+router.put('/client/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, mobile } = req.body;
+
+    const clientUser = await UserModel.findOne({ id, role: 'client' });
+    if (!clientUser) {
+      return res.status(404).json({ error: 'Client user not found.' });
+    }
+
+    if (email && email.toLowerCase().trim() !== clientUser.email) {
+      const cleanEmail = email.toLowerCase().trim();
+      const clash = await UserModel.findOne({ email: cleanEmail, id: { $ne: id } });
+      if (clash) {
+        return res.status(400).json({ error: 'Account with this email already exists.' });
+      }
+      clientUser.email = cleanEmail;
+    }
+
+    if (name) clientUser.name = name.trim();
+    if (mobile !== undefined) clientUser.mobile = (mobile || '').trim();
+    if (password && password.trim()) {
+      clientUser.passwordHash = 'dummy_hash_' + password.trim();
+    }
+
+    await clientUser.save();
+    const { passwordHash, ...safe } = clientUser.toObject();
+    res.json(safe);
+  } catch (error) {
+    console.error('Error updating Client user:', error);
+    res.status(500).json({ error: 'Failed to update Client user.' });
+  }
+});
+
+// DELETE a Client user
+router.delete('/client/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await UserModel.deleteOne({ id, role: 'client' });
+    res.json({ message: 'Client user deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete Client user.' });
+  }
+});
+
 // PUT update user password
 router.put('/:id/password', async (req, res) => {
   try {

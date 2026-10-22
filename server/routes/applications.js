@@ -104,6 +104,8 @@ router.get('/', async (req, res) => {
         jobLocation: job ? (job.location || '') : '',
         companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company'),
         companyLogo: company.logo || '/logo.png',
+        companyId: company?.id || job?.companyId || app.companyId || null,
+        categoryId: job?.categoryId || company?.categoryId || null,
         paymentAmount: Number(computedPaymentAmount)
       };
     });

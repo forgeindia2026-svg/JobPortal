@@ -5,6 +5,7 @@ import AdminDashboard from './components/AdminDashboard';
 import HrDashboard from './components/HrDashboard';
 import BranchManagerDashboard from './components/BranchManagerDashboard';
 import TeamLeaderDashboard from './components/TeamLeaderDashboard';
+import ClientDashboard from './components/ClientDashboard';
 
 const envApiUrl = import.meta.env.VITE_API_URL;
 const API_URL = (envApiUrl && !envApiUrl.includes('3.109.202.254')) ? envApiUrl : 'https://api.jobs.forgeindiaconnect.in';
@@ -43,7 +44,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        const allowedRoles = ['admin', 'hr', 'agent', 'branch_manager', 'team_leader'];
+        const allowedRoles = ['admin', 'hr', 'agent', 'branch_manager', 'team_leader', 'client'];
         if (allowedRoles.includes(data.user.role)) {
           localStorage.setItem('admin_user', JSON.stringify(data.user));
           setCurrentUser(data.user);
@@ -172,6 +173,9 @@ export default function App() {
         )}
         {currentUser.role === 'team_leader' && (
           <TeamLeaderDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        )}
+        {currentUser.role === 'client' && (
+          <ClientDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         )}
       </main>
     </div>
