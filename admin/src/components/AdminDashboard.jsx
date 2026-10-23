@@ -85,8 +85,11 @@ const getBankAppCategoryStatus = (app, interviewsList = []) => {
   // 1. Rejected
   if (['rejected', 'not interested'].includes(s)) return 'rejected';
 
-  // 2. Selected / Joined
-  if (['selected', 'l1 selected', 'l2 selected', 'hired', 'converted', 'joined', 'joined manipal'].includes(s)) return 'selected';
+  // 2. Closed
+  if (['closed', 'joined', 'joined manipal', 'converted', 'hired'].includes(s)) return 'closed';
+
+  // 3. Selected
+  if (['selected', 'l1 selected', 'l2 selected'].includes(s)) return 'selected';
 
   // 3. Document Submission / Verification
   const hasDocInterview = (interviewsList || []).some(i => {
@@ -1272,6 +1275,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           interview: 0,
           document: 0,
           selected: 0,
+          closed: 0,
           rejected: 0,
           applications: []
         };
@@ -1282,6 +1286,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
       const cat = getBankAppCategoryStatus(app, interviews);
       if (cat === 'selected') map[bName].selected++;
+      else if (cat === 'closed') map[bName].closed++;
       else if (cat === 'rejected') map[bName].rejected++;
       else if (cat === 'interview') map[bName].interview++;
       else if (cat === 'document') map[bName].document++;
@@ -1300,6 +1305,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           interview: 0,
           document: 0,
           selected: 0,
+          closed: 0,
           rejected: 0,
           applications: []
         };
@@ -1320,6 +1326,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       interview: 0,
       document: 0,
       selected: 0,
+      closed: 0,
       rejected: 0,
       applications: []
     };
@@ -1674,6 +1681,21 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
               }}
             >
               ✓ Selected: {selectedAdminBankObj.selected}
+            </button>
+            <button
+              onClick={() => setDashboardBankStatusFilter('closed')}
+              style={{
+                border: dashboardBankStatusFilter === 'closed' ? '2px solid #86efac' : '1px solid rgba(134, 239, 172, 0.4)',
+                background: dashboardBankStatusFilter === 'closed' ? '#86efac' : 'rgba(134, 239, 172, 0.25)',
+                color: dashboardBankStatusFilter === 'closed' ? '#065f46' : '#86efac',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer'
+              }}
+            >
+              🔒 Closed: {selectedAdminBankObj.closed || 0}
             </button>
             {selectedAdminBankObj.rejected > 0 && (
               <button
@@ -2053,6 +2075,24 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           gap: '4px'
         }}>
           📄 {status}
+        </span>
+      );
+    }
+    if (s === 'closed' || s === 'joined' || s === 'joined manipal' || s === 'hired' || s === 'converted') {
+      return (
+        <span style={{
+          background: '#dcfce7',
+          color: '#15803d',
+          border: '1px solid #86efac',
+          padding: '3px 8px',
+          borderRadius: '12px',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          🔒 {status}
         </span>
       );
     }
@@ -2772,6 +2812,9 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                         <span style={{ fontSize: '0.75rem', background: 'rgba(187, 247, 208, 0.25)', color: '#bbf7d0', border: '1px solid rgba(187, 247, 208, 0.4)', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
                           ✓ Selected: {bank.selected}
                         </span>
+                        <span style={{ fontSize: '0.75rem', background: 'rgba(134, 239, 172, 0.25)', color: '#86efac', border: '1px solid rgba(134, 239, 172, 0.4)', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                          🔒 Closed: {bank.closed || 0}
+                        </span>
                         {bank.rejected > 0 && (
                           <span style={{ fontSize: '0.75rem', background: 'rgba(254, 202, 202, 0.2)', color: '#fecaca', border: '1px solid rgba(254, 202, 202, 0.35)', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>
                             ✕ Rejected: {bank.rejected}
@@ -3425,6 +3468,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
+                  <option value="Closed">Closed</option>
                   <option value="Joined Manipal">Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
@@ -3718,6 +3762,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="HR Screening">HR Screening</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Selected">Selected</option>
+                  <option value="Closed">Closed</option>
                   <option value="Joined Manipal">Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
@@ -6577,6 +6622,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
+                  <option value="Closed" style={{ fontWeight: 'bold', color: '#059669' }}>🔒 Closed</option>
                   <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal (Payout & Incentive)</option>
                   <option value="Rejected">Rejected</option>
                 </select>
