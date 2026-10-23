@@ -238,11 +238,28 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     setSelectedBankForDashboard(null);
     setDashboardBankStatusFilter('all');
     setDashboardBankSearch('');
+    setDashboardBankDateFilter('all');
+    setDashboardBankCustomStartDate('');
+    setDashboardBankCustomEndDate('');
+    setDashboardBankHrFilter('all');
   };
 
   const [selectedBankForDashboard, setSelectedBankForDashboard] = useState(null);
   const [dashboardBankStatusFilter, setDashboardBankStatusFilter] = useState('all');
   const [dashboardBankSearch, setDashboardBankSearch] = useState('');
+  const [dashboardBankDateFilter, setDashboardBankDateFilter] = useState('all');
+  const [dashboardBankCustomStartDate, setDashboardBankCustomStartDate] = useState('');
+  const [dashboardBankCustomEndDate, setDashboardBankCustomEndDate] = useState('');
+  const [dashboardBankHrFilter, setDashboardBankHrFilter] = useState('all');
+
+  const handleResetDashboardBankFilters = () => {
+    setDashboardBankStatusFilter('all');
+    setDashboardBankSearch('');
+    setDashboardBankDateFilter('all');
+    setDashboardBankCustomStartDate('');
+    setDashboardBankCustomEndDate('');
+    setDashboardBankHrFilter('all');
+  };
 
   const [kpis, setKpis] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -1345,6 +1362,24 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       list = list.filter(app => getBankAppCategoryStatus(app, interviews) === dashboardBankStatusFilter);
     }
 
+    if (dashboardBankDateFilter === 'today') {
+      list = list.filter(app => isToday(app.appliedAt));
+    } else if (dashboardBankDateFilter === 'yesterday') {
+      list = list.filter(app => isYesterday(app.appliedAt));
+    } else if (dashboardBankDateFilter === 'last7days') {
+      list = list.filter(app => isLast7Days(app.appliedAt));
+    } else if (dashboardBankDateFilter === 'thismonth') {
+      list = list.filter(app => isThisMonth(app.appliedAt));
+    } else if (dashboardBankDateFilter === 'custom' && (dashboardBankCustomStartDate || dashboardBankCustomEndDate)) {
+      list = list.filter(app => isInCustomDateRange(app.appliedAt, dashboardBankCustomStartDate, dashboardBankCustomEndDate));
+    }
+
+    if (dashboardBankHrFilter === 'direct') {
+      list = list.filter(app => !app.referredBy || String(app.referredBy).toLowerCase() === 'direct');
+    } else if (dashboardBankHrFilter !== 'all') {
+      list = list.filter(app => String(app.referredBy || '').toLowerCase() === dashboardBankHrFilter.toLowerCase());
+    }
+
     if (dashboardBankSearch.trim()) {
       const q = dashboardBankSearch.trim().toLowerCase();
       list = list.filter(app => {
@@ -1359,7 +1394,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
     }
 
     return list;
-  }, [adminBankingApplications, selectedBankForDashboard, dashboardBankStatusFilter, dashboardBankSearch, interviews]);
+  }, [adminBankingApplications, selectedBankForDashboard, dashboardBankStatusFilter, dashboardBankDateFilter, dashboardBankCustomStartDate, dashboardBankCustomEndDate, dashboardBankHrFilter, dashboardBankSearch, interviews]);
 
   const handleDeleteJob = async (id) => {
     if (!window.confirm('Are you sure you want to delete this job opening?')) return;
@@ -1720,40 +1755,265 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
       {/* Search & Filter Toolbar */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        flexWrap: 'wrap',
-        marginBottom: '1rem',
         background: '#ffffff',
-        padding: '12px 16px',
-        borderRadius: '12px',
+        borderRadius: '16px',
+        padding: '16px',
         border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        marginBottom: '1.25rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
       }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input
-            type="text"
-            placeholder={`Search ${selectedBankForDashboard} candidates by name, mobile, job ID, HR...`}
-            value={dashboardBankSearch}
-            onChange={e => setDashboardBankSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px 8px 36px',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              fontSize: '0.85rem'
-            }}
-          />
+        {/* Row 1: Search + Switch Bank Dropdown + Status Filter Dropdown + HR Filter Dropdown */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '10px'
+        }}>
+          {/* Search Input */}
+          <div style={{ position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input
+              type="text"
+              placeholder={`Search ${selectedBankForDashboard} candidates...`}
+              value={dashboardBankSearch}
+              onChange={e => setDashboardBankSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px 9px 36px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                outline: 'none',
+                background: '#ffffff'
+              }}
+            />
+          </div>
+
+          {/* Switch Bank Dropdown */}
+          <div>
+            <select
+              value={selectedBankForDashboard || ''}
+              onChange={e => {
+                if (e.target.value) {
+                  setSelectedBankForDashboard(e.target.value);
+                  setDashboardBankStatusFilter('all');
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#1e293b',
+                background: '#ffffff',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {adminBankGroups.map(b => (
+                <option key={b.bankName} value={b.bankName}>
+                  🏦 {b.bankName} ({b.totalCount})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter Dropdown */}
+          <div>
+            <select
+              value={dashboardBankStatusFilter}
+              onChange={e => setDashboardBankStatusFilter(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#334155',
+                background: '#ffffff',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">⚡ Status: All Candidates</option>
+              <option value="processing">⏳ Processing ({selectedAdminBankObj.processing || 0})</option>
+              <option value="interview">📅 Interview Scheduled ({selectedAdminBankObj.interview || 0})</option>
+              <option value="document">📄 Document Verification ({selectedAdminBankObj.document || 0})</option>
+              <option value="selected">✓ Selected ({selectedAdminBankObj.selected || 0})</option>
+              <option value="closed">🔒 Closed ({selectedAdminBankObj.closed || 0})</option>
+              <option value="rejected">✕ Rejected ({selectedAdminBankObj.rejected || 0})</option>
+            </select>
+          </div>
+
+          {/* HR Reference Filter Dropdown */}
+          <div>
+            <select
+              value={dashboardBankHrFilter}
+              onChange={e => setDashboardBankHrFilter(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#334155',
+                background: '#ffffff',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">👤 HR: All References</option>
+              <option value="direct">Direct (No HR Referral)</option>
+              {hrs.map(h => (
+                <option key={h.id} value={h.referralCode}>
+                  {h.name} ({h.referralCode})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
-            Showing {filteredDashboardBankCandidates.length} candidate{filteredDashboardBankCandidates.length === 1 ? '' : 's'}
-          </span>
+        {/* Row 2: Date Quick Filter Pills + Custom Date Picker */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '10px',
+          paddingTop: '8px',
+          borderTop: '1px solid #f1f5f9'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginRight: '4px' }}>
+              📅 Date:
+            </span>
+            {[
+              { id: 'all', label: 'All Time' },
+              { id: 'today', label: 'Today' },
+              { id: 'yesterday', label: 'Yesterday' },
+              { id: 'last7days', label: 'Last 7 Days' },
+              { id: 'thismonth', label: 'This Month' },
+              { id: 'custom', label: 'Custom' }
+            ].map(p => {
+              const isActive = dashboardBankDateFilter === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setDashboardBankDateFilter(p.id)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: isActive ? '1px solid #2563eb' : '1px solid #e2e8f0',
+                    background: isActive ? '#eff6ff' : '#f8fafc',
+                    color: isActive ? '#1d4ed8' : '#64748b',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
+              Showing <strong>{filteredDashboardBankCandidates.length}</strong> candidates
+            </span>
+            {(dashboardBankStatusFilter !== 'all' || dashboardBankSearch.trim() || dashboardBankDateFilter !== 'all' || dashboardBankHrFilter !== 'all') && (
+              <button
+                onClick={handleResetDashboardBankFilters}
+                style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#dc2626',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Reset Filters
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Custom Date Range Picker when custom selected */}
+        {dashboardBankDateFilter === 'custom' && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            flexWrap: 'wrap',
+            background: '#f0f9ff',
+            padding: '10px 14px',
+            borderRadius: '10px',
+            border: '1px solid #bae6fd'
+          }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0369a1' }}>
+              Select Date Range:
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b' }}>From:</label>
+              <input
+                type="date"
+                value={dashboardBankCustomStartDate}
+                onChange={e => setDashboardBankCustomStartDate(e.target.value)}
+                style={{
+                  padding: '5px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.8rem',
+                  background: '#ffffff'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#64748b' }}>To:</label>
+              <input
+                type="date"
+                value={dashboardBankCustomEndDate}
+                onChange={e => setDashboardBankCustomEndDate(e.target.value)}
+                style={{
+                  padding: '5px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.8rem',
+                  background: '#ffffff'
+                }}
+              />
+            </div>
+            {(dashboardBankCustomStartDate || dashboardBankCustomEndDate) && (
+              <button
+                onClick={() => {
+                  setDashboardBankCustomStartDate('');
+                  setDashboardBankCustomEndDate('');
+                }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#64748b',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Candidate Cards Grid */}
