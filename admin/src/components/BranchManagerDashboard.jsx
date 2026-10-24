@@ -2,12 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users, UserPlus, Clock, CheckCircle2, ShieldCheck, Mail, Phone, MapPin, Building2,
   RefreshCw, FileText, CheckCircle, Briefcase, Filter, Search, Award, TrendingUp, ChevronRight,
-  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar, Wallet
+  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar, Wallet, LogOut
 } from 'lucide-react';
 import BranchItProjectsTab from './BranchItProjectsTab';
 import ManipalPayoutManager from './ManipalPayoutManager';
 
-export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onBack }) {
+export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onBack, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_leaders' | 'branch_hrs' | 'applications' | 'interviews' | 'incentives' | 'it_projects' | 'manipal_payout'
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -454,6 +454,29 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
             onClick={() => handleTabChange('manipal_payout')}
           >
             <Wallet size={18} /> Manipal Payout ({manipalPayoutCandidates.length})
+          </button>
+        )}
+
+        {onLogout && (
+          <button
+            className="nav-item logout-nav-item"
+            onClick={() => {
+              if (setSidebarOpen) setSidebarOpen(false);
+              onLogout();
+            }}
+            style={{
+              marginTop: '1.25rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              paddingTop: '0.85rem',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <LogOut size={18} /> Logout
           </button>
         )}
       </div>

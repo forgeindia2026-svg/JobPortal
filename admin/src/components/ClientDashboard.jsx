@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Building2, Users, FileText, CalendarDays, CheckCircle, Clock,
   RefreshCw, Search, Download, ArrowLeft, ExternalLink, XCircle,
-  FileCheck, ChevronRight
+  FileCheck, ChevronRight, LogOut
 } from 'lucide-react';
 
 // Brand colors & gradients matching the official bank themes
@@ -199,7 +199,7 @@ const isInCustomDateRange = (dateStr, startDateStr, endDateStr) => {
   return true;
 };
 
-export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isEmbedded = false }) {
+export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isEmbedded = false, onLogout }) {
   const [applications, setApplications] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -894,6 +894,32 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
             >
               <Download size={15} /> Export CSV
             </button>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSidebarOpen && setSidebarOpen(false);
+                  onLogout();
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  color: '#ef4444',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  marginTop: '0.5rem'
+                }}
+              >
+                <LogOut size={15} /> Logout
+              </button>
+            )}
           </div>
         </div>
       </>

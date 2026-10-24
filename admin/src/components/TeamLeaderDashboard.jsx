@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, UserCheck, Briefcase, Mail, Phone, MapPin, Building2, RefreshCw, FileText,
-  CheckCircle2, LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, Search
+  CheckCircle2, LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, Search, LogOut
 } from 'lucide-react';
 
-export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
+export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_hrs' | 'applications' | 'interviews' | 'incentives'
   const [overviewData, setOverviewData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -171,6 +171,29 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
         >
           <Gift size={18} /> Incentives & Payouts
         </button>
+
+        {onLogout && (
+          <button
+            className="nav-item logout-nav-item"
+            onClick={() => {
+              if (setSidebarOpen) setSidebarOpen(false);
+              onLogout();
+            }}
+            style={{
+              marginTop: '1.25rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              paddingTop: '0.85rem',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <LogOut size={18} /> Logout
+          </button>
+        )}
       </div>
 
       {/* MAIN CONTENT AREA */}

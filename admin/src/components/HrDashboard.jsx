@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -33,7 +33,7 @@ const MOTIVATIONAL_QUOTES = [
   "Help them get hired to unlock your reward! 🎯"
 ];
 
-export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false }) {
+export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isAgent = false, onLogout }) {
   const roleLabel = isAgent ? 'Partner' : 'HR';
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -634,6 +634,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   return (
     <div className="admin-layout animate-fade">
       
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen && setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div className={`admin-sidebar ${sidebarOpen ? 'mobile-open' : ''}`} style={{ padding: '1.5rem 1rem' }}>
         <div style={{ marginBottom: '2rem' }}>
@@ -673,6 +681,29 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Settings size={18} /><span>Settings</span>
           </button>
+
+          {onLogout && (
+            <button 
+              className="nav-item logout-nav-item" 
+              onClick={() => { 
+                setSidebarOpen && setSidebarOpen(false); 
+                onLogout(); 
+              }} 
+              style={{ 
+                marginTop: '1.25rem', 
+                borderTop: '1px solid rgba(255,255,255,0.1)', 
+                paddingTop: '0.85rem', 
+                color: '#ef4444', 
+                whiteSpace: 'nowrap',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <LogOut size={18} /><span>Logout</span>
+            </button>
+          )}
         </div>
       </div>
 

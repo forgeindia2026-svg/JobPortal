@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
-  Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2
+  Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -209,7 +209,7 @@ const getBankBrandTheme = (rawName) => {
   };
 };
 
-export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen }) {
+export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '');
     return hash || 'dashboard';
@@ -2494,6 +2494,29 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         >
           <BarChart3 size={18} /> Analytics & Reports
         </button>
+
+        {onLogout && (
+          <button
+            className="nav-item logout-nav-item"
+            onClick={() => {
+              if (setSidebarOpen) setSidebarOpen(false);
+              onLogout();
+            }}
+            style={{
+              marginTop: '1.25rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              paddingTop: '0.85rem',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <LogOut size={18} /> Logout
+          </button>
+        )}
       </div>
 
       <div className="admin-main">

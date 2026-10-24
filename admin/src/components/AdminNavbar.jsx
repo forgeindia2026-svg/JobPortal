@@ -39,6 +39,7 @@ export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
             </span>
             <button
               onClick={onLogout}
+              className="navbar-logout-btn"
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -53,7 +54,7 @@ export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
             >
               <LogOut size={16} /> <span className="desktop-text">Logout</span>
             </button>
-            <button className="mobile-menu-btn" onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: '4px', display: 'none' }}>
+            <button className="mobile-menu-btn" onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: '4px', display: 'none' }} title="Toggle Menu">
               <Menu size={20} />
             </button>
           </div>
