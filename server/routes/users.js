@@ -134,7 +134,7 @@ router.get('/clients', async (req, res) => {
 // POST to create Client
 router.post('/client', async (req, res) => {
   try {
-    const { name, email, password, mobile } = req.body;
+    const { name, email, password, mobile, allowedBanks } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -155,6 +155,7 @@ router.post('/client', async (req, res) => {
       mobile: (mobile || '').trim(),
       passwordHash: 'dummy_hash_' + password,
       role: 'client',
+      allowedBanks: Array.isArray(allowedBanks) ? allowedBanks : [],
       approvalStatus: 'approved',
       createdAt: new Date().toISOString()
     };
@@ -172,7 +173,7 @@ router.post('/client', async (req, res) => {
 router.put('/client/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, password, mobile } = req.body;
+    const { name, email, password, mobile, allowedBanks } = req.body;
 
     const clientUser = await UserModel.findOne({ id, role: 'client' });
     if (!clientUser) {
@@ -193,6 +194,9 @@ router.put('/client/:id', async (req, res) => {
     if (password && password.trim()) {
       clientUser.passwordHash = 'dummy_hash_' + password.trim();
     }
+    if (allowedBanks !== undefined) {
+      clientUser.allowedBanks = Array.isArray(allowedBanks) ? allowedBanks : [];
+    }
 
     await clientUser.save();
     const { passwordHash, ...safe } = clientUser.toObject();
@@ -200,6 +204,27 @@ router.put('/client/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating Client user:', error);
     res.status(500).json({ error: 'Failed to update Client user.' });
+  }
+});
+
+// PUT to update only allowed banks for a client
+router.put('/client/:id/banks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { allowedBanks } = req.body;
+
+    const clientUser = await UserModel.findOne({ id, role: 'client' });
+    if (!clientUser) {
+      return res.status(404).json({ error: 'Client user not found.' });
+    }
+
+    clientUser.allowedBanks = Array.isArray(allowedBanks) ? allowedBanks : [];
+    await clientUser.save();
+    const { passwordHash, ...safe } = clientUser.toObject();
+    res.json(safe);
+  } catch (error) {
+    console.error('Error updating Client banks:', error);
+    res.status(500).json({ error: 'Failed to update Client banks.' });
   }
 });
 

@@ -277,7 +277,70 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [clientSubTab, setClientSubTab] = useState('pipeline'); // 'pipeline' | 'accounts'
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState(null);
-  const [clientForm, setClientForm] = useState({ name: '', email: '', mobile: '', password: '' });
+  const [clientForm, setClientForm] = useState({ name: '', email: '', mobile: '', password: '', allowedBanks: [] });
+  const [bankAccessModalOpen, setBankAccessModalOpen] = useState(false);
+  const [selectedClientForBanks, setSelectedClientForBanks] = useState(null);
+  const [bankSelectionList, setBankSelectionList] = useState([]);
+  const [savingBankAccess, setSavingBankAccess] = useState(false);
+  const [previewClientId, setPreviewClientId] = useState('all');
+
+  const allAvailableBanks = useMemo(() => {
+    const defaults = [
+      'Aditya Birla Capital',
+      'IDFC First Bank',
+      'Bandhan Bank',
+      'Kotak Mahindra Bank',
+      'Axis Bank',
+      'ICICI Bank',
+      'HDFC Bank',
+      'Mahindra Finance',
+      'TATA AIG',
+      'YES Bank'
+    ];
+    (companies || []).filter(c => c.categoryId === 'cat_banking').forEach(c => {
+      const bName = getNormalizedBankName(c.name);
+      if (!defaults.includes(bName)) defaults.push(bName);
+    });
+    return defaults;
+  }, [companies]);
+
+  const handleOpenBankModal = (client = null) => {
+    const targetClient = client || (clients && clients.length > 0 ? clients[0] : null);
+    setSelectedClientForBanks(targetClient);
+    if (targetClient && Array.isArray(targetClient.allowedBanks) && targetClient.allowedBanks.length > 0) {
+      setBankSelectionList([...targetClient.allowedBanks]);
+    } else {
+      setBankSelectionList([]); // all banks
+    }
+    setBankAccessModalOpen(true);
+  };
+
+  const handleSaveBankAccess = async () => {
+    if (!selectedClientForBanks) return;
+    try {
+      setSavingBankAccess(true);
+      const updatedAllowedBanks = bankSelectionList;
+      await fetch(`${API_URL}/api/users/client/${selectedClientForBanks.id}/banks`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allowedBanks: updatedAllowedBanks })
+      });
+
+      setClients(prev => {
+        const updated = prev.map(c => c.id === selectedClientForBanks.id ? { ...c, allowedBanks: updatedAllowedBanks } : c);
+        localStorage.setItem('admin_clients_cache', JSON.stringify(updated));
+        return updated;
+      });
+
+      setBankAccessModalOpen(false);
+      alert(`Bank access updated successfully for "${selectedClientForBanks.name}"!\n\nVisible Banks: ${updatedAllowedBanks.length === 0 ? 'All Banks' : updatedAllowedBanks.join(', ')}`);
+    } catch (err) {
+      console.error('Error saving bank access:', err);
+      alert('Failed to save bank access: ' + err.message);
+    } finally {
+      setSavingBankAccess(false);
+    }
+  };
 
   const candidatePortalBaseUrl = window.location.hostname === 'localhost'
     ? 'http://localhost:5173'
@@ -796,8 +859,11 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
         name: clientForm.name.trim(),
         email: clientForm.email.trim().toLowerCase(),
         mobile: clientForm.mobile.trim(),
-        password: clientForm.password
+        allowedBanks: Array.isArray(clientForm.allowedBanks) ? clientForm.allowedBanks : []
       };
+      if (clientForm.password && clientForm.password.trim()) {
+        payload.password = clientForm.password;
+      }
 
       if (!payload.name || !payload.email) {
         setClientError('Name and Email ID are required.');
@@ -843,6 +909,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           email: payload.email,
           mobile: payload.mobile,
           role: 'client',
+          allowedBanks: payload.allowedBanks,
           createdAt: clientToEdit ? clientToEdit.createdAt : new Date().toISOString()
         };
       }
@@ -863,7 +930,7 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
 
       setClientModalOpen(false);
       setClientToEdit(null);
-      setClientForm({ name: '', email: '', mobile: '', password: '' });
+      setClientForm({ name: '', email: '', mobile: '', password: '', allowedBanks: [] });
       alert(clientToEdit ? 'Client updated successfully!' : `Client account created successfully!\n\nUser ID: ${payload.email}\nPassword: ${payload.password}\n\nClient can now log in at the portal.`);
     } catch (err) {
       console.error('Error saving client:', err);
@@ -6638,13 +6705,79 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
             </div>
 
             {clientSubTab === 'pipeline' ? (
-              <ClientDashboard
-                API_URL={API_URL}
-                currentUser={currentUser}
-                sidebarOpen={sidebarOpen}
-                setSidebarOpen={setSidebarOpen}
-                isEmbedded={true}
-              />
+              <div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '10px 16px',
+                  marginBottom: '1rem',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Building2 size={16} color="#2563eb" /> Preview Portal for Client:
+                    </span>
+                    <select
+                      value={previewClientId}
+                      onChange={(e) => setPreviewClientId(e.target.value)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        background: '#ffffff',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="all">🌟 All Banks (Super Admin Full Pipeline)</option>
+                      {clients.map(c => (
+                        <option key={c.id || c.email} value={c.id || c.email}>
+                          👤 {c.name} ({Array.isArray(c.allowedBanks) && c.allowedBanks.length > 0 ? `${c.allowedBanks.length} Banks Assigned` : 'All Banks'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenBankModal(clients.find(c => (c.id || c.email) === previewClientId) || null)}
+                    className="btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.825rem',
+                      fontWeight: 600,
+                      background: '#2563eb',
+                      border: 'none',
+                      color: '#ffffff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Building2 size={15} /> Select Banks for Clients
+                  </button>
+                </div>
+
+                <ClientDashboard
+                  API_URL={API_URL}
+                  currentUser={currentUser}
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                  isEmbedded={true}
+                  allowedBanksFilter={previewClientId !== 'all' ? (clients.find(c => (c.id || c.email) === previewClientId)?.allowedBanks || null) : null}
+                  onOpenManageBanks={() => handleOpenBankModal(clients.find(c => (c.id || c.email) === previewClientId) || null)}
+                />
+              </div>
             ) : (
               <div className="table-container">
                 <table className="custom-table">
@@ -6705,9 +6838,20 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                             )}
                           </td>
                           <td>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                              <CheckCircle size={12} /> All Banks & Candidates
-                            </span>
+                            {Array.isArray(cl.allowedBanks) && cl.allowedBanks.length > 0 ? (
+                              <div>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                  <Building2 size={12} /> {cl.allowedBanks.length} Banks Allowed
+                                </span>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px', maxWidth: '240px', whiteSpace: 'normal', lineHeight: '1.3' }}>
+                                  {cl.allowedBanks.join(', ')}
+                                </div>
+                              </div>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                                <CheckCircle size={12} /> All Banks & Candidates
+                              </span>
+                            )}
                           </td>
                           <td style={{ color: '#64748b', fontSize: '0.85rem' }}>
                             {cl.createdAt ? new Date(cl.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Active'}
@@ -6719,6 +6863,14 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                             <div style={{ display: 'flex', gap: '6px' }}>
                               <button
                                 className="btn-secondary"
+                                style={{ padding: '5px 9px', color: '#1d4ed8', background: '#eff6ff', borderColor: '#bfdbfe' }}
+                                title="Configure Allowed Banks"
+                                onClick={() => handleOpenBankModal(cl)}
+                              >
+                                <Building2 size={14} />
+                              </button>
+                              <button
+                                className="btn-secondary"
                                 style={{ padding: '5px 9px', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
                                 title="Edit Client"
                                 onClick={() => {
@@ -6727,7 +6879,8 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                                     name: cl.name || '',
                                     email: cl.email || '',
                                     mobile: cl.mobile || '',
-                                    password: ''
+                                    password: '',
+                                    allowedBanks: Array.isArray(cl.allowedBanks) ? cl.allowedBanks : []
                                   });
                                   setClientError('');
                                   setClientModalOpen(true);
@@ -6857,8 +7010,101 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </div>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '1.5rem', fontSize: '0.78rem', color: '#475569' }}>
-                ℹ️ <strong>Client Portal Access:</strong> This client will automatically have access to view all banking partner candidate pipelines, interviews, verification, and live candidate statuses across all banks.
+              {/* Select Banks for Client Section */}
+              <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Building2 size={15} color="#2563eb" /> Visible Banks for this Client
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setClientForm(prev => ({ ...prev, allowedBanks: [] }))}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '0.725rem',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        background: clientForm.allowedBanks.length === 0 ? '#2563eb' : '#ffffff',
+                        color: clientForm.allowedBanks.length === 0 ? '#ffffff' : '#475569',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      All Banks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setClientForm(prev => ({ ...prev, allowedBanks: [...allAvailableBanks] }))}
+                      style={{ padding: '3px 8px', fontSize: '0.725rem', fontWeight: 600, borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#475569', cursor: 'pointer' }}
+                    >
+                      Select All
+                    </button>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>
+                  {clientForm.allowedBanks.length === 0 
+                    ? '🌟 All Banks Allowed: Client sees all candidates from all banking partners.' 
+                    : `🎯 Restricted: Client will only see candidates from the ${clientForm.allowedBanks.length} selected bank(s).`}
+                </p>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))',
+                  gap: '6px',
+                  maxHeight: '170px',
+                  overflowY: 'auto',
+                  padding: '2px'
+                }}>
+                  {allAvailableBanks.map(bName => {
+                    const isSelected = clientForm.allowedBanks.length === 0 || clientForm.allowedBanks.includes(bName);
+                    return (
+                      <div
+                        key={bName}
+                        onClick={() => {
+                          setClientForm(prev => {
+                            let curr = prev.allowedBanks.length === 0 ? [...allAvailableBanks] : [...prev.allowedBanks];
+                            if (curr.includes(bName)) {
+                              curr = curr.filter(b => b !== bName);
+                            } else {
+                              curr.push(bName);
+                            }
+                            return { ...prev, allowedBanks: curr };
+                          });
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 8px',
+                          borderRadius: '8px',
+                          border: isSelected ? '1.5px solid #3b82f6' : '1px solid #e2e8f0',
+                          background: isSelected ? '#eff6ff' : '#ffffff',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          style={{ accentColor: '#2563eb', cursor: 'pointer' }}
+                        />
+                        <img
+                          src={getBankLogo(bName)}
+                          alt={bName}
+                          onError={e => { e.currentTarget.src = '/logo.png'; }}
+                          style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '3px' }}
+                        />
+                        <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#1e3a8a' : '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {bName}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -6881,6 +7127,234 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Bank Access Selection Modal */}
+      {bankAccessModalOpen && (
+        <div className="modal-overlay" onClick={() => setBankAccessModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', borderRadius: '16px', overflow: 'hidden' }}>
+            <div className="modal-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 size={22} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 800 }}>
+                    Select Banks Visible to Client
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                    Choose which banking partner candidate pipelines this client can view
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBankAccessModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem' }}>
+              {/* Client Selector (if multiple clients) */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Target Client Account:
+                </label>
+                {clients.length > 0 ? (
+                  <select
+                    value={selectedClientForBanks?.id || selectedClientForBanks?.email || ''}
+                    onChange={(e) => {
+                      const found = clients.find(c => (c.id || c.email) === e.target.value);
+                      if (found) {
+                        setSelectedClientForBanks(found);
+                        if (Array.isArray(found.allowedBanks) && found.allowedBanks.length > 0) {
+                          setBankSelectionList([...found.allowedBanks]);
+                        } else {
+                          setBankSelectionList([]);
+                        }
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      background: '#ffffff',
+                      outline: 'none'
+                    }}
+                  >
+                    {clients.map(cl => (
+                      <option key={cl.id || cl.email} value={cl.id || cl.email}>
+                        👤 {cl.name} ({cl.email})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div style={{ fontSize: '0.85rem', color: '#ef4444', background: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                    No client accounts exist. Please create a Client Account first.
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Actions & Status */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                  {bankSelectionList.length === 0 ? (
+                    <span style={{ color: '#16a34a' }}>🌟 All Banks Allowed (Full Access)</span>
+                  ) : (
+                    <span style={{ color: '#2563eb' }}>🎯 {bankSelectionList.length} of {allAvailableBanks.length} Banks Selected</span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBankSelectionList([])}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      background: bankSelectionList.length === 0 ? '#2563eb' : '#ffffff',
+                      color: bankSelectionList.length === 0 ? '#ffffff' : '#334155',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    All Banks
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBankSelectionList([...allAvailableBanks])}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#334155',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBankSelectionList(['Axis Bank'])}
+                    style={{
+                      padding: '5px 10px',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                      color: '#64748b',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid of Banks */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: '8px',
+                maxHeight: '260px',
+                overflowY: 'auto',
+                padding: '4px',
+                background: '#f8fafc',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0'
+              }}>
+                {allAvailableBanks.map(bName => {
+                  const isChecked = bankSelectionList.length === 0 || bankSelectionList.includes(bName);
+                  return (
+                    <div
+                      key={bName}
+                      onClick={() => {
+                        let curr = bankSelectionList.length === 0 ? [...allAvailableBanks] : [...bankSelectionList];
+                        if (curr.includes(bName)) {
+                          curr = curr.filter(b => b !== bName);
+                        } else {
+                          curr.push(bName);
+                        }
+                        setBankSelectionList(curr);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: isChecked ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                        background: isChecked ? '#eff6ff' : '#ffffff',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isChecked ? '0 2px 6px rgba(59, 130, 246, 0.15)' : 'none'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {}}
+                        style={{ accentColor: '#2563eb', cursor: 'pointer', width: '16px', height: '16px' }}
+                      />
+                      <img
+                        src={getBankLogo(bName)}
+                        alt={bName}
+                        onError={e => { e.currentTarget.src = '/logo.png'; }}
+                        style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }}
+                      />
+                      <span style={{ fontSize: '0.8rem', fontWeight: isChecked ? 800 : 500, color: isChecked ? '#1e3a8a' : '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {bName}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setBankAccessModalOpen(false)}
+                  disabled={savingBankAccess}
+                  style={{ padding: '9px 18px', borderRadius: '8px', fontWeight: 600 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSaveBankAccess}
+                  disabled={savingBankAccess || !selectedClientForBanks}
+                  style={{
+                    padding: '9px 24px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    background: '#2563eb',
+                    border: 'none',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: savingBankAccess ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <CheckCircle size={16} /> {savingBankAccess ? 'Saving...' : 'Save Bank Access'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

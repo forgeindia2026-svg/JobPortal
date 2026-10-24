@@ -162,6 +162,7 @@ router.post('/login', async (req, res) => {
         branchManagerId: user.branchManagerId || null,
         teamLeaderId: user.teamLeaderId || null,
         canAccessManipalPayout: Boolean(user.canAccessManipalPayout || false),
+        allowedBanks: Array.isArray(user.allowedBanks) ? user.allowedBanks : [],
         approvalStatus: user.approvalStatus || 'approved'
       }
     });

@@ -199,12 +199,26 @@ const isInCustomDateRange = (dateStr, startDateStr, endDateStr) => {
   return true;
 };
 
-export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isEmbedded = false, onLogout }) {
+export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isEmbedded = false, onLogout, allowedBanksFilter = null, onOpenManageBanks = null }) {
   const [applications, setApplications] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Active Allowed Banks for this Client View
+  // 1. Explicit prop allowedBanksFilter (e.g. from Admin preview/selector)
+  // 2. currentUser.allowedBanks if currentUser is a client and has restricted banks
+  // 3. null means All Banks are visible
+  const activeAllowedBanks = useMemo(() => {
+    if (allowedBanksFilter && Array.isArray(allowedBanksFilter) && allowedBanksFilter.length > 0) {
+      return allowedBanksFilter.map(b => b.trim().toLowerCase());
+    }
+    if (currentUser?.role === 'client' && Array.isArray(currentUser.allowedBanks) && currentUser.allowedBanks.length > 0) {
+      return currentUser.allowedBanks.map(b => b.trim().toLowerCase());
+    }
+    return null;
+  }, [allowedBanksFilter, currentUser]);
 
   // When selectedBank is null & selectedKpiStatus is null => Shows Bank Cards Overview (Page 1)
   // When selectedBank or selectedKpiStatus is set => Navigates INSIDE that dedicated drill-down page (Page 2)
@@ -310,13 +324,22 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       const isBankCompany = /bank|banking|nbfc|kotak|axis|idfc|hdfc|icici|bandhan|yes bank|mahindra finance|aditya birla|tata aig/i.test(compName);
       const isBankJob = /bank|banking|relationship officer|relationship executive|branch manager|branch|casa|banca/i.test(jobTitle);
 
-      return isBankCategory || isBankCompany || isBankJob;
+      if (!isBankCategory && !isBankCompany && !isBankJob) return false;
+
+      // Filter by activeAllowedBanks if specified
+      if (activeAllowedBanks && activeAllowedBanks.length > 0) {
+        const normName = getNormalizedBankName(app.companyName).toLowerCase();
+        const isAllowed = activeAllowedBanks.some(allowed => normName.includes(allowed) || allowed.includes(normName));
+        if (!isAllowed) return false;
+      }
+
+      return true;
     }).sort((a, b) => {
       const dateA = new Date(a.appliedAt || a.createdAt || 0).getTime();
       const dateB = new Date(b.appliedAt || b.createdAt || 0).getTime();
       return dateB - dateA;
     });
-  }, [applications]);
+  }, [applications, activeAllowedBanks]);
 
   // Status classifier helper (Strictly Banking applications only)
   const getAppCategoryStatus = (app) => {
@@ -416,6 +439,10 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     // Also include known active banking companies
     companies.filter(c => c.categoryId === 'cat_banking').forEach(c => {
       const bName = getNormalizedBankName(c.name);
+      if (activeAllowedBanks && activeAllowedBanks.length > 0) {
+        const isAllowed = activeAllowedBanks.some(allowed => bName.toLowerCase().includes(allowed) || allowed.includes(bName.toLowerCase()));
+        if (!isAllowed) return;
+      }
       if (!map[bName]) {
         map[bName] = {
           bankName: bName,
@@ -431,8 +458,13 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       }
     });
 
-    return Object.values(map).sort((a, b) => b.totalCount - a.totalCount || a.bankName.localeCompare(b.bankName));
-  }, [bankingApplications, companies, interviews]);
+    let result = Object.values(map);
+    if (activeAllowedBanks && activeAllowedBanks.length > 0) {
+      result = result.filter(b => activeAllowedBanks.some(allowed => b.bankName.toLowerCase().includes(allowed) || allowed.includes(b.bankName.toLowerCase())));
+    }
+
+    return result.sort((a, b) => b.totalCount - a.totalCount || a.bankName.localeCompare(b.bankName));
+  }, [bankingApplications, companies, interviews, activeAllowedBanks]);
 
   // Selected Bank Object & its Candidates
   const selectedBankObj = useMemo(() => {
@@ -1974,13 +2006,66 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
 
       {/* Section: Banks List Grid (Themed with brand logo colors like 2nd image!) */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ marginBottom: '1.25rem' }}>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-            🏦 Select a Bank to View Candidates
-          </h2>
-          <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '4px 0 0 0' }}>
-            Click on any bank card below to open its dedicated page and view all applicant details.
-          </p>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: '12px',
+          marginBottom: '1.25rem'
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                🏦 Select a Bank to View Candidates
+              </h2>
+              {activeAllowedBanks && activeAllowedBanks.length > 0 && (
+                <span style={{
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  color: '#1d4ed8',
+                  padding: '3px 10px',
+                  borderRadius: '16px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <Building2 size={12} /> {bankGroups.length} Assigned Bank{bankGroups.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '4px 0 0 0' }}>
+              Click on any bank card below to open its dedicated page and view all applicant details.
+            </p>
+          </div>
+
+          {onOpenManageBanks && (
+            <button
+              type="button"
+              onClick={onOpenManageBanks}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: '#1d4ed8',
+                background: '#eff6ff',
+                border: '1.5px solid #93c5fd',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 6px rgba(59, 130, 246, 0.15)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#eff6ff'; }}
+            >
+              <Building2 size={16} /> Select Banks for Clients
+            </button>
+          )}
         </div>
 
         <div style={{
