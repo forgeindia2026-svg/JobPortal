@@ -777,11 +777,26 @@ export default function JobDetailModal({
           </div>
         </div>
 
-        {!isFullPage && (
-          <button className="btn-close" onClick={onClose}>
-            <X size={20} />
-          </button>
-        )}
+        <button
+          className="btn-close"
+          onClick={onClose}
+          style={{
+            background: '#f1f5f9',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#64748b',
+            flexShrink: 0
+          }}
+          title="Back to Job"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

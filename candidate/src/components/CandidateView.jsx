@@ -318,36 +318,10 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
           }
         }
       }
-
-      if (targetJobId) {
-        const matched = loadedJobs.find(j => String(j.id).toLowerCase() === String(targetJobId).toLowerCase());
-        if (matched) {
-          setViewingJob(matched);
-        } else if (loadedIt.length > 0) {
-          const matchedIt = loadedIt.find(p => String(p.id).toLowerCase() === String(targetJobId).toLowerCase());
-          if (matchedIt) {
-            setViewingJob(convertItProcToJob(matchedIt, loadedIt));
-          }
-        }
-      }
     } catch (err) {
       console.error('Error loading candidate data:', err);
     }
   };
-
-  useEffect(() => {
-    if (targetJobId && (jobs.length > 0 || itProcesses.length > 0)) {
-      const matched = jobs.find(j => String(j.id).toLowerCase() === String(targetJobId).toLowerCase());
-      if (matched) {
-        setViewingJob(matched);
-      } else if (itProcesses.length > 0) {
-        const matchedIt = itProcesses.find(p => String(p.id).toLowerCase() === String(targetJobId).toLowerCase());
-        if (matchedIt) {
-          setViewingJob(convertItProcToJob(matchedIt, itProcesses));
-        }
-      }
-    }
-  }, [targetJobId, jobs, itProcesses]);
 
   const convertItProcToJob = (proc, processList = null) => ({
     id: proc.id,
