@@ -814,52 +814,6 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
 
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {/* DIRECT SHARE NOTICE BANNER */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-                  border: '1.5px solid #93c5fd',
-                  borderRadius: '14px',
-                  padding: '1rem 1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.08)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
-                      <Sparkles size={18} />
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 800, color: '#1e3a8a', fontSize: '0.95rem' }}>
-                        Direct Job Opportunity
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>
-                        This opening was specially shared with you. View details & submit your application.
-                      </div>
-                    </div>
-                  </div>
-                  {onClearTargetJob && (
-                    <button
-                      onClick={onClearTargetJob}
-                      style={{
-                        background: '#ffffff',
-                        border: '1.5px solid #3b82f6',
-                        borderRadius: '8px',
-                        padding: '6px 14px',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        color: '#1d4ed8',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(37, 99, 235, 0.1)'
-                      }}
-                    >
-                      Browse All Openings →
-                    </button>
-                  )}
-                </div>
-
                 {/* HIGHLIGHTED JOB CARD */}
                 <div
                   className="job-card-vibrant animate-fade"
