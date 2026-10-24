@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -45,7 +45,29 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return (hash === 'job_openings' || hash === 'jobs' || hash === 'applied' || hash === 'interviews' || hash === 'agents' || hash === 'incentives' || hash === 'settings') ? hash : 'overview';
+  });
+
+  const [directJobs, setDirectJobs] = useState([]);
+  const [directJobSearch, setDirectJobSearch] = useState('');
+  const [directJobCompanyFilter, setDirectJobCompanyFilter] = useState('all');
+
+  useEffect(() => {
+    if (activeTab && window.location.hash.replace('#', '') !== activeTab) {
+      window.history.pushState(null, '', `#${activeTab}`);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) setActiveTab(hash);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -57,6 +79,21 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [jobs, setJobs] = useState([]);
   const [hrs, setHrs] = useState([]);
   const [allApplications, setAllApplications] = useState([]);
+
+  const filteredDirectJobs = useMemo(() => {
+    return directJobs.filter(job => {
+      const q = directJobSearch.toLowerCase().trim();
+      const matchSearch = !q ||
+        (job.title && job.title.toLowerCase().includes(q)) ||
+        (job.companyName && job.companyName.toLowerCase().includes(q)) ||
+        (job.location && job.location.toLowerCase().includes(q)) ||
+        (job.categoryName && job.categoryName.toLowerCase().includes(q));
+
+      const matchCompany = directJobCompanyFilter === 'all' || job.companyName === directJobCompanyFilter;
+
+      return matchSearch && matchCompany;
+    });
+  }, [directJobs, directJobSearch, directJobCompanyFilter]);
   // Closed condition: Banking requires 'Joined Manipal' or 'Joined', other sectors allow 'Selected'/'Converted'/'Hired'
   const isCandidateClosedForIncentive = (app) => {
     if (!app) return false;
@@ -226,13 +263,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/api/jobs?status=Active`).then(res => res.json()),
+      fetch(`${API_URL}/api/jobs`).then(res => res.json()),
       fetch(`${API_URL}/api/it-training-processes`).then(res => res.json()),
       fetch(`${API_URL}/api/settings/it-training-incentives`).then(res => res.json()).catch(() => ({})),
       fetch(`${API_URL}/api/partner-incentives?hrId=${isAgent ? currentUser.parentHrId : currentUser.id}`).then(res => res.json()).catch(() => ([]))
     ])
     .then(([jobsData, itData, globalIncentives, partnerIncentives]) => {
       const standardJobs = Array.isArray(jobsData) ? jobsData : [];
+      setDirectJobs(standardJobs);
       let combinedItJob = null;
       if (Array.isArray(itData)) {
         const placementProcesses = itData.filter(it => it.itCategory === 'Placement');
@@ -608,6 +646,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <LayoutDashboard size={18} /><span>Overview</span>
           </button>
 
+          <button className={`nav-item ${activeTab === 'job_openings' ? 'active' : ''}`} onClick={() => { setActiveTab('job_openings'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <Briefcase size={18} /><span>Job Openings ({directJobs.length || 14})</span>
+          </button>
+
           <button className={`nav-item ${activeTab === 'applied' ? 'active' : ''}`} onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Users size={18} /><span>Applied</span>
           </button>
@@ -621,7 +663,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           </button>
           
           <button className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => { setActiveTab('jobs'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
-            <Briefcase size={18} /><span>Incentive Slot</span>
+            <Award size={18} /><span>Incentive Slot</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'incentives' ? 'active' : ''}`} onClick={() => { setActiveTab('incentives'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
@@ -640,7 +682,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {/* Header with Notifications */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>{activeTab === 'overview' ? `Welcome, ${currentUser.name}!` : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
+            <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>{activeTab === 'overview' ? `Welcome, ${currentUser.name}!` : activeTab === 'job_openings' ? 'Job Openings & Referral Links' : activeTab === 'jobs' ? 'Incentive Slot' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
             <p style={{ color: '#64748b' }}>Here is your personal {roleLabel} Dashboard.</p>
           </div>
           
@@ -722,6 +764,28 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </button>
                 <button className="btn-primary" onClick={shareOnWhatsApp} style={{ background: '#25D366', border: 'none', color: 'white' }}>
                   <Share2 size={16} /> WhatsApp
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>
+                  📌 Want to share a specific job opening instead of the entire portal?
+                </span>
+                <button
+                  onClick={() => { setActiveTab('job_openings'); }}
+                  style={{
+                    background: '#ffffff',
+                    color: '#2563eb',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  View All {directJobs.length || 14} Job Links →
                 </button>
               </div>
             </div>
@@ -1287,6 +1351,361 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Dedicated Job Openings Tab with Individual Referral Links */}
+        {activeTab === 'job_openings' && (
+          <div className="animate-fade">
+            {/* Header Hero Banner */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #1d4ed8 100%)',
+              borderRadius: '16px',
+              padding: '1.75rem',
+              color: 'white',
+              marginBottom: '1.5rem',
+              boxShadow: '0 8px 24px rgba(37, 99, 235, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+                      INDIVIDUAL JOB REFERRALS
+                    </span>
+                    <span style={{ background: '#22c55e', color: '#fff', padding: '4px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800 }}>
+                      {directJobs.length} Active Openings
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: '0 0 6px 0', color: '#ffffff' }}>
+                    Job Openings & Referral Links
+                  </h2>
+                  <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.92rem', margin: 0, maxWidth: '680px', lineHeight: 1.5 }}>
+                    Share dedicated opening links with candidates. When a candidate opens a link, they view <strong>only that specific job</strong>, and your referral code (<strong>{currentUser.referralCode}</strong>) is automatically tracked.
+                  </p>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', padding: '12px 18px', borderRadius: '12px', backdropFilter: 'blur(4px)', textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', fontWeight: 700 }}>Your Referral Code</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fef08a', letterSpacing: '1px', marginTop: '2px' }}>
+                    {currentUser.referralCode}
+                  </div>
+                </div>
+              </div>
+
+              {/* General Portal Link Reminder */}
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '0.85rem'
+              }}>
+                <span style={{ color: 'rgba(255,255,255,0.95)' }}>
+                  🌐 <strong>Overall Portal Link:</strong> {referralLink}
+                </span>
+                <button
+                  onClick={copyToClipboard}
+                  style={{
+                    background: copied ? '#10b981' : '#ffffff',
+                    color: copied ? '#ffffff' : '#1e3a8a',
+                    border: 'none',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {copied ? 'Copied General Link!' : 'Copy General Link'}
+                </button>
+              </div>
+            </div>
+
+            {/* Search & Filter Toolbar */}
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '14px',
+              padding: '1rem 1.25rem',
+              marginBottom: '1.5rem',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', gap: '12px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by job title, bank, or location..."
+                    value={directJobSearch}
+                    onChange={(e) => setDirectJobSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px 9px 36px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  {directJobSearch && (
+                    <button
+                      onClick={() => setDirectJobSearch('')}
+                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={directJobCompanyFilter}
+                  onChange={(e) => setDirectJobCompanyFilter(e.target.value)}
+                  style={{
+                    padding: '9px 14px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.875rem',
+                    background: '#ffffff',
+                    outline: 'none',
+                    fontWeight: 600,
+                    color: '#334155'
+                  }}
+                >
+                  <option value="all">All Companies / Banks</option>
+                  {Array.from(new Set(directJobs.map(j => j.companyName).filter(Boolean))).map(comp => (
+                    <option key={comp} value={comp}>{comp}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>
+                Showing {filteredDirectJobs.length} of {directJobs.length} jobs
+              </div>
+            </div>
+
+            {/* Jobs Cards Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+              gap: '16px'
+            }}>
+              {filteredDirectJobs.map((job) => {
+                const compColor = getCompanyColor(job.companyName);
+                const directLink = `${candidatePortalBaseUrl}/?job=${job.id}&ref=${currentUser.referralCode}`;
+                const isCopied = copiedJobId === job.id;
+
+                return (
+                  <div
+                    key={job.id}
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '14px',
+                      border: '1.5px solid #e2e8f0',
+                      padding: '1.25rem',
+                      boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '14px',
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 10px 24px rgba(15, 23, 42, 0.08)';
+                      e.currentTarget.style.borderColor = compColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.04)';
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                    }}
+                  >
+                    {/* Top border color strip */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: compColor }} />
+
+                    {/* Job & Company Info */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          {job.companyLogo ? (
+                            <img
+                              src={job.companyLogo}
+                              alt={job.companyName}
+                              style={{ width: '42px', height: '42px', objectFit: 'contain', background: '#f8fafc', padding: '4px', borderRadius: '8px', border: '1px solid #e2e8f0', flexShrink: 0 }}
+                            />
+                          ) : (
+                            <div style={{ width: '42px', height: '42px', borderRadius: '8px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', flexShrink: 0 }}>
+                              <Briefcase size={20} />
+                            </div>
+                          )}
+                          <div>
+                            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: 0, lineHeight: 1.3 }}>
+                              {job.title}
+                            </h3>
+                            <div style={{ fontSize: '0.85rem', color: compColor, fontWeight: 700, marginTop: '2px' }}>
+                              {job.companyName}
+                            </div>
+                          </div>
+                        </div>
+
+                        <span style={{
+                          background: '#ecfdf5',
+                          color: '#059669',
+                          border: '1px solid #a7f3d0',
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          flexShrink: 0
+                        }}>
+                          {job.status || 'Active'}
+                        </span>
+                      </div>
+
+                      {/* Specs Row */}
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                        {job.salary && (
+                          <span style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', padding: '3px 9px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            💰 {job.salary}
+                          </span>
+                        )}
+                        {job.location && (
+                          <span style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '3px 9px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <MapPin size={12} color="#64748b" /> {job.location}
+                          </span>
+                        )}
+                        {job.categoryName && (
+                          <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 9px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600 }}>
+                            {job.categoryName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Dedicated Referral Link Box */}
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                        Direct Job Referral Link
+                      </div>
+                      <div style={{
+                        background: '#f8fafc',
+                        border: '1px dashed #cbd5e1',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '6px'
+                      }}>
+                        <code style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {directLink}
+                        </code>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <button
+                          onClick={() => copyJobReferralLink(job.id)}
+                          style={{
+                            flex: 1,
+                            background: isCopied ? '#10b981' : '#2563eb',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: isCopied ? '0 2px 8px rgba(16, 185, 129, 0.3)' : '0 2px 8px rgba(37, 99, 235, 0.25)',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                          <span>{isCopied ? 'Copied Link!' : 'Copy Link'}</span>
+                        </button>
+
+                        <button
+                          onClick={() => shareJobOnWhatsApp(job)}
+                          style={{
+                            background: '#25D366',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
+                          }}
+                          title="Share on WhatsApp"
+                        >
+                          <Send size={14} />
+                          <span>WhatsApp</span>
+                        </button>
+
+                        <button
+                          onClick={() => window.open(directLink, '_blank')}
+                          style={{
+                            background: '#f8fafc',
+                            color: '#475569',
+                            border: '1.5px solid #cbd5e1',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                          title="Preview Candidate View"
+                        >
+                          <ExternalLink size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {filteredDirectJobs.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', marginTop: '1rem' }}>
+                <Briefcase size={44} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+                <h4 style={{ fontSize: '1.15rem', color: '#0f172a', fontWeight: 700, margin: '0 0 6px 0' }}>No Matching Jobs Found</h4>
+                <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '0 0 1rem 0' }}>Try searching with a different job title or clear your filters.</p>
+                <button
+                  onClick={() => { setDirectJobSearch(''); setDirectJobCompanyFilter('all'); }}
+                  style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Reset Search
+                </button>
               </div>
             )}
           </div>
