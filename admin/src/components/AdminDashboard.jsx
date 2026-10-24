@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
-  Copy, Lock, Eye, EyeOff, Wallet, ChevronRight
+  Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -278,6 +278,25 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState(null);
   const [clientForm, setClientForm] = useState({ name: '', email: '', mobile: '', password: '' });
+
+  const candidatePortalBaseUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:5173'
+    : 'https://jobs.forgeindiaconnect.in';
+
+  const [copiedJobId, setCopiedJobId] = useState(null);
+
+  const handleCopyJobLink = (jobId) => {
+    const url = `${candidatePortalBaseUrl}/?job=${jobId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedJobId(jobId);
+    setTimeout(() => setCopiedJobId(null), 2500);
+  };
+
+  const handleWhatsAppShareJob = (job) => {
+    const url = `${candidatePortalBaseUrl}/?job=${job.id}`;
+    const text = `🔥 *Job Opening: ${job.title}*\n🏢 *Company:* ${job.companyName || 'Top MNC'}\n📍 *Location:* ${job.location || 'PAN India'}\n💰 *Salary:* ${job.salary || 'Best in Industry'}\n\n👉 *Apply here:* ${url}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
   const [clientShowPassword, setClientShowPassword] = useState(false);
   const [clientError, setClientError] = useState('');
   const [clientSaving, setClientSaving] = useState(false);
@@ -3464,6 +3483,35 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            className="btn-secondary"
+                            style={{
+                              padding: '4px 8px',
+                              background: copiedJobId === job.id ? '#ecfdf5' : '#f8fafc',
+                              color: copiedJobId === job.id ? '#059669' : '#2563eb',
+                              borderColor: copiedJobId === job.id ? '#a7f3d0' : '#cbd5e1'
+                            }}
+                            onClick={() => handleCopyJobLink(job.id)}
+                            title={copiedJobId === job.id ? "Copied!" : "Copy Direct Job Link"}
+                          >
+                            {copiedJobId === job.id ? <Check size={14} /> : <Copy size={14} />}
+                          </button>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '4px 8px', color: '#16a34a', borderColor: '#bbf7d0', background: '#f0fdf4' }}
+                            onClick={() => handleWhatsAppShareJob(job)}
+                            title="Share on WhatsApp"
+                          >
+                            <Send size={14} />
+                          </button>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '4px 8px', color: '#64748b' }}
+                            onClick={() => window.open(`${candidatePortalBaseUrl}/?job=${job.id}`, '_blank')}
+                            title="Preview Candidate View"
+                          >
+                            <ExternalLink size={14} />
+                          </button>
                           <button
                             className="btn-secondary"
                             style={{ padding: '4px 8px' }}

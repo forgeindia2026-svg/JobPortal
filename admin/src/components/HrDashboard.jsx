@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -286,6 +286,24 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
   const shareOnWhatsApp = () => {
     const text = `Hey! Check out these amazing job openings at Forge India Connect: ${referralLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const [copiedJobId, setCopiedJobId] = useState(null);
+
+  const copyJobReferralLink = (jobId) => {
+    const url = `${candidatePortalBaseUrl}?job=${jobId}&ref=${currentUser.referralCode}`;
+    navigator.clipboard.writeText(url);
+    setCopiedJobId(jobId);
+    showToast('Job referral link copied!');
+    setTimeout(() => setCopiedJobId(null), 2500);
+  };
+
+  const shareJobOnWhatsApp = (job, procName = null) => {
+    const jobId = job.id;
+    const title = procName ? `${job.title} (${procName})` : job.title;
+    const url = `${candidatePortalBaseUrl}?job=${jobId}&ref=${currentUser.referralCode}`;
+    const text = `🔥 *Job Opening: ${title}*\n🏢 *Company:* ${job.companyName || 'Forge India Connect'}\n\n👉 *Apply here directly:* ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -1336,6 +1354,52 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                             Set Partner Incentive
                           </button>
                         )}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                          <button
+                            onClick={() => copyJobReferralLink(job.id)}
+                            style={{
+                              flex: 1,
+                              background: copiedJobId === job.id ? '#10b981' : 'rgba(255,255,255,0.22)',
+                              border: '1px solid rgba(255,255,255,0.4)',
+                              color: 'white',
+                              padding: '7px 10px',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              backdropFilter: 'blur(4px)',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {copiedJobId === job.id ? <Check size={14} /> : <Copy size={14} />}
+                            {copiedJobId === job.id ? 'Copied!' : 'Copy Program Link'}
+                          </button>
+                          <button
+                            onClick={() => shareJobOnWhatsApp(job)}
+                            style={{
+                              background: '#25D366',
+                              border: 'none',
+                              color: 'white',
+                              padding: '7px 12px',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              boxShadow: '0 2px 8px rgba(37, 211, 102, 0.4)'
+                            }}
+                            title="Share on WhatsApp"
+                          >
+                            <Send size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1387,6 +1451,52 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         Set Partner Incentive
                       </button>
                     )}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                      <button
+                        onClick={() => copyJobReferralLink(job.id)}
+                        style={{
+                          flex: 1,
+                          background: copiedJobId === job.id ? '#10b981' : 'rgba(255,255,255,0.22)',
+                          border: '1px solid rgba(255,255,255,0.4)',
+                          color: 'white',
+                          padding: '7px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          backdropFilter: 'blur(4px)',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {copiedJobId === job.id ? <Check size={14} /> : <Copy size={14} />}
+                        {copiedJobId === job.id ? 'Copied!' : 'Copy Job Link'}
+                      </button>
+                      <button
+                        onClick={() => shareJobOnWhatsApp(job)}
+                        style={{
+                          background: '#25D366',
+                          border: 'none',
+                          color: 'white',
+                          padding: '7px 12px',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 8px rgba(37, 211, 102, 0.4)'
+                        }}
+                        title="Share on WhatsApp"
+                      >
+                        <Send size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )})}

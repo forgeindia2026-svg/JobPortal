@@ -6,6 +6,26 @@ const envApiUrl = import.meta.env.VITE_API_URL;
 const API_URL = (envApiUrl && !envApiUrl.includes('3.109.202.254')) ? envApiUrl : 'https://api.jobs.forgeindiaconnect.in';
 
 export default function App() {
+  const [targetJobId, setTargetJobId] = useState(() => {
+    try {
+      const match = window.location.href.match(/[?&]job=([A-Za-z0-9_-]+)/i);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleClearTargetJob = () => {
+    setTargetJobId(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('job');
+      window.history.pushState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
+    } catch {
+      // fallback
+    }
+  };
+
   useEffect(() => {
     // Extract referral code from URL search, hash, or full href
     const href = window.location.href;
@@ -50,6 +70,8 @@ export default function App() {
         <CandidateView
           API_URL={API_URL}
           currentUser={currentUser}
+          targetJobId={targetJobId}
+          onClearTargetJob={handleClearTargetJob}
         />
       </main>
     </div>

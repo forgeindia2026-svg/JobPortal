@@ -8,7 +8,9 @@ export default function JobDetailModal({
   isAlreadyApplied,
   isFullPage = true,
   itProcesses = [],
-  onSelectItProcess
+  onSelectItProcess,
+  isDirectJobLink = false,
+  onExploreAll = null
 }) {
   const [currentSubView, setCurrentSubView] = React.useState('main'); // 'main', 'afterSelection', or 'ficTraining'
   const [expandedAfterSelection, setExpandedAfterSelection] = React.useState(false);
@@ -731,6 +733,47 @@ export default function JobDetailModal({
   // VIEW 1: MAIN JOB DETAILS PAGE
   const mainContent = (
     <div className={isFullPage ? "full-page-job-container animate-fade" : "modal-content"} style={isFullPage ? { background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)', maxWidth: '980px', margin: '0 auto' } : { maxWidth: '780px' }}>
+      {/* DIRECT SHARED JOB BADGE BANNER */}
+      {isDirectJobLink && (
+        <div style={{
+          background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+          border: '1.5px solid #93c5fd',
+          borderRadius: '12px',
+          padding: '10px 16px',
+          marginBottom: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '10px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.1rem' }}>📌</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#1e40af' }}>
+              Direct Job Opportunity: You are viewing this specific opening
+            </span>
+          </div>
+          {onExploreAll && (
+            <button
+              onClick={onExploreAll}
+              style={{
+                background: '#ffffff',
+                border: '1.5px solid #3b82f6',
+                borderRadius: '8px',
+                padding: '5px 12px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: '#1d4ed8',
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px rgba(37, 99, 235, 0.1)'
+              }}
+            >
+              Explore All Jobs →
+            </button>
+          )}
+        </div>
+      )}
+
       {/* HEADER BAR */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>

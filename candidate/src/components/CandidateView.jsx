@@ -158,7 +158,7 @@ const FALLBACK_JOBS = [
   }
 ];
 
-export default function CandidateView({ API_URL, currentUser }) {
+export default function CandidateView({ API_URL, currentUser, targetJobId, onClearTargetJob }) {
   const [activeTab, setActiveTab] = useState('browse'); // 'browse' or 'my_apps'
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [companies, setCompanies] = useState(FALLBACK_COMPANIES);
@@ -282,6 +282,9 @@ export default function CandidateView({ API_URL, currentUser }) {
         fetch(`${API_URL}/api/it-training-processes`)
       ]);
 
+      let loadedJobs = FALLBACK_JOBS;
+      let loadedIt = [];
+
       if (catRes.ok && compRes.ok && jobsRes.ok) {
         const cats = await catRes.json();
         const comps = await compRes.json();
@@ -290,6 +293,7 @@ export default function CandidateView({ API_URL, currentUser }) {
         const catList = Array.isArray(cats) && cats.length > 0 ? cats : FALLBACK_CATEGORIES;
         const compList = Array.isArray(comps) && comps.length > 0 ? comps : FALLBACK_COMPANIES;
         const jobList = Array.isArray(jbs) && jbs.length > 0 ? jbs : FALLBACK_JOBS;
+        loadedJobs = jobList;
 
         setCategories(catList);
         setCompanies(compList);
@@ -307,9 +311,22 @@ export default function CandidateView({ API_URL, currentUser }) {
       if (itRes && itRes.ok) {
         const itData = await itRes.json();
         if (Array.isArray(itData)) {
+          loadedIt = itData;
           setItProcesses(itData);
           if (itData.length > 0) {
             setSelectedItProcessId(itData[0].id);
+          }
+        }
+      }
+
+      if (targetJobId) {
+        const matched = loadedJobs.find(j => String(j.id).toLowerCase() === String(targetJobId).toLowerCase());
+        if (matched) {
+          setViewingJob(matched);
+        } else if (loadedIt.length > 0) {
+          const matchedIt = loadedIt.find(p => String(p.id).toLowerCase() === String(targetJobId).toLowerCase());
+          if (matchedIt) {
+            setViewingJob(convertItProcToJob(matchedIt, loadedIt));
           }
         }
       }
@@ -317,6 +334,20 @@ export default function CandidateView({ API_URL, currentUser }) {
       console.error('Error loading candidate data:', err);
     }
   };
+
+  useEffect(() => {
+    if (targetJobId && (jobs.length > 0 || itProcesses.length > 0)) {
+      const matched = jobs.find(j => String(j.id).toLowerCase() === String(targetJobId).toLowerCase());
+      if (matched) {
+        setViewingJob(matched);
+      } else if (itProcesses.length > 0) {
+        const matchedIt = itProcesses.find(p => String(p.id).toLowerCase() === String(targetJobId).toLowerCase());
+        if (matchedIt) {
+          setViewingJob(convertItProcToJob(matchedIt, itProcesses));
+        }
+      }
+    }
+  }, [targetJobId, jobs, itProcesses]);
 
   const convertItProcToJob = (proc, processList = null) => ({
     id: proc.id,
@@ -744,7 +775,213 @@ export default function CandidateView({ API_URL, currentUser }) {
             isFullPage={true}
             itProcesses={viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : itProcesses}
             onSelectItProcess={(proc) => handleViewJobDetails(convertItProcToJob(proc, viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : itProcesses))}
+            isDirectJobLink={Boolean(targetJobId)}
+            onExploreAll={onClearTargetJob}
           />
+        </div>
+      ) : targetJobId ? (
+        <div className="section-container animate-fade" style={{ paddingBottom: '3rem', maxWidth: '820px', margin: '0 auto' }}>
+          {(() => {
+            const singleJob = jobs.find(j => String(j.id).toLowerCase() === String(targetJobId).toLowerCase()) ||
+              (itProcesses.length > 0 ? (() => {
+                const p = itProcesses.find(it => String(it.id).toLowerCase() === String(targetJobId).toLowerCase());
+                return p ? convertItProcToJob(p, itProcesses) : null;
+              })() : null);
+
+            if (!singleJob) {
+              return (
+                <div style={{ background: '#ffffff', borderRadius: '16px', padding: '2.5rem 1.5rem', textAlign: 'center', border: '1.5px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                  <Briefcase size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+                  <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 800, marginBottom: '0.5rem' }}>
+                    Job Opening Not Found
+                  </h3>
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '450px', margin: '0 auto 1.5rem' }}>
+                    This specific job link may have expired or is currently not active. You can explore all our current openings.
+                  </p>
+                  <button
+                    className="btn-primary"
+                    onClick={onClearTargetJob}
+                    style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '0.9rem' }}
+                  >
+                    Explore All Openings
+                  </button>
+                </div>
+              );
+            }
+
+            const compColor = getCompanyColor(singleJob.companyName);
+            const applied = isAlreadyApplied(singleJob.id);
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* DIRECT SHARE NOTICE BANNER */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                  border: '1.5px solid #93c5fd',
+                  borderRadius: '14px',
+                  padding: '1rem 1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.08)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#1e3a8a', fontSize: '0.95rem' }}>
+                        Direct Job Opportunity
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>
+                        This opening was specially shared with you. View details & submit your application.
+                      </div>
+                    </div>
+                  </div>
+                  {onClearTargetJob && (
+                    <button
+                      onClick={onClearTargetJob}
+                      style={{
+                        background: '#ffffff',
+                        border: '1.5px solid #3b82f6',
+                        borderRadius: '8px',
+                        padding: '6px 14px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        color: '#1d4ed8',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 4px rgba(37, 99, 235, 0.1)'
+                      }}
+                    >
+                      Browse All Openings →
+                    </button>
+                  )}
+                </div>
+
+                {/* HIGHLIGHTED JOB CARD */}
+                <div
+                  className="job-card-vibrant animate-fade"
+                  style={{
+                    background: `linear-gradient(135deg, ${compColor} 0%, ${compColor}dd 100%)`,
+                    border: '1.5px solid rgba(255,255,255,0.2)',
+                    borderRadius: '16px',
+                    padding: '1.75rem',
+                    color: '#ffffff',
+                    boxShadow: `0 12px 36px ${compColor}66`,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handleViewJobDetails(singleJob)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      {getLogoUrl(singleJob.companyName, singleJob.companyLogo) ? (
+                        <img
+                          src={getLogoUrl(singleJob.companyName, singleJob.companyLogo)}
+                          alt={singleJob.companyName}
+                          style={{ width: '56px', height: '56px', objectFit: 'contain', background: '#fff', borderRadius: '12px', padding: '6px', border: '2px solid rgba(255,255,255,0.6)' }}
+                        />
+                      ) : (
+                        <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Building2 size={28} />
+                        </div>
+                      )}
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#ffffff' }}>
+                          {singleJob.title}
+                        </h2>
+                        <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', fontWeight: 600, marginTop: '2px' }}>
+                          {singleJob.companyName} • <span style={{ color: '#fed7aa', fontWeight: 700 }}>{singleJob.categoryName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span style={{ background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.3)', padding: '6px 14px', borderRadius: '24px', fontSize: '0.85rem', fontWeight: 700 }}>
+                      {singleJob.jobType || 'Full Time'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '1.5rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 700 }}>Salary Package</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fef08a', marginTop: '2px' }}>{singleJob.salary}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 700 }}>Location</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ffffff', marginTop: '2px' }}>{singleJob.location}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 700 }}>Experience</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ffffff', marginTop: '2px' }}>{singleJob.experience || 'Fresher & Experienced'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 700 }}>Qualification</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#ffffff', marginTop: '2px' }}>{singleJob.qualification || 'Any Degree'}</div>
+                    </div>
+                  </div>
+
+                  {singleJob.trainingPeriod && (
+                    <div style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.85rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Award size={18} color="#fef08a" />
+                      <span><strong>Training:</strong> {singleJob.trainingPeriod}</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewJobDetails(singleJob);
+                      }}
+                      style={{
+                        flex: 1,
+                        background: '#ffffff',
+                        color: compColor,
+                        border: 'none',
+                        padding: '12px 20px',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      View Full Details & Roadmap →
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!applied) handleApplyClick(singleJob);
+                      }}
+                      disabled={applied}
+                      style={{
+                        background: applied ? '#64748b' : '#22c55e',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '12px 24px',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.95rem',
+                        cursor: applied ? 'default' : 'pointer',
+                        boxShadow: applied ? 'none' : '0 4px 14px rgba(34, 197, 94, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {applied ? 'Already Applied' : 'Apply Now'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       ) : ficView === 'bank_selection' ? (
         /* DEDICATED FULL PAGE 1: FIC TRAINING BANK SELECTION */
