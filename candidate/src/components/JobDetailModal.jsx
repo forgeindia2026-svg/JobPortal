@@ -800,8 +800,8 @@ export default function JobDetailModal({
       </div>
 
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) */}
-        {itProcesses && itProcesses.length > 0 && itCategory !== 'Internship' && (job.companyName?.includes('FIC IT') || (job.id && String(job.id).startsWith('it_proc'))) && (
+        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) - Hidden for direct job links */}
+        {!isDirectJobLink && !String(job?.id || '').startsWith('it_proc') && itProcesses && itProcesses.length > 1 && itCategory !== 'Internship' && (job.companyName?.includes('FIC IT')) && (
           <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1.5px solid #f1f5f9' }}>
             {itProcesses.map((proc) => {
               const isSelected = (job.id === proc.id) || (job.programName && job.programName.includes(proc.processName));
