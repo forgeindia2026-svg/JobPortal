@@ -6,6 +6,7 @@ import {
 import JobDetailModal from './JobDetailModal';
 import ApplicationModal from './ApplicationModal';
 import CandidateDashboard from './CandidateDashboard';
+import fallbackJobsData from '../fallback_jobs.json';
 
 const getCompanyColor = (name) => {
   const lowerName = (name || '').toLowerCase();
@@ -119,7 +120,7 @@ const FALLBACK_COMPANIES = [
   }
 ];
 
-const FALLBACK_JOBS = [
+const FALLBACK_JOBS = Array.isArray(fallbackJobsData) && fallbackJobsData.length > 0 ? fallbackJobsData : [
   {
     id: 'job_axis_am',
     title: 'Assistance Manager',
@@ -166,6 +167,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
   const [selectedCategory, setSelectedCategory] = useState(FALLBACK_CATEGORIES[0]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals state
@@ -275,51 +277,72 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
 
   const fetchInitialData = async () => {
     try {
-      const [catRes, compRes, jobsRes, itRes] = await Promise.all([
-        fetch(`${API_URL}/api/categories`),
-        fetch(`${API_URL}/api/companies`),
-        fetch(`${API_URL}/api/jobs`),
-        fetch(`${API_URL}/api/it-training-processes`)
-      ]);
-
-      let loadedJobs = FALLBACK_JOBS;
-      let loadedIt = [];
-
-      if (catRes.ok && compRes.ok && jobsRes.ok) {
-        const cats = await catRes.json();
-        const comps = await compRes.json();
-        const jbs = await jobsRes.json();
-
-        const catList = Array.isArray(cats) && cats.length > 0 ? cats : FALLBACK_CATEGORIES;
-        const compList = Array.isArray(comps) && comps.length > 0 ? comps : FALLBACK_COMPANIES;
-        const jobList = Array.isArray(jbs) && jbs.length > 0 ? jbs : FALLBACK_JOBS;
-        loadedJobs = jobList;
-
-        setCategories(catList);
-        setCompanies(compList);
-        setJobs(jobList);
-
-        const bankingCat = catList.find(c =>
-          c.id === 'cat_banking' ||
-          (c.name || '').toLowerCase().includes('banking')
-        ) || catList[0];
-        if (bankingCat) {
-          setSelectedCategory(bankingCat);
-        }
-      }
-
-      if (itRes && itRes.ok) {
-        const itData = await itRes.json();
-        if (Array.isArray(itData)) {
-          loadedIt = itData;
-          setItProcesses(itData);
-          if (itData.length > 0) {
-            setSelectedItProcessId(itData[0].id);
+      const fetchCategories = fetch(`${API_URL}/api/categories`)
+        .then(res => res.ok ? res.json() : null)
+        .then(cats => {
+          if (Array.isArray(cats) && cats.length > 0) {
+            setCategories(cats);
+            const bankingCat = cats.find(c =>
+              c.id === 'cat_banking' ||
+              (c.name || '').toLowerCase().includes('banking')
+            ) || cats[0];
+            if (bankingCat) {
+              setSelectedCategory(bankingCat);
+            }
           }
-        }
+        })
+        .catch(err => console.error('Categories fetch error:', err));
+
+      const fetchCompanies = fetch(`${API_URL}/api/companies`)
+        .then(res => res.ok ? res.json() : null)
+        .then(comps => {
+          if (Array.isArray(comps) && comps.length > 0) {
+            setCompanies(comps);
+          }
+        })
+        .catch(err => console.error('Companies fetch error:', err));
+
+      const fetchJobs = fetch(`${API_URL}/api/jobs`)
+        .then(res => res.ok ? res.json() : null)
+        .then(jbs => {
+          if (Array.isArray(jbs) && jbs.length > 0) {
+            setJobs(jbs);
+          }
+        })
+        .catch(err => console.error('Jobs fetch error:', err));
+
+      const fetchIt = fetch(`${API_URL}/api/it-training-processes`)
+        .then(res => res.ok ? res.json() : null)
+        .then(itData => {
+          if (Array.isArray(itData)) {
+            setItProcesses(itData);
+            if (itData.length > 0) {
+              setSelectedItProcessId(itData[0].id);
+            }
+          }
+        })
+        .catch(err => console.error('IT processes fetch error:', err));
+
+      let fetchTarget = Promise.resolve();
+      if (targetJobId) {
+        fetchTarget = fetch(`${API_URL}/api/jobs/${targetJobId}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(single => {
+            if (single && single.id) {
+              setJobs(prevJobs => {
+                const exists = prevJobs.some(j => String(j.id).toLowerCase() === String(single.id).toLowerCase());
+                return exists ? prevJobs.map(j => String(j.id).toLowerCase() === String(single.id).toLowerCase() ? single : j) : [single, ...prevJobs];
+              });
+            }
+          })
+          .catch(() => {});
       }
+
+      await Promise.allSettled([fetchCategories, fetchCompanies, fetchJobs, fetchIt, fetchTarget]);
     } catch (err) {
       console.error('Error loading candidate data:', err);
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -763,6 +786,20 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
               })() : null);
 
             if (!singleJob) {
+              if (isInitialLoading) {
+                return (
+                  <div style={{ background: '#ffffff', borderRadius: '16px', padding: '3.5rem 1.5rem', textAlign: 'center', border: '1.5px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                    <div style={{ width: '40px', height: '40px', border: '3.5px solid #f1f5f9', borderTopColor: '#0284c7', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1.25rem' }} />
+                    <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 800, marginBottom: '0.5rem' }}>
+                      Loading Job Opening...
+                    </h3>
+                    <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
+                      Fetching verified job details, please wait a moment.
+                    </p>
+                  </div>
+                );
+              }
+
               return (
                 <div style={{ background: '#ffffff', borderRadius: '16px', padding: '2.5rem 1.5rem', textAlign: 'center', border: '1.5px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
                   <Briefcase size={48} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />

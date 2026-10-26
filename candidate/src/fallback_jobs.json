@@ -1,0 +1,1356 @@
+﻿[
+    {
+        "_id":  "6aaf75641c7be90544d5e6ef",
+        "id":  "job_1789883748252",
+        "companyId":  "comp_axis",
+        "categoryId":  "cat_banking",
+        "title":  "Assistance Manager",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher and Experience",
+        "qualification":  "Any Degree",
+        "salary":  "4.42 LPA",
+        "trainingPeriod":  "Phase 1: 1-4 month (Classroom Training) - 5000 Rs | Phase 2: 5- 12 month  (On the Job training) - 36,833 Rs (5th Month onwards full salary)",
+        "trainingFee":  "2,99,989 Rs (Including GST)",
+        "feeRefundType":  "Non-Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "1,50,000 Rs",
+        "interviewFeeStage":  "Starting the process",
+        "interviewFeeDetails":  "The amount is payable from starting the process",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1-4 month",
+                                   "mode":  "Classroom Training",
+                                   "stipend":  "5000 Rs",
+                                   "_id":  "6aaf75641c7be90544d5e6f0"
+                               },
+                               {
+                                   "duration":  "5- 12 month ",
+                                   "mode":  "On the Job training",
+                                   "stipend":  "36,833 Rs (5th Month onwards full salary)",
+                                   "_id":  "6aaf75641c7be90544d5e6f1"
+                               }
+                           ],
+        "openings":  59,
+        "description":  "Position: Assistant Manager\nCompany: Axis Bank\nEmployment: Full-Time\nLocation: As per business requirement",
+        "responsibilities":  [
+                                 "ROLE :Assistant Manager",
+                                 "Acquire new customers and develop strong customer relationships. Promote Axis Bank products such as savings accounts, current accounts, deposits, loans and other banking services. Generate leads through field visits, referrals and market activities. Achieve assigned monthly sales and business targets. Handle customer queries, follow-ups and service requirements. Complete KYC and other required documentation accurately. Maintain regular customer follow-up and ensure a positive banking experience. Follow the Bank’s internal processes, compliance requirements and ethical standards"
+                             ],
+        "requirements":  [
+                             "Any Degree , Age Limit: 21 to 30"
+                         ],
+        "skills":  [
+                       "Communication skills"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6aaf75641c7be90544d5e6f2"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6aaf75641c7be90544d5e6f3"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6aaf75641c7be90544d5e6f4"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "20,000 These refundable 20 to 35days",
+                                   "_id":  "6aaf90f505f550d5ecf9d38c"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-31",
+        "status":  "Active",
+        "createdAt":  "2026-09-20T05:55:48.252Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-08T04:40:56.507Z",
+        "ficTrainingPeriod":  "45days",
+        "stipendSubtext":  "5000 Rs classroon Training | 36,833 Rs On job Training salary",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  " 4Months Classroom Training | 8Months On Job Training",
+        "trainingTitle":  "12 Month",
+        "programName":  "Retail Lending Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  900,
+        "hrIncentivePaid":  10000,
+        "companyName":  "Axis Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/axis_bank.svg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6aaf792d1c7be90544d5e700",
+        "id":  "job_1789884717021",
+        "companyId":  "comp_mahindra_fin",
+        "categoryId":  "cat_banking",
+        "title":  "Business Executive",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher\u0026 Experience can apply",
+        "qualification":  "Any Degree",
+        "salary":  "3,50,000 LPA",
+        "trainingPeriod":  "1 month  (Online Training only) - No Stipend",
+        "trainingFee":  "42,000 Rs",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "30% Program Fee Refund After 6 Months From Date Of Joining 30% Program Fee Refund After 1 Year (1st Appraisal) 40% Program Fee Refund After 2 Years (2nd Appraisal)",
+        "interviewCrackFee":  "45,000 Rs",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "Free Process there is no Charges. Training with 100% placement from FIC ",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1 month ",
+                                   "mode":  "Online Training only",
+                                   "stipend":  "No Stipend",
+                                   "_id":  "6aaf792d1c7be90544d5e701"
+                               }
+                           ],
+        "openings":  100,
+        "description":  "Position: Business Executive\nCompany: Mahindra Finance\nLocation: Branch / Field-based\nOnly for Female\n\nExtra Benefit:\nMaternity Benefits\nCrech/nanny expense allowance- ₹7000 pm metro \u0026 ₹5000 pm non-metro.\nMaternity Transition Program - flexible work options for 6 months.\nMaternity travel reimbursement - Last 2 months of pregnancy.\nPerformance Appraisal Norms for Employees on Maternity Leave.\nWomen @Work Benefits\nUpgraded hotel entitlement to ensure safe and convenient accommodation.\nCab travel for women in odd hours outside base location.\nCab reimbursement for female colleagues during late working hours.\nWomen wellness - upto 2 days WFH in a month of HO \u0026 RO. For branches 1 day leave in a month.",
+        "responsibilities":  [
+                                 "ROLE :Business Executive",
+                                 "Achieve assigned business and sales targets. Generate and develop new business opportunities. Evaluate customer proposals based on customer profile and requirements. Handle customer and dealer queries and provide timely support. Complete documentation, stamping and other pre- and post-disbursement formalities. Conduct field investigation and verify customer/business details. Maintain good customer relationships and support business growth. Participate in sales promotion and local market activities. Ensure compliance with company policies and processes. Submit regular reports and market updates to the reporting manager"
+                             ],
+        "requirements":  [
+                             "Any Degree",
+                             "Only for Women\u0027s"
+                         ],
+        "skills":  [
+                       "Customer Relationship Management Sales \u0026 Business Development Communication \u0026 Negotiation Field Investigation Documentation \u0026 Follow-up"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification Round",
+                                   "description":  "Need to submit All originals for DOC verification",
+                                   "_id":  "6aaf792d1c7be90544d5e702"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6aaf792d1c7be90544d5e703"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Round",
+                                   "_id":  "6aaf792d1c7be90544d5e704"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment ",
+                                   "description":  "",
+                                   "_id":  "6aaf792d1c7be90544d5e705"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-22",
+        "status":  "Active",
+        "createdAt":  "2026-09-20T06:11:57.021Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:14:09.637Z",
+        "ficTrainingPeriod":  "20days",
+        "stipendSubtext":  "No",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "online Training",
+        "trainingTitle":  "1 Months",
+        "programName":  "Mahindra Finance Parambh Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1200,
+        "hrIncentivePaid":  5000,
+        "companyName":  "Mahindra Finance",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/mahindra_finance.svg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6aaf7a531c7be90544d5e706",
+        "id":  "job_1789885011390",
+        "companyId":  "comp_kotak",
+        "categoryId":  "cat_banking",
+        "title":  "Deputy Manager ",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher/Experience ",
+        "qualification":  "Any Degree",
+        "salary":  "5,47,800 + Business Incentive ",
+        "trainingPeriod":  "Phase 1: 1 - 4Month (Class room Training) - 6,000 Rs | Phase 2: 5 -6 Month (On Job Training) - 25000 Rs | Phase 3: 7 -12 Month (Intership) - 7th Month onward Full salary 45,583 Rs",
+        "trainingFee":  "3,00,000 Rs",
+        "feeRefundType":  "Non Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "1,50,000 Rs",
+        "interviewFeeStage":  "Before  Clearing Interview",
+        "interviewFeeDetails":  "initially need to pay 30000 and submit your all document for Verification ",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1 - 4Month",
+                                   "mode":  "Class room Training",
+                                   "stipend":  "6,000 Rs",
+                                   "_id":  "6aaf7cba1c7be90544d5e70a"
+                               },
+                               {
+                                   "duration":  "5 -6 Month",
+                                   "mode":  "On Job Training",
+                                   "stipend":  "25000 Rs",
+                                   "_id":  "6ab3a5a5ff8de0a234803250"
+                               },
+                               {
+                                   "duration":  "7 -12 Month",
+                                   "mode":  "Intership",
+                                   "stipend":  "7th Month onward Full salary 45,583 Rs",
+                                   "_id":  "6ab3a5a5ff8de0a234803251"
+                               }
+                           ],
+        "openings":  100,
+        "description":  "Position: Deputy Manager\nCompany: Kotak Mahindra Bank\nDepartment: Retail / Branch Banking",
+        "responsibilities":  [
+                                 "ROLE :Deputy Manager",
+                                 "Manage and develop relationships with existing and new customers. Acquire customers and generate business through banking products and services. Promote products such as savings accounts, deposits, loans, insurance and investment solutions. Identify customer needs and provide suitable banking solutions. Achieve assigned business, sales and customer acquisition targets. Handle customer queries, service requests and follow-ups. Maintain accurate customer documentation and ensure KYC compliance. Coordinate with branch teams to ensure smooth customer service and operations. Maintain strong relationships with customers and contribute to branch business growth."
+                             ],
+        "requirements":  [
+                             "Any Degree ,Age Limit:21 to 28"
+                         ],
+        "skills":  [
+                       "Customer Relationship Management Sales \u0026 Business Development Communication \u0026 Negotiation Lead Generation Banking Product Knowledge Target Achievement Customer Service"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document verification",
+                                   "description":  "Need to submit your all original document ",
+                                   "_id":  "6aaf7cba1c7be90544d5e707"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment and Aptitude",
+                                   "_id":  "6aaf7cba1c7be90544d5e708"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Round ",
+                                   "_id":  "6aaf7cba1c7be90544d5e709"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "20,000 These refundable 20 to 35days",
+                                   "_id":  "6aaf913c05f550d5ecf9d392"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-11-30",
+        "status":  "Active",
+        "createdAt":  "2026-09-20T06:16:51.390Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:14:58.680Z",
+        "ficTrainingPeriod":  "60days",
+        "stipendSubtext":  "6000 Rs classroom training | 25000 OJT | CTC Will start from Internship",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "4 Months classroom training |2 Months of OJT | 6 Months of Internship",
+        "trainingTitle":  "12 Months",
+        "programName":  "Kotak NextGen Banking Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  900,
+        "hrIncentivePaid":  15000,
+        "companyName":  "Kotak Mahindra Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/kotak_bank.png",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6aaf7e0f1c7be90544d5e70b",
+        "id":  "job_1789885967544",
+        "companyId":  "comp_bandhan",
+        "categoryId":  "cat_banking",
+        "title":  "Assistance Manager",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher\u0026Experience",
+        "qualification":  "Any Degree",
+        "salary":  "4LPA + Business incentive",
+        "trainingPeriod":  "Phase 1: 1-3Month  (Classroom Training) - 5000 Rs stipend \u0026 food and accoumatation Free | Phase 2: 3-6 Month (On the job Training ) - 15,000 | Phase 3: 7th month (Onboarding) - Full salary 33,333 + Business incentive",
+        "trainingFee":  "2,00,000(Including GST)",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.After 1year completed 50% refund after that 2nd year completed 50% refund",
+        "interviewCrackFee":  "1,20,000 Rs",
+        "interviewFeeStage":  "staring 60% want to pay after that select 40% want to pay",
+        "interviewFeeDetails":  "Process staring 60% want to pay after that select 40% want to pay after select",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1-3Month ",
+                                   "mode":  "Classroom Training",
+                                   "stipend":  "5000 Rs stipend \u0026 food and accoumatation Free",
+                                   "_id":  "6aaf7e0f1c7be90544d5e70c"
+                               },
+                               {
+                                   "duration":  "3-6 Month",
+                                   "mode":  "On the job Training ",
+                                   "stipend":  "15,000",
+                                   "_id":  "6aaf7e0f1c7be90544d5e70d"
+                               },
+                               {
+                                   "duration":  "7th month",
+                                   "mode":  "Onboarding",
+                                   "stipend":  "Full salary 33,333 + Business incentive",
+                                   "_id":  "6aaf7e0f1c7be90544d5e70e"
+                               }
+                           ],
+        "openings":  100,
+        "description":  "Position: Assistant Manager\nCompany: Bandhan Bank\nEmployment Type: Full-Time\nWork Location: Branch / Field, as per business requirement",
+        "responsibilities":  [
+                                 "ROLE :Assistant Manager",
+                                 "Manage day-to-day branch banking and customer service activities. Acquire new customers and build strong customer relationships. Promote banking products such as CASA, deposits, loans and other financial products. Generate leads and achieve assigned business and sales targets. Handle customer queries, account-related requests and service requirements. Support branch operations and ensure proper documentation and KYC compliance. Conduct customer follow-ups and business development activities. Coordinate with branch teams to achieve business objectives. Maintain accurate records and reports while following bank policies and regulatory requirements."
+                             ],
+        "requirements":  [
+                             "Any Degree"
+                         ],
+        "skills":  [
+                       "Customer Relationship Management Sales \u0026 Business Development Banking Product Knowledge Communication \u0026 Negotiation Lead Generation KYC \u0026 Documentation Target Achievement Problem Solving"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification Round",
+                                   "description":  "Need to submit All originals for DOC verification",
+                                   "_id":  "6aaf7e0f1c7be90544d5e70f"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6aaf7e0f1c7be90544d5e710"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Round",
+                                   "_id":  "6aaf7e0f1c7be90544d5e711"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment ",
+                                   "description":  "20,000 These refundable 20 to 35days",
+                                   "_id":  "6aaf7e0f1c7be90544d5e712"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-29",
+        "status":  "Active",
+        "createdAt":  "2026-09-20T06:32:47.544Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:15:20.848Z",
+        "ficTrainingPeriod":  "60days",
+        "stipendSubtext":  "5000 Rs each for first 3 months | 15,000 Rs each for 3months of OJT",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "3 Months classroom Training | 3months OJT",
+        "trainingTitle":  "6Months",
+        "programName":  "Bandhan Bank Aspiring Bank Champions Programme",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  15000,
+        "companyName":  "Bandhan Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/bandhan_bank.png",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab39ef875a3115e04362d6f",
+        "id":  "job_1790156536097",
+        "companyId":  "comp_kotak",
+        "categoryId":  "cat_banking",
+        "title":  "Assistant Manager",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher \u0026 Experience",
+        "qualification":  "Any Degree",
+        "salary":  "3,50,000",
+        "trainingPeriod":  "Phase 1: 45 days  (Campus Training) - 7500 | Phase 2: 45 days  (On Job Training) - 29,166 Rs",
+        "trainingFee":  "1,65,000 Rs",
+        "feeRefundType":  "75,000 Refund",
+        "feeRefundDetails":  "Training fee 1,65,000 move to the loan Process do not pay in your hand it will be detected on yor salary month and month 5,000 to 10,000 after that 2 years completed means 75,000 refund",
+        "interviewCrackFee":  "60,000 Rs",
+        "interviewFeeStage":  "Before Training 50% fees",
+        "interviewFeeDetails":  "placement Training Fee before start the process 50% of the fees after select 50% of fees need to pay",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "45 days ",
+                                   "mode":  "Campus Training",
+                                   "stipend":  "7500 ",
+                                   "_id":  "6ab39ef875a3115e04362d70"
+                               },
+                               {
+                                   "duration":  "45 days ",
+                                   "mode":  "On Job Training",
+                                   "stipend":  "29,166 Rs",
+                                   "_id":  "6ab39ef875a3115e04362d71"
+                               }
+                           ],
+        "openings":  94,
+        "description":  "Job Title: Assistant Manager \nBank: Kotak Mahindra Bank\nGrade: Assistant Manager (L2)\nCTC: ₹3.5 LPA + applicable incentives/bonus\nLocation: As per business requirement\nExperience: Fresher / Graduate\n\nHandle day-to-day banking operational activities and ensure transactions are processed accurately.\nManage customer account servicing, documentation and banking-related requests.\nPerform KYC and documentation verification as per bank procedures.\nProcess and verify banking transactions while following defined operational guidelines.\nMaintain proper records and ensure data accuracy and documentation compliance.\nCoordinate with internal teams for resolving operational and customer-related issues.\nFollow banking policies, compliance requirements and risk-control procedures.\nSupport digital banking and core banking system-related processes.\nEnsure assigned tasks are completed within the required TAT (Turnaround Time).\nMaintain good communication with customers and internal departments when required.\nIdentify discrepancies/errors in documents or transactions and escalate them to the appropriate team.\nContribute to smooth branch/back-office operations and customer service.",
+        "responsibilities":  [
+                                 "Role: Assistant Manager ",
+                                 "Good communication skills Basic computer knowledge MS Office / Excel basics Attention to detail Documentation handling Customer service skills Basic understanding of banking Problem-solving ability Time management Willingness to learn banking software and processes"
+                             ],
+        "requirements":  [
+                             "Any degree , Age Limit: 21 to 24"
+                         ],
+        "skills":  [
+                       "Good Communication Skills",
+                       "Customer Service Skills",
+                       "Basic Banking Knowledge",
+                       "MS Office \u0026 Computer Skills"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document verification",
+                                   "description":  "Need to submit your all original document ",
+                                   "_id":  "6ab3a04775a3115e04362d72"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment and Aptitude",
+                                   "_id":  "6ab3a11775a3115e04362d7b"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Round ",
+                                   "_id":  "6ab3a11775a3115e04362d7c"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "20,000 These refundable 20 to 35days",
+                                   "_id":  "6ab3a11775a3115e04362d7d"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-30",
+        "status":  "Active",
+        "createdAt":  "2026-09-23T09:42:16.097Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:15:40.217Z",
+        "ficTrainingPeriod":  "45 Days",
+        "stipendSubtext":  "7500 during classroom training | Full salary from OJT Onwards",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "45 Days classroom training | 45 days of OJT",
+        "trainingTitle":  "3 Months",
+        "programName":  "Kotak Bank Operations Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  700,
+        "hrIncentivePaid":  5000,
+        "companyName":  "Kotak Mahindra Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/kotak_bank.png",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab3a9e497ae8c7cf062cc8f",
+        "id":  "job_1790159332171",
+        "companyId":  "comp_idfc",
+        "categoryId":  "cat_banking",
+        "title":  "Relationship Manager",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher\u0026Experience",
+        "qualification":  "Any Degree",
+        "salary":  "6,00,000",
+        "trainingPeriod":  "Phase 1: 1-4 month (Class room training) - 6,000 | Phase 2: 5-7 month (Internship) - 30,000 | Phase 3: 8-12 month (On the job training ) - 35,000",
+        "trainingFee":  "3,00,000",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.if completed the 1st year Completed 50% of amount refunable after that 2nd year Completed means 50% of amount will be refunable ",
+        "interviewCrackFee":  "2,20,000 Rs",
+        "interviewFeeStage":  "Starting the process",
+        "interviewFeeDetails":  "The amount is payable from starting the process 50% after that slected the interview 50% want to pay",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1-4 month",
+                                   "mode":  "Class room training",
+                                   "stipend":  "6,000",
+                                   "_id":  "6ab3a9e497ae8c7cf062cc90"
+                               },
+                               {
+                                   "duration":  "5-7 month",
+                                   "mode":  "Internship",
+                                   "stipend":  "30,000",
+                                   "_id":  "6ab3a9e497ae8c7cf062cc91"
+                               },
+                               {
+                                   "duration":  "8-12 month",
+                                   "mode":  "On the job training ",
+                                   "stipend":  "35,000",
+                                   "_id":  "6ab3a9e497ae8c7cf062cc92"
+                               }
+                           ],
+        "openings":  78,
+        "description":  "ROLE: Relationship Manager\nBank: IDFC FIRST Bank\nRole: Relationship Manager\nLocation: PAN India\nExperience: Fresher / Graduate",
+        "responsibilities":  [
+                                 "ROLE :Relationship Manager",
+                                 "Acquire new customers for the bank\u0027s products and services. Generate leads through direct sales, referrals, and other channels. Understand customer requirements and recommend suitable banking products. Handle customer onboarding and account-opening processes. Explain product features, benefits, charges, and eligibility to customers. Complete required KYC and documentation accurately. Build and maintain strong relationships with existing and new customers. Follow up with leads and convert them into customers. Achieve assigned sales and customer acquisition targets. Coordinate with internal teams for smooth processing of customer requests. Maintain accurate customer and sales records. Follow bank policies, compliance requirements, and ethical sales practices."
+                             ],
+        "requirements":  [
+
+                         ],
+        "skills":  [
+                       "Good Communication Skills",
+                       "Customer Relationship Management",
+                       "Problem-Solving Skills",
+                       "Time Management",
+                       "Teamwork \u0026 Coordination"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6ab3ac6397ae8c7cf062cc99"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6ab3ac6397ae8c7cf062cc9a"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6ab3ac6397ae8c7cf062cc9b"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "20,000 These refundable 20 to 35days",
+                                   "_id":  "6ab3ac6397ae8c7cf062cc9c"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-31",
+        "status":  "Active",
+        "createdAt":  "2026-09-23T10:28:52.172Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:15:58.689Z",
+        "ficTrainingPeriod":  "120days",
+        "stipendSubtext":  "6,000 classroom training|30,000 during internship|35,000 during OJT",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "4 Months classroom training |3 Months Internship |5 Months On the job Training",
+        "trainingTitle":  "12Month",
+        "programName":  "IDFC First Bank Emerging Bankers Program",
+        "locationSubtext":  "",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  700,
+        "hrIncentivePaid":  15000,
+        "companyName":  "IDFC First Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/idfc_first_bank.svg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab3b07baf3f0add3d30970c",
+        "id":  "job_1790161019694",
+        "companyId":  "comp_idfc",
+        "categoryId":  "cat_banking",
+        "title":  "Associate Debt Manager",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher\u0026Experience",
+        "qualification":  "Any Degree",
+        "salary":  "5,00,000",
+        "trainingPeriod":  "Phase 1: 1-2 month (classroom Training) - 6,000 | Phase 2: 3rd month (on the job Training) - Full salary 41,666",
+        "trainingFee":  "1,80,000",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment.It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "2,20,000 Rs",
+        "interviewFeeStage":  "Starting the process",
+        "interviewFeeDetails":  "The amount is payable from starting the process.",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1-2 month",
+                                   "mode":  "classroom Training",
+                                   "stipend":  "6,000",
+                                   "_id":  "6ab3b07baf3f0add3d30970d"
+                               },
+                               {
+                                   "duration":  "3rd month",
+                                   "mode":  "on the job Training",
+                                   "stipend":  "Full salary 41,666",
+                                   "_id":  "6ab3b07baf3f0add3d30970e"
+                               }
+                           ],
+        "openings":  50,
+        "description":  "Job Title: Associate Debt Manager\nBank: IDFC FIRST Bank\nRole: Debt Manager\nLocation: PAN India\nExperience: Fresher / Graduate",
+        "responsibilities":  [
+                                 "ROLE :Associate Debt Manager",
+                                 "Acquire new customers for the bank\u0027s products and services. Generate leads through direct sales, referrals, and other channels. Understand customer requirements and recommend suitable banking products. Handle customer onboarding and account-opening processes. Explain product features, benefits, charges, and eligibility to customers. Complete required KYC and documentation accurately. Build and maintain strong relationships with existing and new customers. Follow up with leads and convert them into customers. Achieve assigned sales and customer acquisition targets. Coordinate with internal teams for smooth processing of customer requests. Maintain accurate customer and sales records. Follow bank policies, compliance requirements, and ethical sales practices."
+                             ],
+        "requirements":  [
+                             "Any Degree ,Age Limit:21 to 28 below"
+                         ],
+        "skills":  [
+                       "Good Communication Skills",
+                       "Customer Relationship Management",
+                       "Problem-Solving Skills",
+                       "Time Management Teamwork \u0026 Coordination"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6ab3b07baf3f0add3d30970f"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6ab3b07baf3f0add3d309710"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6ab3b07baf3f0add3d309711"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "20,000 These refundable 20 to 35days",
+                                   "_id":  "6ab3b07baf3f0add3d309712"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-20",
+        "status":  "Active",
+        "createdAt":  "2026-09-23T10:56:59.695Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:16:13.641Z",
+        "ficTrainingPeriod":  "120days",
+        "stipendSubtext":  "6,000 during Training",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "2Months classroom Training | 1Month On Job Training",
+        "trainingTitle":  "3 Months",
+        "programName":  "IDFC First Bank Elevate Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  700,
+        "hrIncentivePaid":  15000,
+        "companyName":  "IDFC First Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/idfc_first_bank.svg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab3b5c53af536049070ca9f",
+        "id":  "job_1790162373983",
+        "companyId":  "comp_aditya",
+        "categoryId":  "cat_banking",
+        "title":  "Banca Channel  (seating branch office hdfc bank)",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "fresher\u0026Experience",
+        "qualification":  "Any Degree",
+        "salary":  "3,50,000",
+        "trainingPeriod":  "Phase 1: 1st Month (Classroom Training) - No stipend but food \u0026 accommodation free | Phase 2: 2-4 month (Intership) - 29,166 | Phase 3: 5-7 (on job Training) - 29,166",
+        "trainingFee":  "99,000",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "80,000 Rs",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1st Month",
+                                   "mode":  "Classroom Training",
+                                   "stipend":  "No stipend but food \u0026 accommodation free",
+                                   "_id":  "6ab3b5c53af536049070caa0"
+                               },
+                               {
+                                   "duration":  "2-4 month",
+                                   "mode":  "Intership",
+                                   "stipend":  "29,166",
+                                   "_id":  "6ab3b5c63af536049070caa1"
+                               },
+                               {
+                                   "duration":  "5-7",
+                                   "mode":  "on job Training",
+                                   "stipend":  "29,166",
+                                   "_id":  "6ab3b5c63af536049070caa2"
+                               }
+                           ],
+        "openings":  30,
+        "description":  "Job Title: Executive Branch Relationship Officer\nCompany: Aditya Birla Capital\nBusiness Units: ABSLI / ABHI\nCTC: ₹3.5 LPA + incentives\nLocation: PAN India\nExperience: Fresher / Graduate",
+        "responsibilities":  [
+                                 "ROLE :Exective Branch Relationship Officer,Agency Manger,Deputy Customer Relationship Manager",
+                                 "Generate new leads and acquire customers for insurance products. Understand customer financial needs and recommend suitable insurance solutions. Explain policy features, benefits, eligibility, and terms to customers. Handle customer onboarding and required documentation. Complete KYC and application-related processes accurately. Maintain relationships with existing and new customers. Follow up with leads and convert them into customers. Achieve assigned sales and business targets. Coordinate with branch teams for smooth policy processing. Provide customer support and resolve basic queries."
+                             ],
+        "requirements":  [
+                             "Any Degree ,Age Limit:21 to 28below"
+                         ],
+        "skills":  [
+                       "Good Communication Skills",
+                       "Customer Handling Skills",
+                       "Time Management",
+                       "Documentation Skills"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6ab3b5c63af536049070caa3"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6ab3b5c63af536049070caa4"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6ab3b5c63af536049070caa5"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "10,000 These refundable 20 to 35days",
+                                   "_id":  "6ab3b5c63af536049070caa6"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-23",
+        "status":  "Active",
+        "createdAt":  "2026-09-23T11:19:33.984Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:16:54.143Z",
+        "ficTrainingPeriod":  "45days",
+        "stipendSubtext":  "Starts from 2nd month 29,166",
+        "stipendTitle":  "Salary",
+        "trainingSubtext":  "1 Months of classroom training | 3 Months of Internship | 3 Months of OJT",
+        "trainingTitle":  "7 Months",
+        "programName":  "Adhitya Birla Capital Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  7000,
+        "companyName":  "Aditya Birla Capital",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/aditya_birla.jpg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab3b91f3af536049070caa7",
+        "id":  "job_1790163231809",
+        "companyId":  "comp_aditya",
+        "categoryId":  "cat_banking",
+        "title":  "Agency Channel ( seating branch office hdfc bank)",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher\u0026Experience",
+        "qualification":  "Any Degree",
+        "salary":  "3,50,000",
+        "trainingPeriod":  "Phase 1: 1st Month (Classroom Training) - No stipend but food \u0026 accommodation free | Phase 2: 2-4 month (internship) - 29,166 | Phase 3: 5-7 month (on job Training) - 29,166",
+        "trainingFee":  "99,000",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "55,000 Rs",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1st Month",
+                                   "mode":  "Classroom Training",
+                                   "stipend":  "No stipend but food \u0026 accommodation free",
+                                   "_id":  "6ab3b91f3af536049070caa8"
+                               },
+                               {
+                                   "duration":  "2-4 month",
+                                   "mode":  "internship",
+                                   "stipend":  "29,166",
+                                   "_id":  "6ab3b91f3af536049070caa9"
+                               },
+                               {
+                                   "duration":  "5-7 month",
+                                   "mode":  "on job Training",
+                                   "stipend":  "29,166",
+                                   "_id":  "6ab3b91f3af536049070caaa"
+                               }
+                           ],
+        "openings":  50,
+        "description":  "Job Title: Deputy Customer Relationship Manager \nCompany: Aditya Birla Capital\nBusiness Units: ABSLI / ABHI\nCTC: ₹3.5 LPA + applicable incentives\nLocation: PAN India\nExperience: Fresher / Graduate",
+        "responsibilities":  [
+                                 "ROLE :Exective Branch Relationship Officer,Agency Manger,Deputy Customer Relationship Manager",
+                                 "Generate new leads and acquire customers for insurance products. Understand customer financial needs and recommend suitable insurance solutions. Explain policy features, benefits, eligibility, and terms to customers. Handle customer onboarding and required documentation. Complete KYC and application-related processes accurately. Maintain relationships with existing and new customers. Follow up with leads and convert them into customers. Achieve assigned sales and business targets. Coordinate with branch teams for smooth policy processing. Provide customer support and resolve basic queries."
+                             ],
+        "requirements":  [
+                             "Any Degree ,Age Limit:21 to 28below"
+                         ],
+        "skills":  [
+                       "Good Communication Skills",
+                       "Customer Handling Skills",
+                       "Time Management",
+                       "Documentation Skills"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6ab3b91f3af536049070caab"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6ab3b91f3af536049070caac"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6ab3b91f3af536049070caad"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "10,000 These refundable 20 to 35days",
+                                   "_id":  "6ab3b91f3af536049070caae"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-11-02",
+        "status":  "Active",
+        "createdAt":  "2026-09-23T11:33:51.809Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:17:08.391Z",
+        "ficTrainingPeriod":  "45days",
+        "stipendSubtext":  "Starts from 2nd Month 29,166",
+        "stipendTitle":  "Salary",
+        "trainingSubtext":  "1 Months of classroom Training | 3Months of Internship | 3Months of OJT",
+        "trainingTitle":  "7 Months",
+        "programName":  "Adhitya Birla Capital Program",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  7000,
+        "companyName":  "Aditya Birla Capital",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/aditya_birla.jpg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab3c0b58a7415018be0e57d",
+        "id":  "job_1790165173915",
+        "companyId":  "comp_aditya",
+        "categoryId":  "cat_banking",
+        "title":  "Direct Channel ( seating branch office hdfc bank)",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher\u0026Experience",
+        "qualification":  "Any Degree",
+        "salary":  "3,50,000",
+        "trainingPeriod":  "Phase 1: 1st Month (Classroom Training) - No stipend but food \u0026 accommodation free | Phase 2: 2-4 month (internship) - 29,166 | Phase 3: 5-7 month (on job Training) - 29,166",
+        "trainingFee":  "99,000",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "55,000 RS",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1st Month",
+                                   "mode":  "Classroom Training",
+                                   "stipend":  "No stipend but food \u0026 accommodation free",
+                                   "_id":  "6ab3c0b58a7415018be0e57e"
+                               },
+                               {
+                                   "duration":  "2-4 month",
+                                   "mode":  "internship",
+                                   "stipend":  "29,166",
+                                   "_id":  "6ab3c0b58a7415018be0e57f"
+                               },
+                               {
+                                   "duration":  "5-7 month",
+                                   "mode":  "on job Training",
+                                   "stipend":  "29,166",
+                                   "_id":  "6ab3c0b58a7415018be0e580"
+                               }
+                           ],
+        "openings":  76,
+        "description":  "Job Title: Agency Manager \nCompany: Aditya Birla Capital\nCTC: ₹3.5 LPA + incentives\nLocation: PAN India\nExperience: Fresher / Graduate",
+        "responsibilities":  [
+                                 "ROLE :Exective Branch Relationship Officer,Agency Manger,Deputy Customer Relationship Manager",
+                                 "Generate new leads and acquire customers for insurance products. Understand customer financial needs and recommend suitable insurance solutions. Explain policy features, benefits, eligibility, and terms to customers. Handle customer onboarding and required documentation. Complete KYC and application-related processes accurately. Maintain relationships with existing and new customers. Follow up with leads and convert them into customers. Achieve assigned sales and business targets. Coordinate with branch teams for smooth policy processing. Provide customer support and resolve basic queries."
+                             ],
+        "requirements":  [
+                             "Any Degree ,Age Limit:21 to 28below"
+                         ],
+        "skills":  [
+                       "Good Communication Skills",
+                       "Customer Handling Skills",
+                       "Time Management",
+                       "Documentation Skills"
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6ab3c0b58a7415018be0e581"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6ab3c0b58a7415018be0e582"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6ab3c0b58a7415018be0e583"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "10,000 These refundable 20 to 35days",
+                                   "_id":  "6ab3c0b58a7415018be0e584"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-11-04",
+        "status":  "Active",
+        "createdAt":  "2026-09-23T12:06:13.915Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "updatedAt":  "2026-10-07T14:17:29.588Z",
+        "ficTrainingPeriod":  "45days",
+        "stipendSubtext":  "Starts from 2nd Month 29,166",
+        "stipendTitle":  "Salary",
+        "trainingSubtext":  "1 Month of classroom Training | 3 Months of internship | 3 Months of OJT",
+        "trainingTitle":  "7 Months",
+        "programName":  "Adhitya Birla Capital Program",
+        "locationSubtext":  "",
+        "salarySubtext":  "Job Location Based on Aadhar card or your nearby",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  7000,
+        "companyName":  "Aditya Birla Capital",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/aditya_birla.jpg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ab50d8aca5fe07f6747bd0d",
+        "id":  "job_1790250378694",
+        "companyId":  "comp_1790250483241",
+        "categoryId":  "cat_banking",
+        "title":  "Corporate Manager",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher or Experirnce",
+        "qualification":  "Any Degree",
+        "salary":  "4,00,000",
+        "trainingPeriod":  "Phase 1: 1Month (Classroom Training) - 5000 | Phase 2: 2nd Month (On Job Training) - 5000 | Phase 3: 3-8month (Internship) - 20,000 for internship period",
+        "trainingFee":  "1,16,820",
+        "feeRefundType":  "Non-Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "60,000 RS",
+        "interviewFeeStage":  "Starting the process",
+        "interviewFeeDetails":  "",
+        "ficTrainingPeriod":  "30days",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1Month",
+                                   "mode":  "Classroom Training",
+                                   "stipend":  "5000",
+                                   "_id":  "6ab50d8aca5fe07f6747bd0e"
+                               },
+                               {
+                                   "duration":  "2nd Month",
+                                   "mode":  "On Job Training",
+                                   "stipend":  "5000",
+                                   "_id":  "6ab50d8aca5fe07f6747bd0f"
+                               },
+                               {
+                                   "duration":  "3-8month",
+                                   "mode":  "Internship",
+                                   "stipend":  "20,000 for internship period",
+                                   "_id":  "6ab50d8aca5fe07f6747bd10"
+                               }
+                           ],
+        "openings":  1,
+        "description":  "Company: HDFC Life\nProgram: HDFC Life Smart Achievers Program\nRole: Corporate Manager\nCTC: ₹4 Lakhs per annum + Variable Pay\nProgram Duration: 8 Months",
+        "responsibilities":  [
+                                 "Role: Corporate Manager",
+                                 "Develop and maintain relationships with customers. Understand customer financial and insurance requirements. Explain HDFC Life insurance products and solutions. Generate new business opportunities through customer interactions and leads. Achieve assigned business and sales targets. Follow up with prospective and existing customers. Provide appropriate product information and support throughout the customer journey. Maintain regular reporting and documentation of business activities. Coordinate with internal teams for smooth policy processing and customer service."
+                             ],
+        "requirements":  [
+                             "Any degree ,Age Limit :21 to 30"
+                         ],
+        "skills":  [
+
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6ab50d8aca5fe07f6747bd11"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6ab50d8aca5fe07f6747bd12"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6ab50d8aca5fe07f6747bd13"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "10,000 These refundable 20 to 35days",
+                                   "_id":  "6ab50d8aca5fe07f6747bd14"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-24",
+        "status":  "Active",
+        "createdAt":  "2026-09-24T11:46:18.694Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "programName":  "HDFC Life Smart Achievers",
+        "stipendSubtext":  "5000 each for 2 Month | 20,000 each for 6 Month of internship",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "1Months classroom training|1Month OJT|6Month Internship",
+        "trainingTitle":  "8Months",
+        "updatedAt":  "2026-10-07T14:45:07.477Z",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "salarySubtext":  "",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  5000,
+        "companyName":  "HDFC Life",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/Hdfc.jpg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6abe2535ccf3628cd2aa5a4e",
+        "id":  "job_1790846261247",
+        "companyId":  "comp_yes_bank",
+        "categoryId":  "cat_banking",
+        "title":  "customer support officer",
+        "jobType":  "Full Time",
+        "location":  "Chennai",
+        "experience":  "Fresher \u0026 Experience",
+        "qualification":  "Any degree but MBA compulsory,Only for Female",
+        "salary":  "5,00,000 CTC",
+        "trainingPeriod":  "Phase 1: 2 Week  (online Training) - No stipend | Phase 2: 12 Month (Internship) - 32,000 RS Stipend",
+        "trainingFee":  "2,00,000 Rs +GST",
+        "feeRefundType":  "Non-Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "interviewCrackFee":  "80,000RS ",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "",
+        "ficTrainingPeriod":  "45Days training",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "2 Week ",
+                                   "mode":  "online Training",
+                                   "stipend":  "No stipend",
+                                   "_id":  "6abe2535ccf3628cd2aa5a4f"
+                               },
+                               {
+                                   "duration":  "12 Month",
+                                   "mode":  "Internship",
+                                   "stipend":  "32,000 RS Stipend",
+                                   "_id":  "6abe2535ccf3628cd2aa5a50"
+                               }
+                           ],
+        "openings":  4,
+        "description":  "Position: Customer Support Officer\nCompany: Yes Bank\nEmployment: Full-Time\nLocation: As per business requirement\nOnly for Female",
+        "responsibilities":  [
+                                 "Role : Customer Support Officer",
+                                 "vacancy: 4 position only",
+                                 "Age : below 28"
+                             ],
+        "requirements":  [
+                             "Only for Female , MBA compulsory "
+                         ],
+        "skills":  [
+
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "Document Verification",
+                                   "description":  "All Original Documents",
+                                   "_id":  "6abe2535ccf3628cd2aa5a51"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L1",
+                                   "description":  "Assessment \u0026 Aptitude ",
+                                   "_id":  "6abe2535ccf3628cd2aa5a52"
+                               },
+                               {
+                                   "stepNumber":  3,
+                                   "title":  "L2",
+                                   "description":  "HR Screening Round ",
+                                   "_id":  "6abe2535ccf3628cd2aa5a53"
+                               },
+                               {
+                                   "stepNumber":  4,
+                                   "title":  "Enrollment",
+                                   "description":  "2360",
+                                   "_id":  "6abe2535ccf3628cd2aa5a54"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-10-31",
+        "status":  "Active",
+        "createdAt":  "2026-10-01T09:17:41.247Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "locationSubtext":  "only for chennai",
+        "programName":  "",
+        "salarySubtext":  "",
+        "stipendSubtext":  "No stipend online Training | 32,000RS Internship",
+        "stipendTitle":  "Stipend",
+        "trainingSubtext":  "2 Week online Training|12 Month Internship",
+        "trainingTitle":  "2Week Training |12 Month internship",
+        "updatedAt":  "2026-10-07T14:43:36.447Z",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  7000,
+        "companyName":  "YES Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/Yes_Bank_Logo.jpg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ac0fb4b31b5261e76497a91",
+        "id":  "job_1791032139590",
+        "companyId":  "comp_axis",
+        "categoryId":  "cat_banking",
+        "title":  "CASA process",
+        "jobType":  "Full Time",
+        "location":  "PAN INDIA",
+        "experience":  "Fresher or Experince",
+        "qualification":  "Any Degree",
+        "salary":  "2.4 LPA",
+        "trainingPeriod":  "No Training Required (Direct Joining)",
+        "trainingFee":  "",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "",
+        "trainingTitle":  "",
+        "trainingSubtext":  "",
+        "stipendTitle":  "Salary",
+        "stipendSubtext":  "20,000 full salary",
+        "salarySubtext":  "",
+        "locationSubtext":  "JOB Location based on Aadhar card",
+        "interviewCrackFee":  "No fees",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "",
+        "ficTrainingPeriod":  "No Training Direct Job",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "No Training Required (Direct Joining)",
+                                   "mode":  "",
+                                   "stipend":  "",
+                                   "_id":  "6ac0fd8a31b5261e76497aa6"
+                               }
+                           ],
+        "openings":  1,
+        "description":  "",
+        "responsibilities":  [
+                                 "ROLE:CASA Process"
+                             ],
+        "requirements":  [
+                             "Interview",
+                             "Document verification online",
+                             "Direct Bank"
+                         ],
+        "skills":  [
+
+                   ],
+        "interviewSteps":  [
+
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-11-02",
+        "status":  "Active",
+        "createdAt":  "2026-10-03T12:55:39.590Z",
+        "__v":  0,
+        "hasTraining":  "No",
+        "programName":  "",
+        "updatedAt":  "2026-10-07T14:17:50.643Z",
+        "hrIncentiveAmount":  0,
+        "hrIncentiveFree":  300,
+        "hrIncentivePaid":  300,
+        "companyName":  "Axis Bank",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/axis_bank.svg",
+        "categoryName":  "Banking \u0026 Financial Services"
+    },
+    {
+        "_id":  "6ac3aed7fccbf439b00efe09",
+        "id":  "job_1791209175704",
+        "companyId":  "comp_1791208318971",
+        "categoryId":  "cat_banking",
+        "title":  "Banca Role -CSM",
+        "jobType":  "Full Time",
+        "location":  "PAN India",
+        "experience":  "Fresher or Experience",
+        "qualification":  "Any Degree",
+        "salary":  "3,35,000 LPA + incentive",
+        "trainingPeriod":  "Phase 1: 1Month (classroom training) - 5,000 Rs | Phase 2: 2Month (On JOb Training) - 15,000 RS | Phase 3: 3Month (Onboarding) - Full Salary",
+        "trainingFee":  "99,000 RS",
+        "feeRefundType":  "100% Refundable",
+        "feeRefundDetails":  "we are providing the loan for training fee payment,It\u0027s deducted from your salary.",
+        "trainingTitle":  "2Month",
+        "trainingSubtext":  " 1Months Classroom Training | 1Months On Job Training",
+        "stipendTitle":  "Stipend",
+        "stipendSubtext":  "5000 Rs Classroom Training | 15,000Rs On Job Training",
+        "salarySubtext":  "",
+        "locationSubtext":  "Job Location Based on Aadhar card or your nearby",
+        "interviewCrackFee":  "",
+        "interviewFeeStage":  "After Clearing Interview",
+        "interviewFeeDetails":  "",
+        "ficTrainingPeriod":  "",
+        "trainingDetails":  null,
+        "trainingPhases":  [
+                               {
+                                   "duration":  "1Month",
+                                   "mode":  "classroom training",
+                                   "stipend":  "5,000 Rs ",
+                                   "_id":  "6ac3aed7fccbf439b00efe0a"
+                               },
+                               {
+                                   "duration":  "2Month",
+                                   "mode":  "On JOb Training",
+                                   "stipend":  "15,000 RS",
+                                   "_id":  "6ac3aed7fccbf439b00efe0b"
+                               },
+                               {
+                                   "duration":  "3Month",
+                                   "mode":  "Onboarding",
+                                   "stipend":  "Full Salary",
+                                   "_id":  "6ac3aed7fccbf439b00efe0c"
+                               }
+                           ],
+        "openings":  1,
+        "description":  "Company: Tata AIG\nProgram Name: Tata AIG YAP\nJob Role: Bancassurance – Customer Service Manager (CSM)\nCertification: Post Graduate Certificate in General Insurance,\nSalary : 3.5 LPA Tier 1 | 3.35 LPA Tier 2 (Tamil Nadu)",
+        "responsibilities":  [
+                                 "Job Role: Banca Role -CSM",
+                                 "Explain general insurance products and policy benefits to bank customers.  Coordinate with bank staff to generate insurance business leads.  Assist customers with insurance applications, documentation, and policy issuance.  Maintain good relationships with bank partners and customers.  Support policy renewals and follow up on prospective customers.  Help customers with policy-related queries and service requests."
+                             ],
+        "requirements":  [
+                             "Any Degree ",
+                             "Age:21 to 28 below"
+                         ],
+        "skills":  [
+
+                   ],
+        "interviewSteps":  [
+                               {
+                                   "stepNumber":  1,
+                                   "title":  "L1",
+                                   "description":  "Direct Interview",
+                                   "_id":  "6ac3b01efccbf439b00efe0d"
+                               },
+                               {
+                                   "stepNumber":  2,
+                                   "title":  "L2",
+                                   "description":  "Direct Interview",
+                                   "_id":  "6ac3b01efccbf439b00efe0e"
+                               }
+                           ],
+        "documentsRequired":  [
+                                  "Resume"
+                              ],
+        "lastDate":  "2026-11-04",
+        "status":  "Active",
+        "createdAt":  "2026-10-05T14:06:15.705Z",
+        "__v":  0,
+        "hasTraining":  "Yes",
+        "programName":  "",
+        "updatedAt":  "2026-10-07T14:18:21.095Z",
+        "hrIncentiveAmount":  1000,
+        "hrIncentiveFree":  1000,
+        "hrIncentivePaid":  9000,
+        "companyName":  "TATA AIG",
+        "companyLogo":  "https://api.jobs.forgeindiaconnect.in/logos/tata_aig.png",
+        "categoryName":  "Banking \u0026 Financial Services"
+    }
+]
