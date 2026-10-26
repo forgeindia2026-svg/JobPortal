@@ -7,6 +7,7 @@ import JobDetailModal from './JobDetailModal';
 import ApplicationModal from './ApplicationModal';
 import CandidateDashboard from './CandidateDashboard';
 import fallbackJobsData from '../fallback_jobs.json';
+import fallbackItProcessesData from '../fallback_it_processes.json';
 
 const getCompanyColor = (name) => {
   const lowerName = (name || '').toLowerCase();
@@ -20,6 +21,7 @@ const getCompanyColor = (name) => {
   if (lowerName.includes('icici')) return '#ea580c';
   if (lowerName.includes('yes bank')) return '#0284c7';
   if (lowerName.includes('tata aig')) return '#1e3a8a';
+  if (lowerName.includes('fic') || lowerName.includes('it training') || lowerName.includes('software')) return '#4f46e5';
   return '#475569';
 };
 
@@ -202,7 +204,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
   const [selectedFicBank, setSelectedFicBank] = useState(null);
-  const [itProcesses, setItProcesses] = useState([]);
+  const [itProcesses, setItProcesses] = useState(Array.isArray(fallbackItProcessesData) && fallbackItProcessesData.length > 0 ? fallbackItProcessesData : []);
   const [selectedItProcessId, setSelectedItProcessId] = useState(null);
   const [selectedItCategory, setSelectedItCategory] = useState('Placement'); // 'Placement', 'Course', 'Internship'
 

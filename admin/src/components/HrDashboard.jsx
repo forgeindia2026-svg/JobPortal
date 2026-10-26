@@ -47,12 +47,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   };
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return (hash === 'job_openings' || hash === 'jobs' || hash === 'applied' || hash === 'interviews' || hash === 'agents' || hash === 'incentives' || hash === 'settings') ? hash : 'overview';
+    return (hash === 'job_openings' || hash === 'it_programs' || hash === 'jobs' || hash === 'applied' || hash === 'interviews' || hash === 'agents' || hash === 'incentives' || hash === 'settings') ? hash : 'overview';
   });
 
   const [directJobs, setDirectJobs] = useState([]);
   const [directJobSearch, setDirectJobSearch] = useState('');
   const [directJobCompanyFilter, setDirectJobCompanyFilter] = useState('all');
+
+  const [itProcesses, setItProcesses] = useState([]);
+  const [itProgramSearch, setItProgramSearch] = useState('');
+  const [itCategoryFilter, setItCategoryFilter] = useState('all');
+  const [copiedItId, setCopiedItId] = useState(null);
 
   useEffect(() => {
     if (activeTab && window.location.hash.replace('#', '') !== activeTab) {
@@ -94,6 +99,22 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       return matchSearch && matchCompany;
     });
   }, [directJobs, directJobSearch, directJobCompanyFilter]);
+
+  const filteredItPrograms = useMemo(() => {
+    return itProcesses.filter(proc => {
+      const q = itProgramSearch.toLowerCase().trim();
+      const matchSearch = !q ||
+        (proc.role && proc.role.toLowerCase().includes(q)) ||
+        (proc.programTitle && proc.programTitle.toLowerCase().includes(q)) ||
+        (proc.processName && proc.processName.toLowerCase().includes(q)) ||
+        (proc.itCategory && proc.itCategory.toLowerCase().includes(q)) ||
+        (proc.salary && proc.salary.toLowerCase().includes(q));
+
+      const matchCategory = itCategoryFilter === 'all' || proc.itCategory === itCategoryFilter;
+
+      return matchSearch && matchCategory;
+    });
+  }, [itProcesses, itProgramSearch, itCategoryFilter]);
   // Closed condition: Banking requires 'Joined Manipal' or 'Joined', other sectors allow 'Selected'/'Converted'/'Hired'
   const isCandidateClosedForIncentive = (app) => {
     if (!app) return false;
@@ -273,6 +294,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       setDirectJobs(standardJobs);
       let combinedItJob = null;
       if (Array.isArray(itData)) {
+        setItProcesses(itData);
         const placementProcesses = itData.filter(it => it.itCategory === 'Placement');
         if (placementProcesses.length > 0) {
           const uniqueProcesses = [];
@@ -342,6 +364,27 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     const title = procName ? `${job.title} (${procName})` : job.title;
     const url = `${candidatePortalBaseUrl}?job=${jobId}&ref=${currentUser.referralCode}`;
     const text = `🔥 *Job Opening: ${title}*\n🏢 *Company:* ${job.companyName || 'Forge India Connect'}\n\n👉 *Apply here directly:* ${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const copyItReferralLink = (itId) => {
+    const url = `${candidatePortalBaseUrl}/?job=${itId}&ref=${currentUser.referralCode}`;
+    navigator.clipboard.writeText(url);
+    setCopiedItId(itId);
+    showToast('IT Program referral link copied!');
+    setTimeout(() => setCopiedItId(null), 2500);
+  };
+
+  const shareItOnWhatsApp = (proc) => {
+    const url = `${candidatePortalBaseUrl}/?job=${proc.id}&ref=${currentUser.referralCode}`;
+    const categoryLabel = proc.itCategory === 'Course' ? 'IT Course Certification' : proc.itCategory === 'Internship' ? 'Free IT Internship' : 'IT Training & 100% Placement Programme';
+    const roleTitle = proc.role || 'Software Engineer Trainee';
+    const track = proc.programTitle || proc.processName || '';
+    const duration = proc.trainingPeriod || '6 Months';
+    const stipend = (proc.stipend && proc.stipend !== '0') ? `\n💰 *Stipend:* ₹${proc.stipend}/month` : '';
+    const salary = (proc.salary && proc.salary !== 'Not Applicable') ? `\n💼 *Salary Package:* ${proc.salary}` : '';
+
+    const text = `🔥 *${categoryLabel}*\n🚀 *Role:* ${roleTitle}\n📚 *Track:* ${track}\n⏱️ *Duration:* ${duration}${stipend}${salary}\n\n👉 *View Details & Apply Here:* ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -658,6 +701,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <Briefcase size={18} /><span>Job Openings ({directJobs.length || 14})</span>
           </button>
 
+          <button className={`nav-item ${activeTab === 'it_programs' ? 'active' : ''}`} onClick={() => { setActiveTab('it_programs'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <GraduationCap size={18} /><span>IT Programs ({itProcesses.length || 29})</span>
+          </button>
+
           <button className={`nav-item ${activeTab === 'applied' ? 'active' : ''}`} onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Users size={18} /><span>Applied</span>
           </button>
@@ -713,7 +760,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {/* Header with Notifications */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>{activeTab === 'overview' ? `Welcome, ${currentUser.name}!` : activeTab === 'job_openings' ? 'Job Openings & Referral Links' : activeTab === 'jobs' ? 'Incentive Slot' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
+            <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>{activeTab === 'overview' ? `Welcome, ${currentUser.name}!` : activeTab === 'job_openings' ? 'Job Openings & Referral Links' : activeTab === 'it_programs' ? 'IT Programs & Referral Links' : activeTab === 'jobs' ? 'Incentive Slot' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
             <p style={{ color: '#64748b' }}>Here is your personal {roleLabel} Dashboard.</p>
           </div>
           
@@ -800,7 +847,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
                 <span style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>
-                  📌 Want to share a specific job opening instead of the entire portal?
+                  💼 Want to share a specific Banking / Direct Job Opening?
                 </span>
                 <button
                   onClick={() => { setActiveTab('job_openings'); }}
@@ -817,6 +864,28 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   }}
                 >
                   View All {directJobs.length || 14} Job Links →
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>
+                  🎓 Want to share a specific IT Training Program / Course / Internship?
+                </span>
+                <button
+                  onClick={() => { setActiveTab('it_programs'); }}
+                  style={{
+                    background: '#fef08a',
+                    color: '#854d0e',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  View All {itProcesses.length || 29} IT Program Links →
                 </button>
               </div>
             </div>
@@ -1734,6 +1803,432 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <button
                   onClick={() => { setDirectJobSearch(''); setDirectJobCompanyFilter('all'); }}
                   style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Reset Search
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Dedicated IT Programs Tab with Individual Referral Links */}
+        {activeTab === 'it_programs' && (
+          <div className="animate-fade">
+            {/* Header Hero Banner */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #3730a3 45%, #4f46e5 100%)',
+              borderRadius: '16px',
+              padding: '1.75rem',
+              color: 'white',
+              marginBottom: '1.5rem',
+              boxShadow: '0 8px 24px rgba(79, 70, 229, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+                      INDIVIDUAL IT PROGRAM REFERRALS
+                    </span>
+                    <span style={{ background: '#22c55e', color: '#fff', padding: '4px 10px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800 }}>
+                      {itProcesses.length} IT Programs Available
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: '0 0 6px 0', color: '#ffffff' }}>
+                    IT Training Programs & Referral Links
+                  </h2>
+                  <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.92rem', margin: 0, maxWidth: '680px', lineHeight: 1.5 }}>
+                    Share dedicated IT program tracks with candidates. When a candidate opens a link, they view <strong>only that specific training program</strong> (with roadmap, phases, stipend & fee details), and your referral code (<strong>{currentUser.referralCode}</strong>) is automatically tracked.
+                  </p>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', padding: '12px 18px', borderRadius: '12px', backdropFilter: 'blur(4px)', textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', fontWeight: 700 }}>Your Referral Code</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fef08a', letterSpacing: '1px', marginTop: '2px' }}>
+                    {currentUser.referralCode}
+                  </div>
+                </div>
+              </div>
+
+              {/* General IT Catalog Link */}
+              <div style={{
+                background: 'rgba(0,0,0,0.25)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '0.85rem'
+              }}>
+                <span style={{ color: 'rgba(255,255,255,0.95)' }}>
+                  🎓 <strong>Overall IT Catalog Link:</strong> {candidatePortalBaseUrl}/#it_training?ref={currentUser.referralCode}
+                </span>
+                <button
+                  onClick={() => {
+                    const catalogUrl = `${candidatePortalBaseUrl}/#it_training?ref=${currentUser.referralCode}`;
+                    navigator.clipboard.writeText(catalogUrl);
+                    showToast('Overall IT Catalog referral link copied!');
+                  }}
+                  style={{
+                    background: '#ffffff',
+                    color: '#3730a3',
+                    border: 'none',
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Copy IT Catalog Link
+                </button>
+              </div>
+            </div>
+
+            {/* Search & Category Filter Toolbar */}
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '14px',
+              padding: '1rem 1.25rem',
+              marginBottom: '1.5rem',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', gap: '12px', flex: 1, minWidth: '280px', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by role, track (Python, Java, MERN), or process..."
+                    value={itProgramSearch}
+                    onChange={(e) => setItProgramSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px 9px 36px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  {itProgramSearch && (
+                    <button
+                      onClick={() => setItProgramSearch('')}
+                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setItCategoryFilter('all')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: '1.5px solid',
+                      borderColor: itCategoryFilter === 'all' ? '#4f46e5' : '#cbd5e1',
+                      background: itCategoryFilter === 'all' ? '#4f46e5' : '#ffffff',
+                      color: itCategoryFilter === 'all' ? '#ffffff' : '#475569'
+                    }}
+                  >
+                    All ({itProcesses.length})
+                  </button>
+                  <button
+                    onClick={() => setItCategoryFilter('Placement')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: '1.5px solid',
+                      borderColor: itCategoryFilter === 'Placement' ? '#8b5cf6' : '#cbd5e1',
+                      background: itCategoryFilter === 'Placement' ? '#8b5cf6' : '#ffffff',
+                      color: itCategoryFilter === 'Placement' ? '#ffffff' : '#475569'
+                    }}
+                  >
+                    100% Placement ({itProcesses.filter(p => p.itCategory === 'Placement').length})
+                  </button>
+                  <button
+                    onClick={() => setItCategoryFilter('Course')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: '1.5px solid',
+                      borderColor: itCategoryFilter === 'Course' ? '#0284c7' : '#cbd5e1',
+                      background: itCategoryFilter === 'Course' ? '#0284c7' : '#ffffff',
+                      color: itCategoryFilter === 'Course' ? '#ffffff' : '#475569'
+                    }}
+                  >
+                    IT Courses ({itProcesses.filter(p => p.itCategory === 'Course').length})
+                  </button>
+                  <button
+                    onClick={() => setItCategoryFilter('Internship')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: '1.5px solid',
+                      borderColor: itCategoryFilter === 'Internship' ? '#059669' : '#cbd5e1',
+                      background: itCategoryFilter === 'Internship' ? '#059669' : '#ffffff',
+                      color: itCategoryFilter === 'Internship' ? '#ffffff' : '#475569'
+                    }}
+                  >
+                    Internships ({itProcesses.filter(p => p.itCategory === 'Internship').length})
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>
+                Showing {filteredItPrograms.length} of {itProcesses.length} IT programs
+              </div>
+            </div>
+
+            {/* IT Programs Cards Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+              gap: '16px'
+            }}>
+              {filteredItPrograms.map((proc) => {
+                const isPlacement = proc.itCategory === 'Placement';
+                const isCourse = proc.itCategory === 'Course';
+                const isIntern = proc.itCategory === 'Internship';
+
+                const themeColor = isPlacement ? '#6366f1' : isCourse ? '#0284c7' : '#059669';
+                const badgeBg = isPlacement ? '#eef2ff' : isCourse ? '#f0f9ff' : '#ecfdf5';
+                const badgeColor = isPlacement ? '#4338ca' : isCourse ? '#0369a1' : '#047857';
+
+                const directLink = `${candidatePortalBaseUrl}/?job=${proc.id}&ref=${currentUser.referralCode}`;
+                const isCopied = copiedItId === proc.id;
+
+                return (
+                  <div
+                    key={proc.id}
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '14px',
+                      border: '1.5px solid #e2e8f0',
+                      padding: '1.25rem',
+                      boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '14px',
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 10px 24px rgba(15, 23, 42, 0.08)';
+                      e.currentTarget.style.borderColor = themeColor;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.04)';
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                    }}
+                  >
+                    {/* Top border color strip */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: themeColor }} />
+
+                    {/* Header info */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{
+                            background: '#f1f5f9',
+                            color: '#334155',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            letterSpacing: '0.3px',
+                            textTransform: 'uppercase'
+                          }}>
+                            {proc.processName || 'PROGRAM'}
+                          </span>
+                          <span style={{
+                            background: badgeBg,
+                            color: badgeColor,
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700
+                          }}>
+                            {isPlacement ? '100% Placement' : isCourse ? 'IT Course' : 'Free Internship'}
+                          </span>
+                        </div>
+
+                        {proc.stipend && proc.stipend !== '0' && (
+                          <span style={{
+                            background: '#fef3c7',
+                            color: '#92400e',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800
+                          }}>
+                            Stipend ₹{proc.stipend}
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0', lineHeight: 1.3 }}>
+                        {proc.role || 'Software Engineer Trainee'}
+                      </h3>
+                      <div style={{ fontSize: '0.85rem', color: themeColor, fontWeight: 600, lineHeight: 1.4, marginBottom: '10px' }}>
+                        {proc.programTitle || 'FIC IT Placement Programme'}
+                      </div>
+
+                      {/* Detail Chips */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9', fontSize: '0.78rem' }}>
+                        <div>
+                          <span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>DURATION</span>
+                          <strong style={{ color: '#0f172a' }}>{proc.trainingPeriod || '6 Months'}</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>SALARY / PACKAGE</span>
+                          <strong style={{ color: '#0f172a' }}>{proc.salary || 'Not Applicable'}</strong>
+                        </div>
+                        {proc.trainingFee && (
+                          <div>
+                            <span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>FEE STRUCTURE</span>
+                            <strong style={{ color: '#0f172a' }}>{proc.trainingFee}</strong>
+                          </div>
+                        )}
+                        {proc.bondPeriod && (
+                          <div>
+                            <span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>BOND PERIOD</span>
+                            <strong style={{ color: '#0f172a' }}>{proc.bondPeriod}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Referral Link & Actions */}
+                    <div>
+                      {/* Link Preview Bar */}
+                      <div style={{
+                        background: '#f8fafc',
+                        border: '1px dashed #cbd5e1',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '6px'
+                      }}>
+                        <code style={{ fontSize: '0.75rem', color: themeColor, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {directLink}
+                        </code>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <button
+                          onClick={() => copyItReferralLink(proc.id)}
+                          style={{
+                            flex: 1,
+                            background: isCopied ? '#10b981' : themeColor,
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: isCopied ? '0 2px 8px rgba(16, 185, 129, 0.3)' : `0 2px 8px ${themeColor}44`,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                          <span>{isCopied ? 'Copied Link!' : 'Copy Link'}</span>
+                        </button>
+
+                        <button
+                          onClick={() => shareItOnWhatsApp(proc)}
+                          style={{
+                            background: '#25D366',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
+                          }}
+                          title="Share on WhatsApp"
+                        >
+                          <Send size={14} />
+                          <span>WhatsApp</span>
+                        </button>
+
+                        <button
+                          onClick={() => window.open(directLink, '_blank')}
+                          style={{
+                            background: '#f8fafc',
+                            color: '#475569',
+                            border: '1.5px solid #cbd5e1',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                          title="Preview Candidate View"
+                        >
+                          <ExternalLink size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {filteredItPrograms.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', marginTop: '1rem' }}>
+                <GraduationCap size={44} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+                <h4 style={{ fontSize: '1.15rem', color: '#0f172a', fontWeight: 700, margin: '0 0 6px 0' }}>No Matching IT Programs Found</h4>
+                <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '0 0 1rem 0' }}>Try searching with a different technology or clear your filters.</p>
+                <button
+                  onClick={() => { setItProgramSearch(''); setItCategoryFilter('all'); }}
+                  style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
                 >
                   Reset Search
                 </button>
