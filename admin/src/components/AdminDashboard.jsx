@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
-  Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut
+  Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut,
+  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -209,12 +210,42 @@ const getBankBrandTheme = (rawName) => {
   };
 };
 
-export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
+export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sidebarOpen, setSidebarOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '');
     return hash || 'dashboard';
   });
   const [paymentSubTab, setPaymentSubTab] = useState('success');
+
+  // Admin Profile & Security Settings state
+  const [adminProfileData, setAdminProfileData] = useState({
+    name: currentUser?.name || 'Super Admin',
+    email: currentUser?.email || '',
+    mobile: currentUser?.mobile || ''
+  });
+  const [adminProfileSaving, setAdminProfileSaving] = useState(false);
+  const [adminProfileMsg, setAdminProfileMsg] = useState({ type: '', text: '' });
+
+  const [adminPasswordData, setAdminPasswordData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [adminPasswordSaving, setAdminPasswordSaving] = useState(false);
+  const [adminPasswordMsg, setAdminPasswordMsg] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    if (currentUser) {
+      setAdminProfileData({
+        name: currentUser.name || 'Super Admin',
+        email: currentUser.email || '',
+        mobile: currentUser.mobile || ''
+      });
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (window.location.hash.replace('#', '') !== activeTab) {
@@ -228,8 +259,110 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
       setActiveTab(hash || 'dashboard');
     };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
+
+  const handleAdminProfileSave = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setAdminProfileSaving(true);
+    setAdminProfileMsg({ type: '', text: '' });
+    try {
+      if (!adminProfileData.name.trim()) {
+        setAdminProfileMsg({ type: 'error', text: 'Admin name cannot be empty.' });
+        setAdminProfileSaving(false);
+        return;
+      }
+      if (!adminProfileData.email.trim()) {
+        setAdminProfileMsg({ type: 'error', text: 'Email address cannot be empty.' });
+        setAdminProfileSaving(false);
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/users/${currentUser.id}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: adminProfileData.name.trim(),
+          email: adminProfileData.email.trim(),
+          mobile: adminProfileData.mobile ? adminProfileData.mobile.trim() : ''
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setAdminProfileMsg({ type: 'error', text: data.error || 'Failed to update profile.' });
+        return;
+      }
+
+      const updatedUser = { ...currentUser, ...data };
+      localStorage.setItem('admin_user', JSON.stringify(updatedUser));
+      if (onUpdateUser) {
+        onUpdateUser(updatedUser);
+      }
+      setAdminProfileMsg({ type: 'success', text: 'Admin profile updated successfully!' });
+      setTimeout(() => setAdminProfileMsg({ type: '', text: '' }), 4000);
+    } catch (err) {
+      setAdminProfileMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setAdminProfileSaving(false);
+    }
+  };
+
+  const handleAdminPasswordChange = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setAdminPasswordSaving(true);
+    setAdminPasswordMsg({ type: '', text: '' });
+
+    if (!adminPasswordData.oldPassword) {
+      setAdminPasswordMsg({ type: 'error', text: 'Please enter your current password.' });
+      setAdminPasswordSaving(false);
+      return;
+    }
+    if (!adminPasswordData.newPassword) {
+      setAdminPasswordMsg({ type: 'error', text: 'Please enter a new password.' });
+      setAdminPasswordSaving(false);
+      return;
+    }
+    if (adminPasswordData.newPassword.length < 4) {
+      setAdminPasswordMsg({ type: 'error', text: 'New password must be at least 4 characters.' });
+      setAdminPasswordSaving(false);
+      return;
+    }
+    if (adminPasswordData.newPassword !== adminPasswordData.confirmPassword) {
+      setAdminPasswordMsg({ type: 'error', text: 'New password and confirm password do not match.' });
+      setAdminPasswordSaving(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/${currentUser.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          oldPassword: adminPasswordData.oldPassword,
+          newPassword: adminPasswordData.newPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setAdminPasswordMsg({ type: 'error', text: data.error || 'Failed to update password.' });
+        return;
+      }
+
+      setAdminPasswordMsg({ type: 'success', text: 'Password updated successfully! Please keep your new password safe.' });
+      setAdminPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setAdminPasswordMsg({ type: '', text: '' }), 4000);
+    } catch (err) {
+      setAdminPasswordMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setAdminPasswordSaving(false);
+    }
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -2560,6 +2693,19 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
           onClick={() => handleTabChange('reports')}
         >
           <BarChart3 size={18} /> Analytics & Reports
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'admin_profile' ? 'active' : ''}`}
+          onClick={() => handleTabChange('admin_profile')}
+          style={{
+            marginTop: '0.5rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            paddingTop: '0.75rem',
+            color: activeTab === 'admin_profile' ? '#fff' : '#cbd5e1'
+          }}
+        >
+          <UserCog size={18} style={{ color: '#f59e0b' }} /> Admin Profile & Settings
         </button>
 
         {onLogout && (
@@ -6905,6 +7051,403 @@ export default function AdminDashboard({ API_URL, currentUser, sidebarOpen, setS
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'admin_profile' && (
+          <div style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '3rem' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.6rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 800 }}>
+                  <UserCog size={28} color="#f59e0b" /> Admin Profile & Security Settings
+                </h2>
+                <p style={{ color: '#64748b', fontSize: '0.92rem', marginTop: '4px' }}>
+                  Manage your Super Admin login credentials, contact info, and system security controls.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', 
+                  color: '#92400e', 
+                  padding: '6px 14px', 
+                  borderRadius: '20px', 
+                  fontWeight: 700, 
+                  fontSize: '0.82rem',
+                  border: '1px solid #fcd34d'
+                }}>
+                  <ShieldCheck size={16} /> Super Admin Privilege
+                </span>
+              </div>
+            </div>
+
+            {/* Profile Message Alert */}
+            {adminProfileMsg.text && (
+              <div style={{
+                marginBottom: '1.25rem',
+                padding: '14px 18px',
+                borderRadius: '10px',
+                fontSize: '0.92rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: adminProfileMsg.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                color: adminProfileMsg.type === 'error' ? '#dc2626' : '#15803d',
+                border: `1px solid ${adminProfileMsg.type === 'error' ? '#fecaca' : '#bbf7d0'}`
+              }}>
+                {adminProfileMsg.type === 'error' ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                <span>{adminProfileMsg.text}</span>
+              </div>
+            )}
+
+            {/* Password Message Alert */}
+            {adminPasswordMsg.text && (
+              <div style={{
+                marginBottom: '1.25rem',
+                padding: '14px 18px',
+                borderRadius: '10px',
+                fontSize: '0.92rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: adminPasswordMsg.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                color: adminPasswordMsg.type === 'error' ? '#dc2626' : '#15803d',
+                border: `1px solid ${adminPasswordMsg.type === 'error' ? '#fecaca' : '#bbf7d0'}`
+              }}>
+                {adminPasswordMsg.type === 'error' ? <XCircle size={18} /> : <CheckCircle size={18} />}
+                <span>{adminPasswordMsg.text}</span>
+              </div>
+            )}
+
+            {/* 2-Column Responsive Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+              
+              {/* CARD 1: Profile Information */}
+              <div style={{ 
+                background: '#ffffff', 
+                borderRadius: '16px', 
+                padding: '1.75rem', 
+                border: '1px solid #e2e8f0', 
+                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <User size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>Admin Profile Details</h3>
+                    <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '2px' }}>Your visible display name and contact credentials</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleAdminProfileSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Admin Name <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="text" 
+                        value={adminProfileData.name} 
+                        onChange={(e) => setAdminProfileData({ ...adminProfileData, name: e.target.value })}
+                        required
+                        placeholder="e.g. Super Admin"
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px 14px 10px 38px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.92rem', 
+                          outline: 'none',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <User size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Login Email Address <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="email" 
+                        value={adminProfileData.email} 
+                        onChange={(e) => setAdminProfileData({ ...adminProfileData, email: e.target.value })}
+                        required
+                        placeholder="e.g. admin@forgeindiaconnect.in"
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px 14px 10px 38px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.92rem', 
+                          outline: 'none',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <Mail size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    </div>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                      Used to log into the Admin portal. Must be unique.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Mobile / WhatsApp Number
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="tel" 
+                        value={adminProfileData.mobile} 
+                        onChange={(e) => setAdminProfileData({ ...adminProfileData, mobile: e.target.value })}
+                        placeholder="e.g. 9876543210"
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px 14px 10px 38px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.92rem', 
+                          outline: 'none',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <Phone size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    </div>
+                    <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                      Optional mobile number for alerts & authentication.
+                    </span>
+                  </div>
+
+                  <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                    <button 
+                      type="submit" 
+                      disabled={adminProfileSaving}
+                      className="btn-primary" 
+                      style={{ 
+                        width: '100%', 
+                        padding: '11px 16px', 
+                        borderRadius: '8px', 
+                        fontWeight: 700, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                        cursor: adminProfileSaving ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <Check size={18} /> {adminProfileSaving ? 'Saving Profile...' : 'Save Profile Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* CARD 2: Security & Password Management */}
+              <div style={{ 
+                background: '#ffffff', 
+                borderRadius: '16px', 
+                padding: '1.75rem', 
+                border: '1px solid #e2e8f0', 
+                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Key size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>Change Password</h3>
+                    <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '2px' }}>Verify old password to update login secret</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleAdminPasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Current / Old Password <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showOldPass ? 'text' : 'password'} 
+                        value={adminPasswordData.oldPassword} 
+                        onChange={(e) => setAdminPasswordData({ ...adminPasswordData, oldPassword: e.target.value })}
+                        required
+                        placeholder="Enter current password"
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px 42px 10px 38px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.92rem', 
+                          outline: 'none',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <Lock size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                      <button
+                        type="button"
+                        onClick={() => setShowOldPass(!showOldPass)}
+                        style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}
+                      >
+                        {showOldPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      New Password <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showNewPass ? 'text' : 'password'} 
+                        value={adminPasswordData.newPassword} 
+                        onChange={(e) => setAdminPasswordData({ ...adminPasswordData, newPassword: e.target.value })}
+                        required
+                        placeholder="At least 4-6 characters"
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px 42px 10px 38px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.92rem', 
+                          outline: 'none',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <Key size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPass(!showNewPass)}
+                        style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}
+                      >
+                        {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                      Confirm New Password <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showConfirmPass ? 'text' : 'password'} 
+                        value={adminPasswordData.confirmPassword} 
+                        onChange={(e) => setAdminPasswordData({ ...adminPasswordData, confirmPassword: e.target.value })}
+                        required
+                        placeholder="Repeat new password"
+                        style={{ 
+                          width: '100%', 
+                          padding: '10px 42px 10px 38px', 
+                          borderRadius: '8px', 
+                          border: '1px solid #cbd5e1', 
+                          fontSize: '0.92rem', 
+                          outline: 'none',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <ShieldCheck size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPass(!showConfirmPass)}
+                        style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}
+                      >
+                        {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                    <button 
+                      type="submit" 
+                      disabled={adminPasswordSaving}
+                      className="btn-primary" 
+                      style={{ 
+                        width: '100%', 
+                        padding: '11px 16px', 
+                        borderRadius: '8px', 
+                        fontWeight: 700, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                        boxShadow: '0 4px 12px rgba(217, 119, 6, 0.25)',
+                        cursor: adminPasswordSaving ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <Lock size={18} /> {adminPasswordSaving ? 'Updating Password...' : 'Update Login Password'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* CARD 3: Super Admin Privileges & System Status */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: '#ffffff',
+              borderRadius: '16px',
+              padding: '1.75rem',
+              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.15)',
+              border: '1px solid #334155'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Shield size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff' }}>System Authority & Account Overview</h3>
+                    <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '2px' }}>FIC RecruitPro Master Control Account</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '4px 12px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700 }}>
+                    Active & Authenticated
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User Identifier</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f1f5f9', marginTop: '4px', fontFamily: 'monospace' }}>
+                    {currentUser?.id || 'usr_admin'}
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assigned System Role</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f59e0b', marginTop: '4px', textTransform: 'capitalize' }}>
+                    {currentUser?.role || 'admin'} (Super Admin)
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authorized Portal Modules</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#38bdf8', marginTop: '4px' }}>
+                    All 12 Modules (Full Access)
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
       </div>

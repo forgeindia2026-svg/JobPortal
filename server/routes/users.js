@@ -540,15 +540,30 @@ router.put('/hr/:id/incentives', async (req, res) => {
   }
 });
 
-// PUT update user profile (Name, Bank Details, Profile Photo)
+// PUT update user profile (Name, Email, Mobile, Bank Details, Profile Photo)
 router.put('/:id/profile', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName, profilePhoto, mobile } = req.body;
+    const { name, email, mobile, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName, profilePhoto } = req.body;
     
-    const updateObj = { name, bankAccountNumber, bankIfscCode, bankName, bankBranch, accountHolderName };
-    if (profilePhoto !== undefined) updateObj.profilePhoto = profilePhoto;
+    const updateObj = {};
+    if (name !== undefined) updateObj.name = name;
     if (mobile !== undefined) updateObj.mobile = mobile;
+    if (profilePhoto !== undefined) updateObj.profilePhoto = profilePhoto;
+    if (bankAccountNumber !== undefined) updateObj.bankAccountNumber = bankAccountNumber;
+    if (bankIfscCode !== undefined) updateObj.bankIfscCode = bankIfscCode;
+    if (bankName !== undefined) updateObj.bankName = bankName;
+    if (bankBranch !== undefined) updateObj.bankBranch = bankBranch;
+    if (accountHolderName !== undefined) updateObj.accountHolderName = accountHolderName;
+
+    if (email && email.trim()) {
+      const trimmedEmail = email.trim().toLowerCase();
+      const existing = await UserModel.findOne({ email: trimmedEmail, id: { $ne: id } });
+      if (existing) {
+        return res.status(400).json({ error: 'Account with this email already exists.' });
+      }
+      updateObj.email = trimmedEmail;
+    }
 
     const updatedUser = await UserModel.findOneAndUpdate(
       { id },

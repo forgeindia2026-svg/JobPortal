@@ -32,6 +32,11 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  const handleUpdateUser = (updatedUser) => {
+    localStorage.setItem('admin_user', JSON.stringify(updatedUser));
+    setCurrentUser(updatedUser);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -155,12 +160,15 @@ export default function App() {
       <AdminNavbar
         currentUser={currentUser}
         onLogout={handleLogout}
+        onOpenProfile={() => {
+          window.location.hash = '#admin_profile';
+        }}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
 
       <main style={{ flex: 1 }}>
         {currentUser.role === 'admin' && (
-          <AdminDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />
+          <AdminDashboard API_URL={API_URL} currentUser={currentUser} onUpdateUser={handleUpdateUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />
         )}
         {currentUser.role === 'hr' && (
           <HrDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />

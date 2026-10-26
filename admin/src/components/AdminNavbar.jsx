@@ -1,7 +1,7 @@
 import React from 'react';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, UserCog } from 'lucide-react';
 
-export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
+export default function AdminNavbar({ currentUser, onLogout, toggleSidebar, onOpenProfile }) {
   return (
     <nav className="top-nav" style={{ background: '#0f172a' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -32,13 +32,26 @@ export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {currentUser && (
-          <div className="user-pill">
+          <div 
+            className="user-pill"
+            onClick={() => onOpenProfile && onOpenProfile()}
+            style={{ 
+              cursor: onOpenProfile ? 'pointer' : 'default',
+              userSelect: 'none',
+              transition: 'all 0.2s ease'
+            }}
+            title={onOpenProfile ? "Click to view Admin Profile & Settings" : ""}
+          >
+            <UserCog size={16} style={{ color: '#f59e0b', marginRight: '3px' }} />
             <span className="desktop-text" style={{ fontWeight: 600 }}>{currentUser.name}</span>
             <span className="desktop-text" style={{ fontSize: '0.75rem', color: '#f59e0b', textTransform: 'capitalize' }}>
               ({currentUser.role})
             </span>
             <button
-              onClick={onLogout}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogout();
+              }}
               className="navbar-logout-btn"
               style={{
                 background: 'transparent',
