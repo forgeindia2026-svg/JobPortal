@@ -46,6 +46,7 @@ const getBankShadowColor = (name) => {
   if (lowerName.includes('icici')) return 'rgba(234, 88, 12, 0.45)';
   if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'rgba(2, 132, 199, 0.45)';
   if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'rgba(30, 58, 138, 0.45)';
+  if (lowerName.includes('suryoday')) return 'rgba(234, 88, 12, 0.45)';
   return 'rgba(30, 41, 59, 0.35)';
 };
 
@@ -62,6 +63,7 @@ const getNormalizedBankName = (rawName) => {
   if (n.includes('tata aig') || n.includes('tata')) return 'TATA AIG';
   if (n.includes('aditya birla')) return 'Aditya Birla Capital';
   if (n.includes('yes bank') || n.includes('yes')) return 'YES Bank';
+  if (n.includes('suryoday')) return 'Suryoday Small Finance Bank';
   return rawName || 'Banking Partner';
 };
 
@@ -76,6 +78,7 @@ const getBankLogo = (bankName) => {
   if (n.includes('axis')) return '/logos/axis_bank.svg';
   if (n.includes('aditya birla')) return '/logos/aditya_birla.jpg';
   if (n.includes('yes bank') || n.includes('yes')) return '/logos/Yes_Bank_Logo.jpg';
+  if (n.includes('suryoday')) return '/logos/suryoday.webp';
   return '/logo.png';
 };
 
@@ -200,6 +203,14 @@ const getBankBrandTheme = (rawName) => {
       bg: '#fff7ed',
       border: '#fed7aa',
       name: 'ICICI Bank'
+    };
+  }
+  if (n.includes('suryoday')) {
+    return {
+      color: '#c2410c',
+      bg: '#fff7ed',
+      border: '#fed7aa',
+      name: 'Suryoday Small Finance Bank'
     };
   }
   return {
@@ -428,7 +439,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       'HDFC Bank',
       'Mahindra Finance',
       'TATA AIG',
-      'YES Bank'
+      'YES Bank',
+      'Suryoday Small Finance Bank'
     ];
     (companies || []).filter(c => c.categoryId === 'cat_banking').forEach(c => {
       const bName = getNormalizedBankName(c.name);

@@ -12,7 +12,8 @@ const defaultCompanyPriorityMap = {
   'Kotak Mahindra Bank': 6,
   'Mahindra Finance': 7,
   'Axis Bank': 8,
-  'TATA AIG': 9
+  'TATA AIG': 9,
+  'Suryoday Small Finance Bank': 10
 };
 
 // GET /api/companies (optional query ?categoryId=xxx)

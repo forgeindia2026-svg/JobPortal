@@ -385,6 +385,17 @@ const initialData = {
       createdAt: new Date().toISOString()
     },
     {
+      id: 'comp_suryoday',
+      categoryId: 'cat_banking',
+      name: 'Suryoday Small Finance Bank',
+      logo: '/logos/suryoday.webp',
+      description: 'Scheduled commercial bank providing inclusive retail and microfinance banking products across India.',
+      website: 'https://www.suryodaybank.com',
+      status: 'Active',
+      displayOrder: 10,
+      createdAt: new Date().toISOString()
+    },
+    {
       id: 'comp_techm',
       categoryId: 'cat_it',
       name: 'Tech Mahindra',

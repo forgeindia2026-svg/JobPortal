@@ -113,6 +113,14 @@ const FALLBACK_COMPANIES = [
     website: 'https://www.mahindrafinance.com'
   },
   {
+    id: 'comp_suryoday',
+    categoryId: 'cat_banking',
+    name: 'Suryoday Small Finance Bank',
+    logo: '/logos/suryoday.webp',
+    description: 'Scheduled commercial bank providing inclusive retail and microfinance banking products across India.',
+    website: 'https://www.suryodaybank.com'
+  },
+  {
     id: 'comp_techm',
     categoryId: 'cat_it',
     name: 'Tech Mahindra',
@@ -563,6 +571,8 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
       'Tech Mahindra': '/logos/tech_mahindra.svg',
       'HDFC Life': '/logos/Hdfc.jpg',
       'TATA AIG': '/logos/tata_aig.png',
+      'YES Bank': '/logos/Yes_Bank_Logo.jpg',
+      'Suryoday Small Finance Bank': '/logos/suryoday.webp',
       'FIC IT Training & Placement': '/logo.png',
       'FIC IT Training': '/logo.png',
       'FIC': '/logo.png'
@@ -683,7 +693,8 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
     'Kotak Mahindra Bank': 5,
     'Mahindra Finance': 6,
     'Axis Bank': 7,
-    'TATA AIG': 8
+    'TATA AIG': 8,
+    'Suryoday Small Finance Bank': 9
   };
 
   const rawCompanies = selectedCategory

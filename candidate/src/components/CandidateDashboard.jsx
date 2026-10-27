@@ -144,7 +144,9 @@ export default function CandidateDashboard({ candidate, API_URL, onBrowseJobs })
                           'Mahindra Finance': '/logos/mahindra_finance.svg',
                           'Tech Mahindra': '/logos/tech_mahindra.svg',
                           'HDFC Life': '/logos/Hdfc.jpg',
-                          'TATA AIG': '/logos/tata_aig.png'
+                          'TATA AIG': '/logos/tata_aig.png',
+                          'YES Bank': '/logos/Yes_Bank_Logo.jpg',
+                          'Suryoday Small Finance Bank': '/logos/suryoday.webp'
                         };
                         const logoSrc = fallbackMap[app.companyName] || (app.companyLogo && app.companyLogo.includes('/logos/') ? `/logos/${app.companyLogo.split('/').pop()}` : app.companyLogo);
                         return logoSrc ? (
