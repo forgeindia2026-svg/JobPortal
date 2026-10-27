@@ -21,8 +21,9 @@ const getCompanyColor = (name) => {
   if (lowerName.includes('icici')) return '#ea580c';
   if (lowerName.includes('yes bank')) return '#0284c7';
   if (lowerName.includes('tata aig')) return '#1e3a8a';
+  if (lowerName.includes('suryoday')) return '#ea580c';
   if (lowerName.includes('fic') || lowerName.includes('it training') || lowerName.includes('software')) return '#4f46e5';
-  return '#475569';
+  return '#ea580c';
 };
 
 const FALLBACK_CATEGORIES = [
@@ -1038,10 +1039,34 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                     <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', zIndex: 1 }}>
                       {getLogoUrl(comp.name, comp.logo) ? (
-                        <img src={getLogoUrl(comp.name, comp.logo)} alt={comp.name} style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'contain', background: '#fff', border: '2px solid rgba(255,255,255,0.5)' }} />
+                        <div style={{
+                          width: '58px',
+                          height: '46px',
+                          borderRadius: '10px',
+                          background: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '3px 5px',
+                          border: '2px solid rgba(255,255,255,0.7)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                          flexShrink: 0,
+                          overflow: 'hidden'
+                        }}>
+                          <img 
+                            src={getLogoUrl(comp.name, comp.logo)} 
+                            alt={comp.name} 
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'contain',
+                              transform: (comp.name || '').toLowerCase().includes('suryoday') ? 'scale(1.22)' : 'scale(1.05)'
+                            }} 
+                          />
+                        </div>
                       ) : (
-                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', backdropFilter: 'blur(4px)', border: '2px solid rgba(255,255,255,0.5)' }}>
-                          <Building2 size={22} />
+                        <div style={{ width: '58px', height: '46px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', backdropFilter: 'blur(4px)', border: '2px solid rgba(255,255,255,0.5)' }}>
+                          <Building2 size={24} />
                         </div>
                       )}
                       <div>
@@ -1616,7 +1641,8 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                             { name: 'Bandhan Bank', tag: '⚡ Urgent Hiring', color: '#fef08a' },
                             { name: 'Aditya Birla Capital', tag: '✨ 3 Openings', color: '#93c5fd' },
                             { name: 'Kotak Mahindra Bank', tag: '🎯 Direct Placement', color: '#86efac' },
-                            { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' }
+                            { name: 'Axis Bank', tag: '💼 Active Drive', color: '#f472b6' },
+                            { name: 'Suryoday Small Finance Bank', tag: '🌟 1 Opening', color: '#fdba74' }
                           ].map((bank, i) => (
                             <div 
                               key={i} 
@@ -1698,17 +1724,38 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                         <div style={{ position: 'absolute', bottom: '-20px', left: '30px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
                         <div className="comp-card-top">
                           {getLogoUrl(comp.name, comp.logo) ? (
-                            <img 
-                              src={getLogoUrl(comp.name, comp.logo)} 
-                              alt={comp.name} 
-                              className="company-logo-vibrant" 
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
+                            <div style={{
+                              width: '84px',
+                              height: '56px',
+                              borderRadius: '12px',
+                              background: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '4px 6px',
+                              border: '2px solid rgba(255,255,255,0.8)',
+                              boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                              flexShrink: 0,
+                              overflow: 'hidden'
+                            }}>
+                              <img 
+                                src={getLogoUrl(comp.name, comp.logo)} 
+                                alt={comp.name} 
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'contain',
+                                  transform: (comp.name || '').toLowerCase().includes('suryoday') ? 'scale(1.25)' : 'scale(1.05)',
+                                  transition: 'transform 0.2s ease'
+                                }}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            </div>
                           ) : (
-                            <div className="company-logo-vibrant logo-placeholder">
-                              <Building2 size={26} color="var(--primary)" />
+                            <div className="company-logo-vibrant logo-placeholder" style={{ width: '84px', height: '56px' }}>
+                              <Building2 size={28} color="var(--primary)" />
                             </div>
                           )}
                           <div className="comp-info">
