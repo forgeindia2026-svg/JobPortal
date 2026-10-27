@@ -216,6 +216,19 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     }
   };
 
+  const availableBranches = React.useMemo(() => {
+    if (!job) return [];
+    const combined = `${job.description || ''}\n${job.location || ''}`;
+    const parenRegex = /([A-Za-z\s]+?)\s*\(([^)]+)\)/g;
+    let match;
+    const list = [];
+    while ((match = parenRegex.exec(combined)) !== null) {
+      const branches = match[2].split(/[,/|•\n]+/).map(b => b.trim()).filter(Boolean);
+      list.push(...branches);
+    }
+    return [...new Set(list)];
+  }, [job]);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" style={{ maxWidth: '560px' }} onClick={e => e.stopPropagation()}>
@@ -343,16 +356,26 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
 
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                 <div className="form-group" style={{ background: '#f3e8ff', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #a855f7', margin: 0 }}>
-                  <label className="form-label" style={{ color: '#581c87', fontWeight: 'bold' }}>City *</label>
+                  <label className="form-label" style={{ color: '#581c87', fontWeight: 'bold' }}>
+                    {availableBranches.length > 0 ? 'City / Preferred Branch *' : 'City *'}
+                  </label>
                   <input
                     type="text"
+                    list="available-branch-list"
                     className="form-input"
                     style={{ border: '1px solid #e9d5ff', background: '#fff' }}
                     required
-                    placeholder="e.g. Chennai"
+                    placeholder={availableBranches.length > 0 ? 'Select or type branch (e.g. Salem, Madurai...)' : 'e.g. Chennai'}
                     value={location}
                     onChange={e => setLocation(e.target.value)}
                   />
+                  {availableBranches.length > 0 && (
+                    <datalist id="available-branch-list">
+                      {availableBranches.map((b, idx) => (
+                        <option key={idx} value={b} />
+                      ))}
+                    </datalist>
+                  )}
                 </div>
                 <div className="form-group" style={{ background: '#fdf2f8', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #ec4899', margin: 0 }}>
                   <label className="form-label" style={{ color: '#831843', fontWeight: 'bold' }}>Experience *</label>

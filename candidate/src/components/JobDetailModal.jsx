@@ -51,6 +51,47 @@ export default function JobDetailModal({
 
   if (!job) return null;
 
+  const parseBranchLocations = (text, mainLoc) => {
+    if (!text && !mainLoc) return [];
+    const groups = [];
+    const combined = `${text || ''}\n${mainLoc || ''}`;
+
+    // 1. Check for Pattern: REGION(branch1, branch2, ...)
+    const parenRegex = /([A-Za-z\s]+?)\s*\(([^)]+)\)/g;
+    let match;
+    while ((match = parenRegex.exec(combined)) !== null) {
+      const rawRegion = match[1].replace(/Job Location\s*:\s*/i, '').trim();
+      const branches = match[2].split(/[,/|•\n]+/).map(b => b.trim()).filter(Boolean);
+      if (rawRegion && branches.length > 0 && !['pan india', 'nearby', 'aadhar card', 'based on'].includes(rawRegion.toLowerCase())) {
+        const existing = groups.find(g => g.region.toLowerCase() === rawRegion.toLowerCase());
+        if (existing) {
+          branches.forEach(b => { if (!existing.branches.includes(b)) existing.branches.push(b); });
+        } else {
+          groups.push({ region: rawRegion, branches });
+        }
+      }
+    }
+
+    // 2. Fallback: line-by-line colon format
+    if (groups.length === 0 && text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        const colonMatch = line.match(/^([A-Za-z\s]{3,}?):\s*(.+)$/);
+        if (colonMatch && !colonMatch[1].toLowerCase().includes('job location')) {
+          const rawRegion = colonMatch[1].trim();
+          const branches = colonMatch[2].split(/[,/|•]+/).map(b => b.trim()).filter(Boolean);
+          if (branches.length > 0) {
+            groups.push({ region: rawRegion, branches });
+          }
+        }
+      }
+    }
+
+    return groups;
+  };
+
+  const branchLocations = parseBranchLocations(job.description, job.location);
+
   const getTrainingPhasesList = () => {
     if (job.trainingPhases && Array.isArray(job.trainingPhases) && job.trainingPhases.length > 0) {
       return job.trainingPhases;
@@ -1021,10 +1062,119 @@ export default function JobDetailModal({
           </div>
         )}
 
-        <div>
-          <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>{labelOverview}</h4>
-          <p style={{ color: '#475569', fontSize: '0.925rem', lineHeight: '1.6' }}>{job.description}</p>
-        </div>
+        {(() => {
+          // If description was purely the location list string, provide a clean contextual overview
+          const isPureLocationText = branchLocations.length > 0 && 
+            (job.description || '')
+              .replace(/Job Location\s*:\s*/gi, '')
+              .replace(/[A-Za-z\s]+?\s*\([^)]*\)/gi, '')
+              .trim().length < 15;
+
+          const displayOverviewText = isPureLocationText
+            ? `Opportunities open for ${job.title} across ${branchLocations.reduce((a, g) => a + g.branches.length, 0)} prime branch locations in ${branchLocations.map(g => g.region).join(' & ')}. Placement location is assigned based on candidate's residential address or nearest Aadhar card location.`
+            : job.description;
+
+          return (
+            <div>
+              <h4 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '8px' }}>{labelOverview}</h4>
+              <p style={{ color: '#475569', fontSize: '0.925rem', lineHeight: '1.7', whiteSpace: 'pre-line', margin: 0 }}>
+                {displayOverviewText}
+              </p>
+            </div>
+          );
+        })()}
+
+        {/* STRUCTURED AVAILABLE BRANCH LOCATIONS SECTION */}
+        {branchLocations.length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            border: '1.5px solid #cbd5e1',
+            borderRadius: '14px',
+            padding: '1.25rem',
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: '#0284c7',
+                  color: '#ffffff'
+                }}>
+                  <MapPin size={18} />
+                </span>
+                <div>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Available Branch Locations
+                  </h4>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    {branchLocations.reduce((acc, g) => acc + g.branches.length, 0)} Branches across {branchLocations.length} Region{branchLocations.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+              <span style={{
+                background: '#e0f2fe',
+                color: '#0369a1',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                border: '1px solid #bae6fd'
+              }}>
+                📍 Location Based on Nearby / Aadhar
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {branchLocations.map((group, gIdx) => (
+                <div key={gIdx} style={{
+                  background: '#ffffff',
+                  borderRadius: '10px',
+                  padding: '1rem',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Building2 size={16} color="#0284c7" />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', letterSpacing: '0.5px' }}>
+                        {group.region.toUpperCase()}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0284c7', background: '#eff6ff', padding: '2px 8px', borderRadius: '12px' }}>
+                      {group.branches.length} Branches
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {group.branches.map((branch, bIdx) => (
+                      <span key={bIdx} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        color: '#334155',
+                        fontSize: '0.825rem',
+                        fontWeight: 600,
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                      }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7', flexShrink: 0 }} />
+                        {branch}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* QUICK JOB METADATA BOX */}
         <div style={{

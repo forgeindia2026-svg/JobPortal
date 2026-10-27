@@ -754,6 +754,11 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
                 value={description}
                 onChange={e => setDescription(e.target.value)}
               ></textarea>
+              <small style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '5px', display: 'block', lineHeight: 1.4 }}>
+                📍 <strong>Multi-Location Tip:</strong> For multiple branch locations by state/region, enter as: <br />
+                <code>TAMIL NADU(Salem, Madurai, Tambaram) BANGALURU(Jayanagar, Banashankari)</code><br />
+                The candidate portal will automatically format them into neat, interactive branch badges and autocomplete options!
+              </small>
             </div>
 
             <div style={{ marginBottom: '1.25rem' }}>
