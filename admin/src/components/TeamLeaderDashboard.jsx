@@ -72,9 +72,14 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
 
   const handleOpenHrCandidates = (hr, statusFilter = 'all') => {
     let hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hr.referralCode || '').toUpperCase());
-    if (statusFilter === 'Selected' || statusFilter === 'closed') {
-      const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired', 'joined manipal', 'closed', 'enrollment'];
-      hrApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || String(app.status || '').toLowerCase().includes('select') || String(app.status || '').toLowerCase().includes('closed') || String(app.status || '').toLowerCase().includes('joined'));
+    if (statusFilter === 'closed') {
+      const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment'];
+      hrApps = hrApps.filter(app => {
+        const s = String(app.status || '').toLowerCase().trim();
+        return !s.includes('select') && (CLOSED_STATUSES.includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired'));
+      });
+    } else if (statusFilter === 'Selected') {
+      hrApps = hrApps.filter(app => String(app.status || '').toLowerCase().trim().includes('select'));
     }
     setActiveTab('team_hrs');
     setSelectedHrForCandidateBreakdown({
@@ -302,11 +307,14 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
 
             {/* 2 Leadership Boards: Top Applications Received & Top Closers (Team HRs Only) */}
             {(() => {
-              const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired', 'joined manipal', 'closed', 'enrollment'];
+              const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment'];
               const hrStats = hrs.map(hr => {
                 const hrCode = hr.referralCode;
                 const hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hrCode || '').toUpperCase());
-                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                const closedApps = hrApps.filter(app => {
+                  const s = String(app.status || '').toLowerCase().trim();
+                  return !s.includes('select') && (CLOSED_STATUSES.includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired'));
+                });
                 return {
                   ...hr,
                   name: hr.name || hr.hrName,
@@ -446,7 +454,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                       <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                         🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({topClosers.length} Team HRs)</span>
                       </h3>
-                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Ranked by successful selections and closures</p>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Ranked by successful candidate closures</p>
                     </div>
                     {topClosers.length === 0 ? (
                       <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>No HRs assigned to your team yet.</div>
@@ -457,7 +465,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                           return (
                             <div
                               key={hr.id || hr.hrId || idx}
-                              onClick={() => handleOpenHrCandidates(hr, 'Selected')}
+                              onClick={() => handleOpenHrCandidates(hr, 'closed')}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',

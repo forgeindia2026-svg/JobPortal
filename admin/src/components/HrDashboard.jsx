@@ -115,17 +115,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       return matchSearch && matchCategory;
     });
   }, [itProcesses, itProgramSearch, itCategoryFilter]);
-  // Closed condition: Selected candidates are closed (across Banking & all sectors), along with Joined, Converted, Hired
+  // Closed condition: candidate is closed only when joined, converted, hired, or closed (Selected is NOT closed)
   const isCandidateClosedForIncentive = (app) => {
     if (!app) return false;
     const s = String(app.status || '').toLowerCase().trim();
-    if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+    if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled', 'selected', 'l1 selected', 'l2 selected'].includes(s) || s.includes('select')) return false;
 
-    return ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'].includes(s) ||
-           s.includes('select') || s.includes('joined') || s.includes('hired') || s.includes('closed');
+    return ['closed', 'joined', 'joined manipal', 'converted', 'hired', 'enrollment'].includes(s) ||
+           s.includes('closed') || s.includes('joined') || s.includes('hired');
   };
 
-  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'];
+  const CLOSED_STATUSES = ['closed', 'joined', 'joined manipal', 'converted', 'hired', 'enrollment'];
   
   const [showPartnerIncentiveModal, setShowPartnerIncentiveModal] = useState(false);
   const [selectedJobForIncentive, setSelectedJobForIncentive] = useState(null);
@@ -1028,7 +1028,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   {/* Top Closers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected/Closed)</span>
+                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Closed Candidates)</span>
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topClosers.map((hr, idx) => {

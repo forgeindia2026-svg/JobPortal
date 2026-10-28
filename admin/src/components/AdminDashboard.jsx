@@ -580,17 +580,17 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const [incentiveSaving, setIncentiveSaving] = useState(false);
   const [incentiveError, setIncentiveError] = useState('');
 
-  // Candidate is closed: Selected candidates are closed (across Banking & all sectors), along with Joined, Converted, Hired
+  // Candidate is closed: Only when closed, joined, converted, or hired (Selected candidates are NOT closed)
   const isCandidateClosedForIncentive = (app) => {
     if (!app) return false;
     const s = String(app.status || '').toLowerCase().trim();
-    if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+    if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled', 'selected', 'l1 selected', 'l2 selected'].includes(s) || s.includes('select')) return false;
 
-    return ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'].includes(s) ||
-           s.includes('select') || s.includes('joined') || s.includes('hired') || s.includes('closed');
+    return ['closed', 'joined', 'joined manipal', 'converted', 'hired', 'enrollment'].includes(s) ||
+           s.includes('closed') || s.includes('joined') || s.includes('hired');
   };
 
-  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'];
+  const CLOSED_STATUSES = ['closed', 'joined', 'joined manipal', 'converted', 'hired', 'enrollment'];
   const getHrClosedApps = (hr) => {
     if (!hr) return [];
     const code = String(hr.referralCode || '').toLowerCase();
@@ -1441,7 +1441,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           const isSel = ['selected', 'l1 selected', 'l2 selected'].includes(s) || s.includes('select');
           if (!isSel) return false;
         } else if (filterLower === 'closed') {
-          const isClo = ['closed', 'joined', 'converted', 'hired', 'enrollment', 'selected', 'l1 selected', 'l2 selected', 'joined manipal'].includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired');
+          const isClo = ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired');
           if (!isClo) return false;
         } else if (filterLower === 'rejected') {
           const isRej = ['rejected', 'not interested'].includes(s);
@@ -1481,7 +1481,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
     };
 
     const isSel = (app) => ['selected', 'l1 selected', 'l2 selected'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().trim().includes('select');
-    const isClo = (app) => ['closed', 'joined', 'converted', 'hired', 'enrollment', 'selected', 'l1 selected', 'l2 selected', 'joined manipal'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().trim().includes('select') || String(app.status || '').toLowerCase().trim().includes('closed') || String(app.status || '').toLowerCase().trim().includes('joined') || String(app.status || '').toLowerCase().trim().includes('hired');
+    const isClo = (app) => ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(String(app.status || '').toLowerCase().trim()) || (!isSel(app) && (String(app.status || '').toLowerCase().trim().includes('closed') || String(app.status || '').toLowerCase().trim().includes('joined') || String(app.status || '').toLowerCase().trim().includes('hired')));
     const isRej = (app) => ['rejected', 'not interested'].includes(String(app.status || '').toLowerCase().trim());
 
     const documentSubmitted = hrAllCandidates.filter(a => isDoc(a) && !isSel(a) && !isClo(a) && !isRej(a)).length;
@@ -3161,7 +3161,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         return (
                           <div
                             key={hr.id || idx}
-                            onClick={() => handleOpenHrCandidates(hr, 'Selected')}
+                            onClick={() => handleOpenHrCandidates(hr, 'closed')}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
