@@ -1,7 +1,7 @@
 import React from 'react';
-import { LogOut, Menu, UserCog } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
-export default function AdminNavbar({ currentUser, onLogout, toggleSidebar, onOpenProfile }) {
+export default function AdminNavbar({ currentUser, onLogout, toggleSidebar }) {
   return (
     <nav className="top-nav" style={{ background: '#0f172a' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -30,47 +30,57 @@ export default function AdminNavbar({ currentUser, onLogout, toggleSidebar, onOp
         </a>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {currentUser && (
-          <div 
-            className="user-pill"
-            onClick={() => onOpenProfile && onOpenProfile()}
-            style={{ 
-              cursor: onOpenProfile ? 'pointer' : 'default',
-              userSelect: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            title={onOpenProfile ? "Click to view Admin Profile & Settings" : ""}
-          >
-            <UserCog size={16} style={{ color: '#f59e0b', marginRight: '3px' }} />
-            <span className="desktop-text" style={{ fontWeight: 600 }}>{currentUser.name}</span>
-            <span className="desktop-text" style={{ fontSize: '0.75rem', color: '#f59e0b', textTransform: 'capitalize' }}>
-              ({currentUser.role})
-            </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onLogout();
+          <>
+            <div 
+              className="user-pill"
+              style={{ 
+                userSelect: 'none'
               }}
-              className="navbar-logout-btn"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#ef4444',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                marginLeft: '8px'
-              }}
-              title="Logout"
             >
-              <LogOut size={16} /> <span className="desktop-text">Logout</span>
+              <span style={{ fontWeight: 600 }}>{currentUser.name}</span>
+              <span style={{ fontSize: '0.75rem', color: '#f59e0b', textTransform: 'capitalize' }}>
+                ({currentUser.role})
+              </span>
+              <button
+                onClick={onLogout}
+                className="navbar-logout-btn"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#ef4444',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  marginLeft: '8px'
+                }}
+                title="Logout"
+              >
+                <LogOut size={16} /> <span>Logout</span>
+              </button>
+            </div>
+
+            <button 
+              className="mobile-menu-btn" 
+              onClick={toggleSidebar} 
+              style={{ 
+                background: 'rgba(255, 255, 255, 0.08)', 
+                border: '1px solid rgba(255, 255, 255, 0.15)', 
+                color: '#fff', 
+                cursor: 'pointer', 
+                padding: '8px',
+                borderRadius: '8px',
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }} 
+              title="Toggle Menu"
+            >
+              <Menu size={22} />
             </button>
-            <button className="mobile-menu-btn" onClick={toggleSidebar} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', marginLeft: '4px', display: 'none' }} title="Toggle Menu">
-              <Menu size={20} />
-            </button>
-          </div>
+          </>
         )}
       </div>
     </nav>

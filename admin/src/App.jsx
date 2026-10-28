@@ -160,9 +160,6 @@ export default function App() {
       <AdminNavbar
         currentUser={currentUser}
         onLogout={handleLogout}
-        onOpenProfile={() => {
-          window.location.hash = '#admin_profile';
-        }}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
 

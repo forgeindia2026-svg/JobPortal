@@ -474,12 +474,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .user-pill {
-    gap: 4px;
-    font-size: 0.8rem;
-  }
-
-  .user-pill button {
-    margin-left: 2px !important;
+    display: none !important;
   }
 
   /* KPI cards - EXACT 2 columns side by side on mobile */
