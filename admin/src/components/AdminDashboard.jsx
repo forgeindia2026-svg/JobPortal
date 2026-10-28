@@ -580,26 +580,17 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const [incentiveSaving, setIncentiveSaving] = useState(false);
   const [incentiveError, setIncentiveError] = useState('');
 
-  // Candidate is closed for incentive: Banking requires 'Joined Manipal' or 'Joined', other sectors allow 'Selected'/'Hired'/'Converted'
+  // Candidate is closed: Selected candidates are closed (across Banking & all sectors), along with Joined, Converted, Hired
   const isCandidateClosedForIncentive = (app) => {
     if (!app) return false;
     const s = String(app.status || '').toLowerCase().trim();
     if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
 
-    const catId = String(app.categoryId || '').toLowerCase();
-    const compName = String(app.companyName || '').toLowerCase();
-    const jobTitle = String(app.jobTitle || '').toLowerCase();
-    const isBanking = catId === 'cat_banking' ||
-      /bank|banking|nbfc|kotak|axis|idfc|hdfc|icici|bandhan|yes bank|mahindra finance|aditya birla|tata aig/i.test(compName) ||
-      /bank|banking|relationship officer|relationship executive|branch manager|branch|casa|banca/i.test(jobTitle);
-
-    if (isBanking) {
-      return s === 'joined manipal' || s === 'joined';
-    }
-    return ['selected', 'joined', 'converted', 'hired'].includes(s);
+    return ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'].includes(s) ||
+           s.includes('select') || s.includes('joined') || s.includes('hired') || s.includes('closed');
   };
 
-  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal'];
+  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'];
   const getHrClosedApps = (hr) => {
     if (!hr) return [];
     const code = String(hr.referralCode || '').toLowerCase();
@@ -1447,10 +1438,10 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           const hasDocInt = (interviews || []).some(int => (String(int.candidateId) === String(app.candidateId) || String(int.applicationId) === String(app.id)) && String(int.status || '').toLowerCase().includes('document'));
           if (!isDoc && !hasDocInt) return false;
         } else if (filterLower === 'selected') {
-          const isSel = ['selected', 'l1 selected', 'l2 selected'].includes(s);
+          const isSel = ['selected', 'l1 selected', 'l2 selected'].includes(s) || s.includes('select');
           if (!isSel) return false;
         } else if (filterLower === 'closed') {
-          const isClo = ['closed', 'joined', 'converted', 'hired', 'enrollment'].includes(s);
+          const isClo = ['closed', 'joined', 'converted', 'hired', 'enrollment', 'selected', 'l1 selected', 'l2 selected', 'joined manipal'].includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired');
           if (!isClo) return false;
         } else if (filterLower === 'rejected') {
           const isRej = ['rejected', 'not interested'].includes(s);
@@ -1489,8 +1480,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       return isDocStatus || hasDocInt;
     };
 
-    const isSel = (app) => ['selected', 'l1 selected', 'l2 selected'].includes(String(app.status || '').toLowerCase().trim());
-    const isClo = (app) => ['closed', 'joined', 'converted', 'hired', 'enrollment'].includes(String(app.status || '').toLowerCase().trim());
+    const isSel = (app) => ['selected', 'l1 selected', 'l2 selected'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().trim().includes('select');
+    const isClo = (app) => ['closed', 'joined', 'converted', 'hired', 'enrollment', 'selected', 'l1 selected', 'l2 selected', 'joined manipal'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().trim().includes('select') || String(app.status || '').toLowerCase().trim().includes('closed') || String(app.status || '').toLowerCase().trim().includes('joined') || String(app.status || '').toLowerCase().trim().includes('hired');
     const isRej = (app) => ['rejected', 'not interested'].includes(String(app.status || '').toLowerCase().trim());
 
     const documentSubmitted = hrAllCandidates.filter(a => isDoc(a) && !isSel(a) && !isClo(a) && !isRej(a)).length;

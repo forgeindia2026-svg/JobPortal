@@ -364,9 +364,9 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
 
   const handleOpenHrCandidates = (hr, statusFilter = 'all') => {
     let hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hr.referralCode || '').toUpperCase());
-    if (statusFilter === 'Selected') {
-      const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired'];
-      hrApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+    if (statusFilter === 'Selected' || statusFilter === 'closed') {
+      const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired', 'joined manipal', 'closed', 'enrollment'];
+      hrApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || String(app.status || '').toLowerCase().includes('select') || String(app.status || '').toLowerCase().includes('closed') || String(app.status || '').toLowerCase().includes('joined'));
     }
     setActiveTab('team_leaders');
     setSelectedTlId(null);
@@ -797,11 +797,11 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
 
             {/* 2 Leadership Boards: Top Applications Received & Top Closers (Branch HRs Only) */}
             {(() => {
-              const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired'];
+              const CLOSED_STATUSES = ['selected', 'joined', 'converted', 'hired', 'joined manipal', 'closed', 'enrollment'];
               const hrStats = hrs.map(hr => {
                 const hrCode = hr.referralCode;
                 const hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hrCode || '').toUpperCase());
-                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()) || String(app.status || '').toLowerCase().includes('select') || String(app.status || '').toLowerCase().includes('closed') || String(app.status || '').toLowerCase().includes('joined'));
                 return {
                   ...hr,
                   name: hr.name || hr.hrName,

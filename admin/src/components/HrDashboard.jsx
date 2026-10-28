@@ -115,26 +115,17 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       return matchSearch && matchCategory;
     });
   }, [itProcesses, itProgramSearch, itCategoryFilter]);
-  // Closed condition: Banking requires 'Joined Manipal' or 'Joined', other sectors allow 'Selected'/'Converted'/'Hired'
+  // Closed condition: Selected candidates are closed (across Banking & all sectors), along with Joined, Converted, Hired
   const isCandidateClosedForIncentive = (app) => {
     if (!app) return false;
     const s = String(app.status || '').toLowerCase().trim();
     if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
 
-    const catId = String(app.categoryId || '').toLowerCase();
-    const compName = String(app.companyName || '').toLowerCase();
-    const jobTitle = String(app.jobTitle || '').toLowerCase();
-    const isBanking = catId === 'cat_banking' ||
-      /bank|banking|nbfc|kotak|axis|idfc|hdfc|icici|bandhan|yes bank|mahindra finance|aditya birla|tata aig/i.test(compName) ||
-      /bank|banking|relationship officer|relationship executive|branch manager|branch|casa|banca/i.test(jobTitle);
-
-    if (isBanking) {
-      return s === 'joined manipal' || s === 'joined';
-    }
-    return ['selected', 'joined', 'converted', 'hired'].includes(s);
+    return ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'].includes(s) ||
+           s.includes('select') || s.includes('joined') || s.includes('hired') || s.includes('closed');
   };
 
-  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal'];
+  const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal', 'converted', 'hired', 'closed', 'enrollment'];
   
   const [showPartnerIncentiveModal, setShowPartnerIncentiveModal] = useState(false);
   const [selectedJobForIncentive, setSelectedJobForIncentive] = useState(null);
