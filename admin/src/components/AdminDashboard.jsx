@@ -481,8 +481,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
     if (!selectedClientForBanks) return;
     try {
       setSavingBankAccess(true);
-      const updatedAllowedBanks = bankSelectionList;
-      const updatedAllowedJobs = jobSelectionList;
+      const updatedAllowedBanks = bankSelectionList.includes('__NONE__') ? ['__NONE__'] : bankSelectionList;
+      const updatedAllowedJobs = jobSelectionList.includes('__NONE__') ? ['__NONE__'] : jobSelectionList;
       await fetch(`${API_URL}/api/users/client/${selectedClientForBanks.id}/banks`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -496,7 +496,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       });
 
       setBankAccessModalOpen(false);
-      alert(`Client access updated successfully for "${selectedClientForBanks.name}"!\n\nVisible Banks: ${updatedAllowedBanks.length === 0 ? 'All Banks' : updatedAllowedBanks.join(', ')}\nVisible Jobs: ${updatedAllowedJobs.length === 0 ? 'All Jobs in Assigned Banks' : updatedAllowedJobs.length + ' specific jobs'}`);
+      const bankSummary = updatedAllowedBanks.length === 0 
+        ? 'All Banks' 
+        : (updatedAllowedBanks.includes('__NONE__') ? 'None' : updatedAllowedBanks.join(', '));
+      const jobSummary = updatedAllowedJobs.length === 0 
+        ? 'All Jobs in Assigned Banks' 
+        : (updatedAllowedJobs.includes('__NONE__') ? 'None' : `${updatedAllowedJobs.length} specific jobs`);
+      alert(`Client access updated successfully for "${selectedClientForBanks.name}"!\n\nVisible Banks: ${bankSummary}\nVisible Jobs: ${jobSummary}`);
     } catch (err) {
       console.error('Error saving bank/job access:', err);
       alert('Failed to save access: ' + err.message);
@@ -7646,21 +7652,27 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   padding: '2px'
                 }}>
                   {allAvailableBanks.map(bName => {
-                    const isSelected = clientForm.allowedBanks.length === 0 || clientForm.allowedBanks.includes(bName);
+                    const isSelected = clientForm.allowedBanks.includes('__NONE__') ? false : (clientForm.allowedBanks.length === 0 || clientForm.allowedBanks.includes(bName));
+                    const toggleClientBank = () => {
+                      setClientForm(prev => {
+                        let curr;
+                        if (prev.allowedBanks.length === 0) {
+                          curr = allAvailableBanks.filter(b => b !== bName);
+                        } else if (prev.allowedBanks.includes('__NONE__')) {
+                          curr = [bName];
+                        } else if (prev.allowedBanks.includes(bName)) {
+                          curr = prev.allowedBanks.filter(b => b !== bName);
+                        } else {
+                          curr = [...prev.allowedBanks, bName];
+                        }
+                        return { ...prev, allowedBanks: curr.length > 0 ? curr : ['__NONE__'] };
+                      });
+                    };
+
                     return (
                       <div
                         key={bName}
-                        onClick={() => {
-                          setClientForm(prev => {
-                            let curr = prev.allowedBanks.length === 0 ? [...allAvailableBanks] : [...prev.allowedBanks];
-                            if (curr.includes(bName)) {
-                              curr = curr.filter(b => b !== bName);
-                            } else {
-                              curr.push(bName);
-                            }
-                            return { ...prev, allowedBanks: curr };
-                          });
-                        }}
+                        onClick={toggleClientBank}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -7677,7 +7689,11 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => {}}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleClientBank();
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           style={{ accentColor: '#2563eb', cursor: 'pointer' }}
                         />
                         <img
@@ -7836,7 +7852,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <Briefcase size={16} /> 2. Allowed Jobs ({jobSelectionList.length === 0 ? 'All Jobs' : `${jobSelectionList.length} Selected`})
+                  <Briefcase size={16} /> 2. Allowed Jobs ({jobSelectionList.length === 0 ? 'All Jobs' : (jobSelectionList.includes('__NONE__') ? '0 Selected' : `${jobSelectionList.length} Selected`)})
                 </button>
               </div>
 
@@ -7847,17 +7863,19 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
                       {bankSelectionList.length === 0 ? (
                         <span style={{ color: '#16a34a' }}>🌟 All Banks Allowed (Full Access)</span>
+                      ) : bankSelectionList.includes('__NONE__') ? (
+                        <span style={{ color: '#ef4444' }}>⚠️ 0 Banks Selected (No Bank Access)</span>
                       ) : (
                         <span style={{ color: '#2563eb' }}>🎯 {bankSelectionList.length} of {allAvailableBanks.length} Banks Selected</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '6px' }}>
                       <button
                         type="button"
                         onClick={() => setBankSelectionList([])}
                         style={{
-                          padding: '5px 12px',
-                          fontSize: '0.78rem',
+                          padding: '5px 10px',
+                          fontSize: '0.75rem',
                           fontWeight: 700,
                           borderRadius: '6px',
                           border: '1px solid #cbd5e1',
@@ -7866,14 +7884,14 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                           cursor: 'pointer'
                         }}
                       >
-                        All Banks
+                        All Banks (Default)
                       </button>
                       <button
                         type="button"
                         onClick={() => setBankSelectionList([...allAvailableBanks])}
                         style={{
-                          padding: '5px 12px',
-                          fontSize: '0.78rem',
+                          padding: '5px 10px',
+                          fontSize: '0.75rem',
                           fontWeight: 700,
                           borderRadius: '6px',
                           border: '1px solid #cbd5e1',
@@ -7883,6 +7901,22 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         }}
                       >
                         Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBankSelectionList(['__NONE__'])}
+                        style={{
+                          padding: '5px 10px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          background: bankSelectionList.includes('__NONE__') ? '#ef4444' : '#ffffff',
+                          color: bankSelectionList.includes('__NONE__') ? '#ffffff' : '#64748b',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Deselect All
                       </button>
                     </div>
                   </div>
@@ -7900,20 +7934,27 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                     border: '1px solid #e2e8f0'
                   }}>
                     {allAvailableBanks.map(bName => {
-                      const isChecked = bankSelectionList.length === 0 || bankSelectionList.includes(bName);
+                      const isChecked = bankSelectionList.includes('__NONE__') ? false : (bankSelectionList.length === 0 || bankSelectionList.includes(bName));
                       const bankJobCount = getJobsForBank(bName).length;
+
+                      const toggleBank = () => {
+                        if (bankSelectionList.length === 0) {
+                          const remaining = allAvailableBanks.filter(b => b !== bName);
+                          setBankSelectionList(remaining.length > 0 ? remaining : ['__NONE__']);
+                        } else if (bankSelectionList.includes('__NONE__')) {
+                          setBankSelectionList([bName]);
+                        } else if (bankSelectionList.includes(bName)) {
+                          const remaining = bankSelectionList.filter(b => b !== bName);
+                          setBankSelectionList(remaining.length > 0 ? remaining : ['__NONE__']);
+                        } else {
+                          setBankSelectionList([...bankSelectionList, bName]);
+                        }
+                      };
+
                       return (
                         <div
                           key={bName}
-                          onClick={() => {
-                            let curr = bankSelectionList.length === 0 ? [...allAvailableBanks] : [...bankSelectionList];
-                            if (curr.includes(bName)) {
-                              curr = curr.filter(b => b !== bName);
-                            } else {
-                              curr.push(bName);
-                            }
-                            setBankSelectionList(curr);
-                          }}
+                          onClick={toggleBank}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -7932,7 +7973,11 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                             <input
                               type="checkbox"
                               checked={isChecked}
-                              onChange={() => {}}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                toggleBank();
+                              }}
+                              onClick={(e) => e.stopPropagation()}
                               style={{ accentColor: '#2563eb', cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
                             />
                             <img
@@ -7955,170 +8000,276 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 </div>
               ) : (
                 /* JOBS TAB */
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                (() => {
+                  const activeAssignedBanks = bankSelectionList.includes('__NONE__')
+                    ? []
+                    : (bankSelectionList.length === 0
+                      ? allAvailableBanks
+                      : allAvailableBanks.filter(b => bankSelectionList.includes(b)));
+
+                  const allAssignedBankJobs = (jobs || []).filter(j => {
+                    const norm = getNormalizedBankName(j.companyName || '');
+                    return activeAssignedBanks.some(b =>
+                      norm.toLowerCase() === b.toLowerCase() ||
+                      b.toLowerCase().includes(norm.toLowerCase()) ||
+                      norm.toLowerCase().includes(b.toLowerCase())
+                    );
+                  });
+
+                  const isJobSelected = (job) => {
+                    if (jobSelectionList.includes('__NONE__')) return false;
+                    if (jobSelectionList.length === 0) return true; // All jobs allowed by default
+                    const jId = job.id || job.title;
+                    return jobSelectionList.includes(jId) ||
+                           (job.title && jobSelectionList.includes(job.title)) ||
+                           (job.id && jobSelectionList.includes(job.id));
+                  };
+
+                  const selectedJobsCount = jobSelectionList.includes('__NONE__')
+                    ? 0
+                    : (jobSelectionList.length === 0 ? allAssignedBankJobs.length : allAssignedBankJobs.filter(j => isJobSelected(j)).length);
+
+                  const toggleJob = (job) => {
+                    const jId = job.id || job.title;
+                    const allJobIds = allAssignedBankJobs.map(j => j.id || j.title);
+
+                    if (jobSelectionList.length === 0) {
+                      // Currently All Jobs selected -> uncheck this specific one:
+                      const remaining = allJobIds.filter(id => id !== jId && id !== job.id && id !== job.title);
+                      setJobSelectionList(remaining.length > 0 ? remaining : ['__NONE__']);
+                    } else if (jobSelectionList.includes('__NONE__')) {
+                      // Currently None -> check this specific one:
+                      setJobSelectionList([jId]);
+                    } else if (isJobSelected(job)) {
+                      // Currently checked -> uncheck it:
+                      const remaining = jobSelectionList.filter(id => id !== jId && id !== job.id && id !== job.title && id !== '__NONE__');
+                      setJobSelectionList(remaining.length > 0 ? remaining : ['__NONE__']);
+                    } else {
+                      // Currently unchecked -> check it:
+                      const current = jobSelectionList.filter(id => id !== '__NONE__');
+                      setJobSelectionList([...current, jId]);
+                    }
+                  };
+
+                  return (
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
-                        {jobSelectionList.length === 0 ? (
-                          <span style={{ color: '#16a34a' }}>🌟 All Jobs in Assigned Banks Allowed</span>
-                        ) : (
-                          <span style={{ color: '#7c3aed' }}>🎯 {jobSelectionList.length} Specific Job{jobSelectionList.length > 1 ? 's' : ''} Selected</span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                        {jobSelectionList.length === 0 ? 'Client will see all applicants across all positions in assigned banks.' : 'Client will strictly only see applicants for these chosen jobs.'}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setJobSelectionList([])}
-                        style={{
-                          padding: '5px 12px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          borderRadius: '6px',
-                          border: '1px solid #cbd5e1',
-                          background: jobSelectionList.length === 0 ? '#7c3aed' : '#ffffff',
-                          color: jobSelectionList.length === 0 ? '#ffffff' : '#334155',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        All Jobs (Default)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* List of Jobs grouped by Bank */}
-                  <div style={{
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    padding: '6px',
-                    background: '#f8fafc',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                  }}>
-                    {allAvailableBanks
-                      .filter(bName => bankSelectionList.length === 0 || bankSelectionList.includes(bName))
-                      .map(bName => {
-                        const bankJobs = getJobsForBank(bName);
-                        return (
-                          <div key={bName} style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '10px 12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <img
-                                  src={getBankLogo(bName)}
-                                  alt={bName}
-                                  onError={e => { e.currentTarget.src = '/logo.png'; }}
-                                  style={{ width: '20px', height: '20px', objectFit: 'contain' }}
-                                />
-                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>
-                                  {bName}
-                                </span>
-                                <span style={{ fontSize: '0.725rem', color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: '10px' }}>
-                                  {bankJobs.length} role{bankJobs.length > 1 ? 's' : ''}
-                                </span>
-                              </div>
-                              {bankJobs.length > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const bankJobIds = bankJobs.map(j => j.id || j.title);
-                                    const allSelected = bankJobIds.every(id => jobSelectionList.includes(id));
-                                    if (allSelected) {
-                                      setJobSelectionList(prev => prev.filter(id => !bankJobIds.includes(id)));
-                                    } else {
-                                      setJobSelectionList(prev => [...new Set([...prev, ...bankJobIds])]);
-                                    }
-                                  }}
-                                  style={{
-                                    fontSize: '0.72rem',
-                                    fontWeight: 600,
-                                    padding: '2px 8px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #cbd5e1',
-                                    background: '#f8fafc',
-                                    color: '#2563eb',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Toggle All for {bName.split(' ')[0]}
-                                </button>
-                              )}
-                            </div>
-
-                            {bankJobs.length === 0 ? (
-                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', padding: '4px 0' }}>
-                                No active job vacancies created for this bank yet.
-                              </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                            {jobSelectionList.length === 0 ? (
+                              <span style={{ color: '#16a34a' }}>🌟 All Jobs in Assigned Banks Allowed ({allAssignedBankJobs.length} Roles)</span>
+                            ) : jobSelectionList.includes('__NONE__') || selectedJobsCount === 0 ? (
+                              <span style={{ color: '#ef4444' }}>⚠️ 0 Jobs Selected (No Job Access)</span>
                             ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                {bankJobs.map(job => {
-                                  const jobIdOrTitle = job.id || job.title;
-                                  const isSelected = jobSelectionList.length === 0 || jobSelectionList.includes(jobIdOrTitle) || jobSelectionList.includes(job.title) || jobSelectionList.includes(job.id);
-                                  return (
-                                    <div
-                                      key={jobIdOrTitle}
-                                      onClick={() => {
-                                        // If jobSelectionList was empty (All Jobs), clicking one should initialize list with that one
-                                        let curr = jobSelectionList.length === 0 ? [jobIdOrTitle] : [...jobSelectionList];
-                                        if (curr.includes(jobIdOrTitle) || curr.includes(job.id) || curr.includes(job.title)) {
-                                          curr = curr.filter(id => id !== jobIdOrTitle && id !== job.id && id !== job.title);
-                                        } else {
-                                          curr.push(jobIdOrTitle);
-                                        }
-                                        setJobSelectionList(curr);
-                                      }}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        padding: '8px 10px',
-                                        borderRadius: '8px',
-                                        border: isSelected ? '1.5px solid #a855f7' : '1px solid #e2e8f0',
-                                        background: isSelected ? '#faf5ff' : '#ffffff',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s ease'
-                                      }}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => {}}
-                                        style={{ accentColor: '#7c3aed', cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
-                                      />
-                                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                                        <div style={{ fontSize: '0.825rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#6b21a8' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                          {job.title}
-                                        </div>
-                                        <div style={{ fontSize: '0.725rem', color: '#64748b', display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
-                                          {job.salary && <span>💰 {job.salary}</span>}
-                                          {job.location && <span>📍 {job.location.substring(0, 30)}{job.location.length > 30 ? '...' : ''}</span>}
-                                          {job.jobType && <span>🏷️ {job.jobType}</span>}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                              <span style={{ color: '#7c3aed' }}>🎯 {selectedJobsCount} of {allAssignedBankJobs.length} Job Roles Selected</span>
                             )}
                           </div>
-                        );
-                      })}
-                  </div>
-                </div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            {jobSelectionList.length === 0 
+                              ? 'Client will see all applicants across all positions in assigned banks.' 
+                              : 'Client will strictly only see applicants for these chosen jobs.'}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setJobSelectionList([])}
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              border: '1px solid #cbd5e1',
+                              background: jobSelectionList.length === 0 ? '#7c3aed' : '#ffffff',
+                              color: jobSelectionList.length === 0 ? '#ffffff' : '#334155',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            All Jobs (Default)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setJobSelectionList(allAssignedBankJobs.map(j => j.id || j.title))}
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              border: '1px solid #cbd5e1',
+                              background: '#ffffff',
+                              color: '#334155',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Select All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setJobSelectionList(['__NONE__'])}
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              borderRadius: '6px',
+                              border: '1px solid #cbd5e1',
+                              background: jobSelectionList.includes('__NONE__') ? '#ef4444' : '#ffffff',
+                              color: jobSelectionList.includes('__NONE__') ? '#ffffff' : '#64748b',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Deselect All
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* List of Jobs grouped by Bank */}
+                      <div style={{
+                        maxHeight: '300px',
+                        overflowY: 'auto',
+                        padding: '6px',
+                        background: '#f8fafc',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        {activeAssignedBanks.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '24px 12px', color: '#64748b', fontSize: '0.85rem' }}>
+                            No banks are currently allowed. Please select banks in the <strong>Allowed Banks</strong> tab first.
+                          </div>
+                        ) : (
+                          activeAssignedBanks.map(bName => {
+                            const bankJobs = getJobsForBank(bName);
+                            const bankJobIds = bankJobs.map(j => j.id || j.title);
+                            const areAllBankJobsSelected = bankJobs.length > 0 && bankJobs.every(j => isJobSelected(j));
+
+                            const toggleAllBankJobs = () => {
+                              const allJobIds = allAssignedBankJobs.map(j => j.id || j.title);
+                              if (areAllBankJobsSelected) {
+                                // Uncheck all jobs for this bank:
+                                if (jobSelectionList.length === 0) {
+                                  const remaining = allJobIds.filter(id => !bankJobIds.includes(id));
+                                  setJobSelectionList(remaining.length > 0 ? remaining : ['__NONE__']);
+                                } else {
+                                  const remaining = jobSelectionList.filter(id => !bankJobIds.includes(id) && id !== '__NONE__');
+                                  setJobSelectionList(remaining.length > 0 ? remaining : ['__NONE__']);
+                                }
+                              } else {
+                                // Check all jobs for this bank:
+                                const current = jobSelectionList.length === 0 ? allJobIds : jobSelectionList.filter(id => id !== '__NONE__');
+                                setJobSelectionList([...new Set([...current, ...bankJobIds])]);
+                              }
+                            };
+
+                            return (
+                              <div key={bName} style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '10px 12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <img
+                                      src={getBankLogo(bName)}
+                                      alt={bName}
+                                      onError={e => { e.currentTarget.src = '/logo.png'; }}
+                                      style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                                    />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>
+                                      {bName}
+                                    </span>
+                                    <span style={{ fontSize: '0.725rem', color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: '10px' }}>
+                                      {bankJobs.length} role{bankJobs.length > 1 ? 's' : ''}
+                                    </span>
+                                  </div>
+                                  {bankJobs.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={toggleAllBankJobs}
+                                      style={{
+                                        fontSize: '0.72rem',
+                                        fontWeight: 600,
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #cbd5e1',
+                                        background: areAllBankJobsSelected ? '#fef2f2' : '#f8fafc',
+                                        color: areAllBankJobsSelected ? '#dc2626' : '#2563eb',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      {areAllBankJobsSelected ? `Deselect All (${bName.split(' ')[0]})` : `Select All (${bName.split(' ')[0]})`}
+                                    </button>
+                                  )}
+                                </div>
+
+                                {bankJobs.length === 0 ? (
+                                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', padding: '4px 0' }}>
+                                    No active job vacancies created for this bank yet.
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {bankJobs.map(job => {
+                                      const jobIdOrTitle = job.id || job.title;
+                                      const isSelected = isJobSelected(job);
+                                      return (
+                                        <div
+                                          key={jobIdOrTitle}
+                                          onClick={() => toggleJob(job)}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            padding: '8px 10px',
+                                            borderRadius: '8px',
+                                            border: isSelected ? '1.5px solid #a855f7' : '1px solid #e2e8f0',
+                                            background: isSelected ? '#faf5ff' : '#ffffff',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
+                                          }}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={(e) => {
+                                              e.stopPropagation();
+                                              toggleJob(job);
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            style={{ accentColor: '#7c3aed', cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                                          />
+                                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                                            <div style={{ fontSize: '0.825rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#6b21a8' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                              {job.title}
+                                            </div>
+                                            <div style={{ fontSize: '0.725rem', color: '#64748b', display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                              {job.salary && <span>💰 {job.salary}</span>}
+                                              {job.location && <span>📍 {job.location.substring(0, 30)}{job.location.length > 30 ? '...' : ''}</span>}
+                                              {job.jobType && <span>🏷️ {job.jobType}</span>}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()
               )}
 
               {/* Bottom Summary Bar */}
               <div style={{ marginTop: '1.25rem', padding: '10px 14px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                 <div style={{ fontSize: '0.8rem', color: '#334155' }}>
                   <strong>Access Summary:</strong>{' '}
-                  <span style={{ color: '#2563eb', fontWeight: 700 }}>{bankSelectionList.length === 0 ? 'All Banks' : `${bankSelectionList.length} Banks`}</span>
+                  <span style={{ color: '#2563eb', fontWeight: 700 }}>
+                    {bankSelectionList.length === 0 ? 'All Banks' : (bankSelectionList.includes('__NONE__') ? '0 Banks' : `${bankSelectionList.length} Banks`)}
+                  </span>
                   {' • '}
-                  <span style={{ color: '#7c3aed', fontWeight: 700 }}>{jobSelectionList.length === 0 ? 'All Jobs in Allowed Banks' : `${jobSelectionList.length} Specific Jobs`}</span>
+                  <span style={{ color: '#7c3aed', fontWeight: 700 }}>
+                    {jobSelectionList.length === 0 ? 'All Jobs in Allowed Banks' : (jobSelectionList.includes('__NONE__') ? '0 Jobs' : `${jobSelectionList.length} Specific Jobs`)}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
