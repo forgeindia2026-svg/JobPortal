@@ -46,6 +46,19 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     }
   }, [isOpen, candidate]);
 
+  const availableBranches = React.useMemo(() => {
+    if (!job) return [];
+    const combined = `${job.description || ''}\n${job.location || ''}`;
+    const parenRegex = /([A-Za-z\s]+?)\s*\(([^)]+)\)/g;
+    let match;
+    const list = [];
+    while ((match = parenRegex.exec(combined)) !== null) {
+      const branches = match[2].split(/[,/|•\n]+/).map(b => b.trim()).filter(Boolean);
+      list.push(...branches);
+    }
+    return [...new Set(list)];
+  }, [job]);
+
   if (!isOpen || !job) return null;
 
   if (job?.status && job.status.toLowerCase() === 'hold on') {
@@ -216,18 +229,6 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     }
   };
 
-  const availableBranches = React.useMemo(() => {
-    if (!job) return [];
-    const combined = `${job.description || ''}\n${job.location || ''}`;
-    const parenRegex = /([A-Za-z\s]+?)\s*\(([^)]+)\)/g;
-    let match;
-    const list = [];
-    while ((match = parenRegex.exec(combined)) !== null) {
-      const branches = match[2].split(/[,/|•\n]+/).map(b => b.trim()).filter(Boolean);
-      list.push(...branches);
-    }
-    return [...new Set(list)];
-  }, [job]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
