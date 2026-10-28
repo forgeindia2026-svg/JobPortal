@@ -163,6 +163,7 @@ router.post('/login', async (req, res) => {
         teamLeaderId: user.teamLeaderId || null,
         canAccessManipalPayout: Boolean(user.canAccessManipalPayout || false),
         allowedBanks: Array.isArray(user.allowedBanks) ? user.allowedBanks : [],
+        allowedJobs: Array.isArray(user.allowedJobs) ? user.allowedJobs : [],
         approvalStatus: user.approvalStatus || 'approved'
       }
     });

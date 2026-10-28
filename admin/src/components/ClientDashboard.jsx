@@ -201,7 +201,7 @@ const isInCustomDateRange = (dateStr, startDateStr, endDateStr) => {
   return true;
 };
 
-export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isEmbedded = false, onLogout, allowedBanksFilter = null, onOpenManageBanks = null }) {
+export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, isEmbedded = false, onLogout, allowedBanksFilter = null, allowedJobsFilter = null, onOpenManageBanks = null }) {
   const [applications, setApplications] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -221,6 +221,20 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     }
     return null;
   }, [allowedBanksFilter, currentUser]);
+
+  // Active Allowed Jobs for this Client View
+  // 1. Explicit prop allowedJobsFilter (e.g. from Admin preview/selector)
+  // 2. currentUser.allowedJobs if currentUser is a client and has restricted jobs
+  // 3. null means All Jobs are visible
+  const activeAllowedJobs = useMemo(() => {
+    if (allowedJobsFilter && Array.isArray(allowedJobsFilter) && allowedJobsFilter.length > 0) {
+      return allowedJobsFilter.map(j => String(j).trim().toLowerCase());
+    }
+    if (currentUser?.role === 'client' && Array.isArray(currentUser.allowedJobs) && currentUser.allowedJobs.length > 0) {
+      return currentUser.allowedJobs.map(j => String(j).trim().toLowerCase());
+    }
+    return null;
+  }, [allowedJobsFilter, currentUser]);
 
   // When selectedBank is null & selectedKpiStatus is null => Shows Bank Cards Overview (Page 1)
   // When selectedBank or selectedKpiStatus is set => Navigates INSIDE that dedicated drill-down page (Page 2)
@@ -335,13 +349,24 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
         if (!isAllowed) return false;
       }
 
+      // Filter by activeAllowedJobs if specified
+      if (activeAllowedJobs && activeAllowedJobs.length > 0) {
+        const appJobId = String(app.jobId || '').toLowerCase().trim();
+        const appJobTitle = String(app.jobTitle || '').toLowerCase().trim();
+        const isJobAllowed = activeAllowedJobs.some(allowed => {
+          const normAllowed = String(allowed || '').toLowerCase().trim();
+          return appJobId === normAllowed || appJobTitle === normAllowed || appJobTitle.includes(normAllowed) || normAllowed.includes(appJobTitle);
+        });
+        if (!isJobAllowed) return false;
+      }
+
       return true;
     }).sort((a, b) => {
       const dateA = new Date(a.appliedAt || a.createdAt || 0).getTime();
       const dateB = new Date(b.appliedAt || b.createdAt || 0).getTime();
       return dateB - dateA;
     });
-  }, [applications, activeAllowedBanks]);
+  }, [applications, activeAllowedBanks, activeAllowedJobs]);
 
   // Status classifier helper (Strictly Banking applications only)
   const getAppCategoryStatus = (app) => {
@@ -2021,7 +2046,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
               <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                 🏦 Select a Bank to View Candidates
               </h2>
-              {activeAllowedBanks && activeAllowedBanks.length > 0 && (
+              {((activeAllowedBanks && activeAllowedBanks.length > 0) || (activeAllowedJobs && activeAllowedJobs.length > 0)) && (
                 <span style={{
                   background: '#eff6ff',
                   border: '1px solid #bfdbfe',
@@ -2034,7 +2059,8 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
                   alignItems: 'center',
                   gap: '4px'
                 }}>
-                  <Building2 size={12} /> {bankGroups.length} Assigned Bank{bankGroups.length > 1 ? 's' : ''}
+                  <Building2 size={12} /> {activeAllowedBanks ? `${activeAllowedBanks.length} Banks` : 'All Banks'}
+                  {activeAllowedJobs && activeAllowedJobs.length > 0 && ` • ${activeAllowedJobs.length} Jobs`}
                 </span>
               )}
             </div>

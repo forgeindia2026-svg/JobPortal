@@ -134,7 +134,7 @@ router.get('/clients', async (req, res) => {
 // POST to create Client
 router.post('/client', async (req, res) => {
   try {
-    const { name, email, password, mobile, allowedBanks } = req.body;
+    const { name, email, password, mobile, allowedBanks, allowedJobs } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -156,6 +156,7 @@ router.post('/client', async (req, res) => {
       passwordHash: 'dummy_hash_' + password,
       role: 'client',
       allowedBanks: Array.isArray(allowedBanks) ? allowedBanks : [],
+      allowedJobs: Array.isArray(allowedJobs) ? allowedJobs : [],
       approvalStatus: 'approved',
       createdAt: new Date().toISOString()
     };
@@ -173,7 +174,7 @@ router.post('/client', async (req, res) => {
 router.put('/client/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, password, mobile, allowedBanks } = req.body;
+    const { name, email, password, mobile, allowedBanks, allowedJobs } = req.body;
 
     const clientUser = await UserModel.findOne({ id, role: 'client' });
     if (!clientUser) {
@@ -197,6 +198,9 @@ router.put('/client/:id', async (req, res) => {
     if (allowedBanks !== undefined) {
       clientUser.allowedBanks = Array.isArray(allowedBanks) ? allowedBanks : [];
     }
+    if (allowedJobs !== undefined) {
+      clientUser.allowedJobs = Array.isArray(allowedJobs) ? allowedJobs : [];
+    }
 
     await clientUser.save();
     const { passwordHash, ...safe } = clientUser.toObject();
@@ -207,24 +211,29 @@ router.put('/client/:id', async (req, res) => {
   }
 });
 
-// PUT to update only allowed banks for a client
+// PUT to update allowed banks and jobs for a client
 router.put('/client/:id/banks', async (req, res) => {
   try {
     const { id } = req.params;
-    const { allowedBanks } = req.body;
+    const { allowedBanks, allowedJobs } = req.body;
 
     const clientUser = await UserModel.findOne({ id, role: 'client' });
     if (!clientUser) {
       return res.status(404).json({ error: 'Client user not found.' });
     }
 
-    clientUser.allowedBanks = Array.isArray(allowedBanks) ? allowedBanks : [];
+    if (allowedBanks !== undefined) {
+      clientUser.allowedBanks = Array.isArray(allowedBanks) ? allowedBanks : [];
+    }
+    if (allowedJobs !== undefined) {
+      clientUser.allowedJobs = Array.isArray(allowedJobs) ? allowedJobs : [];
+    }
     await clientUser.save();
     const { passwordHash, ...safe } = clientUser.toObject();
     res.json(safe);
   } catch (error) {
-    console.error('Error updating Client banks:', error);
-    res.status(500).json({ error: 'Failed to update Client banks.' });
+    console.error('Error updating Client banks/jobs:', error);
+    res.status(500).json({ error: 'Failed to update Client banks and jobs.' });
   }
 });
 

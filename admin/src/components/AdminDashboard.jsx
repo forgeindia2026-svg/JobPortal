@@ -421,10 +421,12 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const [clientSubTab, setClientSubTab] = useState('pipeline'); // 'pipeline' | 'accounts'
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState(null);
-  const [clientForm, setClientForm] = useState({ name: '', email: '', mobile: '', password: '', allowedBanks: [] });
+  const [clientForm, setClientForm] = useState({ name: '', email: '', mobile: '', password: '', allowedBanks: [], allowedJobs: [] });
   const [bankAccessModalOpen, setBankAccessModalOpen] = useState(false);
+  const [accessModalTab, setAccessModalTab] = useState('banks'); // 'banks' | 'jobs'
   const [selectedClientForBanks, setSelectedClientForBanks] = useState(null);
   const [bankSelectionList, setBankSelectionList] = useState([]);
+  const [jobSelectionList, setJobSelectionList] = useState([]);
   const [savingBankAccess, setSavingBankAccess] = useState(false);
   const [previewClientId, setPreviewClientId] = useState('all');
 
@@ -449,6 +451,15 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
     return defaults;
   }, [companies]);
 
+  const getJobsForBank = (bName) => {
+    return (jobs || []).filter(j => {
+      const jCompName = getNormalizedBankName(j.companyName || '');
+      return jCompName.toLowerCase() === bName.toLowerCase() ||
+             bName.toLowerCase().includes(jCompName.toLowerCase()) ||
+             jCompName.toLowerCase().includes(bName.toLowerCase());
+    });
+  };
+
   const handleOpenBankModal = (client = null) => {
     const targetClient = client || (clients && clients.length > 0 ? clients[0] : null);
     setSelectedClientForBanks(targetClient);
@@ -457,6 +468,12 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
     } else {
       setBankSelectionList([]); // all banks
     }
+    if (targetClient && Array.isArray(targetClient.allowedJobs) && targetClient.allowedJobs.length > 0) {
+      setJobSelectionList([...targetClient.allowedJobs]);
+    } else {
+      setJobSelectionList([]); // all jobs
+    }
+    setAccessModalTab('banks');
     setBankAccessModalOpen(true);
   };
 
@@ -465,23 +482,24 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
     try {
       setSavingBankAccess(true);
       const updatedAllowedBanks = bankSelectionList;
+      const updatedAllowedJobs = jobSelectionList;
       await fetch(`${API_URL}/api/users/client/${selectedClientForBanks.id}/banks`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allowedBanks: updatedAllowedBanks })
+        body: JSON.stringify({ allowedBanks: updatedAllowedBanks, allowedJobs: updatedAllowedJobs })
       });
 
       setClients(prev => {
-        const updated = prev.map(c => c.id === selectedClientForBanks.id ? { ...c, allowedBanks: updatedAllowedBanks } : c);
+        const updated = prev.map(c => c.id === selectedClientForBanks.id ? { ...c, allowedBanks: updatedAllowedBanks, allowedJobs: updatedAllowedJobs } : c);
         localStorage.setItem('admin_clients_cache', JSON.stringify(updated));
         return updated;
       });
 
       setBankAccessModalOpen(false);
-      alert(`Bank access updated successfully for "${selectedClientForBanks.name}"!\n\nVisible Banks: ${updatedAllowedBanks.length === 0 ? 'All Banks' : updatedAllowedBanks.join(', ')}`);
+      alert(`Client access updated successfully for "${selectedClientForBanks.name}"!\n\nVisible Banks: ${updatedAllowedBanks.length === 0 ? 'All Banks' : updatedAllowedBanks.join(', ')}\nVisible Jobs: ${updatedAllowedJobs.length === 0 ? 'All Jobs in Assigned Banks' : updatedAllowedJobs.length + ' specific jobs'}`);
     } catch (err) {
-      console.error('Error saving bank access:', err);
-      alert('Failed to save bank access: ' + err.message);
+      console.error('Error saving bank/job access:', err);
+      alert('Failed to save access: ' + err.message);
     } finally {
       setSavingBankAccess(false);
     }
@@ -1004,7 +1022,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         name: clientForm.name.trim(),
         email: clientForm.email.trim().toLowerCase(),
         mobile: clientForm.mobile.trim(),
-        allowedBanks: Array.isArray(clientForm.allowedBanks) ? clientForm.allowedBanks : []
+        allowedBanks: Array.isArray(clientForm.allowedBanks) ? clientForm.allowedBanks : [],
+        allowedJobs: Array.isArray(clientForm.allowedJobs) ? clientForm.allowedJobs : []
       };
       if (clientForm.password && clientForm.password.trim()) {
         payload.password = clientForm.password;
@@ -1055,6 +1074,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           mobile: payload.mobile,
           role: 'client',
           allowedBanks: payload.allowedBanks,
+          allowedJobs: payload.allowedJobs,
           createdAt: clientToEdit ? clientToEdit.createdAt : new Date().toISOString()
         };
       }
@@ -1075,7 +1095,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
 
       setClientModalOpen(false);
       setClientToEdit(null);
-      setClientForm({ name: '', email: '', mobile: '', password: '', allowedBanks: [] });
+      setClientForm({ name: '', email: '', mobile: '', password: '', allowedBanks: [], allowedJobs: [] });
       alert(clientToEdit ? 'Client updated successfully!' : `Client account created successfully!\n\nUser ID: ${payload.email}\nPassword: ${payload.password}\n\nClient can now log in at the portal.`);
     } catch (err) {
       console.error('Error saving client:', err);
@@ -6922,7 +6942,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                       cursor: 'pointer'
                     }}
                   >
-                    <Building2 size={15} /> Select Banks for Clients
+                    <Building2 size={15} /> Manage Client Access (Banks & Jobs)
                   </button>
                 </div>
 
@@ -6933,6 +6953,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   setSidebarOpen={setSidebarOpen}
                   isEmbedded={true}
                   allowedBanksFilter={previewClientId !== 'all' ? (clients.find(c => (c.id || c.email) === previewClientId)?.allowedBanks || null) : null}
+                  allowedJobsFilter={previewClientId !== 'all' ? (clients.find(c => (c.id || c.email) === previewClientId)?.allowedJobs || null) : null}
                   onOpenManageBanks={() => handleOpenBankModal(clients.find(c => (c.id || c.email) === previewClientId) || null)}
                 />
               </div>
@@ -6998,16 +7019,27 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                           <td>
                             {Array.isArray(cl.allowedBanks) && cl.allowedBanks.length > 0 ? (
                               <div>
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
-                                  <Building2 size={12} /> {cl.allowedBanks.length} Banks Allowed
-                                </span>
+                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                    <Building2 size={12} /> {cl.allowedBanks.length} Banks
+                                  </span>
+                                  {Array.isArray(cl.allowedJobs) && cl.allowedJobs.length > 0 ? (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                      <Briefcase size={12} /> {cl.allowedJobs.length} Jobs
+                                    </span>
+                                  ) : (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 600 }}>
+                                      All Jobs
+                                    </span>
+                                  )}
+                                </div>
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px', maxWidth: '240px', whiteSpace: 'normal', lineHeight: '1.3' }}>
                                   {cl.allowedBanks.join(', ')}
                                 </div>
                               </div>
                             ) : (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                                <CheckCircle size={12} /> All Banks & Candidates
+                                <CheckCircle size={12} /> All Banks & Jobs
                               </span>
                             )}
                           </td>
@@ -7022,7 +7054,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                               <button
                                 className="btn-secondary"
                                 style={{ padding: '5px 9px', color: '#1d4ed8', background: '#eff6ff', borderColor: '#bfdbfe' }}
-                                title="Configure Allowed Banks"
+                                title="Configure Allowed Banks & Jobs"
                                 onClick={() => handleOpenBankModal(cl)}
                               >
                                 <Building2 size={14} />
@@ -7038,7 +7070,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                                     email: cl.email || '',
                                     mobile: cl.mobile || '',
                                     password: '',
-                                    allowedBanks: Array.isArray(cl.allowedBanks) ? cl.allowedBanks : []
+                                    allowedBanks: Array.isArray(cl.allowedBanks) ? cl.allowedBanks : [],
+                                    allowedJobs: Array.isArray(cl.allowedJobs) ? cl.allowedJobs : []
                                   });
                                   setClientError('');
                                   setClientModalOpen(true);
@@ -7686,10 +7719,10 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         </div>
       )}
 
-      {/* Dedicated Bank Access Selection Modal */}
+      {/* Dedicated Bank & Job Access Selection Modal */}
       {bankAccessModalOpen && (
         <div className="modal-overlay" onClick={() => setBankAccessModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', borderRadius: '16px', overflow: 'hidden' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px', borderRadius: '16px', overflow: 'hidden' }}>
             <div className="modal-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -7697,10 +7730,10 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 800 }}>
-                    Select Banks Visible to Client
+                    Manage Client Access (Banks & Jobs)
                   </h3>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
-                    Choose which banking partner candidate pipelines this client can view
+                    Configure which Banks and specific Job roles this Client can view
                   </p>
                 </div>
               </div>
@@ -7715,7 +7748,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
 
             <div style={{ padding: '1.5rem' }}>
               {/* Client Selector (if multiple clients) */}
-              <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Target Client Account:
                 </label>
@@ -7730,6 +7763,11 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                           setBankSelectionList([...found.allowedBanks]);
                         } else {
                           setBankSelectionList([]);
+                        }
+                        if (Array.isArray(found.allowedJobs) && found.allowedJobs.length > 0) {
+                          setJobSelectionList([...found.allowedJobs]);
+                        } else {
+                          setJobSelectionList([]);
                         }
                       }
                     }}
@@ -7758,156 +7796,363 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 )}
               </div>
 
-              {/* Quick Actions & Status */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
-                  {bankSelectionList.length === 0 ? (
-                    <span style={{ color: '#16a34a' }}>🌟 All Banks Allowed (Full Access)</span>
-                  ) : (
-                    <span style={{ color: '#2563eb' }}>🎯 {bankSelectionList.length} of {allAvailableBanks.length} Banks Selected</span>
-                  )}
+              {/* TABS: Banks Access vs Specific Jobs Access */}
+              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px', marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setAccessModalTab('banks')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: accessModalTab === 'banks' ? '#2563eb' : '#f1f5f9',
+                    color: accessModalTab === 'banks' ? '#ffffff' : '#475569',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Building2 size={16} /> 1. Allowed Banks ({bankSelectionList.length === 0 ? 'All' : bankSelectionList.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccessModalTab('jobs')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: accessModalTab === 'jobs' ? '#7c3aed' : '#f1f5f9',
+                    color: accessModalTab === 'jobs' ? '#ffffff' : '#475569',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Briefcase size={16} /> 2. Allowed Jobs ({jobSelectionList.length === 0 ? 'All Jobs' : `${jobSelectionList.length} Selected`})
+                </button>
+              </div>
+
+              {accessModalTab === 'banks' ? (
+                <div>
+                  {/* Quick Actions & Status for Banks */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                      {bankSelectionList.length === 0 ? (
+                        <span style={{ color: '#16a34a' }}>🌟 All Banks Allowed (Full Access)</span>
+                      ) : (
+                        <span style={{ color: '#2563eb' }}>🎯 {bankSelectionList.length} of {allAvailableBanks.length} Banks Selected</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setBankSelectionList([])}
+                        style={{
+                          padding: '5px 12px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          background: bankSelectionList.length === 0 ? '#2563eb' : '#ffffff',
+                          color: bankSelectionList.length === 0 ? '#ffffff' : '#334155',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        All Banks
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBankSelectionList([...allAvailableBanks])}
+                        style={{
+                          padding: '5px 12px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          background: '#ffffff',
+                          color: '#334155',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Select All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Grid of Banks */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                    gap: '8px',
+                    maxHeight: '260px',
+                    overflowY: 'auto',
+                    padding: '4px',
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    {allAvailableBanks.map(bName => {
+                      const isChecked = bankSelectionList.length === 0 || bankSelectionList.includes(bName);
+                      const bankJobCount = getJobsForBank(bName).length;
+                      return (
+                        <div
+                          key={bName}
+                          onClick={() => {
+                            let curr = bankSelectionList.length === 0 ? [...allAvailableBanks] : [...bankSelectionList];
+                            if (curr.includes(bName)) {
+                              curr = curr.filter(b => b !== bName);
+                            } else {
+                              curr.push(bName);
+                            }
+                            setBankSelectionList(curr);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '6px',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: isChecked ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                            background: isChecked ? '#eff6ff' : '#ffffff',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            boxShadow: isChecked ? '0 2px 6px rgba(59, 130, 246, 0.15)' : 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              style={{ accentColor: '#2563eb', cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                            />
+                            <img
+                              src={getBankLogo(bName)}
+                              alt={bName}
+                              onError={e => { e.currentTarget.src = '/logo.png'; }}
+                              style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px', flexShrink: 0 }}
+                            />
+                            <span style={{ fontSize: '0.8rem', fontWeight: isChecked ? 800 : 500, color: isChecked ? '#1e3a8a' : '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {bName}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: '10px', flexShrink: 0 }}>
+                            {bankJobCount} jobs
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* JOBS TAB */
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                        {jobSelectionList.length === 0 ? (
+                          <span style={{ color: '#16a34a' }}>🌟 All Jobs in Assigned Banks Allowed</span>
+                        ) : (
+                          <span style={{ color: '#7c3aed' }}>🎯 {jobSelectionList.length} Specific Job{jobSelectionList.length > 1 ? 's' : ''} Selected</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        {jobSelectionList.length === 0 ? 'Client will see all applicants across all positions in assigned banks.' : 'Client will strictly only see applicants for these chosen jobs.'}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setJobSelectionList([])}
+                        style={{
+                          padding: '5px 12px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          background: jobSelectionList.length === 0 ? '#7c3aed' : '#ffffff',
+                          color: jobSelectionList.length === 0 ? '#ffffff' : '#334155',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        All Jobs (Default)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* List of Jobs grouped by Bank */}
+                  <div style={{
+                    maxHeight: '300px',
+                    overflowY: 'auto',
+                    padding: '6px',
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    {allAvailableBanks
+                      .filter(bName => bankSelectionList.length === 0 || bankSelectionList.includes(bName))
+                      .map(bName => {
+                        const bankJobs = getJobsForBank(bName);
+                        return (
+                          <div key={bName} style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '10px 12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <img
+                                  src={getBankLogo(bName)}
+                                  alt={bName}
+                                  onError={e => { e.currentTarget.src = '/logo.png'; }}
+                                  style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                                />
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>
+                                  {bName}
+                                </span>
+                                <span style={{ fontSize: '0.725rem', color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: '10px' }}>
+                                  {bankJobs.length} role{bankJobs.length > 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              {bankJobs.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const bankJobIds = bankJobs.map(j => j.id || j.title);
+                                    const allSelected = bankJobIds.every(id => jobSelectionList.includes(id));
+                                    if (allSelected) {
+                                      setJobSelectionList(prev => prev.filter(id => !bankJobIds.includes(id)));
+                                    } else {
+                                      setJobSelectionList(prev => [...new Set([...prev, ...bankJobIds])]);
+                                    }
+                                  }}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 600,
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #cbd5e1',
+                                    background: '#f8fafc',
+                                    color: '#2563eb',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Toggle All for {bName.split(' ')[0]}
+                                </button>
+                              )}
+                            </div>
+
+                            {bankJobs.length === 0 ? (
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', padding: '4px 0' }}>
+                                No active job vacancies created for this bank yet.
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {bankJobs.map(job => {
+                                  const jobIdOrTitle = job.id || job.title;
+                                  const isSelected = jobSelectionList.length === 0 || jobSelectionList.includes(jobIdOrTitle) || jobSelectionList.includes(job.title) || jobSelectionList.includes(job.id);
+                                  return (
+                                    <div
+                                      key={jobIdOrTitle}
+                                      onClick={() => {
+                                        // If jobSelectionList was empty (All Jobs), clicking one should initialize list with that one
+                                        let curr = jobSelectionList.length === 0 ? [jobIdOrTitle] : [...jobSelectionList];
+                                        if (curr.includes(jobIdOrTitle) || curr.includes(job.id) || curr.includes(job.title)) {
+                                          curr = curr.filter(id => id !== jobIdOrTitle && id !== job.id && id !== job.title);
+                                        } else {
+                                          curr.push(jobIdOrTitle);
+                                        }
+                                        setJobSelectionList(curr);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        padding: '8px 10px',
+                                        borderRadius: '8px',
+                                        border: isSelected ? '1.5px solid #a855f7' : '1px solid #e2e8f0',
+                                        background: isSelected ? '#faf5ff' : '#ffffff',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease'
+                                      }}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => {}}
+                                        style={{ accentColor: '#7c3aed', cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                                      />
+                                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ fontSize: '0.825rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#6b21a8' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                          {job.title}
+                                        </div>
+                                        <div style={{ fontSize: '0.725rem', color: '#64748b', display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                          {job.salary && <span>💰 {job.salary}</span>}
+                                          {job.location && <span>📍 {job.location.substring(0, 30)}{job.location.length > 30 ? '...' : ''}</span>}
+                                          {job.jobType && <span>🏷️ {job.jobType}</span>}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Summary Bar */}
+              <div style={{ marginTop: '1.25rem', padding: '10px 14px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ fontSize: '0.8rem', color: '#334155' }}>
+                  <strong>Access Summary:</strong>{' '}
+                  <span style={{ color: '#2563eb', fontWeight: 700 }}>{bankSelectionList.length === 0 ? 'All Banks' : `${bankSelectionList.length} Banks`}</span>
+                  {' • '}
+                  <span style={{ color: '#7c3aed', fontWeight: 700 }}>{jobSelectionList.length === 0 ? 'All Jobs in Allowed Banks' : `${jobSelectionList.length} Specific Jobs`}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"
-                    onClick={() => setBankSelectionList([])}
-                    style={{
-                      padding: '5px 12px',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      background: bankSelectionList.length === 0 ? '#2563eb' : '#ffffff',
-                      color: bankSelectionList.length === 0 ? '#ffffff' : '#334155',
-                      cursor: 'pointer'
-                    }}
+                    className="btn-secondary"
+                    onClick={() => setBankAccessModalOpen(false)}
+                    disabled={savingBankAccess}
+                    style={{ padding: '8px 16px', borderRadius: '8px', fontWeight: 600, fontSize: '0.825rem' }}
                   >
-                    All Banks
+                    Cancel
                   </button>
                   <button
                     type="button"
-                    onClick={() => setBankSelectionList([...allAvailableBanks])}
+                    className="btn-primary"
+                    onClick={handleSaveBankAccess}
+                    disabled={savingBankAccess || !selectedClientForBanks}
                     style={{
-                      padding: '5px 12px',
-                      fontSize: '0.78rem',
+                      padding: '8px 20px',
+                      borderRadius: '8px',
                       fontWeight: 700,
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      background: '#ffffff',
-                      color: '#334155',
-                      cursor: 'pointer'
+                      fontSize: '0.825rem',
+                      background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: savingBankAccess ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)'
                     }}
                   >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBankSelectionList(['Axis Bank'])}
-                    style={{
-                      padding: '5px 10px',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      borderRadius: '6px',
-                      border: '1px solid #e2e8f0',
-                      background: '#f8fafc',
-                      color: '#64748b',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Reset
+                    <CheckCircle size={16} /> {savingBankAccess ? 'Saving...' : 'Save Client Access'}
                   </button>
                 </div>
-              </div>
-
-              {/* Grid of Banks */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-                gap: '8px',
-                maxHeight: '260px',
-                overflowY: 'auto',
-                padding: '4px',
-                background: '#f8fafc',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0'
-              }}>
-                {allAvailableBanks.map(bName => {
-                  const isChecked = bankSelectionList.length === 0 || bankSelectionList.includes(bName);
-                  return (
-                    <div
-                      key={bName}
-                      onClick={() => {
-                        let curr = bankSelectionList.length === 0 ? [...allAvailableBanks] : [...bankSelectionList];
-                        if (curr.includes(bName)) {
-                          curr = curr.filter(b => b !== bName);
-                        } else {
-                          curr.push(bName);
-                        }
-                        setBankSelectionList(curr);
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 12px',
-                        borderRadius: '10px',
-                        border: isChecked ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                        background: isChecked ? '#eff6ff' : '#ffffff',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                        boxShadow: isChecked ? '0 2px 6px rgba(59, 130, 246, 0.15)' : 'none'
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {}}
-                        style={{ accentColor: '#2563eb', cursor: 'pointer', width: '16px', height: '16px' }}
-                      />
-                      <img
-                        src={getBankLogo(bName)}
-                        alt={bName}
-                        onError={e => { e.currentTarget.src = '/logo.png'; }}
-                        style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }}
-                      />
-                      <span style={{ fontSize: '0.8rem', fontWeight: isChecked ? 800 : 500, color: isChecked ? '#1e3a8a' : '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bName}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setBankAccessModalOpen(false)}
-                  disabled={savingBankAccess}
-                  style={{ padding: '9px 18px', borderRadius: '8px', fontWeight: 600 }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleSaveBankAccess}
-                  disabled={savingBankAccess || !selectedClientForBanks}
-                  style={{
-                    padding: '9px 24px',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    background: '#2563eb',
-                    border: 'none',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    cursor: savingBankAccess ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  <CheckCircle size={16} /> {savingBankAccess ? 'Saving...' : 'Save Bank Access'}
-                </button>
               </div>
             </div>
           </div>

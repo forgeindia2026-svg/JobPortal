@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
   bankIfscCode: String,
   canAccessManipalPayout: { type: Boolean, default: false },
   allowedBanks: [String],
+  allowedJobs: [String],
   createdAt: { type: String, default: () => new Date().toISOString() }
 }, { strict: false });
 
