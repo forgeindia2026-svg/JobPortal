@@ -2093,6 +2093,22 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                     100% Placement ({itProcesses.filter(p => p.itCategory === 'Placement').length})
                   </button>
                   <button
+                    onClick={() => setItCategoryFilter('Fast Track')}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: '1.5px solid',
+                      borderColor: itCategoryFilter === 'Fast Track' ? '#ea580c' : '#cbd5e1',
+                      background: itCategoryFilter === 'Fast Track' ? '#ea580c' : '#ffffff',
+                      color: itCategoryFilter === 'Fast Track' ? '#ffffff' : '#475569'
+                    }}
+                  >
+                    ⚡ Fast Track ({itProcesses.filter(p => p.itCategory === 'Fast Track').length})
+                  </button>
+                  <button
                     onClick={() => setItCategoryFilter('Course')}
                     style={{
                       padding: '7px 14px',

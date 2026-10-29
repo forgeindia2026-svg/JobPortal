@@ -68,7 +68,7 @@
   {
     "_id": "6ab659b27dc7dd835bc1a1eb",
     "id": "it_proc_1790335410107",
-    "processName": "process 2",
+    "processName": "PROCESS 2",
     "programTitle": "FIC IT Training & 100% Placement Programme",
     "role": "Software developer Trainee",
     "salary": "2.5 to 3.0 LPA ",
@@ -108,7 +108,7 @@
         "_id": "6ab659b27dc7dd835bc1a1ef"
       }
     ],
-    "order": 1,
+    "order": 2,
     "status": "Active",
     "createdAt": "2026-09-25T11:23:30.107Z",
     "__v": 0,
@@ -281,7 +281,7 @@
         "_id": "6ab652127dc7dd835bc1a1ea"
       }
     ],
-    "order": 2,
+    "order": 3,
     "status": "Active",
     "createdAt": "2026-09-25T10:50:57.486Z",
     "__v": 0,
@@ -1566,5 +1566,233 @@
     "trainingPhases": [],
     "selectionSteps": [],
     "__v": 0
+  },
+  {
+    "id": "it_proc_ft_1",
+    "processName": "PROCESS 1",
+    "programTitle": "FIC Fast Track IT Training & 100% Placement",
+    "role": "Software Engineer Trainee",
+    "salary": "3.5 - 5.0 LPA",
+    "location": "Bangalore / Chennai / PAN INDIA",
+    "trainingPeriod": "3 Months",
+    "trainingSubtext": "1.5 Months Intensive Training | 1.5 Months Live Project",
+    "stipend": "12,000",
+    "stipendSubtext": "Stipend ₹12,000 per month during training",
+    "trainingFee": "1.5 LPA",
+    "feeSubtext": "Fast Track Program Cost",
+    "bondPeriod": "1 Year Bond",
+    "originalsRequired": "Originals Need to Submit",
+    "description": "Accelerated 3-month IT training & guaranteed placement in top tech companies.",
+    "itCategory": "Fast Track",
+    "order": 1,
+    "status": "Active",
+    "selectionSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Screening & Registration",
+        "description": "Application review and initial profile shortlisting"
+      },
+      {
+        "stepNumber": 2,
+        "title": "Technical Assessment",
+        "description": "Basic coding, problem solving and aptitude round"
+      },
+      {
+        "stepNumber": 3,
+        "title": "Technical & HR Interview",
+        "description": "Discussion with hiring manager & interview clearance"
+      },
+      {
+        "stepNumber": 4,
+        "title": "Batch Onboarding",
+        "description": "Offer letter issuance, document submission, and training commencement"
+      }
+    ],
+    "trainingPhases": [
+      {
+        "title": "Phase 1 Training",
+        "duration": "1.5 Months",
+        "mode": "Intensive Fast Track Training",
+        "stipend": "STIPEND ₹12,000"
+      },
+      {
+        "title": "Phase 2 Training",
+        "duration": "1.5 Months",
+        "mode": "Live Project Internship (OJT)",
+        "stipend": "STIPEND ₹12,000"
+      }
+    ]
+  },
+  {
+    "id": "it_proc_ft_2",
+    "processName": "PROCESS 2",
+    "programTitle": "FIC Fast Track IT Training & Placement - Track 2",
+    "role": "Software Developer Trainee",
+    "salary": "4.0 - 5.5 LPA",
+    "location": "Bangalore / Chennai / PAN INDIA",
+    "trainingPeriod": "3 Months",
+    "trainingSubtext": "1.5 Months Intensive Training | 1.5 Months Live Project",
+    "stipend": "12,000",
+    "stipendSubtext": "Stipend ₹12,000 per month during training",
+    "trainingFee": "1.8 LPA",
+    "feeSubtext": "Fast Track Program Cost",
+    "bondPeriod": "1 Year Bond",
+    "originalsRequired": "Originals Need to Submit",
+    "description": "Fast track engineering track covering cloud full stack development with fast-paced placement drives.",
+    "itCategory": "Fast Track",
+    "order": 2,
+    "status": "Active",
+    "selectionSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Screening & Registration",
+        "description": "Application review and initial profile shortlisting"
+      },
+      {
+        "stepNumber": 2,
+        "title": "Technical Assessment",
+        "description": "Basic coding, problem solving and aptitude round"
+      },
+      {
+        "stepNumber": 3,
+        "title": "Technical & HR Interview",
+        "description": "Discussion with hiring manager & interview clearance"
+      },
+      {
+        "stepNumber": 4,
+        "title": "Batch Onboarding",
+        "description": "Offer letter issuance, document submission, and training commencement"
+      }
+    ],
+    "trainingPhases": [
+      {
+        "title": "Phase 1 Training",
+        "duration": "1.5 Months",
+        "mode": "Intensive Fast Track Training",
+        "stipend": "STIPEND ₹12,000"
+      },
+      {
+        "title": "Phase 2 Training",
+        "duration": "1.5 Months",
+        "mode": "Live Project Internship (OJT)",
+        "stipend": "STIPEND ₹12,000"
+      }
+    ]
+  },
+  {
+    "id": "it_proc_ft_3",
+    "processName": "PROCESS 3",
+    "programTitle": "FIC Fast Track IT Training & Placement - Advanced Track",
+    "role": "Software Developer",
+    "salary": "4.5 - 6.5 LPA",
+    "location": "Bangalore / Chennai / PAN INDIA",
+    "trainingPeriod": "3 Months",
+    "trainingSubtext": "1.5 Months Intensive Training | 1.5 Months Live Project",
+    "stipend": "15,000",
+    "stipendSubtext": "Stipend ₹15,000 per month during training",
+    "trainingFee": "2.2 LPA (100% Refundable)",
+    "feeSubtext": "Fast Track Program Cost",
+    "bondPeriod": "1 Year Bond",
+    "originalsRequired": "Originals Need to Submit",
+    "description": "Premium fast track program with high package placement guarantee upon training completion.",
+    "itCategory": "Fast Track",
+    "order": 3,
+    "status": "Active",
+    "selectionSteps": [
+      {
+        "stepNumber": 1,
+        "title": "Screening & Registration",
+        "description": "Application review and initial profile shortlisting"
+      },
+      {
+        "stepNumber": 2,
+        "title": "Technical Assessment",
+        "description": "Coding & core concepts evaluation"
+      },
+      {
+        "stepNumber": 3,
+        "title": "Technical & HR Interview",
+        "description": "Technical panel interview and HR discussion"
+      },
+      {
+        "stepNumber": 4,
+        "title": "Batch Onboarding",
+        "description": "Offer issuance, original documents handover, and training start"
+      }
+    ],
+    "trainingPhases": [
+      {
+        "title": "Phase 1 Training",
+        "duration": "1.5 Months",
+        "mode": "Intensive Fast Track Training",
+        "stipend": "STIPEND ₹15,000"
+      },
+      {
+        "title": "Phase 2 Training",
+        "duration": "1.5 Months",
+        "mode": "Enterprise Live Project (OJT)",
+        "stipend": "STIPEND ₹15,000"
+      }
+    ]
+  },
+  {
+    "id": "it_proc_ft_fs_1",
+    "processName": "PROCESS 1",
+    "programTitle": "FIC Fast Track Full Stack Development & Placement",
+    "role": "Full Stack Developer",
+    "salary": "4.0 - 5.5 LPA",
+    "location": "Bangalore / Chennai / PAN INDIA",
+    "trainingPeriod": "3 Months",
+    "trainingSubtext": "1.5 Months Full Stack Training | 1.5 Months Live Project",
+    "stipend": "12,000",
+    "stipendSubtext": "Stipend ₹12,000 per month during training",
+    "trainingFee": "1.6 LPA",
+    "feeSubtext": "Fast Track Program Cost",
+    "bondPeriod": "1 Year Bond",
+    "originalsRequired": "Originals Need to Submit",
+    "description": "Fast track Full Stack curriculum with frontend and backend frameworks and deployment.",
+    "itCategory": "Fast Track",
+    "order": 1,
+    "status": "Active"
+  },
+  {
+    "id": "it_proc_ft_fs_2",
+    "processName": "PROCESS 2",
+    "programTitle": "FIC Fast Track Full Stack Development - Track 2",
+    "role": "Full Stack Developer",
+    "salary": "4.5 - 6.0 LPA",
+    "location": "Bangalore / Chennai / PAN INDIA",
+    "trainingPeriod": "3 Months",
+    "trainingSubtext": "1.5 Months Full Stack Training | 1.5 Months Live Project",
+    "stipend": "12,000",
+    "stipendSubtext": "Stipend ₹12,000 per month during training",
+    "trainingFee": "1.9 LPA",
+    "feeSubtext": "Fast Track Program Cost",
+    "bondPeriod": "1 Year Bond",
+    "originalsRequired": "Originals Need to Submit",
+    "description": "Accelerated full stack program with enterprise live projects.",
+    "itCategory": "Fast Track",
+    "order": 2,
+    "status": "Active"
+  },
+  {
+    "id": "it_proc_ft_fs_3",
+    "processName": "PROCESS 3",
+    "programTitle": "FIC Fast Track Full Stack Development - Advanced Track",
+    "role": "Full Stack Developer",
+    "salary": "5.0 - 7.0 LPA",
+    "location": "Bangalore / Chennai / PAN INDIA",
+    "trainingPeriod": "3 Months",
+    "trainingSubtext": "1.5 Months Full Stack Training | 1.5 Months Live Project",
+    "stipend": "15,000",
+    "stipendSubtext": "Stipend ₹15,000 per month during training",
+    "trainingFee": "2.4 LPA (100% Refundable)",
+    "feeSubtext": "Fast Track Program Cost",
+    "bondPeriod": "1 Year Bond",
+    "originalsRequired": "Originals Need to Submit",
+    "description": "High tier placement guarantee track in full stack software engineering.",
+    "itCategory": "Fast Track",
+    "order": 3,
+    "status": "Active"
   }
 ]

@@ -6271,7 +6271,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             ) : (
               <div>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                  {['Placement', 'Course', 'Internship'].map(cat => (
+                  {['Placement', 'Fast Track', 'Course', 'Internship'].map(cat => (
                     <button
                       key={cat}
                       onClick={() => setActiveItCategoryTab(cat)}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   MapPin, Briefcase, Building2, ChevronRight, Sparkles, ArrowLeft, Search,
-  Code, TrendingUp, Headphones, Award, X, Wallet, User, Clock, Banknote, IndianRupee, ShieldCheck, CheckCircle2, Layers
+  Code, TrendingUp, Headphones, Award, X, Wallet, User, Clock, Banknote, IndianRupee, ShieldCheck, CheckCircle2, Layers, Zap
 } from 'lucide-react';
 import JobDetailModal from './JobDetailModal';
 import ApplicationModal from './ApplicationModal';
@@ -360,12 +360,12 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
   const convertItProcToJob = (proc, processList = null) => ({
     id: proc.id,
     title: proc.role || 'Software Engineer Trainee',
-    companyName: proc.itCategory === 'Course' ? 'FIC IT Courses' : proc.itCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement',
+    companyName: proc.itCategory === 'Course' ? 'FIC IT Courses' : proc.itCategory === 'Internship' ? 'FIC Free IT Internship' : proc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement',
     companyLogo: '/logo.png',
     categoryName: 'IT & Software Development',
     categoryId: 'cat_it',
     itCategory: proc.itCategory || 'Placement',
-    programName: `${proc.processName}: ${proc.programTitle || 'FIC IT Training & 100% Placement Programme'}`,
+    programName: `${proc.processName}: ${proc.programTitle || (proc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training & 100% Placement' : 'FIC IT Training & 100% Placement Programme')}`,
     salary: proc.salary || '4.0 LPA + Incentives',
     experience: 'Fresher & Experience',
     location: proc.location || 'PAN INDIA',
@@ -384,6 +384,8 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
       ? `ROLE: ${proc.role || 'Software Engineer Trainee'} | Program: ${proc.programTitle || 'FIC IT Training Courses'} | Training Duration: ${proc.trainingPeriod || '3 Months'}.`
       : proc.itCategory === 'Internship'
       ? `ROLE: ${proc.role || 'Software Engineer Trainee'} | Program: ${proc.programTitle || 'FIC Free IT Internship'} | Training Duration: ${proc.trainingPeriod || '3 Months'} | Stipend: ₹${proc.stipend || '0'}.`
+      : proc.itCategory === 'Fast Track'
+      ? `ROLE: ${proc.role || 'Software Engineer Trainee'} | Program: ${proc.programTitle || 'FIC Fast Track IT Training'} | Training Duration: ${proc.trainingPeriod || '3 Months'} | Stipend: ₹${proc.stipend || '12,000'} | Bond: ${proc.bondPeriod || '1 Year Bond'} | Originals: ${proc.originalsRequired || 'Originals Need to Submit'}.`
       : `ROLE: ${proc.role || 'Software Engineer Trainee'} | Program: ${proc.programTitle || 'FIC IT Training'} | Training Duration: ${proc.trainingPeriod || '6 Months'} | Stipend: ₹${proc.stipend || '12,000'} | Bond: ${proc.bondPeriod || '1 Year Bond'} | Originals: ${proc.originalsRequired || 'Originals Need to Submit'}.`),
     responsibilities: [
       'Complete comprehensive software development and full stack curriculum.',
@@ -448,6 +450,18 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
       }
       group.processes.push(proc);
     });
+
+    // Ensure all processes in each group are sorted strictly by process number (PROCESS 1, PROCESS 2, PROCESS 3)
+    groups.forEach(g => {
+      g.processes.sort((a, b) => {
+        const numA = (String(a.processName || '').match(/\d+/) || [999])[0];
+        const numB = (String(b.processName || '').match(/\d+/) || [999])[0];
+        return parseInt(numA, 10) - parseInt(numB, 10);
+      });
+      // Always guarantee primaryProcess is explicitly PROCESS 1 (fallback to index 0)
+      g.primaryProcess = g.processes.find(p => (String(p.processName || '').match(/\d+/) || [''])[0] === '1') || g.processes[0];
+    });
+
     return groups;
   };
 
@@ -1353,11 +1367,12 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
             <div>
               <h2 className="section-title">
                 {selectedItCategory === 'Placement' ? 'Openings at FIC IT Training & Placement' :
+                 selectedItCategory === 'Fast Track' ? 'Openings at FIC Fast Track IT Training' :
                  selectedItCategory === 'Course' ? 'FIC IT Training Courses' : 'FIC Free IT Internship'}
               </h2>
               <p className="section-subtitle">
                 Showing {getGroupedItRoles().length} career training role{getGroupedItRoles().length > 1 ? 's' : ''} 
-                {selectedItCategory === 'Placement' ? ' with 100% placement guarantee' : ''}
+                {selectedItCategory === 'Placement' ? ' with 100% placement guarantee' : selectedItCategory === 'Fast Track' ? ' with 3-month fast track placement guarantee' : ''}
               </p>
             </div>
           </div>
@@ -1398,7 +1413,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                         <div>
                           <h4 className="job-card-title">{group.role || 'Software Developer Trainee'}</h4>
                           <div className="job-comp-name">
-                            {selectedItCategory === 'Course' ? 'FIC IT Courses' : selectedItCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement'}
+                            {selectedItCategory === 'Course' ? 'FIC IT Courses' : selectedItCategory === 'Internship' ? 'FIC Free IT Internship' : selectedItCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement'}
                           </div>
                         </div>
                       </div>
@@ -1427,6 +1442,41 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                         </span>
                       )}
                     </div>
+
+                    {/* PROCESS SELECTOR BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3) */}
+                    {group.processes && group.processes.length > 1 && (
+                      <div style={{ display: 'flex', gap: '8px', margin: '12px 0 6px 0', flexWrap: 'wrap' }} onClick={(e) => e.stopPropagation()}>
+                        {group.processes.map(proc => {
+                          const pNum = (String(proc.processName || '').match(/\d+/) || [''])[0];
+                          const isProc1 = pNum === '1';
+                          return (
+                            <button
+                              key={proc.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const specificJob = convertItProcToJob(proc, group.processes);
+                                handleViewJobDetails(specificJob);
+                              }}
+                              style={{
+                                padding: '6px 14px',
+                                borderRadius: '8px',
+                                fontSize: '0.82rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                border: isProc1 ? '1.5px solid #2563eb' : '1.5px solid #cbd5e1',
+                                background: isProc1 ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : '#f8fafc',
+                                color: isProc1 ? '#ffffff' : '#1e293b',
+                                boxShadow: isProc1 ? '0 2px 8px rgba(37,99,235,0.25)' : 'none',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {proc.processName ? proc.processName.toUpperCase() : `PROCESS ${pNum}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     <p className="job-snippet">
                       ROLE: {group.role} | Location: {primaryProc.location || 'PAN INDIA'} | Stipend: ₹{primaryProc.stipend || '12,000'} | Program Fees: {feeText} | {primaryProc.originalsRequired || 'Originals Need to Submit'}.
@@ -2037,7 +2087,83 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                 </div>
               </div>
 
-              {/* 3. FIC IT TRAINING & PLACEMENT KPI CARD - THIRD */}
+              {/* 3. FIC FAST TRACK IT TRAINING & PLACEMENT KPI CARD */}
+              <div 
+                onClick={() => handleOpenItTraining('Fast Track')}
+                style={{ 
+                  background: 'linear-gradient(135deg, #d97706 0%, #ea580c 40%, #c2410c 80%, #7c2d12 100%)',
+                  borderRadius: '20px', 
+                  padding: '1.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                  boxShadow: '0 8px 32px rgba(234, 88, 12, 0.45), 0 2px 8px rgba(194, 65, 12, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
+                  transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  marginBottom: '2.5rem',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  border: '1.5px solid rgba(255,255,255,0.18)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)';
+                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(234, 88, 12, 0.55), 0 8px 20px rgba(194, 65, 12, 0.4), inset 0 1px 0 rgba(255,255,255,0.22)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(234, 88, 12, 0.45), 0 2px 8px rgba(194, 65, 12, 0.3), inset 0 1px 0 rgba(255,255,255,0.18)';
+                }}
+              >
+                {/* Decorative glowing orbs */}
+                <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: '-20px', left: '30px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(253,186,116,0.3) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
+                  <div style={{ 
+                    borderRadius: '50%', width: '58px', height: '58px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    flexShrink: 0, overflow: 'hidden',
+                    background: '#ffffff',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(0,0,0,0.1)',
+                    border: '2.5px solid rgba(255,255,255,0.9)'
+                  }}>
+                    <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.3)', lineHeight: 1.2 }}>
+                      FIC Fast Track IT Training
+                    </h3>
+                    <span style={{ 
+                      fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      marginTop: '6px',
+                      background: 'rgba(255,255,255,0.2)',
+                      color: '#fed7aa',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      backdropFilter: 'blur(4px)',
+                      letterSpacing: '0.02em'
+                    }}>
+                      ⚡ Accelerated 3-Month Placement
+                    </span>
+                  </div>
+                </div>
+
+                <p style={{ margin: 0, fontSize: '0.88rem', color: 'rgba(255,255,255,0.92)', lineHeight: '1.55', position: 'relative', zIndex: 1, textShadow: '0 1px 2px rgba(0,0,0,0.15)' }}>
+                  Intensive 3-month IT Training with classroom technical sprints, live project OJT, monthly stipend, and fast-track placement guarantee.
+                </p>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '12px', marginTop: '2px', position: 'relative', zIndex: 1 }}>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '6px', textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
+                    ⚡ View Fast Track Openings
+                  </span>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.22)', border: '1.5px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+                    <ChevronRight size={18} color="#ffffff" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. FIC IT TRAINING & PLACEMENT KPI CARD - FOURTH */}
               <div 
                 onClick={() => handleOpenItTraining('Placement')}
                 style={{ 

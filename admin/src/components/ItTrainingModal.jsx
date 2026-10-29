@@ -208,6 +208,7 @@ export default function ItTrainingModal({ isOpen, onClose, onSave, processToEdit
                 style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.95rem' }}
               >
                 <option value="Placement">Placement (100% Guarantee)</option>
+                <option value="Fast Track">Fast Track</option>
                 <option value="Course">Course</option>
                 <option value="Internship">Free Internship</option>
               </select>

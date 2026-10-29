@@ -842,11 +842,19 @@ export default function JobDetailModal({
       </div>
 
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) - Hidden for direct job links */}
-        {!isDirectJobLink && !String(job?.id || '').startsWith('it_proc') && itProcesses && itProcesses.length > 1 && itCategory !== 'Internship' && (job.companyName?.includes('FIC IT')) && (
+        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) */}
+        {itProcesses && itProcesses.length > 1 && (
           <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1.5px solid #f1f5f9' }}>
-            {itProcesses.map((proc) => {
-              const isSelected = (job.id === proc.id) || (job.programName && job.programName.includes(proc.processName));
+            {[...itProcesses].sort((a, b) => {
+              const numA = (String(a.processName || '').match(/\d+/) || [999])[0];
+              const numB = (String(b.processName || '').match(/\d+/) || [999])[0];
+              return parseInt(numA, 10) - parseInt(numB, 10);
+            }).map((proc) => {
+              const procNum = (String(proc.processName || '').match(/\d+/) || [''])[0];
+              const jobNum = (String(job.programName || job.title || '').match(/process\s*(\d+)/i) || [''])[1];
+              const isSelected = (job.id === proc.id) || 
+                (procNum && jobNum && procNum === jobNum) || 
+                (job.programName && String(proc.processName || '').trim() && job.programName.toLowerCase().includes(String(proc.processName).toLowerCase().trim()));
               return (
                 <button
                   key={proc.id}
@@ -872,7 +880,7 @@ export default function JobDetailModal({
                     textAlign: 'center'
                   }}
                 >
-                  {proc.processName}
+                  {proc.processName ? proc.processName.toUpperCase() : `PROCESS ${procNum}`}
                 </button>
               );
             })}
