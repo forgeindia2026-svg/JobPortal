@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
-const { BranchItProjectModel, UserModel } = require('../db');
+const { BranchItProjectModel, BranchItMasterProjectModel, UserModel } = require('../db');
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -67,6 +67,115 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching Branch IT Projects:', error);
     res.status(500).json({ error: 'Failed to fetch Branch IT projects.' });
+  }
+});
+
+// GET Master IT Projects list
+router.get('/master', async (req, res) => {
+  try {
+    const { branch } = req.query;
+    let filter = {};
+    if (branch && branch !== 'all') {
+      filter = { $or: [{ branch: new RegExp('^' + branch + '$', 'i') }, { branch: '' }, { branch: null }] };
+    }
+
+    let masterProjects = await BranchItMasterProjectModel.find(filter).sort({ createdAt: -1 }).lean();
+
+    // If completely empty, auto-seed with common IT projects and existing assigned project names
+    if (masterProjects.length === 0) {
+      const existingAssignments = await BranchItProjectModel.find({}).lean();
+      const existingNames = [...new Set(existingAssignments.map(p => p.projectName).filter(Boolean))];
+
+      const defaults = [
+        { name: 'Candidate Portal App v2', description: 'Candidate self-service registration, job application & interview tracker' },
+        { name: 'Recruitment Admin & Operations Dashboard', description: 'Admin, Branch Manager, Team Leader, and HR executive operations portal' },
+        { name: 'Automated Interview Scheduling Engine', description: 'Multi-round interview slots scheduling and Google Meet integration' },
+        { name: 'Payment & Candidate Incentive System', description: 'Incentive calculation, invoice generation and payout processing' }
+      ];
+
+      const toInsert = [...defaults];
+      existingNames.forEach(name => {
+        if (!toInsert.some(d => d.name.toLowerCase() === name.toLowerCase())) {
+          toInsert.push({ name, description: 'Existing active IT project' });
+        }
+      });
+
+      const docs = toInsert.map((p, idx) => ({
+        id: `it_mst_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+        name: p.name,
+        description: p.description || '',
+        status: 'Active',
+        createdAt: new Date().toISOString()
+      }));
+
+      await BranchItMasterProjectModel.insertMany(docs);
+      masterProjects = await BranchItMasterProjectModel.find(filter).sort({ createdAt: -1 }).lean();
+    }
+
+    // Attach count of team members assigned to each master project
+    const allAssignments = await BranchItProjectModel.find({}).lean();
+    const countMap = {};
+    allAssignments.forEach(a => {
+      const key = (a.projectName || '').toLowerCase().trim();
+      countMap[key] = (countMap[key] || 0) + 1;
+    });
+
+    const enriched = masterProjects.map(mp => ({
+      ...mp,
+      assignedMembersCount: countMap[(mp.name || '').toLowerCase().trim()] || 0
+    }));
+
+    res.json(enriched);
+  } catch (error) {
+    console.error('Error fetching Master IT Projects:', error);
+    res.status(500).json({ error: 'Failed to fetch master projects.' });
+  }
+});
+
+// POST create new Master IT Project
+router.post('/master', async (req, res) => {
+  try {
+    const { name, description, branch, branchManagerId } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Project name is required.' });
+    }
+
+    const trimmedName = name.trim();
+    const existing = await BranchItMasterProjectModel.findOne({
+      name: new RegExp('^' + trimmedName + '$', 'i')
+    }).lean();
+
+    if (existing) {
+      return res.status(200).json(existing);
+    }
+
+    const newMst = new BranchItMasterProjectModel({
+      id: `it_mst_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: trimmedName,
+      description: (description || '').trim(),
+      branch: (branch || '').trim(),
+      branchManagerId: (branchManagerId || '').trim(),
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    });
+
+    await newMst.save();
+    res.status(201).json(newMst);
+  } catch (error) {
+    console.error('Error creating Master IT project:', error);
+    res.status(500).json({ error: 'Failed to create master project.' });
+  }
+});
+
+// DELETE Master IT Project
+router.delete('/master/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await BranchItMasterProjectModel.deleteOne({ id });
+    res.json({ message: 'Master project deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting Master IT project:', error);
+    res.status(500).json({ error: 'Failed to delete master project.' });
   }
 });
 

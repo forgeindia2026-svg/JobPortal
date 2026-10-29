@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Code, Plus, Search, Calendar, Clock, AlertTriangle, CheckCircle,
   FileText, Eye, Trash2, Edit2, X, Upload, Image, RefreshCw, CheckCircle2,
-  ExternalLink, User, Layers, Building2, MapPin
+  ExternalLink, User, Layers, Building2, MapPin, FolderKanban, Check, Sparkles
 } from 'lucide-react';
 
 export default function BranchItProjectsTab({ API_URL, currentUser }) {
@@ -16,6 +16,17 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [branchFilter, setBranchFilter] = useState('all');
+
+  // Master IT Projects State
+  const [masterProjects, setMasterProjects] = useState([]);
+  const [manageProjectsModalOpen, setManageProjectsModalOpen] = useState(false);
+  const [newMasterProjectForm, setNewMasterProjectForm] = useState({ name: '', description: '' });
+  const [savingMasterProject, setSavingMasterProject] = useState(false);
+  const [masterError, setMasterError] = useState('');
+  const [isCustomProjectInput, setIsCustomProjectInput] = useState(false);
+  const [inlineAddProjectOpen, setInlineAddProjectOpen] = useState(false);
+  const [inlineProjectName, setInlineProjectName] = useState('');
+  const [inlineProjectDesc, setInlineProjectDesc] = useState('');
 
   // Add / Edit Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -38,6 +49,19 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
 
   // Proof Lightbox Modal
   const [viewProofModal, setViewProofModal] = useState(null);
+
+  // Fetch Master IT Projects
+  const fetchMasterProjects = async () => {
+    try {
+      const res = await fetch(`${resolvedApi}/api/branch-it-projects/master`);
+      if (res.ok) {
+        const data = await res.json();
+        setMasterProjects(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching master projects:', err);
+    }
+  };
 
   // Fetch IT Projects
   const fetchProjects = async () => {
@@ -72,7 +96,85 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
 
   useEffect(() => {
     fetchProjects();
+    fetchMasterProjects();
   }, [currentUser]);
+
+  // Master Project Handlers
+  const handleCreateMasterProject = async (e) => {
+    if (e) e.preventDefault();
+    if (!newMasterProjectForm.name.trim()) return;
+    try {
+      setSavingMasterProject(true);
+      setMasterError('');
+      const res = await fetch(`${resolvedApi}/api/branch-it-projects/master`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newMasterProjectForm.name.trim(),
+          description: newMasterProjectForm.description.trim(),
+          branch: currentUser?.branch || '',
+          branchManagerId: isBranchManager ? currentUser?.id : ''
+        })
+      });
+      if (res.ok) {
+        setNewMasterProjectForm({ name: '', description: '' });
+        await fetchMasterProjects();
+      } else {
+        const errJson = await res.json();
+        setMasterError(errJson.error || 'Failed to add master project.');
+      }
+    } catch (err) {
+      setMasterError('Network error adding master project.');
+    } finally {
+      setSavingMasterProject(false);
+    }
+  };
+
+  const handleCreateMasterProjectInline = async () => {
+    if (!inlineProjectName.trim()) return;
+    try {
+      setSavingMasterProject(true);
+      const res = await fetch(`${resolvedApi}/api/branch-it-projects/master`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: inlineProjectName.trim(),
+          description: inlineProjectDesc.trim(),
+          branch: currentUser?.branch || '',
+          branchManagerId: isBranchManager ? currentUser?.id : ''
+        })
+      });
+      if (res.ok) {
+        const created = await res.json();
+        await fetchMasterProjects();
+        setForm(prev => ({
+          ...prev,
+          projectName: created.name,
+          description: prev.description || created.description || ''
+        }));
+        setInlineProjectName('');
+        setInlineProjectDesc('');
+        setInlineAddProjectOpen(false);
+        setIsCustomProjectInput(false);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingMasterProject(false);
+    }
+  };
+
+  const handleDeleteMasterProject = async (id, name) => {
+    if (!window.confirm(`Delete project "${name}" from master projects list?`)) return;
+    try {
+      const res = await fetch(`${resolvedApi}/api/branch-it-projects/master/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchMasterProjects();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Handle image upload & base64 conversion
   const handleFileChange = (e) => {
@@ -99,7 +201,10 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
   };
 
   const handleOpenAddModal = () => {
+    fetchMasterProjects();
     setEditingProject(null);
+    setIsCustomProjectInput(false);
+    setInlineAddProjectOpen(false);
     setForm({
       memberName: '',
       memberRole: 'Frontend Developer',
@@ -117,7 +222,10 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
   };
 
   const handleOpenEditModal = (proj) => {
+    fetchMasterProjects();
     setEditingProject(proj);
+    setIsCustomProjectInput(false);
+    setInlineAddProjectOpen(false);
     setForm({
       memberName: proj.memberName || '',
       memberRole: proj.memberRole || 'Developer',
@@ -179,6 +287,7 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
         setSuccessMsg(editingProject ? 'Project updated successfully!' : 'IT Project added with Email proof!');
         setModalOpen(false);
         fetchProjects();
+        fetchMasterProjects();
         setTimeout(() => setSuccessMsg(''), 4000);
       } else {
         const errJson = await res.json();
@@ -367,12 +476,22 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
           </div>
         </div>
 
-        <div className="it-projects-actions" style={{ display: 'flex', gap: '10px' }}>
+        <div className="it-projects-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
-            onClick={fetchProjects}
+            onClick={() => {
+              fetchProjects();
+              fetchMasterProjects();
+            }}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#475569', fontSize: '0.85rem' }}
           >
             <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
+          </button>
+
+          <button
+            onClick={() => setManageProjectsModalOpen(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 16px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, color: '#0369a1', fontSize: '0.86rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+          >
+            <FolderKanban size={16} color="#0284c7" /> Manage IT Projects ({masterProjects.length})
           </button>
 
           <button
@@ -844,19 +963,141 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                 </div>
               </div>
 
-              {/* Project Name */}
+              {/* Project Name (Scrollable Dropdown / Selector) */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Project Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Candidate Portal App v2"
-                  value={form.projectName}
-                  onChange={e => setForm({ ...form, projectName: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', margin: 0 }}>
+                    Project Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomProjectInput(!isCustomProjectInput)}
+                      style={{ background: 'none', border: 'none', color: '#0284c7', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                    >
+                      {isCustomProjectInput ? '← Pick from Saved Projects' : '✏️ Type Custom'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setManageProjectsModalOpen(true)}
+                      style={{ background: 'none', border: 'none', color: '#16a34a', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                    >
+                      ⚙️ Manage Projects ({masterProjects.length})
+                    </button>
+                  </div>
+                </div>
+
+                {!isCustomProjectInput ? (
+                  <div>
+                    <select
+                      required
+                      value={form.projectName}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '__custom__') {
+                          setIsCustomProjectInput(true);
+                          return;
+                        }
+                        if (val === '__add_new__') {
+                          setInlineAddProjectOpen(true);
+                          return;
+                        }
+                        const found = masterProjects.find(p => p.name === val);
+                        setForm(prev => ({
+                          ...prev,
+                          projectName: val,
+                          description: prev.description ? prev.description : (found?.description || '')
+                        }));
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        border: '1.5px solid #0284c7',
+                        background: '#f0f9ff',
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="">-- Scroll & Select Project ({masterProjects.length} Available) --</option>
+                      {masterProjects.map(p => (
+                        <option key={p.id || p.name} value={p.name}>
+                          📁 {p.name} {p.assignedMembersCount ? `(${p.assignedMembersCount} assigned)` : ''}
+                        </option>
+                      ))}
+                      <option value="__add_new__">➕ Add New Project to IT List...</option>
+                      <option value="__custom__">✏️ Type Custom Project Name...</option>
+                    </select>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', fontSize: '0.75rem', color: '#64748b' }}>
+                      <span>Pre-added projects scroll panni choose pannikalam</span>
+                      <button
+                        type="button"
+                        onClick={() => setInlineAddProjectOpen(!inlineAddProjectOpen)}
+                        style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', padding: '3px 8px', borderRadius: '5px', cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        {inlineAddProjectOpen ? 'Close Quick Add' : '+ Quick Add Project'}
+                      </button>
+                    </div>
+
+                    {/* Inline Quick Add Form */}
+                    {inlineAddProjectOpen && (
+                      <div style={{ marginTop: '10px', padding: '12px', background: '#f8fafc', border: '1px dashed #0284c7', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0369a1' }}>
+                          Add New Project to Master List:
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Project Name (e.g. Vendor Management Portal)"
+                          value={inlineProjectName}
+                          onChange={e => setInlineProjectName(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Short Scope / Deliverables (optional)"
+                          value={inlineProjectDesc}
+                          onChange={e => setInlineProjectDesc(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setInlineAddProjectOpen(false)}
+                            style={{ padding: '5px 10px', borderRadius: '5px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.8rem', cursor: 'pointer' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCreateMasterProjectInline}
+                            disabled={savingMasterProject || !inlineProjectName.trim()}
+                            style={{ padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#0284c7', color: '#fff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            {savingMasterProject ? 'Saving...' : 'Save & Select'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Candidate Portal App v2"
+                      value={form.projectName}
+                      onChange={e => setForm({ ...form, projectName: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                    />
+                    <div style={{ marginTop: '4px', fontSize: '0.75rem', color: '#64748b' }}>
+                      Typing custom project name. It will also be available for future assignments.
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
@@ -1004,6 +1245,138 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
               >
                 Open in Full Window <ExternalLink size={13} />
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL: MANAGE MASTER IT PROJECTS */}
+      {manageProjectsModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', color: '#fff' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>
+                  📁 IT Projects Master List ({masterProjects.length})
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
+                  Pre-add projects here so Branch Managers can scroll and assign team members directly.
+                </p>
+              </div>
+              <button
+                onClick={() => setManageProjectsModalOpen(false)}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', cursor: 'pointer', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem' }}>
+              {/* Form to add new project */}
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Plus size={16} color="#0284c7" /> Add New Project
+                </div>
+
+                {masterError && (
+                  <div style={{ background: '#fef2f2', color: '#dc2626', padding: '8px 12px', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '8px' }}>
+                    ⚠️ {masterError}
+                  </div>
+                )}
+
+                <form onSubmit={handleCreateMasterProject} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Project Name (e.g. Candidate Portal App v2, HR CRM...)"
+                    value={newMasterProjectForm.name}
+                    onChange={e => setNewMasterProjectForm({ ...newMasterProjectForm, name: e.target.value })}
+                    style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                  <textarea
+                    rows={2}
+                    placeholder="Default Scope / Deliverables (e.g. API endpoints, UI features, integration specs...)"
+                    value={newMasterProjectForm.description}
+                    onChange={e => setNewMasterProjectForm({ ...newMasterProjectForm, description: e.target.value })}
+                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="submit"
+                      disabled={savingMasterProject || !newMasterProjectForm.name.trim()}
+                      style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: '#0284c7', color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Plus size={14} /> {savingMasterProject ? 'Adding...' : 'Add Project'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Master Projects List */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#334155' }}>
+                  Available Projects ({masterProjects.length})
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  Selectable when adding IT members
+                </span>
+              </div>
+
+              {masterProjects.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.88rem' }}>
+                  No master projects added yet. Use the form above to add your first project.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
+                  {masterProjects.map(mp => (
+                    <div
+                      key={mp.id || mp.name}
+                      style={{
+                        padding: '12px 14px',
+                        background: '#fff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        transition: 'border-color 0.15s'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>{mp.name}</span>
+                          <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 700 }}>
+                            {mp.assignedMembersCount || 0} members assigned
+                          </span>
+                        </div>
+                        {mp.description && (
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', lineHeight: 1.4 }}>
+                            {mp.description}
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteMasterProject(mp.id, mp.name)}
+                        title="Delete project from master list"
+                        style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '6px', borderRadius: '6px', cursor: 'pointer', color: '#dc2626', flexShrink: 0 }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setManageProjectsModalOpen(false)}
+                  style={{ padding: '8px 20px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#334155', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -259,6 +259,18 @@ const branchItProjectSchema = new mongoose.Schema({
   createdAt: { type: String, default: () => new Date().toISOString() },
   updatedAt: String
 }, { strict: false });
+const branchItMasterProjectSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  description: { type: String, default: '' },
+  branch: { type: String, default: '' },
+  branchManagerId: { type: String, default: '' },
+  status: { type: String, default: 'Active' },
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: String
+}, { strict: false });
+const BranchItMasterProjectModel = mongoose.model('BranchItMasterProject', branchItMasterProjectSchema);
+
 const BranchItProjectModel = mongoose.model('BranchItProject', branchItProjectSchema);
 
 const initialData = {
@@ -913,6 +925,7 @@ module.exports = {
   PartnerIncentiveModel,
   WithdrawalRequestModel,
   InterviewModel,
-  BranchItProjectModel
+  BranchItProjectModel,
+  BranchItMasterProjectModel
 };
 
