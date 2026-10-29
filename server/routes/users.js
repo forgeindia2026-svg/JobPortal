@@ -39,7 +39,7 @@ router.get('/hr', async (req, res) => {
 // POST to create HR
 router.post('/hr', async (req, res) => {
   try {
-    const { name, email, password, mobile, profilePhoto } = req.body;
+    const { name, email, password, mobile, profilePhoto, teamLeaderId, branchManagerId, branch } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -53,6 +53,25 @@ router.post('/hr', async (req, res) => {
     const userId = 'usr_' + Date.now();
     const referralCode = 'HR-' + Math.floor(10000 + Math.random() * 90000);
 
+    let assignedTlId = teamLeaderId || null;
+    let assignedBmId = branchManagerId || null;
+    let assignedBranch = branch || '';
+
+    // If teamLeaderId is provided, lookup the TL to automatically inherit BM and Branch
+    if (assignedTlId) {
+      const tl = await UserModel.findOne({ id: assignedTlId, role: 'team_leader' }).lean();
+      if (tl) {
+        if (!assignedBmId && tl.branchManagerId) assignedBmId = tl.branchManagerId;
+        if (!assignedBranch && tl.branch) assignedBranch = tl.branch;
+      }
+    }
+
+    // If branchManagerId is provided without branch, inherit BM's branch
+    if (assignedBmId && !assignedBranch) {
+      const bm = await UserModel.findOne({ id: assignedBmId, role: 'branch_manager' }).lean();
+      if (bm && bm.branch) assignedBranch = bm.branch;
+    }
+
     const newUser = {
       id: userId,
       name,
@@ -61,8 +80,12 @@ router.post('/hr', async (req, res) => {
       profilePhoto: profilePhoto || '',
       passwordHash: 'dummy_hash_' + password,
       role: 'hr',
+      teamLeaderId: assignedTlId,
+      branchManagerId: assignedBmId,
+      branch: assignedBranch,
       referralCode,
       linkClicks: 0,
+      approvalStatus: 'approved',
       createdAt: new Date().toISOString()
     };
 
@@ -823,8 +846,14 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
     const tlIds = tls.map(t => t.id);
     const tlMap = Object.fromEntries(tls.map(t => [t.id, t]));
 
-    // 2. All HRs under these TLs
-    const hrs = await UserModel.find({ role: 'hr', teamLeaderId: { $in: tlIds } }).sort({ createdAt: -1 }).lean();
+    // 2. All HRs under these TLs or direct under this BM
+    const hrs = await UserModel.find({ 
+      role: 'hr', 
+      $or: [
+        { teamLeaderId: { $in: tlIds } },
+        { branchManagerId: id }
+      ] 
+    }).sort({ createdAt: -1 }).lean();
     const hrCodes = hrs.map(h => (h.referralCode || '').toLowerCase()).filter(Boolean);
     const hrMap = Object.fromEntries(hrs.map(h => [(h.referralCode || '').toLowerCase(), h]));
 
@@ -910,7 +939,7 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
       const myTl = tlMap[h.teamLeaderId];
       return {
         ...safe,
-        teamLeaderName: myTl ? myTl.name : 'Unknown TL',
+        teamLeaderName: myTl ? myTl.name : (h.branchManagerId ? 'Direct Branch HR' : 'Unassigned'),
         candidatesApplied: appCountByCode[code] || 0
       };
     });

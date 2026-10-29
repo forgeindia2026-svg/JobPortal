@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, UserCheck, Briefcase, Mail, Phone, MapPin, Building2, RefreshCw, FileText,
-  CheckCircle2, LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, Search, LogOut
+  CheckCircle2, LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, Search, LogOut,
+  UserPlus, X, Trash2, AlertCircle
 } from 'lucide-react';
 
 export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
@@ -12,6 +13,61 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
   const [statusModalApp, setStatusModalApp] = useState(null);
   const [newAppStatus, setNewAppStatus] = useState('');
   const [savingStatus, setSavingStatus] = useState(false);
+
+  // HR Creation State
+  const [hrModalOpen, setHrModalOpen] = useState(false);
+  const [hrForm, setHrForm] = useState({ name: '', email: '', password: '', mobile: '' });
+  const [hrSaving, setHrSaving] = useState(false);
+  const [hrError, setHrError] = useState('');
+  const [hrSuccessMsg, setHrSuccessMsg] = useState('');
+
+  const handleCreateHr = async (e) => {
+    e.preventDefault();
+    setHrSaving(true);
+    setHrError('');
+    setHrSuccessMsg('');
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/hr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...hrForm,
+          teamLeaderId: currentUser.id,
+          branchManagerId: currentUser.branchManagerId || '',
+          branch: currentUser.branch || ''
+        })
+      });
+      const resData = await res.json();
+      if (res.ok) {
+        setHrSuccessMsg(`HR "${resData.name}" added successfully to your team! Referral code: ${resData.referralCode}`);
+        setHrForm({ name: '', email: '', password: '', mobile: '' });
+        setHrModalOpen(false);
+        fetchTlOverview();
+      } else {
+        setHrError(resData.error || 'Failed to create HR');
+      }
+    } catch (err) {
+      setHrError('Network error creating HR');
+    } finally {
+      setHrSaving(false);
+    }
+  };
+
+  const handleDeleteHr = async (hrId, hrName) => {
+    if (!window.confirm(`Are you sure you want to remove HR "${hrName}" from your team?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/users/hr/${hrId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchTlOverview();
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Failed to delete HR');
+      }
+    } catch (err) {
+      alert('Network error deleting HR');
+    }
+  };
 
   const handleUpdateStatus = async () => {
     if (!statusModalApp || !newAppStatus) return;
@@ -233,6 +289,16 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
             <RefreshCw size={14} /> Refresh Team
           </button>
         </div>
+
+        {hrSuccessMsg && (
+          <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: '10px', color: '#065f46', fontSize: '0.9rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={18} color="#059669" />
+              <span>{hrSuccessMsg}</span>
+            </div>
+            <button onClick={() => setHrSuccessMsg('')} style={{ background: 'none', border: 'none', color: '#065f46', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+          </div>
+        )}
 
         {loading ? (
           <div style={{ padding: '4rem', textAlign: 'center', color: '#64748b' }}>
@@ -574,19 +640,40 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
 
             {/* Team HRs Quick List (Direct access to Image 2 model) */}
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>My Team HR Executives ({hrs.length})</h3>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
                     HR executives assigned to you with their candidate pipelines and expected payouts.
                   </p>
                 </div>
-                <button
-                  onClick={() => handleTabChange('team_hrs')}
-                  style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
-                >
-                  Full HR Breakdown ›
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    onClick={() => { setHrModalOpen(true); setHrError(''); setHrSuccessMsg(''); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#16a34a',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(22,163,74,0.2)'
+                    }}
+                  >
+                    <UserPlus size={16} /> Add New HR
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('team_hrs')}
+                    style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                  >
+                    Full HR Breakdown ›
+                  </button>
+                </div>
               </div>
 
               <div style={{ overflowX: 'auto' }}>
@@ -604,7 +691,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                     {hrs.length === 0 ? (
                       <tr>
                         <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                          No HR executives assigned under you yet.
+                          No HR executives assigned under you yet. Click <strong>Add New HR</strong> to onboard your first HR!
                         </td>
                       </tr>
                     ) : (
@@ -627,25 +714,43 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                               ₹{(hrItem.totalAmount || 0).toLocaleString('en-IN')}
                             </td>
                           <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                            <button
-                              onClick={() => {
-                                setActiveTab('team_hrs');
-                                setSelectedHrForCandidateBreakdown(hrItem);
-                              }}
-                              style={{
-                                background: '#2563eb',
-                                color: '#fff',
-                                border: 'none',
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                fontSize: '0.85rem',
-                                boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
-                              }}
-                            >
-                              View Candidates
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                              <button
+                                onClick={() => {
+                                  setActiveTab('team_hrs');
+                                  setSelectedHrForCandidateBreakdown(hrItem);
+                                }}
+                                style={{
+                                  background: '#2563eb',
+                                  color: '#fff',
+                                  border: 'none',
+                                  padding: '8px 16px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: '0.85rem',
+                                  boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
+                                }}
+                              >
+                                View Candidates
+                              </button>
+                              <button
+                                onClick={() => handleDeleteHr(hrItem.id || hrItem.hrId, hrDisplayName)}
+                                title="Remove HR"
+                                style={{
+                                  background: '#fee2e2',
+                                  color: '#dc2626',
+                                  border: 'none',
+                                  padding: '8px 10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -765,11 +870,32 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
           })() : (
               /* VIEW 2: TEAM HRS TABLE (Exact match of User's Image 2) */
               <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-                <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>Team Leaders & Approvals: My Team HRs</h3>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                    HRs assigned under your leadership. Click <strong>View Candidates</strong> to see the candidate breakdown.
-                  </p>
+                <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>Team Leaders & Approvals: My Team HRs</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                      HRs assigned under your leadership. Click <strong>View Candidates</strong> to see the candidate breakdown.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setHrModalOpen(true); setHrError(''); setHrSuccessMsg(''); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#16a34a',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(22,163,74,0.2)'
+                    }}
+                  >
+                    <UserPlus size={16} /> Add New HR
+                  </button>
                 </div>
 
                 <div style={{ overflowX: 'auto' }}>
@@ -787,7 +913,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                       {hrs.length === 0 ? (
                         <tr>
                           <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                            No HRs assigned under you yet.
+                            No HRs assigned under you yet. Click <strong>Add New HR</strong> above to onboard your first HR executive!
                           </td>
                         </tr>
                       ) : (
@@ -810,22 +936,40 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                                 ₹{(hrItem.totalAmount || 0).toLocaleString('en-IN')}
                               </td>
                             <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                              <button
-                                onClick={() => setSelectedHrForCandidateBreakdown(hrItem)}
-                                style={{
-                                  background: '#2563eb',
-                                  color: '#fff',
-                                  border: 'none',
-                                  padding: '8px 16px',
-                                  borderRadius: '8px',
-                                  cursor: 'pointer',
-                                  fontWeight: 600,
-                                  fontSize: '0.85rem',
-                                  boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
-                                }}
-                              >
-                                View Candidates
-                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                <button
+                                  onClick={() => setSelectedHrForCandidateBreakdown(hrItem)}
+                                  style={{
+                                    background: '#2563eb',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    fontSize: '0.85rem',
+                                    boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
+                                  }}
+                                >
+                                  View Candidates
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteHr(hrItem.id || hrItem.hrId, hrDisplayName)}
+                                  title="Remove HR"
+                                  style={{
+                                    background: '#fee2e2',
+                                    color: '#dc2626',
+                                    border: 'none',
+                                    padding: '8px 10px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1115,6 +1259,114 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal to Add New HR */}
+      {hrModalOpen && (
+        <div className="modal-overlay" onClick={() => setHrModalOpen(false)}>
+          <div className="modal-content animate-fade" style={{ maxWidth: '480px', background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '1.25rem 1.5rem', background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Add New HR Executive</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', opacity: 0.9 }}>
+                  Create an HR executive under your team ({currentUser.name})
+                </p>
+              </div>
+              <button
+                onClick={() => setHrModalOpen(false)}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateHr} style={{ padding: '1.5rem' }}>
+              {hrError && (
+                <div style={{ padding: '10px 14px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertCircle size={16} /> {hrError}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Full Name <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Priya Sharma"
+                  value={hrForm.name}
+                  onChange={e => setHrForm({ ...hrForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Email Address <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="priya@example.com"
+                  value={hrForm.email}
+                  onChange={e => setHrForm({ ...hrForm, email: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Password <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Minimum 6 characters"
+                  value={hrForm.password}
+                  onChange={e => setHrForm({ ...hrForm, password: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder="10-digit mobile number"
+                  value={hrForm.mobile}
+                  onChange={e => setHrForm({ ...hrForm, mobile: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '1.25rem', fontSize: '0.8rem', color: '#64748b' }}>
+                <div>Assigned Team Leader: <strong style={{ color: '#0f172a' }}>{currentUser.name}</strong></div>
+                {currentUser.branch && <div style={{ marginTop: '2px' }}>Branch: <strong style={{ color: '#0f172a' }}>{currentUser.branch}</strong></div>}
+                <div style={{ marginTop: '4px', color: '#16a34a', fontWeight: 600 }}>✓ Unique referral code will be auto-generated.</div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setHrModalOpen(false)}
+                  style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}
+                  disabled={hrSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={hrSaving}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 700, cursor: hrSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {hrSaving ? 'Creating...' : 'Create HR'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

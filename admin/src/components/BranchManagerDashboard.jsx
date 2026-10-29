@@ -19,6 +19,13 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // HR Modal
+  const [hrModalOpen, setHrModalOpen] = useState(false);
+  const [hrForm, setHrForm] = useState({ name: '', email: '', password: '', mobile: '', teamLeaderId: '' });
+  const [hrSaving, setHrSaving] = useState(false);
+  const [hrError, setHrError] = useState('');
+  const [hrSuccessMsg, setHrSuccessMsg] = useState('');
+
   // Application search and filters (Admin-style)
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
@@ -126,6 +133,54 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
       setError('Network error creating Team Leader');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreateHr = async (e) => {
+    e.preventDefault();
+    setHrSaving(true);
+    setHrError('');
+    setHrSuccessMsg('');
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/hr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...hrForm,
+          branchManagerId: currentUser.id,
+          branch: currentUser.branch || ''
+        })
+      });
+      const resData = await res.json();
+      if (res.ok) {
+        setHrSuccessMsg(`HR "${resData.name}" added successfully! Referral code: ${resData.referralCode}`);
+        setHrForm({ name: '', email: '', password: '', mobile: '', teamLeaderId: '' });
+        setHrModalOpen(false);
+        fetchOverview();
+      } else {
+        setHrError(resData.error || 'Failed to create HR');
+      }
+    } catch (err) {
+      setHrError('Network error creating HR');
+    } finally {
+      setHrSaving(false);
+    }
+  };
+
+  const handleDeleteHr = async (hrId, hrName) => {
+    if (!window.confirm(`Are you sure you want to remove HR "${hrName}" from this branch?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/users/hr/${hrId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchOverview();
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Failed to delete HR');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting HR');
     }
   };
 
@@ -1471,14 +1526,26 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
         ) : activeTab === 'branch_hrs' ? (
           /* TAB 3: BRANCH HRS */
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>Branch HR Executives ({hrs.length})</h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                  HR executives assigned under your branch's Team Leaders by Super Admin.
+                  Manage HR executives assigned under your branch and Team Leaders.
                 </p>
               </div>
+              <button
+                onClick={() => { setHrModalOpen(true); setHrError(''); setHrSuccessMsg(''); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)' }}
+              >
+                <UserPlus size={16} /> Add New HR
+              </button>
             </div>
+
+            {hrSuccessMsg && (
+              <div style={{ margin: '1rem 1.5rem 0 1.5rem', background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '10px 14px', borderRadius: '8px', fontSize: '0.88rem', fontWeight: 600 }}>
+                ✅ {hrSuccessMsg}
+              </div>
+            )}
 
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
@@ -1490,13 +1557,14 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                     <th style={{ padding: '12px 16px' }}>Referral Code</th>
                     <th style={{ padding: '12px 16px' }}>Candidates Applied</th>
                     <th style={{ padding: '12px 16px' }}>Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {hrs.length === 0 ? (
                     <tr>
-                      <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-                        No HRs assigned under your branch's Team Leaders yet. Super Admin assigns HRs to approved TLs.
+                      <td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                        No HRs added under your branch yet. Click <strong>+ Add New HR</strong> to create your first HR!
                       </td>
                     </tr>
                   ) : (
@@ -1531,6 +1599,15 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700 }}>
                             <CheckCircle2 size={12} /> Active in Branch
                           </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleDeleteHr(hr.id, hr.name)}
+                            title="Remove HR from branch"
+                            style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+                          >
+                            Remove
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -2163,6 +2240,111 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Add HR Modal for Branch Manager */}
+      {hrModalOpen && (
+        <div className="modal-overlay" onClick={() => setHrModalOpen(false)}>
+          <div className="modal-content animate-fade" style={{ maxWidth: '480px', background: '#fff', borderRadius: '16px', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Add New HR Executive</h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#d1fae5' }}>Create login credentials for HR under {currentUser.branch || 'Branch'}</p>
+              </div>
+              <button onClick={() => setHrModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#fff' }}>✕</button>
+            </div>
+
+            <form onSubmit={handleCreateHr} style={{ padding: '1.5rem' }}>
+              {hrError && (
+                <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px 14px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', border: '1px solid #fecaca' }}>
+                  ⚠️ {hrError}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Kumar"
+                  value={hrForm.name}
+                  onChange={e => setHrForm({ ...hrForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="hr@example.com"
+                  value={hrForm.email}
+                  onChange={e => setHrForm({ ...hrForm, email: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>Password *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Create secure password"
+                  value={hrForm.password}
+                  onChange={e => setHrForm({ ...hrForm, password: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>Mobile Number</label>
+                <input
+                  type="tel"
+                  placeholder="10-digit mobile number"
+                  value={hrForm.mobile}
+                  onChange={e => setHrForm({ ...hrForm, mobile: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>Assign to Team Leader</label>
+                <select
+                  value={hrForm.teamLeaderId}
+                  onChange={e => setHrForm({ ...hrForm, teamLeaderId: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '0.9rem', outline: 'none', background: '#fff' }}
+                >
+                  <option value="">Direct under Branch Manager (No TL)</option>
+                  {tls.map(tl => (
+                    <option key={tl.id} value={tl.id}>
+                      {tl.name} ({tl.branch || currentUser.branch || 'Branch'}) - {tl.approvalStatus === 'approved' ? 'Approved' : 'Pending'}
+                    </option>
+                  ))}
+                </select>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  Optionally select which Team Leader this HR reports to, or leave direct under branch.
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setHrModalOpen(false)}
+                  style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={hrSaving}
+                  style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 700, cursor: hrSaving ? 'not-allowed' : 'pointer' }}
+                >
+                  {hrSaving ? 'Creating HR...' : 'Create HR'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
