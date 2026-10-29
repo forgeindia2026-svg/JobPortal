@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut } from 'lucide-react';
+import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
 import OffersAndTargetsModal from './OffersAndTargetsModal';
+import OffersAndTargetsView from './OffersAndTargetsView';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 const getCompanyColor = (name) => {
@@ -49,7 +50,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   };
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return (hash === 'job_openings' || hash === 'it_programs' || hash === 'jobs' || hash === 'applied' || hash === 'interviews' || hash === 'agents' || hash === 'incentives' || hash === 'settings') ? hash : 'overview';
+    return (hash === 'job_openings' || hash === 'it_programs' || hash === 'jobs' || hash === 'applied' || hash === 'interviews' || hash === 'agents' || hash === 'incentives' || hash === 'settings' || hash === 'offers_targets') ? hash : 'overview';
   });
 
   const [directJobs, setDirectJobs] = useState([]);
@@ -718,6 +719,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <Gift size={18} /><span>Incentives</span>
           </button>
 
+          <button className={`nav-item ${activeTab === 'offers_targets' ? 'active' : ''}`} onClick={() => { setActiveTab('offers_targets'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap', background: activeTab === 'offers_targets' ? 'linear-gradient(135deg, rgba(234, 88, 12, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%)' : 'transparent', color: activeTab === 'offers_targets' ? '#ea580c' : undefined }}>
+            <Target size={18} color={activeTab === 'offers_targets' ? '#ea580c' : undefined} /><span>Offers & Targets 🔥</span>
+          </button>
+
           <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Settings size={18} /><span>Settings</span>
           </button>
@@ -753,7 +758,19 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         {/* Header with Notifications */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>{activeTab === 'overview' ? `Welcome, ${currentUser.name}!` : activeTab === 'job_openings' ? 'Job Openings & Referral Links' : activeTab === 'it_programs' ? 'IT Programs & Referral Links' : activeTab === 'jobs' ? 'Incentive Slot' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
+            <h2 style={{ fontSize: '1.8rem', color: '#0f172a' }}>
+              {activeTab === 'overview'
+                ? `Welcome, ${currentUser.name}!`
+                : activeTab === 'offers_targets'
+                ? 'Offers & Targets Hub 🎯'
+                : activeTab === 'job_openings'
+                ? 'Job Openings & Referral Links'
+                : activeTab === 'it_programs'
+                ? 'IT Programs & Referral Links'
+                : activeTab === 'jobs'
+                ? 'Incentive Slot'
+                : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+            </h2>
             <p style={{ color: '#64748b' }}>Here is your personal {roleLabel} Dashboard.</p>
           </div>
           
@@ -816,12 +833,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           />
         )}
 
+        {activeTab === 'offers_targets' && (
+          <OffersAndTargetsView
+            API_URL={API_URL}
+            currentUser={currentUser}
+            onBack={() => setActiveTab('overview')}
+          />
+        )}
+
         {activeTab === 'overview' && (
           <div className="animate-fade">
-            
-            
-
-
 
             <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', padding: '1.5rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0' }}>
               <div>
@@ -886,7 +907,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             {/* OFFERS AND TARGETS BUTTON (Exact placement: below Referral Link and above KPI cards) */}
             <div style={{ marginBottom: '1.75rem' }}>
               <div
-                onClick={() => setOffersModalOpen(true)}
+                onClick={() => setActiveTab('offers_targets')}
                 style={{
                   background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%)',
                   padding: '1.15rem 1.5rem',
@@ -940,15 +961,31 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                       >
                         Active Bonus 🔥
                       </span>
+                      <span
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.2)',
+                          color: '#ffffff',
+                          padding: '2px 8px',
+                          borderRadius: '20px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700
+                        }}
+                      >
+                        All 10 Partner Banks Common Drive
+                      </span>
                     </div>
                     <p style={{ margin: '3px 0 0', fontSize: '0.84rem', color: '#ffedd5', fontWeight: 500 }}>
-                      Free & Paid Drives: Team Rewards (Bandhan Bank 20 = ₹30k) + Individual Cash Bonuses up to ₹25,000!
+                      Free & Paid Drives: Team Target (20 Hires = ₹30k Team Bonus) + Individual Cash Bonuses up to ₹25,000!
                     </p>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab('offers_targets');
+                    }}
                     style={{
                       background: '#ffffff',
                       color: '#c2410c',

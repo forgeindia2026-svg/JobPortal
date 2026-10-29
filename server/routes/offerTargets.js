@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { OfferTargetModel, ApplicationModel, UserModel } = require('../db');
+const { OfferTargetModel, OfferProgramModel, ApplicationModel, UserModel } = require('../db');
 
 const DEFAULT_TARGETS = [
   {
@@ -83,6 +83,208 @@ function isSelectedApp(status) {
   if (['rejected', 'not interested', 'cancelled', 'payment pending', 'unpaid'].includes(s)) return false;
   return s.includes('select') || s.includes('joined') || s.includes('converted') || s.includes('hired');
 }
+
+// GET active unified program details with calculated progress
+router.get('/program', async (req, res) => {
+  try {
+    const { hrId } = req.query;
+
+    let program = await OfferProgramModel.findOne({ id: 'active_program' }).lean();
+    if (!program) {
+      const created = await OfferProgramModel.create({
+        id: 'active_program',
+        programName: 'Special Banking Placement Drive 2026',
+        subtitle: 'All 10 Partner Banks Common Drive: Team Target (20 Hires = ₹30k Team Bonus) + Individual Cash Bonuses up to ₹25,000!',
+        startDate: '2026-10-29',
+        endDate: '2026-11-10',
+        status: 'active',
+        banks: [
+          'Bandhan Bank',
+          'Axis Bank',
+          'Suryoday Small Finance Bank',
+          'Kotak Mahindra Bank',
+          'IDFC First Bank',
+          'YES Bank',
+          'HDFC Bank',
+          'ICICI Bank',
+          'Aditya Birla Capital',
+          'Mahindra Finance'
+        ],
+        freeTeamTarget: {
+          targetCount: 20,
+          rewardAmount: 30000,
+          rewardTitle: '₹30,000 Team Cash Reward',
+          description: 'Complete 20 candidates across any of our 10 partner banks to win ₹30,000 Team Cash Bonus!'
+        },
+        freeIndividualSlabs: [
+          { count: 5, rewardAmount: 5000, rewardTitle: 'Incentive + ₹5,000 Cash Bonus', description: 'Close 5 candidates across any partner bank to unlock ₹5,000 bonus!' },
+          { count: 10, rewardAmount: 10000, rewardTitle: 'Incentive + ₹10,000 Mega Bonus', description: 'Close 10 candidates across any partner bank to unlock ₹10,000 bonus!' },
+          { count: 15, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Super Bonus', description: 'Close 15 candidates across any partner bank to unlock ₹15,000 bonus!' },
+          { count: 20, rewardAmount: 25000, rewardTitle: 'Incentive + ₹25,000 Bumper Bonus', description: 'Close 20 candidates across any partner bank to unlock ₹25,000 bonus!' }
+        ],
+        paidTeamTarget: {
+          targetCount: 15,
+          rewardAmount: 25000,
+          rewardTitle: '₹25,000 Team Reward',
+          description: 'Enroll 15 candidates into Paid IT Training Programs for ₹25,000 team reward!'
+        },
+        paidIndividualSlabs: [
+          { count: 5, rewardAmount: 7500, rewardTitle: 'Incentive + ₹7,500 Bonus', description: 'Enroll 5 candidates into paid IT training tracks to win ₹7,500 bonus!' },
+          { count: 10, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Mega Bonus', description: 'Enroll 10 candidates into paid IT training tracks to win ₹15,000 bonus!' }
+        ]
+      });
+      program = created.toObject ? created.toObject() : created;
+    }
+
+    // Load HR user if hrId provided
+    let hrUser = null;
+    if (hrId) {
+      hrUser = await UserModel.findOne({ id: hrId }).lean();
+    }
+    const hrCode = (hrUser?.referralCode || '').toLowerCase().trim();
+
+    // Load all closed applications
+    const allApps = await ApplicationModel.find({}).lean();
+    const closedApps = allApps.filter(a => isSelectedApp(a.status));
+
+    // Calculate days remaining & event active
+    const now = new Date();
+    const end = new Date(`${program.endDate || '2026-11-10'}T23:59:59`);
+    const diffMs = end.getTime() - now.getTime();
+    const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    const isEventActive = program.status === 'active' && diffMs > 0;
+
+    // Filter applications: Free vs Paid
+    const freeClosedApps = closedApps.filter(a => {
+      const s = String(a.status || '').toLowerCase();
+      const isPaid = s.includes('manipal') || (a.jobTitle || '').toLowerCase().includes('manipal') || (a.trainingFee && a.trainingFee !== '0');
+      return !isPaid;
+    });
+    const hrFreeClosedApps = hrCode ? freeClosedApps.filter(a => (a.referredBy || '').toLowerCase().trim() === hrCode) : [];
+
+    const paidClosedApps = closedApps.filter(a => {
+      const s = String(a.status || '').toLowerCase();
+      const isPaid = s.includes('manipal') || (a.jobTitle || '').toLowerCase().includes('manipal') || (a.trainingFee && a.trainingFee !== '0') || (Number(a.incentiveAmount) > 2000);
+      return isPaid;
+    });
+    const hrPaidClosedApps = hrCode ? paidClosedApps.filter(a => (a.referredBy || '').toLowerCase().trim() === hrCode) : [];
+
+    // Free Team Target Progress
+    const freeTargetCount = Number(program.freeTeamTarget?.targetCount) || 20;
+    const freeTeamCompleted = freeClosedApps.length;
+    const freeTeamProgress = {
+      targetCount: freeTargetCount,
+      completedCount: freeTeamCompleted,
+      remainingCount: Math.max(0, freeTargetCount - freeTeamCompleted),
+      percentage: Math.min(100, Math.round((freeTeamCompleted / freeTargetCount) * 100)),
+      isAchieved: freeTeamCompleted >= freeTargetCount,
+      rewardAmount: program.freeTeamTarget?.rewardAmount || 30000,
+      rewardTitle: program.freeTeamTarget?.rewardTitle || '₹30,000 Team Cash Reward',
+      description: program.freeTeamTarget?.description || ''
+    };
+
+    // Free Individual Slabs Progress
+    const hrFreeCount = hrFreeClosedApps.length;
+    const freeIndividualSlabs = (program.freeIndividualSlabs || []).map(slab => {
+      const slabCount = Number(slab.count) || 5;
+      return {
+        ...slab,
+        myClosedCount: hrFreeCount,
+        remainingCount: Math.max(0, slabCount - hrFreeCount),
+        percentage: Math.min(100, Math.round((hrFreeCount / slabCount) * 100)),
+        isAchieved: hrFreeCount >= slabCount
+      };
+    });
+
+    // Paid Team Target Progress
+    const paidTargetCount = Number(program.paidTeamTarget?.targetCount) || 15;
+    const paidTeamCompleted = paidClosedApps.length;
+    const paidTeamProgress = {
+      targetCount: paidTargetCount,
+      completedCount: paidTeamCompleted,
+      remainingCount: Math.max(0, paidTargetCount - paidTeamCompleted),
+      percentage: Math.min(100, Math.round((paidTeamCompleted / paidTargetCount) * 100)),
+      isAchieved: paidTeamCompleted >= paidTargetCount,
+      rewardAmount: program.paidTeamTarget?.rewardAmount || 25000,
+      rewardTitle: program.paidTeamTarget?.rewardTitle || '₹25,000 Team Reward',
+      description: program.paidTeamTarget?.description || ''
+    };
+
+    // Paid Individual Slabs Progress
+    const hrPaidCount = hrPaidClosedApps.length;
+    const paidIndividualSlabs = (program.paidIndividualSlabs || []).map(slab => {
+      const slabCount = Number(slab.count) || 5;
+      return {
+        ...slab,
+        myClosedCount: hrPaidCount,
+        remainingCount: Math.max(0, slabCount - hrPaidCount),
+        percentage: Math.min(100, Math.round((hrPaidCount / slabCount) * 100)),
+        isAchieved: hrPaidCount >= slabCount
+      };
+    });
+
+    res.json({
+      program: {
+        ...program,
+        daysRemaining,
+        isEventActive
+      },
+      stats: {
+        totalTeamClosed: closedApps.length,
+        totalHrClosed: hrCode ? hrFreeCount + hrPaidCount : 0,
+        freeTeamProgress,
+        freeIndividualSlabs,
+        paidTeamProgress,
+        paidIndividualSlabs
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching offer program:', error);
+    res.status(500).json({ error: 'Failed to fetch offer program.' });
+  }
+});
+
+// PUT update active program (Admin)
+router.put('/program', async (req, res) => {
+  try {
+    const {
+      programName,
+      subtitle,
+      startDate,
+      endDate,
+      status,
+      banks,
+      freeTeamTarget,
+      freeIndividualSlabs,
+      paidTeamTarget,
+      paidIndividualSlabs
+    } = req.body;
+
+    let program = await OfferProgramModel.findOne({ id: 'active_program' });
+    if (!program) {
+      program = new OfferProgramModel({ id: 'active_program' });
+    }
+
+    if (programName !== undefined) program.programName = programName.trim();
+    if (subtitle !== undefined) program.subtitle = subtitle.trim();
+    if (startDate !== undefined) program.startDate = startDate.trim();
+    if (endDate !== undefined) program.endDate = endDate.trim();
+    if (status !== undefined) program.status = status;
+    if (banks !== undefined) program.banks = Array.isArray(banks) ? banks : [banks];
+    if (freeTeamTarget !== undefined) program.freeTeamTarget = freeTeamTarget;
+    if (freeIndividualSlabs !== undefined) program.freeIndividualSlabs = freeIndividualSlabs;
+    if (paidTeamTarget !== undefined) program.paidTeamTarget = paidTeamTarget;
+    if (paidIndividualSlabs !== undefined) program.paidIndividualSlabs = paidIndividualSlabs;
+
+    program.updatedAt = new Date().toISOString();
+    await program.save();
+
+    res.json({ message: 'Program updated successfully', program });
+  } catch (error) {
+    console.error('Error updating offer program:', error);
+    res.status(500).json({ error: 'Failed to update offer program.' });
+  }
+});
 
 // GET all offer targets with progress
 router.get('/', async (req, res) => {

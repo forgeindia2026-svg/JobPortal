@@ -288,6 +288,90 @@ const offerTargetSchema = new mongoose.Schema({
 }, { strict: false });
 const OfferTargetModel = mongoose.model('OfferTarget', offerTargetSchema);
 
+const offerProgramSchema = new mongoose.Schema({
+  id: { type: String, default: 'active_program', unique: true },
+  programName: { type: String, default: 'Special Banking Placement Drive 2026' },
+  subtitle: { type: String, default: 'All 10 Partner Banks Common Drive: Team Target (20 Hires = ₹30k Team Bonus) + Individual Cash Bonuses up to ₹25,000!' },
+  startDate: { type: String, default: '2026-10-29' },
+  endDate: { type: String, default: '2026-11-10' },
+  status: { type: String, default: 'active' }, // 'active' | 'inactive' | 'completed'
+  banks: {
+    type: [String],
+    default: [
+      'Bandhan Bank',
+      'Axis Bank',
+      'Suryoday Small Finance Bank',
+      'Kotak Mahindra Bank',
+      'IDFC First Bank',
+      'YES Bank',
+      'HDFC Bank',
+      'ICICI Bank',
+      'Aditya Birla Capital',
+      'Mahindra Finance'
+    ]
+  },
+  freeTeamTarget: {
+    targetCount: { type: Number, default: 20 },
+    rewardAmount: { type: Number, default: 30000 },
+    rewardTitle: { type: String, default: '₹30,000 Team Cash Reward' },
+    description: { type: String, default: 'Complete 20 candidates across any of our 10 partner banks to win ₹30,000 Team Cash Bonus!' }
+  },
+  freeIndividualSlabs: {
+    type: Array,
+    default: [
+      {
+        count: 5,
+        rewardAmount: 5000,
+        rewardTitle: 'Incentive + ₹5,000 Cash Bonus',
+        description: 'Close 5 candidates across any partner bank to unlock ₹5,000 bonus!'
+      },
+      {
+        count: 10,
+        rewardAmount: 10000,
+        rewardTitle: 'Incentive + ₹10,000 Mega Bonus',
+        description: 'Close 10 candidates across any partner bank to unlock ₹10,000 bonus!'
+      },
+      {
+        count: 15,
+        rewardAmount: 15000,
+        rewardTitle: 'Incentive + ₹15,000 Super Bonus',
+        description: 'Close 15 candidates across any partner bank to unlock ₹15,000 bonus!'
+      },
+      {
+        count: 20,
+        rewardAmount: 25000,
+        rewardTitle: 'Incentive + ₹25,000 Bumper Bonus',
+        description: 'Close 20 candidates across any partner bank to unlock ₹25,000 bonus!'
+      }
+    ]
+  },
+  paidTeamTarget: {
+    targetCount: { type: Number, default: 15 },
+    rewardAmount: { type: Number, default: 25000 },
+    rewardTitle: { type: String, default: '₹25,000 Team Reward' },
+    description: { type: String, default: 'Enroll 15 candidates into Paid IT Training Programs for ₹25,000 team reward!' }
+  },
+  paidIndividualSlabs: {
+    type: Array,
+    default: [
+      {
+        count: 5,
+        rewardAmount: 7500,
+        rewardTitle: 'Incentive + ₹7,500 Bonus',
+        description: 'Enroll 5 candidates into paid IT training tracks to win ₹7,500 bonus!'
+      },
+      {
+        count: 10,
+        rewardAmount: 15000,
+        rewardTitle: 'Incentive + ₹15,000 Mega Bonus',
+        description: 'Enroll 10 candidates into paid IT training tracks to win ₹15,000 bonus!'
+      }
+    ]
+  },
+  updatedAt: String
+}, { strict: false });
+const OfferProgramModel = mongoose.model('OfferProgram', offerProgramSchema);
+
 const BranchItProjectModel = mongoose.model('BranchItProject', branchItProjectSchema);
 
 const initialData = {
@@ -944,6 +1028,7 @@ module.exports = {
   InterviewModel,
   BranchItProjectModel,
   BranchItMasterProjectModel,
-  OfferTargetModel
+  OfferTargetModel,
+  OfferProgramModel
 };
 
