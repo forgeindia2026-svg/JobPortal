@@ -837,7 +837,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           <OffersAndTargetsView
             API_URL={API_URL}
             currentUser={currentUser}
+            candidatePortalBaseUrl={candidatePortalBaseUrl}
+            referralLink={referralLink}
+            applications={stats?.applications || []}
+            directJobs={directJobs || []}
             onBack={() => setActiveTab('overview')}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+            showToast={showToast}
           />
         )}
 
