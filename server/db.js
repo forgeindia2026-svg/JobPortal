@@ -290,6 +290,7 @@ const OfferTargetModel = mongoose.model('OfferTarget', offerTargetSchema);
 
 const offerProgramSchema = new mongoose.Schema({
   id: { type: String, default: 'active_program', unique: true },
+  badgeText: { type: String, default: 'SPECIAL RECRUITMENT EVENT' },
   programName: { type: String, default: 'Special Banking Placement Drive 2026' },
   subtitle: { type: String, default: 'All 10 Partner Banks Common Drive: Team Target (20 Hires = ₹30k Team Bonus) + Individual Cash Bonuses up to ₹25,000!' },
   startDate: { type: String, default: '2026-10-29' },
@@ -368,6 +369,56 @@ const offerProgramSchema = new mongoose.Schema({
       }
     ]
   },
+  paidComboSets: {
+    type: Array,
+    default: [
+      {
+        id: 'combo_1',
+        title: 'Set 1: Premium Banking Trio',
+        roles: ['Aditya Birla', 'Tata Capital', 'HDFC Bank'],
+        targetCount: 3,
+        rewardType: 'both',
+        rewardAmount: 25000,
+        rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Enroll candidates across Aditya Birla, Tata, and HDFC to claim a Brand New TAB or ₹25,000 Cash!'
+      },
+      {
+        id: 'combo_2',
+        title: 'Set 2: Hybrid Banking & IT Combo',
+        roles: ['Any 2 Banking Candidates', '1 IT Training Candidate'],
+        targetCount: 3,
+        rewardType: 'both',
+        rewardAmount: 25000,
+        rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Enroll any 2 Banking candidates + 1 IT Training candidate to unlock a Brand New TAB or ₹25,000 Cash!'
+      },
+      {
+        id: 'combo_3',
+        title: 'Set 3: Gold Academy Power Trio',
+        roles: ['Axis Gold Academy', 'Kotak Gold Academy', 'Suryoday Small Finance Bank'],
+        targetCount: 3,
+        rewardType: 'both',
+        rewardAmount: 25000,
+        rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Enroll candidates across Axis Gold, Kotak Gold, and Suryoday Bank to win the Mega Reward!'
+      },
+      {
+        id: 'combo_4',
+        title: 'Set 4: Master Placement Quad Combo',
+        roles: ['Axis Gold', 'Kotak Gold', 'Aditya Birla', 'Any IT Track'],
+        targetCount: 4,
+        rewardType: 'both',
+        rewardAmount: 30000,
+        rewardTitle: 'Premium TAB + ₹10,000 Cash Bonus',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Achieve 4 closures across premium gold banks and IT training to claim the ultimate Bumper Reward!'
+      }
+    ]
+  },
+  bankConfigs: { type: mongoose.Schema.Types.Mixed, default: {} },
   updatedAt: String
 }, { strict: false });
 const OfferProgramModel = mongoose.model('OfferProgram', offerProgramSchema);

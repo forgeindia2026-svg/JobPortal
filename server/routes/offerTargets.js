@@ -84,6 +84,28 @@ function isSelectedApp(status) {
   return s.includes('select') || s.includes('joined') || s.includes('converted') || s.includes('hired');
 }
 
+function matchAppToBank(app, bankName) {
+  if (!bankName || bankName === 'all') return true;
+  const bLower = String(bankName).toLowerCase();
+  const cName = String(app.companyName || '').toLowerCase();
+  const jTitle = String(app.jobTitle || '').toLowerCase();
+  const progName = String(app.programName || '').toLowerCase();
+
+  if (bLower.includes('bandhan')) return cName.includes('bandhan') || jTitle.includes('bandhan');
+  if (bLower.includes('axis')) return cName.includes('axis') || jTitle.includes('axis');
+  if (bLower.includes('suryoday')) return cName.includes('suryoday') || jTitle.includes('suryoday');
+  if (bLower.includes('kotak')) return cName.includes('kotak') || jTitle.includes('kotak');
+  if (bLower.includes('idfc')) return cName.includes('idfc') || jTitle.includes('idfc');
+  if (bLower.includes('yes')) return cName.includes('yes') || jTitle.includes('yes');
+  if (bLower.includes('hdfc')) return cName.includes('hdfc') || jTitle.includes('hdfc');
+  if (bLower.includes('icici')) return cName.includes('icici') || jTitle.includes('icici');
+  if (bLower.includes('aditya') || bLower.includes('birla')) return cName.includes('aditya') || cName.includes('birla') || jTitle.includes('birla');
+  if (bLower.includes('mahindra')) return (cName.includes('mahindra') && !cName.includes('kotak')) || jTitle.includes('mahindra');
+
+  const simple = bLower.replace('bank', '').trim();
+  return cName.includes(simple) || jTitle.includes(simple) || progName.includes(simple);
+}
+
 // GET active unified program details with calculated progress
 router.get('/program', async (req, res) => {
   try {
@@ -93,6 +115,7 @@ router.get('/program', async (req, res) => {
     if (!program) {
       const created = await OfferProgramModel.create({
         id: 'active_program',
+        badgeText: 'SPECIAL RECRUITMENT EVENT',
         programName: 'Special Banking Placement Drive 2026',
         subtitle: 'All 10 Partner Banks Common Drive: Team Target (20 Hires = ₹30k Team Bonus) + Individual Cash Bonuses up to ₹25,000!',
         startDate: '2026-10-29',
@@ -114,24 +137,25 @@ router.get('/program', async (req, res) => {
           targetCount: 20,
           rewardAmount: 30000,
           rewardTitle: '₹30,000 Team Cash Reward',
-          description: 'Complete 20 candidates across any of our 10 partner banks to win ₹30,000 Team Cash Bonus!'
+          description: 'Complete 20 candidates in Bandhan Bank to win ₹30,000 Team Cash Bonus!'
         },
         freeIndividualSlabs: [
-          { count: 5, rewardAmount: 5000, rewardTitle: 'Incentive + ₹5,000 Cash Bonus', description: 'Close 5 candidates across any partner bank to unlock ₹5,000 bonus!' },
-          { count: 10, rewardAmount: 10000, rewardTitle: 'Incentive + ₹10,000 Mega Bonus', description: 'Close 10 candidates across any partner bank to unlock ₹10,000 bonus!' },
-          { count: 15, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Super Bonus', description: 'Close 15 candidates across any partner bank to unlock ₹15,000 bonus!' },
-          { count: 20, rewardAmount: 25000, rewardTitle: 'Incentive + ₹25,000 Bumper Bonus', description: 'Close 20 candidates across any partner bank to unlock ₹25,000 bonus!' }
+          { count: 5, rewardAmount: 5000, rewardTitle: 'Incentive + ₹5,000 Cash Bonus', description: 'Close 5 candidates to unlock ₹5,000 bonus!' },
+          { count: 10, rewardAmount: 10000, rewardTitle: 'Incentive + ₹10,000 Mega Bonus', description: 'Close 10 candidates to unlock ₹10,000 bonus!' },
+          { count: 15, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Super Bonus', description: 'Close 15 candidates to unlock ₹15,000 bonus!' },
+          { count: 20, rewardAmount: 25000, rewardTitle: 'Incentive + ₹25,000 Bumper Bonus', description: 'Close 20 candidates to unlock ₹25,000 bonus!' }
         ],
         paidTeamTarget: {
           targetCount: 15,
           rewardAmount: 25000,
           rewardTitle: '₹25,000 Team Reward',
-          description: 'Enroll 15 candidates into Paid IT Training Programs for ₹25,000 team reward!'
+          description: 'Enroll 15 candidates in FIC Training (100% Placement or Refund) for ₹25,000 team reward!'
         },
         paidIndividualSlabs: [
-          { count: 5, rewardAmount: 7500, rewardTitle: 'Incentive + ₹7,500 Bonus', description: 'Enroll 5 candidates into paid IT training tracks to win ₹7,500 bonus!' },
-          { count: 10, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Mega Bonus', description: 'Enroll 10 candidates into paid IT training tracks to win ₹15,000 bonus!' }
-        ]
+          { count: 5, rewardAmount: 7500, rewardTitle: 'Incentive + ₹7,500 Bonus', description: 'Enroll 5 candidates in FIC Training to win ₹7,500 bonus!' },
+          { count: 10, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Mega Bonus', description: 'Enroll 10 candidates in FIC Training to win ₹15,000 bonus!' }
+        ],
+        bankConfigs: {}
       });
       program = created.toObject ? created.toObject() : created;
     }
@@ -169,57 +193,195 @@ router.get('/program', async (req, res) => {
     });
     const hrPaidClosedApps = hrCode ? paidClosedApps.filter(a => (a.referredBy || '').toLowerCase().trim() === hrCode) : [];
 
-    // Free Team Target Progress
-    const freeTargetCount = Number(program.freeTeamTarget?.targetCount) || 20;
-    const freeTeamCompleted = freeClosedApps.length;
-    const freeTeamProgress = {
-      targetCount: freeTargetCount,
-      completedCount: freeTeamCompleted,
-      remainingCount: Math.max(0, freeTargetCount - freeTeamCompleted),
-      percentage: Math.min(100, Math.round((freeTeamCompleted / freeTargetCount) * 100)),
-      isAchieved: freeTeamCompleted >= freeTargetCount,
-      rewardAmount: program.freeTeamTarget?.rewardAmount || 30000,
-      rewardTitle: program.freeTeamTarget?.rewardTitle || '₹30,000 Team Cash Reward',
-      description: program.freeTeamTarget?.description || ''
-    };
+    // Bank list
+    const bankList = Array.isArray(program.banks) && program.banks.length > 0 ? program.banks : [
+      'Bandhan Bank',
+      'Axis Bank',
+      'Suryoday Small Finance Bank',
+      'Kotak Mahindra Bank',
+      'IDFC First Bank',
+      'YES Bank',
+      'HDFC Bank',
+      'ICICI Bank',
+      'Aditya Birla Capital',
+      'Mahindra Finance'
+    ];
 
-    // Free Individual Slabs Progress
-    const hrFreeCount = hrFreeClosedApps.length;
-    const freeIndividualSlabs = (program.freeIndividualSlabs || []).map(slab => {
-      const slabCount = Number(slab.count) || 5;
-      return {
-        ...slab,
-        myClosedCount: hrFreeCount,
-        remainingCount: Math.max(0, slabCount - hrFreeCount),
-        percentage: Math.min(100, Math.round((hrFreeCount / slabCount) * 100)),
-        isAchieved: hrFreeCount >= slabCount
+    const bankConfigs = program.bankConfigs || {};
+    const bankStats = {};
+
+    bankList.forEach(bName => {
+      const customConfig = bankConfigs[bName] || {};
+
+      const freeTeamConfig = customConfig.freeTeamTarget || program.freeTeamTarget || {
+        targetCount: 20,
+        rewardAmount: 30000,
+        rewardTitle: '₹30,000 Team Cash Reward',
+        description: `Complete 20 candidates in ${bName} to win ₹30,000 Team Cash Bonus!`
+      };
+
+      const freeSlabsConfig = customConfig.freeIndividualSlabs || program.freeIndividualSlabs || [
+        { count: 5, rewardAmount: 5000, rewardTitle: 'Incentive + ₹5,000 Cash Bonus', description: `Close 5 candidates in ${bName} to unlock ₹5,000 bonus!` },
+        { count: 10, rewardAmount: 10000, rewardTitle: 'Incentive + ₹10,000 Mega Bonus', description: `Close 10 candidates in ${bName} to unlock ₹10,000 bonus!` },
+        { count: 15, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Super Bonus', description: `Close 15 candidates in ${bName} to unlock ₹15,000 bonus!` },
+        { count: 20, rewardAmount: 25000, rewardTitle: 'Incentive + ₹25,000 Bumper Bonus', description: `Close 20 candidates in ${bName} to unlock ₹25,000 bonus!` }
+      ];
+
+      const paidTeamConfig = customConfig.paidTeamTarget || program.paidTeamTarget || {
+        targetCount: 15,
+        rewardAmount: 25000,
+        rewardTitle: '₹25,000 Team Reward',
+        description: `Enroll 15 candidates for ${bName} in FIC Training for ₹25,000 team reward!`
+      };
+
+      const paidSlabsConfig = customConfig.paidIndividualSlabs || program.paidIndividualSlabs || [
+        { count: 5, rewardAmount: 7500, rewardTitle: 'Incentive + ₹7,500 Bonus', description: `Enroll 5 candidates for ${bName} in FIC Training to win ₹7,500 bonus!` },
+        { count: 10, rewardAmount: 15000, rewardTitle: 'Incentive + ₹15,000 Mega Bonus', description: `Enroll 10 candidates for ${bName} in FIC Training to win ₹15,000 bonus!` }
+      ];
+
+      // Filter apps for this bank
+      const bankFreeTeamApps = freeClosedApps.filter(a => matchAppToBank(a, bName));
+      const bankFreeHrApps = hrFreeClosedApps.filter(a => matchAppToBank(a, bName));
+
+      const bankPaidTeamApps = paidClosedApps.filter(a => matchAppToBank(a, bName));
+      const bankPaidHrApps = hrPaidClosedApps.filter(a => matchAppToBank(a, bName));
+
+      // Calculate Free team progress
+      const bFreeTargetCount = Number(freeTeamConfig.targetCount) || 20;
+      const bFreeCompleted = bankFreeTeamApps.length;
+      const freeTeamProgress = {
+        targetCount: bFreeTargetCount,
+        completedCount: bFreeCompleted,
+        remainingCount: Math.max(0, bFreeTargetCount - bFreeCompleted),
+        percentage: Math.min(100, Math.round((bFreeCompleted / bFreeTargetCount) * 100)),
+        isAchieved: bFreeCompleted >= bFreeTargetCount,
+        rewardAmount: freeTeamConfig.rewardAmount || 30000,
+        rewardTitle: freeTeamConfig.rewardTitle || '₹30,000 Team Cash Reward',
+        description: freeTeamConfig.description || `Complete ${bFreeTargetCount} candidates in ${bName} to win ₹${Number(freeTeamConfig.rewardAmount || 30000).toLocaleString('en-IN')} Team Cash Bonus!`
+      };
+
+      // Free Individual Slabs
+      const bHrFreeCount = bankFreeHrApps.length;
+      const freeIndividualSlabs = freeSlabsConfig.map(slab => {
+        const slabCount = Number(slab.count) || 5;
+        return {
+          ...slab,
+          myClosedCount: bHrFreeCount,
+          remainingCount: Math.max(0, slabCount - bHrFreeCount),
+          percentage: Math.min(100, Math.round((bHrFreeCount / slabCount) * 100)),
+          isAchieved: bHrFreeCount >= slabCount
+        };
+      });
+
+      // Paid Team Progress
+      const bPaidTargetCount = Number(paidTeamConfig.targetCount) || 15;
+      const bPaidCompleted = bankPaidTeamApps.length;
+      const paidTeamProgress = {
+        targetCount: bPaidTargetCount,
+        completedCount: bPaidCompleted,
+        remainingCount: Math.max(0, bPaidTargetCount - bPaidCompleted),
+        percentage: Math.min(100, Math.round((bPaidCompleted / bPaidTargetCount) * 100)),
+        isAchieved: bPaidCompleted >= bPaidTargetCount,
+        rewardAmount: paidTeamConfig.rewardAmount || 25000,
+        rewardTitle: paidTeamConfig.rewardTitle || '₹25,000 Team Reward',
+        description: paidTeamConfig.description || `Enroll ${bPaidTargetCount} candidates for ${bName} in FIC Training for ₹${Number(paidTeamConfig.rewardAmount || 25000).toLocaleString('en-IN')} team reward!`
+      };
+
+      // Paid Individual Slabs
+      const bHrPaidCount = bankPaidHrApps.length;
+      const paidIndividualSlabs = paidSlabsConfig.map(slab => {
+        const slabCount = Number(slab.count) || 5;
+        return {
+          ...slab,
+          myClosedCount: bHrPaidCount,
+          remainingCount: Math.max(0, slabCount - bHrPaidCount),
+          percentage: Math.min(100, Math.round((bHrPaidCount / slabCount) * 100)),
+          isAchieved: bHrPaidCount >= slabCount
+        };
+      });
+
+      bankStats[bName] = {
+        bankName: bName,
+        teamClosedFree: bFreeCompleted,
+        hrClosedFree: bHrFreeCount,
+        teamClosedPaid: bPaidCompleted,
+        hrClosedPaid: bHrPaidCount,
+        freeTeamProgress,
+        freeIndividualSlabs,
+        paidTeamProgress,
+        paidIndividualSlabs
       };
     });
 
-    // Paid Team Target Progress
-    const paidTargetCount = Number(program.paidTeamTarget?.targetCount) || 15;
-    const paidTeamCompleted = paidClosedApps.length;
-    const paidTeamProgress = {
-      targetCount: paidTargetCount,
-      completedCount: paidTeamCompleted,
-      remainingCount: Math.max(0, paidTargetCount - paidTeamCompleted),
-      percentage: Math.min(100, Math.round((paidTeamCompleted / paidTargetCount) * 100)),
-      isAchieved: paidTeamCompleted >= paidTargetCount,
-      rewardAmount: program.paidTeamTarget?.rewardAmount || 25000,
-      rewardTitle: program.paidTeamTarget?.rewardTitle || '₹25,000 Team Reward',
-      description: program.paidTeamTarget?.description || ''
-    };
+    // Calculate paidComboSets progress
+    const DEFAULT_PAID_COMBO_SETS = [
+      {
+        id: 'combo_1',
+        title: 'Set 1: Premium Banking Trio',
+        roles: ['Aditya Birla', 'Tata Capital', 'HDFC Bank'],
+        targetCount: 3,
+        rewardType: 'both',
+        rewardAmount: 25000,
+        rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Enroll candidates across Aditya Birla, Tata, and HDFC to claim a Brand New TAB or ₹25,000 Cash!'
+      },
+      {
+        id: 'combo_2',
+        title: 'Set 2: Hybrid Banking & IT Combo',
+        roles: ['Any 2 Banking Candidates', '1 IT Training Candidate'],
+        targetCount: 3,
+        rewardType: 'both',
+        rewardAmount: 25000,
+        rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Enroll any 2 Banking candidates + 1 IT Training candidate to unlock a Brand New TAB or ₹25,000 Cash!'
+      },
+      {
+        id: 'combo_3',
+        title: 'Set 3: Gold Academy Power Trio',
+        roles: ['Axis Gold Academy', 'Kotak Gold Academy', 'Suryoday Small Finance Bank'],
+        targetCount: 3,
+        rewardType: 'both',
+        rewardAmount: 25000,
+        rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Enroll candidates across Axis Gold, Kotak Gold, and Suryoday Bank to win the Mega Reward!'
+      },
+      {
+        id: 'combo_4',
+        title: 'Set 4: Master Placement Quad Combo',
+        roles: ['Axis Gold', 'Kotak Gold', 'Aditya Birla', 'Any IT Track'],
+        targetCount: 4,
+        rewardType: 'both',
+        rewardAmount: 30000,
+        rewardTitle: 'Premium TAB + ₹10,000 Cash Bonus',
+        extraIncentiveText: '+ Full Candidate Placement Incentives',
+        description: 'Achieve 4 closures across premium gold banks and IT training to claim the ultimate Bumper Reward!'
+      }
+    ];
 
-    // Paid Individual Slabs Progress
-    const hrPaidCount = hrPaidClosedApps.length;
-    const paidIndividualSlabs = (program.paidIndividualSlabs || []).map(slab => {
-      const slabCount = Number(slab.count) || 5;
+    const rawComboSets = (Array.isArray(program.paidComboSets) && program.paidComboSets.length > 0)
+      ? program.paidComboSets
+      : DEFAULT_PAID_COMBO_SETS;
+
+    const paidComboSets = rawComboSets.map(set => {
+      let matchingCount = 0;
+      if (hrCode) {
+        matchingCount = hrPaidClosedApps.length;
+      }
+      const targetCount = Number(set.targetCount) || 3;
+      const completedCount = Math.min(targetCount, matchingCount);
+      const remainingCount = Math.max(0, targetCount - completedCount);
+      const percentage = targetCount > 0 ? Math.min(100, Math.round((completedCount / targetCount) * 100)) : 0;
+      const isAchieved = completedCount >= targetCount;
+
       return {
-        ...slab,
-        myClosedCount: hrPaidCount,
-        remainingCount: Math.max(0, slabCount - hrPaidCount),
-        percentage: Math.min(100, Math.round((hrPaidCount / slabCount) * 100)),
-        isAchieved: hrPaidCount >= slabCount
+        ...set,
+        completedCount,
+        remainingCount,
+        percentage,
+        isAchieved
       };
     });
 
@@ -227,15 +389,15 @@ router.get('/program', async (req, res) => {
       program: {
         ...program,
         daysRemaining,
-        isEventActive
+        isEventActive,
+        bankConfigs,
+        paidComboSets
       },
+      bankStats,
+      paidComboSets,
       stats: {
         totalTeamClosed: closedApps.length,
-        totalHrClosed: hrCode ? hrFreeCount + hrPaidCount : 0,
-        freeTeamProgress,
-        freeIndividualSlabs,
-        paidTeamProgress,
-        paidIndividualSlabs
+        totalHrClosed: hrCode ? hrFreeClosedApps.length + hrPaidClosedApps.length : 0
       }
     });
   } catch (error) {
@@ -248,6 +410,7 @@ router.get('/program', async (req, res) => {
 router.put('/program', async (req, res) => {
   try {
     const {
+      badgeText,
       programName,
       subtitle,
       startDate,
@@ -257,7 +420,9 @@ router.put('/program', async (req, res) => {
       freeTeamTarget,
       freeIndividualSlabs,
       paidTeamTarget,
-      paidIndividualSlabs
+      paidIndividualSlabs,
+      paidComboSets,
+      bankConfigs
     } = req.body;
 
     let program = await OfferProgramModel.findOne({ id: 'active_program' });
@@ -265,6 +430,7 @@ router.put('/program', async (req, res) => {
       program = new OfferProgramModel({ id: 'active_program' });
     }
 
+    if (badgeText !== undefined) program.badgeText = badgeText.trim();
     if (programName !== undefined) program.programName = programName.trim();
     if (subtitle !== undefined) program.subtitle = subtitle.trim();
     if (startDate !== undefined) program.startDate = startDate.trim();
@@ -275,6 +441,14 @@ router.put('/program', async (req, res) => {
     if (freeIndividualSlabs !== undefined) program.freeIndividualSlabs = freeIndividualSlabs;
     if (paidTeamTarget !== undefined) program.paidTeamTarget = paidTeamTarget;
     if (paidIndividualSlabs !== undefined) program.paidIndividualSlabs = paidIndividualSlabs;
+    if (paidComboSets !== undefined) {
+      program.paidComboSets = paidComboSets;
+      program.markModified('paidComboSets');
+    }
+    if (bankConfigs !== undefined) {
+      program.bankConfigs = bankConfigs;
+      program.markModified('bankConfigs');
+    }
 
     program.updatedAt = new Date().toISOString();
     await program.save();
@@ -283,6 +457,61 @@ router.put('/program', async (req, res) => {
   } catch (error) {
     console.error('Error updating offer program:', error);
     res.status(500).json({ error: 'Failed to update offer program.' });
+  }
+});
+
+// PUT update individual bank targets
+router.put('/bank-target', async (req, res) => {
+  try {
+    const { bankName, freeTeamTarget, freeIndividualSlabs, paidTeamTarget, paidIndividualSlabs } = req.body;
+    if (!bankName) return res.status(400).json({ error: 'bankName is required.' });
+
+    let program = await OfferProgramModel.findOne({ id: 'active_program' });
+    if (!program) {
+      program = new OfferProgramModel({ id: 'active_program' });
+    }
+
+    const currentConfigs = program.bankConfigs || {};
+    currentConfigs[bankName] = {
+      ...(currentConfigs[bankName] || {}),
+      ...(freeTeamTarget !== undefined ? { freeTeamTarget } : {}),
+      ...(freeIndividualSlabs !== undefined ? { freeIndividualSlabs } : {}),
+      ...(paidTeamTarget !== undefined ? { paidTeamTarget } : {}),
+      ...(paidIndividualSlabs !== undefined ? { paidIndividualSlabs } : {})
+    };
+
+    program.bankConfigs = currentConfigs;
+    program.markModified('bankConfigs');
+    program.updatedAt = new Date().toISOString();
+    await program.save();
+
+    res.json({ message: `Targets for ${bankName} updated successfully`, bankConfig: currentConfigs[bankName] });
+  } catch (err) {
+    console.error('Error updating bank target:', err);
+    res.status(500).json({ error: 'Failed to update bank target.' });
+  }
+});
+
+// PUT update paid combo sets (Admin)
+router.put('/paid-combo-sets', async (req, res) => {
+  try {
+    const { comboSets } = req.body;
+    if (!Array.isArray(comboSets)) return res.status(400).json({ error: 'comboSets array is required.' });
+
+    let program = await OfferProgramModel.findOne({ id: 'active_program' });
+    if (!program) {
+      program = new OfferProgramModel({ id: 'active_program' });
+    }
+
+    program.paidComboSets = comboSets;
+    program.markModified('paidComboSets');
+    program.updatedAt = new Date().toISOString();
+    await program.save();
+
+    res.json({ message: 'FIC Training Combo Sets updated successfully', paidComboSets: comboSets });
+  } catch (err) {
+    console.error('Error updating paid combo sets:', err);
+    res.status(500).json({ error: 'Failed to update paid combo sets.' });
   }
 });
 
