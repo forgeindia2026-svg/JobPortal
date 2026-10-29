@@ -271,6 +271,23 @@ const branchItMasterProjectSchema = new mongoose.Schema({
 }, { strict: false });
 const BranchItMasterProjectModel = mongoose.model('BranchItMasterProject', branchItMasterProjectSchema);
 
+const offerTargetSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  title: { type: String, required: true },
+  processType: { type: String, default: 'free' }, // 'free' | 'paid'
+  targetScope: { type: String, default: 'team' }, // 'team' | 'individual'
+  companyOrProgram: { type: String, default: 'All' }, // e.g. 'Bandhan Bank', 'All Free Processes', etc.
+  targetCount: { type: Number, required: true }, // e.g. 20, 5, 10
+  rewardAmount: { type: Number, required: true }, // e.g. 30000, 5000, 10000
+  rewardTitle: { type: String, default: '' }, // e.g. '₹30,000 Team Reward', 'Incentive + ₹5,000 Bonus'
+  description: { type: String, default: '' },
+  validityText: { type: String, default: 'Ongoing' }, // e.g. 'This Month', 'Special Drive'
+  status: { type: String, default: 'active' }, // 'active' | 'inactive'
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: String
+}, { strict: false });
+const OfferTargetModel = mongoose.model('OfferTarget', offerTargetSchema);
+
 const BranchItProjectModel = mongoose.model('BranchItProject', branchItProjectSchema);
 
 const initialData = {
@@ -926,6 +943,7 @@ module.exports = {
   WithdrawalRequestModel,
   InterviewModel,
   BranchItProjectModel,
-  BranchItMasterProjectModel
+  BranchItMasterProjectModel,
+  OfferTargetModel
 };
 

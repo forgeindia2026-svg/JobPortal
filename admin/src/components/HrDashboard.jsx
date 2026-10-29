@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
+import OffersAndTargetsModal from './OffersAndTargetsModal';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 const getCompanyColor = (name) => {
@@ -40,6 +41,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [copied, setCopied] = useState(false);
   const [expandedApp, setExpandedApp] = useState(null);
   const [toast, setToast] = useState(null);
+  const [offersModalOpen, setOffersModalOpen] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -878,6 +880,94 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 >
                   View All {itProcesses.length || 29} IT Program Links →
                 </button>
+              </div>
+            </div>
+
+            {/* OFFERS AND TARGETS BUTTON (Exact placement: below Referral Link and above KPI cards) */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div
+                onClick={() => setOffersModalOpen(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%)',
+                  padding: '1.15rem 1.5rem',
+                  borderRadius: '16px',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 24px -4px rgba(234, 88, 12, 0.35)',
+                  transition: 'all 0.2s ease',
+                  border: '1px solid rgba(255, 255, 255, 0.25)'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '12px',
+                      background: 'rgba(255, 255, 255, 0.22)',
+                      backdropFilter: 'blur(8px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    🎯
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, letterSpacing: '0.2px' }}>
+                        Offers and Targets
+                      </h3>
+                      <span
+                        style={{
+                          background: '#fef08a',
+                          color: '#854d0e',
+                          padding: '2px 8px',
+                          borderRadius: '20px',
+                          fontSize: '0.72rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        Active Bonus 🔥
+                      </span>
+                    </div>
+                    <p style={{ margin: '3px 0 0', fontSize: '0.84rem', color: '#ffedd5', fontWeight: 500 }}>
+                      Free & Paid Drives: Team Rewards (Bandhan Bank 20 = ₹30k) + Individual Cash Bonuses up to ₹25,000!
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    style={{
+                      background: '#ffffff',
+                      color: '#c2410c',
+                      border: 'none',
+                      padding: '9px 20px',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>View Offers & Targets</span>
+                    <span>→</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -3065,6 +3155,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           {toast.message}
         </div>
       )}
+      {/* Offers & Targets Modal */}
+      <OffersAndTargetsModal
+        isOpen={offersModalOpen}
+        onClose={() => setOffersModalOpen(false)}
+        API_URL={API_URL}
+        currentUser={currentUser}
+      />
     </div>
   );
 }

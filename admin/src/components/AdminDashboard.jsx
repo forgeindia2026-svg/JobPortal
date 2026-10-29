@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
   Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut,
-  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield
+  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield, Trophy
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -16,6 +16,7 @@ import AgentsManager from './AgentsManager';
 import HierarchyManager from './HierarchyManager';
 import ClientDashboard from './ClientDashboard';
 import ManipalPayoutManager from './ManipalPayoutManager';
+import OfferTargetsManager from './OfferTargetsManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Bank themes & styling helpers for Admin Dashboard
@@ -2680,6 +2681,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           onClick={() => handleTabChange('payouts')}
         >
           <Gift size={18} /> Incentives & Payouts
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'offer_targets' ? 'active' : ''}`}
+          onClick={() => handleTabChange('offer_targets')}
+        >
+          <Trophy size={18} style={{ color: '#f59e0b' }} /> Offers & Targets
         </button>
 
         <button
@@ -6520,6 +6528,12 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             currentUser={currentUser}
             hrs={hrs}
             onRefresh={fetchAllData}
+          />
+        )}
+        {activeTab === 'offer_targets' && (
+          <OfferTargetsManager
+            API_URL={API_URL}
+            currentUser={currentUser}
           />
         )}
         {activeTab === 'partners_admin' && (
