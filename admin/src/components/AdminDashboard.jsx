@@ -1442,8 +1442,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           const isSel = ['selected', 'l1 selected', 'l2 selected'].includes(s) || s.includes('select');
           if (!isSel) return false;
         } else if (filterLower === 'closed') {
-          const isClo = ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired');
-          if (!isClo) return false;
+          const isCloOrSel = !['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s) && (s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll'));
+          if (!isCloOrSel) return false;
         } else if (filterLower === 'rejected') {
           const isRej = ['rejected', 'not interested'].includes(s);
           if (!isRej) return false;
@@ -3050,8 +3050,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
 
             {(() => {
               const hrStats = hrs.map(hr => {
-                const hrApps = validApplications.filter(app => app.referredBy === hr.referralCode);
-                const closedApps = hrApps.filter(app => CLOSED_STATUSES.includes(String(app.status || '').toLowerCase()));
+                const hrCode = String(hr.referralCode || '').toLowerCase();
+                const hrApps = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === hrCode);
+                const closedApps = hrApps.filter(app => {
+                  const s = String(app.status || '').toLowerCase().trim();
+                  if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+                  return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
+                });
                 return {
                   ...hr,
                   totalSourced: hrApps.length,
@@ -3170,7 +3175,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <div style={{ marginBottom: '1.25rem' }}>
                       <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>({topClosers.length} HRs)</span>
+                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>({topClosers.length} HRs - Selected & Closed)</span>
                       </h3>
                       <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Click on any HR or count to view their candidates</p>
                     </div>

@@ -1066,7 +1066,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               const hrStats = hrs.map(hr => {
                 const hrCode = String(hr.referralCode || '').toLowerCase();
                 const hrApps = validApps.filter(app => String(app.referredBy || '').toLowerCase() === hrCode);
-                const closedApps = hrApps.filter(app => isCandidateClosedForIncentive(app));
+                const closedApps = hrApps.filter(app => {
+                  const s = String(app.status || '').toLowerCase().trim();
+                  if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+                  return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
+                });
                 return {
                   ...hr,
                   totalSourced: hrApps.length,
@@ -1155,7 +1159,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   {/* Top Closers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Closed Candidates)</span>
+                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected & Closed Candidates)</span>
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topClosers.map((hr, idx) => {

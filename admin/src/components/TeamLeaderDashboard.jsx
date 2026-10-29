@@ -129,10 +129,11 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
   const handleOpenHrCandidates = (hr, statusFilter = 'all') => {
     let hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hr.referralCode || '').toUpperCase());
     if (statusFilter === 'closed') {
-      const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment'];
+      const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment', 'selected'];
       hrApps = hrApps.filter(app => {
         const s = String(app.status || '').toLowerCase().trim();
-        return !s.includes('select') && (CLOSED_STATUSES.includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired'));
+        if (s.includes('reject') || s.includes('not interested') || s.includes('drop') || s.includes('pending') || s.includes('interviewing') || s.includes('shortlist')) return false;
+        return CLOSED_STATUSES.includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
       });
     } else if (statusFilter === 'Selected') {
       hrApps = hrApps.filter(app => String(app.status || '').toLowerCase().trim().includes('select'));
@@ -373,13 +374,14 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
 
             {/* 2 Leadership Boards: Top Applications Received & Top Closers (Team HRs Only) */}
             {(() => {
-              const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment'];
+              const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment', 'selected'];
               const hrStats = hrs.map(hr => {
                 const hrCode = hr.referralCode;
                 const hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hrCode || '').toUpperCase());
                 const closedApps = hrApps.filter(app => {
                   const s = String(app.status || '').toLowerCase().trim();
-                  return !s.includes('select') && (CLOSED_STATUSES.includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired'));
+                  if (s.includes('reject') || s.includes('not interested') || s.includes('drop') || s.includes('pending') || s.includes('interviewing') || s.includes('shortlist')) return false;
+                  return CLOSED_STATUSES.includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
                 });
                 return {
                   ...hr,
@@ -518,9 +520,9 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                   <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #e2e8f0' }}>
                     <div style={{ marginBottom: '1.25rem' }}>
                       <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({topClosers.length} Team HRs)</span>
+                        🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({topClosers.length} Team HRs - Selected & Closed)</span>
                       </h3>
-                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Ranked by successful candidate closures</p>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>Ranked by selected & closed candidates</p>
                     </div>
                     {topClosers.length === 0 ? (
                       <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>No HRs assigned to your team yet.</div>
