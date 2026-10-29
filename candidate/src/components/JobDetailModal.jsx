@@ -90,7 +90,7 @@ export default function JobDetailModal({
     return groups;
   };
 
-  const branchLocations = parseBranchLocations(job.description, job.location);
+  const branchLocations = parseBranchLocations(job.branchLocationsText || job.branchLocations || job.description, job.location);
 
   const getTrainingPhasesList = () => {
     if (job.trainingPhases && Array.isArray(job.trainingPhases) && job.trainingPhases.length > 0) {
@@ -1063,16 +1063,19 @@ export default function JobDetailModal({
         )}
 
         {(() => {
-          // If description was purely the location list string, provide a clean contextual overview
-          const isPureLocationText = branchLocations.length > 0 && 
+          // If description was purely the location list string or contains multiline branch text, provide a clean contextual overview
+          const hasRawBranchText = (job.description || '').includes('(') && branchLocations.length > 0 &&
+            (job.description || '').split('\n').length > 5;
+
+          const isPureLocationText = hasRawBranchText || (branchLocations.length > 0 && 
             (job.description || '')
               .replace(/Job Location\s*:\s*/gi, '')
               .replace(/[A-Za-z\s]+?\s*\([^)]*\)/gi, '')
-              .trim().length < 15;
+              .trim().length < 50);
 
           const displayOverviewText = isPureLocationText
-            ? `Opportunities open for ${job.title} across ${branchLocations.reduce((a, g) => a + g.branches.length, 0)} prime branch locations in ${branchLocations.map(g => g.region).join(' & ')}. Placement location is assigned based on candidate's residential address or nearest Aadhar card location.`
-            : job.description;
+            ? `Position: ${job.title}\nCompany: ${job.companyName || 'Axis Bank'}\nEmployment: Full-Time\nLocation: As per business requirement`
+            : (job.description || `Position: ${job.title}\nCompany: ${job.companyName || 'Axis Bank'}\nEmployment: Full-Time\nLocation: As per business requirement`);
 
           return (
             <div>

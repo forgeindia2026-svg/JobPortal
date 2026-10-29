@@ -50,6 +50,13 @@ router.get('/', async (req, res) => {
       };
     });
 
+    populated.sort((a, b) => {
+      if (a.order !== undefined && b.order !== undefined && a.order !== b.order) {
+        return Number(a.order) - Number(b.order);
+      }
+      return 0;
+    });
+
     res.json(populated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch jobs from MongoDB Atlas.' });

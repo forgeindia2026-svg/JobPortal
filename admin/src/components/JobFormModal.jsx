@@ -226,7 +226,9 @@ export default function JobFormModal({ isOpen, onClose, jobToEdit, categories, c
         interviewSteps: interviewSteps.filter(s => s.title.trim() !== ''),
         documentsRequired: documentsRequired.filter(d => d.trim() !== ''),
         lastDate,
-        status
+        status,
+        branchLocationsText: jobToEdit?.branchLocationsText || undefined,
+        order: jobToEdit?.order !== undefined ? jobToEdit.order : undefined
       };
 
       const url = jobToEdit ? `${API_URL}/api/jobs/${jobToEdit.id}` : `${API_URL}/api/jobs`;

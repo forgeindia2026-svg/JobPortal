@@ -728,6 +728,27 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
   }).sort((a, b) => {
     const compA = a.companyName || (selectedCompany ? selectedCompany.name : '');
     const compB = b.companyName || (selectedCompany ? selectedCompany.name : '');
+
+    // Axis Bank specific order: 1. Assistant Manager, 2. Relationship Executive / Senior Relationship Executive gold loan officer, 3. CASA process
+    const isAxisA = compA.toLowerCase().includes('axis');
+    const isAxisB = compB.toLowerCase().includes('axis');
+    if (isAxisA && isAxisB) {
+      const getAxisPriority = (title) => {
+        const t = (title || '').toLowerCase();
+        if (t.includes('assist')) return 1;
+        if (t.includes('gold loan') || t.includes('relationship executive')) return 2;
+        if (t.includes('casa')) return 3;
+        return 99;
+      };
+      const diff = getAxisPriority(a.title) - getAxisPriority(b.title);
+      if (diff !== 0) return diff;
+    }
+
+    // By explicit order field if defined
+    if (a.order !== undefined && b.order !== undefined && a.order !== b.order) {
+      return Number(a.order) - Number(b.order);
+    }
+
     const isAdityaA = compA.toLowerCase().includes('aditya birla');
     const isAdityaB = compB.toLowerCase().includes('aditya birla');
 
@@ -2215,7 +2236,11 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                           </div>
 
                           {job.description && (
-                            <p className="job-snippet" style={{ color: 'rgba(255,255,255,0.85)' }}>{job.description}</p>
+                            <p className="job-snippet" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                              {((job.description.includes('(') && job.description.split('\n').length > 5) || job.description.toLowerCase().startsWith('tamil nadu('))
+                                ? `Position: ${job.title} | Company: ${compName} | Employment: Full-Time | Location: As per business requirement`
+                                : job.description}
+                            </p>
                           )}
                         </div>
 
