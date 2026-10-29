@@ -189,7 +189,7 @@ export default function OffersAndTargetsView({
   onNavigateTab,
   showToast
 }) {
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'bank_detail' | 'combo_detail'
+  const [viewMode, setViewMode] = useState('categories'); // 'categories' | 'free_process' | 'paid_process' | 'bank_detail' | 'combo_detail'
   const [selectedCombo, setSelectedCombo] = useState(null);
   const [selectedComboIdx, setSelectedComboIdx] = useState(0);
   const [copiedText, setCopiedText] = useState(null);
@@ -284,6 +284,23 @@ export default function OffersAndTargetsView({
     }
   };
 
+  const handleOpenFreeProcess = () => {
+    setActiveProcess('free');
+    setViewMode('free_process');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenPaidProcess = () => {
+    setActiveProcess('paid');
+    setViewMode('paid_process');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToCategories = () => {
+    setViewMode('categories');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleOpenBankDetail = (bName) => {
     setSelectedBank(bName);
     setViewMode('bank_detail');
@@ -291,7 +308,7 @@ export default function OffersAndTargetsView({
   };
 
   const handleBackToBanks = () => {
-    setViewMode('grid');
+    setViewMode('free_process');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -303,7 +320,7 @@ export default function OffersAndTargetsView({
   };
 
   const handleBackToChallengeSets = () => {
-    setViewMode('grid');
+    setViewMode('paid_process');
     setActiveProcess('paid');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -572,7 +589,31 @@ export default function OffersAndTargetsView({
               onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; }}
             >
               <ArrowLeft size={16} />
-              <span>← Back to Combo Challenges</span>
+              <span>← Back to Combo Sets</span>
+            </button>
+          ) : (viewMode === 'free_process' || viewMode === 'paid_process') ? (
+            <button
+              onClick={handleBackToCategories}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '10px',
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
+                color: '#334155',
+                fontWeight: 800,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; }}
+            >
+              <ArrowLeft size={16} />
+              <span>← Back to Hub</span>
             </button>
           ) : (
             <button
@@ -604,21 +645,44 @@ export default function OffersAndTargetsView({
             <span>Dashboard</span>
             <span style={{ margin: '0 5px' }}>/</span>
             <span
-              onClick={viewMode === 'bank_detail' ? handleBackToBanks : viewMode === 'combo_detail' ? handleBackToChallengeSets : undefined}
+              onClick={viewMode !== 'categories' ? handleBackToCategories : undefined}
               style={{
-                cursor: viewMode !== 'grid' ? 'pointer' : 'default',
-                color: viewMode !== 'grid' ? '#0284c7' : '#0f172a',
-                fontWeight: viewMode !== 'grid' ? 600 : 700
+                cursor: viewMode !== 'categories' ? 'pointer' : 'default',
+                color: viewMode !== 'categories' ? '#0284c7' : '#0f172a',
+                fontWeight: viewMode !== 'categories' ? 600 : 700
               }}
             >
               Offers & Targets
             </span>
+
+            {viewMode === 'free_process' && (
+              <>
+                <span style={{ margin: '0 5px' }}>/</span>
+                <span style={{ fontWeight: 800, color: '#ea580c' }}>Free Process (10 Partner Banks)</span>
+              </>
+            )}
+
             {viewMode === 'bank_detail' && (
               <>
+                <span style={{ margin: '0 5px' }}>/</span>
+                <span
+                  onClick={handleBackToBanks}
+                  style={{ cursor: 'pointer', color: '#0284c7', fontWeight: 600 }}
+                >
+                  Free Process
+                </span>
                 <span style={{ margin: '0 5px' }}>/</span>
                 <span style={{ fontWeight: 800, color: bankTheme.primary }}>{currentBankName}</span>
               </>
             )}
+
+            {viewMode === 'paid_process' && (
+              <>
+                <span style={{ margin: '0 5px' }}>/</span>
+                <span style={{ fontWeight: 800, color: '#4338ca' }}>Paid Process (FIC Training Sets)</span>
+              </>
+            )}
+
             {viewMode === 'combo_detail' && selectedCombo && (
               <>
                 <span style={{ margin: '0 5px' }}>/</span>
@@ -626,7 +690,7 @@ export default function OffersAndTargetsView({
                   onClick={handleBackToChallengeSets}
                   style={{ cursor: 'pointer', color: '#4f46e5', fontWeight: 600 }}
                 >
-                  Combo Challenges
+                  Paid Process
                 </span>
                 <span style={{ margin: '0 5px' }}>/</span>
                 <span style={{ fontWeight: 800, color: '#1e1b4b' }}>{selectedCombo.title}</span>
@@ -658,9 +722,9 @@ export default function OffersAndTargetsView({
       </div>
 
       {/* ============================================================== */}
-      {/* VIEW MODE 1: OVERVIEW PAGE (FREE BANK GRID OR PAID 4 COMBOS)    */}
+      {/* VIEW MODE 1: CATEGORY SELECTION (2 KPI CARDS: FREE vs PAID)   */}
       {/* ============================================================== */}
-      {viewMode === 'grid' && (
+      {viewMode === 'categories' && (
         <div>
           {/* HERO CAMPAIGN BANNER */}
           <div
@@ -774,661 +838,524 @@ export default function OffersAndTargetsView({
             </div>
           </div>
 
-          {/* PROCESS SELECTOR TABS (FREE DIRECT BANKING vs PAID FIC TRAINING) */}
+          {/* TWO CATEGORY CARDS: FREE PROCESS vs PAID PROCESS */}
           <div
             style={{
-              display: 'flex',
-              gap: '8px',
-              marginBottom: '1.5rem',
-              borderBottom: '2px solid #e2e8f0',
-              paddingBottom: '2px',
-              overflowX: 'auto',
-              WebkitOverflowScrolling: 'touch'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '16px',
+              marginBottom: '2rem'
             }}
           >
-            <button
-              onClick={() => { setActiveProcess('free'); }}
+            {/* CARD 1: FREE PROCESS (10 DIRECT BANKING DRIVES) */}
+            <div
+              onClick={handleOpenFreeProcess}
               style={{
-                padding: '8px 16px',
-                borderRadius: '10px 10px 0 0',
-                border: 'none',
-                background: isFree ? '#ffffff' : 'transparent',
-                color: isFree ? '#c2410c' : '#64748b',
-                fontWeight: 800,
-                fontSize: '0.88rem',
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 60%, #9a3412 100%)',
+                borderRadius: '18px',
+                padding: '1.4rem 1.3rem',
+                color: '#ffffff',
                 cursor: 'pointer',
-                borderBottom: isFree ? '3px solid #ea580c' : '3px solid transparent',
-                marginBottom: '-4px',
+                boxShadow: '0 12px 28px -6px rgba(234, 88, 12, 0.45)',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                transition: 'all 0.15s ease'
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '210px',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 18px 36px -6px rgba(234, 88, 12, 0.55)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 12px 28px -6px rgba(234, 88, 12, 0.45)';
               }}
             >
-              <Building2 size={16} />
-              <span>Free Process (10 Direct Banking Drives)</span>
-              <span
+              <div
                 style={{
-                  background: isFree ? '#ffedd5' : '#e2e8f0',
-                  color: isFree ? '#c2410c' : '#475569',
-                  padding: '2px 6px',
-                  borderRadius: '10px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800
+                  position: 'absolute',
+                  top: '-35px',
+                  right: '-35px',
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                  pointerEvents: 'none'
                 }}
-              >
-                Cash Rewards
-              </span>
-            </button>
+              />
 
-            <button
-              onClick={() => { setActiveProcess('paid'); }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '10px 10px 0 0',
-                border: 'none',
-                background: !isFree ? '#ffffff' : 'transparent',
-                color: !isFree ? '#1d4ed8' : '#64748b',
-                fontWeight: 800,
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                borderBottom: !isFree ? '3px solid #2563eb' : '3px solid transparent',
-                marginBottom: '-4px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Tablet size={16} color={!isFree ? '#1d4ed8' : '#64748b'} />
-              <span>Paid Process (FIC Training - Win TAB or ₹25k Cash)</span>
-              <span
-                style={{
-                  background: !isFree ? '#dbeafe' : '#e2e8f0',
-                  color: !isFree ? '#1d4ed8' : '#475569',
-                  padding: '2px 6px',
-                  borderRadius: '10px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800
-                }}
-              >
-                📱 TAB Reward
-              </span>
-            </button>
-          </div>
-
-          {/* ============================================================== */}
-          {/* DISPLAY A: FREE PROCESS - 10 PARTNER BANKS GRID                */}
-          {/* ============================================================== */}
-          {isFree && (
-            <div style={{ marginBottom: '2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '8px' }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Building2 size={18} color="#0284c7" />
-                    <span>Select Bank to View Target & Reward Details</span>
-                  </h3>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                    Click any partner bank below to open its dedicated Team Goal and Individual Bonus Slabs page.
-                  </p>
-                </div>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0284c7', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '3px 10px', borderRadius: '12px' }}>
-                  10 Partner Banks
-                </span>
-              </div>
-
-              <style>{`
-                .partner-banks-grid {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-                  gap: 14px;
-                }
-                @media (max-width: 768px) {
-                  .partner-banks-grid {
-                    grid-template-columns: repeat(2, 1fr) !important;
-                    gap: 10px !important;
-                  }
-                  .partner-bank-card {
-                    padding: 0.85rem 0.75rem 0.75rem !important;
-                    border-radius: 14px !important;
-                    min-height: 160px !important;
-                  }
-                  .partner-bank-logo {
-                    width: 36px !important;
-                    height: 36px !important;
-                  }
-                  .partner-bank-name {
-                    font-size: 0.88rem !important;
-                  }
-                  .partner-bank-desc {
-                    font-size: 0.7rem !important;
-                    line-height: 1.3 !important;
-                    min-height: 28px !important;
-                  }
-                }
-              `}</style>
-
-              <div className="partner-banks-grid">
-                {bankList.map((bName) => {
-                  const bConfig = BANK_COLORS[bName] || {
-                    primary: '#ea580c',
-                    gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                    glow: 'rgba(234, 88, 12, 0.45)',
-                    desc: 'Scheduled commercial bank partner for 2026 placement drive.'
-                  };
-                  const bStats = programData?.bankStats?.[bName];
-                  const closedCount = bStats?.teamClosedFree || 0;
-                  const targetCount = bStats?.freeTeamProgress?.targetCount || 20;
-
-                  return (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div
-                      key={bName}
-                      onClick={() => handleOpenBankDetail(bName)}
-                      className="partner-bank-card"
                       style={{
-                        background: bConfig.gradient,
-                        borderRadius: '16px',
-                        padding: '1.1rem 1rem 0.95rem',
-                        cursor: 'pointer',
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '12px',
+                        background: '#ffffff',
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        minHeight: '175px',
-                        boxShadow: `0 10px 24px -4px ${bConfig.glow || 'rgba(0,0,0,0.35)'}`,
-                        color: '#ffffff',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.transform = 'translateY(-3px)';
-                        e.currentTarget.style.boxShadow = `0 16px 32px -4px ${bConfig.glow || 'rgba(0,0,0,0.45)'}`;
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'none';
-                        e.currentTarget.style.boxShadow = `0 10px 24px -4px ${bConfig.glow || 'rgba(0,0,0,0.35)'}`;
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                        flexShrink: 0
                       }}
                     >
-                      {/* SUBTLE BACKGROUND DECORATIVE CIRCLE */}
-                      <div
+                      <Building2 size={22} color="#ea580c" />
+                    </div>
+                    <div>
+                      <span
                         style={{
-                          position: 'absolute',
-                          top: '-25px',
-                          right: '-25px',
-                          width: '90px',
-                          height: '90px',
-                          borderRadius: '50%',
-                          background: 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)',
-                          pointerEvents: 'none'
-                        }}
-                      />
-
-                      <div>
-                        {/* TOP ROW: LOGO + BANK TITLE + TARGET */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <div
-                            className="partner-bank-logo"
-                            style={{
-                              width: '42px',
-                              height: '42px',
-                              borderRadius: '10px',
-                              background: '#ffffff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden',
-                              padding: '4px',
-                              flexShrink: 0,
-                              boxShadow: '0 3px 8px rgba(0,0,0,0.15)'
-                            }}
-                          >
-                            {BANK_LOGOS[bName] ? (
-                              <img
-                                src={BANK_LOGOS[bName]}
-                                alt={bName}
-                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                              />
-                            ) : (
-                              <span style={{ fontWeight: 900, color: bConfig.primary, fontSize: '1rem' }}>
-                                {bName.charAt(0)}
-                              </span>
-                            )}
-                          </div>
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              className="partner-bank-name"
-                              style={{
-                                fontSize: '0.96rem',
-                                fontWeight: 800,
-                                color: '#ffffff',
-                                lineHeight: 1.25,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                              title={bName}
-                            >
-                              {bName}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.92)', fontWeight: 600, marginTop: '2px' }}>
-                              Target: <strong style={{ color: '#ffffff' }}>{targetCount} Hires</strong>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* MIDDLE: DESCRIPTION (TRUNCATED TO 2 LINES FOR PERFECT ROW ALIGNMENT) */}
-                        <p
-                          className="partner-bank-desc"
-                          style={{
-                            margin: '0',
-                            fontSize: '0.74rem',
-                            color: 'rgba(255, 255, 255, 0.88)',
-                            lineHeight: 1.38,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            minHeight: '32px'
-                          }}
-                        >
-                          {bConfig.desc || 'Premier partner banking institution with dedicated drive vacancies.'}
-                        </p>
-                      </div>
-
-                      {/* BOTTOM ROW: STATUS + ACTION BUTTON */}
-                      <div
-                        style={{
-                          paddingTop: '8px',
-                          marginTop: '8px',
-                          borderTop: '1px solid rgba(255, 255, 255, 0.22)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '4px'
+                          background: 'rgba(255, 255, 255, 0.22)',
+                          color: '#ffffff',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            color: '#ffffff',
-                            background: 'rgba(0, 0, 0, 0.22)',
-                            padding: '2px 7px',
-                            borderRadius: '6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {closedCount} Closed
-                        </span>
-
-                        <span
-                          style={{
-                            fontSize: '0.74rem',
-                            fontWeight: 800,
-                            color: '#ffffff',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '2px',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          <span>View</span>
-                          <ChevronRight size={13} />
-                        </span>
+                        DIRECT BANKING DRIVES
+                      </span>
+                      <div style={{ fontSize: '0.72rem', color: '#ffedd5', fontWeight: 700, marginTop: '2px' }}>
+                        10 Partner Banks Common Drive
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </div>
 
-          {/* ============================================================== */}
-          {/* DISPLAY B: PAID PROCESS - 4 FIC TRAINING COMBO SETS           */}
-          {/* ============================================================== */}
-          {!isFree && (
-            <div style={{ marginBottom: '2.5rem' }}>
-              <style>{`
-                .paid-combo-grid {
-                  display: grid;
-                  grid-template-columns: repeat(2, 1fr);
-                  gap: 16px;
-                }
-                .paid-spotlight-banner {
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  gap: 16px;
-                  padding: 1.25rem 1.5rem;
-                }
-                .paid-combo-card {
-                  padding: 1.25rem;
-                  border-radius: 16px;
-                }
-                @media (max-width: 860px) {
-                  .paid-combo-grid {
-                    grid-template-columns: 1fr !important;
-                    gap: 14px !important;
-                  }
-                  .paid-spotlight-banner {
-                    flex-direction: column !important;
-                    align-items: flex-start !important;
-                    padding: 1rem 1rem !important;
-                    gap: 12px !important;
-                  }
-                  .paid-spotlight-badge {
-                    width: 100% !important;
-                    text-align: center !important;
-                  }
-                  .paid-combo-card {
-                    padding: 1.1rem 1rem !important;
-                    border-radius: 14px !important;
-                  }
-                }
-              `}</style>
-
-              {/* SPOTLIGHT BANNER FOR TAB / ₹25k REWARD */}
-              <div
-                className="paid-spotlight-banner"
-                style={{
-                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%)',
-                  borderRadius: '18px',
-                  border: '1.5px solid #334155',
-                  marginBottom: '1.5rem',
-                  color: '#ffffff',
-                  boxShadow: '0 8px 24px -6px rgba(15, 23, 42, 0.4)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                  <div
+                  <span
                     style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: '#fbbf24',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
+                      background: '#ffffff',
+                      color: '#c2410c',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontSize: '0.72rem',
+                      fontWeight: 900
                     }}
                   >
-                    <Tablet size={26} />
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800 }}>
-                        BUMPER PRIZE
-                      </span>
-                      <h3 style={{ margin: 0, fontSize: 'clamp(1.1rem, 2.5vw, 1.25rem)', fontWeight: 800, color: '#ffffff' }}>
-                        Brand New TAB (Tablet) OR ₹25,000 Cash Prize!
-                      </h3>
-                    </div>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.4, maxWidth: '780px' }}>
-                      Achieve any of the 4 Specialized FIC Training Combo Sets below to win a Brand New Tablet or ₹25k Direct Cash + Standard Candidate Referral Incentives!
-                    </p>
-                  </div>
+                    CASH BONUSES 💰
+                  </span>
                 </div>
 
-                <div
-                  className="paid-spotlight-badge"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.18)',
-                    borderRadius: '12px',
-                    padding: '8px 16px',
-                    textAlign: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <div style={{ fontSize: '0.64rem', textTransform: 'uppercase', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.5px' }}>
-                    GRAND REWARD
-                  </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fbbf24' }}>
-                    📱 TAB / ₹25k
-                  </div>
+                <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.25 }}>
+                  Free Process (10 Direct Banking Drives)
+                </h3>
+
+                <p style={{ margin: '0 0 12px', fontSize: '0.82rem', color: '#ffedd5', lineHeight: 1.45 }}>
+                  Free direct hiring drives across 10 partner banks. Team Target (20 Hires = ₹30k Team Bonus) + Individual Cash Bonuses up to ₹25,000!
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+                  <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
+                    🏦 10 Partner Banks
+                  </span>
+                  <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
+                    👥 ₹30k Team Bonus
+                  </span>
+                  <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
+                    🎯 Up to ₹25k Individual Cash
+                  </span>
                 </div>
               </div>
 
-              {/* 4 COMBO CHALLENGE CARDS GRID */}
-              <div className="paid-combo-grid">
-                {paidComboSets.map((set, idx) => {
-                  const theme = COMBO_CARD_THEMES[idx % COMBO_CARD_THEMES.length];
-                  const rolesList = Array.isArray(set.roles)
-                    ? set.roles
-                    : typeof set.roles === 'string'
-                    ? set.roles.split(',').map(r => r.trim()).filter(Boolean)
-                    : [];
+              <div
+                style={{
+                  background: '#ffffff',
+                  color: '#c2410c',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.84rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                }}
+              >
+                <span>Select Bank to View Targets</span>
+                <ArrowRight size={16} />
+              </div>
+            </div>
 
-                  const completed = set.completedCount || 0;
-                  const target = Number(set.targetCount) || 3;
-                  const percentage = set.percentage || (target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0);
-                  const isAchieved = set.isAchieved || completed >= target;
-                  const remaining = Math.max(0, target - completed);
+            {/* CARD 2: PAID PROCESS (FIC TRAINING & PLACEMENT) */}
+            <div
+              onClick={handleOpenPaidProcess}
+              style={{
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 60%, #4338ca 100%)',
+                borderRadius: '18px',
+                padding: '1.4rem 1.3rem',
+                color: '#ffffff',
+                cursor: 'pointer',
+                boxShadow: '0 12px 28px -6px rgba(49, 46, 129, 0.45)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '210px',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 18px 36px -6px rgba(49, 46, 129, 0.55)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 12px 28px -6px rgba(49, 46, 129, 0.45)';
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-35px',
+                  right: '-35px',
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                  pointerEvents: 'none'
+                }}
+              />
 
-                  return (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div
-                      key={set.id || idx}
-                      onClick={() => handleOpenComboDetail(set, idx)}
-                      className="paid-combo-card"
                       style={{
-                        background: theme.gradient,
-                        borderRadius: '18px',
-                        border: isAchieved ? '2px solid #a7f3d0' : `1px solid ${theme.border}`,
-                        boxShadow: `0 12px 28px -6px ${theme.glow}`,
-                        color: '#ffffff',
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '12px',
+                        background: '#ffffff',
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        transition: 'all 0.22s ease'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = `0 18px 36px -6px ${theme.glow}`;
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'none';
-                        e.currentTarget.style.boxShadow = `0 12px 28px -6px ${theme.glow}`;
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                        flexShrink: 0
                       }}
                     >
-                      {/* SUBTLE BACKGROUND DECORATIVE ACCENT */}
-                      <div
+                      <Tablet size={22} color="#312e81" />
+                    </div>
+                    <div>
+                      <span
                         style={{
-                          position: 'absolute',
-                          top: '-40px',
-                          right: '-40px',
-                          width: '140px',
-                          height: '140px',
-                          borderRadius: '50%',
-                          background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                          pointerEvents: 'none'
+                          background: 'rgba(255, 255, 255, 0.22)',
+                          color: '#ffffff',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
                         }}
-                      />
-
-                      <div>
-                        {/* CARD TOP BADGE */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <span
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.2)',
-                              color: '#ffffff',
-                              border: '1px solid rgba(255, 255, 255, 0.35)',
-                              padding: '3px 10px',
-                              borderRadius: '8px',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px'
-                            }}
-                          >
-                            SET {idx + 1} CHALLENGE
-                          </span>
-
-                          <span style={{ fontSize: '1.2rem' }}>
-                            {idx === 0 ? '🏆' : idx === 1 ? '⚡' : idx === 2 ? '🥇' : '💎'}
-                          </span>
-                        </div>
-
-                        {/* SET TITLE */}
-                        <h4 style={{ margin: '0 0 6px', fontSize: '1.15rem', fontWeight: 900, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.2)' }}>
-                          {set.title}
-                        </h4>
-
-                        <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.45 }}>
-                          {set.description}
-                        </p>
-
-                        {/* GRAND REWARD HIGHLIGHT BOX */}
-                        <div
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.15)',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            borderRadius: '14px',
-                            padding: '12px 14px',
-                            marginBottom: '14px',
-                            backdropFilter: 'blur(8px)'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
-                            <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', fontWeight: 900, color: '#fef08a', letterSpacing: '0.5px' }}>
-                              🎁 UNLOCKS ON COMPLETION
-                            </span>
-                            <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#854d0e', background: '#fef08a', padding: '2px 8px', borderRadius: '6px' }}>
-                              TAB or ₹25k
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '1.08rem', fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-                            <Tablet size={20} color="#fef08a" style={{ flexShrink: 0 }} />
-                            <span>{set.rewardTitle || 'Brand New TAB or ₹25,000 Cash'}</span>
-                          </div>
-                          <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.95)', marginTop: '4px' }}>
-                            {set.extraIncentiveText || '+ Full Candidate Placement Incentives'}
-                          </div>
-                        </div>
-
-                        {/* INCLUDED ROLES / COMBO CHIPS */}
-                        <div style={{ marginBottom: '14px' }}>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
-                            REQUIRED COMBINATION ({target} HIRES):
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {rolesList.map((roleName, rIdx) => (
-                              <span
-                                key={rIdx}
-                                style={{
-                                  background: 'rgba(255, 255, 255, 0.2)',
-                                  color: '#ffffff',
-                                  border: '1px solid rgba(255, 255, 255, 0.35)',
-                                  padding: '4px 10px',
-                                  borderRadius: '8px',
-                                  fontSize: '0.76rem',
-                                  fontWeight: 700,
-                                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                                }}
-                              >
-                                {roleName}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* PROGRESS BAR */}
-                        <div style={{ marginBottom: '14px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', fontWeight: 800, marginBottom: '6px' }}>
-                            <span style={{ color: 'rgba(255, 255, 255, 0.95)' }}>
-                              Enrolled: <strong>{completed}</strong> / {target}
-                            </span>
-                            <span style={{ color: '#fef08a' }}>
-                              {percentage}%
-                            </span>
-                          </div>
-
-                          <div style={{ width: '100%', height: '8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.22)', border: '1px solid rgba(255, 255, 255, 0.35)', overflow: 'hidden' }}>
-                            <div
-                              style={{
-                                height: '100%',
-                                width: `${percentage}%`,
-                                background: isAchieved ? '#10b981' : 'linear-gradient(90deg, #fef08a 0%, #ffffff 100%)',
-                                borderRadius: '6px',
-                                transition: 'width 0.4s ease',
-                                boxShadow: '0 0 10px rgba(254, 240, 138, 0.6)'
-                              }}
-                            />
-                          </div>
-                        </div>
+                      >
+                        FIC TRAINING & PLACEMENT
+                      </span>
+                      <div style={{ fontSize: '0.72rem', color: '#c7d2fe', fontWeight: 700, marginTop: '2px' }}>
+                        4 Specialized Combo Sets
                       </div>
+                    </div>
+                  </div>
 
-                      {/* STATUS TAG */}
+                  <span
+                    style={{
+                      background: '#fef08a',
+                      color: '#854d0e',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontSize: '0.72rem',
+                      fontWeight: 900
+                    }}
+                  >
+                    WIN TAB / ₹25k 📱
+                  </span>
+                </div>
+
+                <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff', lineHeight: 1.25 }}>
+                  Paid Process (FIC Training & Placement)
+                </h3>
+
+                <p style={{ margin: '0 0 12px', fontSize: '0.82rem', color: '#e0e7ff', lineHeight: 1.45 }}>
+                  Enroll candidates in any of the 4 specialized FIC Training Combo Sets. Win a Brand New TAB (Tablet) OR ₹25,000 Direct Cash Prize!
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+                  <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
+                    📱 Brand New TAB
+                  </span>
+                  <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
+                    💰 ₹25,000 Cash Prize
+                  </span>
+                  <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
+                    🏆 4 Challenge Sets
+                  </span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: '#ffffff',
+                  color: '#312e81',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  fontWeight: 900,
+                  fontSize: '0.84rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                }}
+              >
+                <span>View Combo Challenges</span>
+                <ArrowRight size={16} />
+              </div>
+            </div>
+          </div>
+
+          {/* FOOTER INFO & GUIDELINES */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px'
+            }}
+          >
+            <ShieldCheck size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '0.78rem', color: '#475569', lineHeight: 1.45 }}>
+              <strong style={{ color: '#0f172a' }}>Drive Terms & Guidelines:</strong> Candidates closed in any partner bank during the active drive period (<strong>{formatDate(program.startDate)} — {formatDate(program.endDate)}</strong>) count towards both the Team Bonus and Individual Cash Rewards. In FIC Training, closing any of the 4 Combo Sets unlocks a Brand New Tablet or ₹25,000 Cash on top of all referral incentives.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* VIEW MODE 2: FREE PROCESS - 10 PARTNER BANKS GRID              */}
+      {/* ============================================================== */}
+      {viewMode === 'free_process' && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building2 size={20} color="#ea580c" />
+                <span>Select Bank to View Target & Reward Details</span>
+              </h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                Click any partner bank below to open its dedicated Team Goal and Individual Bonus Slabs page.
+              </p>
+            </div>
+            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#c2410c', background: '#fff7ed', border: '1px solid #fdba74', padding: '4px 12px', borderRadius: '12px' }}>
+              10 Partner Banks
+            </span>
+          </div>
+
+          <style>{`
+            .partner-banks-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+              gap: 14px;
+            }
+            @media (max-width: 768px) {
+              .partner-banks-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+              }
+              .partner-bank-card {
+                padding: 0.85rem 0.75rem 0.75rem !important;
+                border-radius: 14px !important;
+                min-height: 160px !important;
+              }
+              .partner-bank-logo {
+                width: 36px !important;
+                height: 36px !important;
+              }
+              .partner-bank-name {
+                font-size: 0.88rem !important;
+              }
+              .partner-bank-desc {
+                font-size: 0.7rem !important;
+                line-height: 1.3 !important;
+                min-height: 28px !important;
+              }
+            }
+          `}</style>
+
+          <div className="partner-banks-grid">
+            {bankList.map((bName) => {
+              const bConfig = BANK_COLORS[bName] || {
+                primary: '#ea580c',
+                gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                glow: 'rgba(234, 88, 12, 0.45)',
+                desc: 'Scheduled commercial bank partner for 2026 placement drive.'
+              };
+              const bStats = programData?.bankStats?.[bName];
+              const closedCount = bStats?.teamClosedFree || 0;
+              const targetCount = bStats?.freeTeamProgress?.targetCount || 20;
+
+              return (
+                <div
+                  key={bName}
+                  onClick={() => handleOpenBankDetail(bName)}
+                  className="partner-bank-card"
+                  style={{
+                    background: bConfig.gradient,
+                    borderRadius: '16px',
+                    padding: '1.1rem 1rem 0.95rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '175px',
+                    boxShadow: `0 10px 24px -4px ${bConfig.glow || 'rgba(0,0,0,0.35)'}`,
+                    color: '#ffffff',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-3px)';
+                    e.currentTarget.style.boxShadow = `0 16px 32px -4px ${bConfig.glow || 'rgba(0,0,0,0.45)'}`;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = `0 10px 24px -4px ${bConfig.glow || 'rgba(0,0,0,0.35)'}`;
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-25px',
+                      right: '-25px',
+                      width: '90px',
+                      height: '90px',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <div
+                        className="partner-bank-logo"
                         style={{
-                          padding: '9px 12px',
+                          width: '42px',
+                          height: '42px',
                           borderRadius: '10px',
-                          background: isAchieved ? 'rgba(16, 185, 129, 0.95)' : 'rgba(0, 0, 0, 0.25)',
-                          border: isAchieved ? '1px solid #a7f3d0' : '1px solid rgba(255, 255, 255, 0.25)',
+                          background: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          color: '#ffffff'
+                          overflow: 'hidden',
+                          padding: '4px',
+                          flexShrink: 0,
+                          boxShadow: '0 3px 8px rgba(0,0,0,0.15)'
                         }}
                       >
-                        {isAchieved ? (
-                          <>
-                            <CheckCircle2 size={16} color="#ffffff" />
-                            <span>🎉 COMBO ACHIEVED — CLAIM TAB / ₹25K!</span>
-                          </>
+                        {BANK_LOGOS[bName] ? (
+                          <img
+                            src={BANK_LOGOS[bName]}
+                            alt={bName}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                          />
                         ) : (
-                          <>
-                            <Lock size={13} color="rgba(255, 255, 255, 0.85)" />
-                            <span>Need {remaining} more candidate{remaining === 1 ? '' : 's'} to win TAB / ₹25k</span>
-                          </>
+                          <span style={{ fontWeight: 900, color: bConfig.primary, fontSize: '1rem' }}>
+                            {bName.charAt(0)}
+                          </span>
                         )}
                       </div>
 
-                      {/* VIEW 3 BRANDS & REFER CANDIDATES ACTION BUTTON */}
-                      <div
-                        style={{
-                          marginTop: '10px',
-                          padding: '10px 14px',
-                          borderRadius: '12px',
-                          background: 'rgba(255, 255, 255, 0.2)',
-                          border: '1px solid rgba(255, 255, 255, 0.35)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '6px',
-                          fontSize: '0.82rem',
-                          fontWeight: 900,
-                          color: '#ffffff',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                          backdropFilter: 'blur(6px)',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>👉 View {rolesList.length || 3} Brands & Refer</span>
-                        </span>
-                        <ChevronRight size={17} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          className="partner-bank-name"
+                          style={{
+                            fontSize: '0.96rem',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            lineHeight: 1.25,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                          title={bName}
+                        >
+                          {bName}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.92)', fontWeight: 600, marginTop: '2px' }}>
+                          Target: <strong style={{ color: '#ffffff' }}>{targetCount} Hires</strong>
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+
+                    <p
+                      className="partner-bank-desc"
+                      style={{
+                        margin: '0',
+                        fontSize: '0.74rem',
+                        color: 'rgba(255, 255, 255, 0.88)',
+                        lineHeight: 1.38,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: '32px'
+                      }}
+                    >
+                      {bConfig.desc || 'Premier partner banking institution with dedicated drive vacancies.'}
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      paddingTop: '8px',
+                      marginTop: '8px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '4px'
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        background: 'rgba(0, 0, 0, 0.22)',
+                        padding: '2px 7px',
+                        borderRadius: '6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {closedCount} Closed
+                    </span>
+
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <span>View</span>
+                      <ChevronRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           {/* FOOTER INFO & GUIDELINES */}
           <div
@@ -1445,7 +1372,237 @@ export default function OffersAndTargetsView({
           >
             <ShieldCheck size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div style={{ fontSize: '0.78rem', color: '#475569', lineHeight: 1.45 }}>
-              <strong style={{ color: '#0f172a' }}>Drive Terms & Guidelines:</strong> Candidates closed in any partner bank during the active drive period (<strong>{formatDate(program.startDate)} — {formatDate(program.endDate)}</strong>) count towards both the Team Bonus and Individual Cash Rewards. In FIC Training, closing any of the 4 Combo Sets unlocks a Brand New Tablet or ₹25,000 Cash on top of all referral incentives.
+              <strong style={{ color: '#0f172a' }}>Direct Banking Drive Info:</strong> Candidates closed in any partner bank count towards both the Team Bonus (₹30k for 20 hires) and Individual Cash Bonuses up to ₹25,000.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* VIEW MODE 3: PAID PROCESS - 4 FIC TRAINING COMBO SETS GRID    */}
+      {/* ============================================================== */}
+      {viewMode === 'paid_process' && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tablet size={20} color="#4f46e5" />
+                <span>FIC Training & Placement Combo Sets</span>
+              </h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                Select any of the 4 combo sets below to view its details and claim Brand New TAB or ₹25,000 Cash!
+              </p>
+            </div>
+            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#4338ca', background: '#eef2ff', border: '1px solid #c7d2fe', padding: '4px 12px', borderRadius: '12px' }}>
+              4 Challenge Sets
+            </span>
+          </div>
+
+          <style>{`
+            .paid-sets-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+              gap: 14px;
+            }
+            @media (max-width: 768px) {
+              .paid-sets-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+              }
+              .paid-set-card {
+                padding: 0.85rem 0.75rem 0.75rem !important;
+                border-radius: 14px !important;
+                min-height: 165px !important;
+              }
+              .paid-set-name {
+                font-size: 0.88rem !important;
+              }
+            }
+          `}</style>
+
+          <div className="paid-sets-grid">
+            {paidComboSets.map((set, idx) => {
+              const theme = COMBO_CARD_THEMES[idx % COMBO_CARD_THEMES.length];
+              const rolesList = Array.isArray(set.roles)
+                ? set.roles
+                : typeof set.roles === 'string'
+                ? set.roles.split(',').map(r => r.trim()).filter(Boolean)
+                : [];
+
+              const completed = set.completedCount || 0;
+              const target = Number(set.targetCount) || 3;
+              const isAchieved = set.isAchieved || completed >= target;
+
+              return (
+                <div
+                  key={set.id || idx}
+                  onClick={() => handleOpenComboDetail(set, idx)}
+                  className="paid-set-card"
+                  style={{
+                    background: theme.gradient,
+                    borderRadius: '16px',
+                    padding: '1.1rem 1rem 0.95rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '175px',
+                    boxShadow: `0 10px 24px -4px ${theme.glow}`,
+                    color: '#ffffff',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-3px)';
+                    e.currentTarget.style.boxShadow = `0 16px 32px -4px ${theme.glow}`;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = `0 10px 24px -4px ${theme.glow}`;
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-25px',
+                      right: '-25px',
+                      width: '90px',
+                      height: '90px',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)',
+                      pointerEvents: 'none'
+                    }}
+                  />
+
+                  <div>
+                    {/* TOP ROW: SET BADGE + TARGET */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.2)',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255, 255, 255, 0.35)',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 900,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        SET {idx + 1}
+                      </span>
+
+                      <span style={{ fontSize: '0.72rem', color: '#fef08a', fontWeight: 800 }}>
+                        Target: {target} Hires
+                      </span>
+                    </div>
+
+                    {/* SET TITLE */}
+                    <div
+                      className="paid-set-name"
+                      style={{
+                        fontSize: '0.96rem',
+                        fontWeight: 900,
+                        color: '#ffffff',
+                        lineHeight: 1.25,
+                        marginBottom: '6px'
+                      }}
+                    >
+                      {set.title}
+                    </div>
+
+                    {/* REQUIRED COMBO ROLES PREVIEW */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                      {rolesList.map((r, rIdx) => (
+                        <span
+                          key={rIdx}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.18)',
+                            color: '#ffffff',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontSize: '0.66rem',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* REWARD BADGE */}
+                    <div style={{ fontSize: '0.72rem', color: '#fef08a', fontWeight: 800 }}>
+                      🎁 Brand New TAB or ₹25,000 Cash
+                    </div>
+                  </div>
+
+                  {/* BOTTOM ROW: STATUS + ACTION BUTTON */}
+                  <div
+                    style={{
+                      paddingTop: '8px',
+                      marginTop: '8px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '4px'
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        background: isAchieved ? '#10b981' : 'rgba(0, 0, 0, 0.25)',
+                        padding: '2px 7px',
+                        borderRadius: '6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {isAchieved ? '✓ Achieved' : `${completed}/${target} Hires`}
+                    </span>
+
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <span>View</span>
+                      <ChevronRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FOOTER INFO & GUIDELINES */}
+          <div
+            style={{
+              marginTop: '1.5rem',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px'
+            }}
+          >
+            <ShieldCheck size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '0.78rem', color: '#475569', lineHeight: 1.45 }}>
+              <strong style={{ color: '#0f172a' }}>Combo Set Guidelines:</strong> Achieving any of the 4 combo sets unlocks a Brand New Tablet or ₹25,000 Direct Cash on top of all standard candidate placement referral incentives.
             </div>
           </div>
         </div>
@@ -1921,7 +2078,7 @@ export default function OffersAndTargetsView({
       )}
 
       {/* ============================================================== */}
-      {/* VIEW MODE 3: DEDICATED COMBO CHALLENGE DETAIL PAGE             */}
+      {/* VIEW MODE 4: SINGLE KPI CARD FOR COMBO CHALLENGE DETAIL       */}
       {/* ============================================================== */}
       {viewMode === 'combo_detail' && selectedCombo && (() => {
         const theme = COMBO_CARD_THEMES[selectedComboIdx % COMBO_CARD_THEMES.length];
@@ -1963,29 +2120,28 @@ export default function OffersAndTargetsView({
         const remainingSlotsCount = Math.max(0, totalSlotsCount - completedSlotsCount);
 
         return (
-          <div style={{ animation: 'fadeIn 0.25s ease' }}>
-            {/* HERO BANNER */}
+          <div style={{ maxWidth: '820px', margin: '0 auto', animation: 'fadeIn 0.22s ease' }}>
+            {/* THE SINGLE KPI CARD */}
             <div
               style={{
                 background: theme.gradient,
-                borderRadius: '20px',
-                padding: '1.75rem',
+                borderRadius: '22px',
+                padding: 'clamp(1.25rem, 3.5vw, 2rem)',
                 color: '#ffffff',
-                marginBottom: '1.75rem',
-                boxShadow: `0 14px 34px -8px ${theme.glow}`,
+                boxShadow: `0 16px 38px -8px ${theme.glow}`,
                 border: isComboAchieved ? '2px solid #a7f3d0' : `1px solid ${theme.border}`,
                 position: 'relative',
                 overflow: 'hidden'
               }}
             >
-              {/* DECORATIVE BACKGROUND ACCENTS */}
+              {/* DECORATIVE BACKGROUND ACCENT */}
               <div
                 style={{
                   position: 'absolute',
-                  top: '-50px',
-                  right: '-50px',
-                  width: '200px',
-                  height: '200px',
+                  top: '-45px',
+                  right: '-45px',
+                  width: '160px',
+                  height: '160px',
                   borderRadius: '50%',
                   background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
                   pointerEvents: 'none'
@@ -1993,19 +2149,20 @@ export default function OffersAndTargetsView({
               />
 
               <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* CARD HEADER ROW: BADGES & ACTIVE DATES */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span
                       style={{
                         background: 'rgba(255, 255, 255, 0.22)',
                         border: '1px solid rgba(255, 255, 255, 0.4)',
                         color: '#ffffff',
-                        padding: '4px 12px',
-                        borderRadius: '10px',
-                        fontSize: '0.74rem',
+                        padding: '3px 10px',
+                        borderRadius: '8px',
+                        fontSize: '0.72rem',
                         fontWeight: 900,
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase'
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
                       }}
                     >
                       SET {selectedComboIdx + 1} CHALLENGE
@@ -2013,643 +2170,319 @@ export default function OffersAndTargetsView({
 
                     <span
                       style={{
-                        background: '#fef08a',
-                        color: '#854d0e',
-                        padding: '4px 10px',
-                        borderRadius: '10px',
-                        fontSize: '0.74rem',
+                        background: isComboAchieved ? '#10b981' : '#fef08a',
+                        color: isComboAchieved ? '#ffffff' : '#854d0e',
+                        padding: '3px 10px',
+                        borderRadius: '8px',
+                        fontSize: '0.72rem',
                         fontWeight: 900,
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px'
                       }}
                     >
-                      <Sparkles size={13} />
-                      <span>MEGA BUMPER PRIZE</span>
+                      <Sparkles size={12} />
+                      <span>{isComboAchieved ? 'CHALLENGE WON 🎉' : 'BUMPER PRIZE'}</span>
                     </span>
                   </div>
 
-                  <span style={{ fontSize: '0.76rem', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.74rem', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 700 }}>
                     Active until: <strong>{formatDate(program.endDate)}</strong>
                   </span>
                 </div>
 
-                <h1 style={{ margin: '0 0 8px', fontSize: 'clamp(1.35rem, 3.5vw, 1.85rem)', fontWeight: 900, color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.25)' }}>
+                {/* SET TITLE & DESCRIPTION */}
+                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.3rem, 3vw, 1.75rem)', fontWeight: 900, color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                   {selectedCombo.title}
-                </h1>
-
-                <p style={{ margin: '0 0 1.25rem', fontSize: '0.92rem', color: 'rgba(255, 255, 255, 0.92)', lineHeight: 1.5, maxWidth: '820px' }}>
+                </h2>
+                <p style={{ margin: '0 0 1.25rem', fontSize: '0.86rem', color: 'rgba(255, 255, 255, 0.92)', lineHeight: 1.45 }}>
                   {selectedCombo.description}
                 </p>
 
-                {/* PROGRESS BAR */}
+                {/* GRAND REWARD HIGHLIGHT BOX */}
                 <div
                   style={{
-                    background: 'rgba(0, 0, 0, 0.22)',
-                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    background: 'rgba(255, 255, 255, 0.16)',
+                    border: '1px solid rgba(255, 255, 255, 0.32)',
                     borderRadius: '14px',
-                    padding: '12px 16px'
+                    padding: '12px 16px',
+                    marginBottom: '1.25rem',
+                    backdropFilter: 'blur(8px)'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#ffffff' }}>
-                      Challenge Progress: <strong style={{ color: '#fef08a' }}>{completedSlotsCount}</strong> of <strong>{totalSlotsCount}</strong> Brand Slots Completed
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
+                    <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 900, color: '#fef08a', letterSpacing: '0.5px' }}>
+                      🎁 UNLOCKS ON COMPLETION
                     </span>
-                    <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#fef08a' }}>
-                      {comboPercentage}% Completed
-                    </span>
-                  </div>
-
-                  <div style={{ width: '100%', height: '10px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.2)', overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${comboPercentage}%`,
-                        background: isComboAchieved ? '#10b981' : 'linear-gradient(90deg, #fef08a 0%, #34d399 100%)',
-                        borderRadius: '6px',
-                        transition: 'width 0.4s ease',
-                        boxShadow: '0 0 12px rgba(254, 240, 138, 0.6)'
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '0.76rem', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 700 }}>
-                    {isComboAchieved ? (
-                      <>
-                        <CheckCircle2 size={16} color="#34d399" />
-                        <span style={{ color: '#34d399', fontWeight: 800 }}>Challenge Achieved! You can now claim your Brand New TAB or ₹25,000 Cash!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={14} color="rgba(255, 255, 255, 0.8)" />
-                        <span>Refer and close {remainingSlotsCount} more candidate{remainingSlotsCount === 1 ? '' : 's'} across the open brand slots below to unlock the Bumper Reward.</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* GRAND PRIZE SPOTLIGHT DUAL CARDS (TABLET VS ₹25,000 CASH) */}
-            <div style={{ marginBottom: '2rem' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                <span
-                  style={{
-                    background: '#fef3c7',
-                    color: '#92400e',
-                    padding: '3px 12px',
-                    borderRadius: '20px',
-                    fontSize: '0.72rem',
-                    fontWeight: 900,
-                    letterSpacing: '0.5px',
-                    textTransform: 'uppercase',
-                    display: 'inline-block',
-                    marginBottom: '6px'
-                  }}
-                >
-                  🎁 UNLOCKS ON COMPLETION
-                </span>
-                <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 3vw, 1.55rem)', fontWeight: 900, color: '#0f172a' }}>
-                  Winner's Choice: Brand New TAB or ₹25,000 Cash!
-                </h2>
-                <p style={{ margin: '4px auto 0', fontSize: '0.84rem', color: '#64748b', maxWidth: '640px' }}>
-                  Once you place 1 candidate in each of the {totalSlotsCount} partner brands below, you can choose either the Brand New Tablet or ₹25,000 Direct Cash Transfer!
-                </p>
-              </div>
-
-              {/* DUAL REWARD CARDS */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px', marginBottom: '14px' }}>
-                {/* REWARD OPTION 1: BRAND NEW TAB */}
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    borderRadius: '16px',
-                    padding: '1.5rem',
-                    border: '2px solid #38bdf8',
-                    color: '#ffffff',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    boxShadow: '0 10px 24px -4px rgba(56, 189, 248, 0.25)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <div
-                      style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '12px',
-                        background: 'rgba(56, 189, 248, 0.15)',
-                        border: '1.5px solid #38bdf8',
-                        color: '#38bdf8',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Tablet size={24} />
-                    </div>
-                    <span style={{ background: '#0284c7', color: '#ffffff', padding: '3px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800 }}>
-                      OPTION A
+                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#854d0e', background: '#fef08a', padding: '2px 8px', borderRadius: '6px' }}>
+                      TAB or ₹25k
                     </span>
                   </div>
-
-                  <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
-                    Brand New TAB (Tablet)
-                  </h3>
-                  <p style={{ margin: '0 0 14px', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>
-                    Brand New 10.1" Android Tablet with full accessories & box warranty delivered straight to your doorstep.
-                  </p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    <span style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 700 }}>
-                      📱 10.1" IPS HD Screen
-                    </span>
-                    <span style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 700 }}>
-                      ⚡ Octa-Core Processor
-                    </span>
-                    <span style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 700 }}>
-                      🚚 Free Doorstep Delivery
-                    </span>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Tablet size={22} color="#fef08a" style={{ flexShrink: 0 }} />
+                    <span>{selectedCombo.rewardTitle || 'Brand New TAB (Tablet) OR ₹25,000 Cash Prize!'}</span>
+                  </div>
+                  <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.95)', marginTop: '4px' }}>
+                    {selectedCombo.extraIncentiveText || '+ Full Candidate Placement Referral Incentives Included'}
                   </div>
                 </div>
 
-                {/* REWARD OPTION 2: ₹25,000 CASH */}
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, #14532d 0%, #166534 100%)',
-                    borderRadius: '16px',
-                    padding: '1.5rem',
-                    border: '2px solid #86efac',
-                    color: '#ffffff',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    boxShadow: '0 10px 24px -4px rgba(34, 197, 94, 0.25)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <div
-                      style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '12px',
-                        background: 'rgba(134, 239, 172, 0.15)',
-                        border: '1.5px solid #86efac',
-                        color: '#86efac',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Award size={24} />
-                    </div>
-                    <span style={{ background: '#15803d', color: '#ffffff', padding: '3px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800 }}>
-                      OPTION B
-                    </span>
+                {/* COMBO PARTNER BANKS LIST (THE 3 BANKS IN THIS SET) */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.76rem', fontWeight: 900, color: 'rgba(255, 255, 255, 0.95)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Building2 size={15} color="#fef08a" />
+                    <span>Required Combo Banks / Roles ({totalSlotsCount} Hires Required):</span>
                   </div>
 
-                  <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
-                    ₹25,000 Direct Cash
-                  </h3>
-                  <p style={{ margin: '0 0 14px', fontSize: '0.8rem', color: '#bbf7d0', lineHeight: 1.4 }}>
-                    Direct NEFT bank transfer or instant UPI payment credited directly to your registered account with zero deductions.
-                  </p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    <span style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#dcfce7', fontWeight: 700 }}>
-                      💰 ₹25,000 Lump Sum
-                    </span>
-                    <span style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#dcfce7', fontWeight: 700 }}>
-                      ⚡ Instant Bank NEFT / UPI
-                    </span>
-                    <span style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#dcfce7', fontWeight: 700 }}>
-                      💯 Zero Deductions
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* INCENTIVE PLUS BANNER */}
-              <div
-                style={{
-                  background: '#f8fafc',
-                  border: '1.5px dashed #cbd5e1',
-                  borderRadius: '12px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                  fontSize: '0.8rem',
-                  color: '#334155'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Gift size={16} color="#059669" />
-                  <span>
-                    <strong>PLUS:</strong> Standard candidate placement referral incentives are paid in full for all {totalSlotsCount} placed candidates!
-                  </span>
-                </div>
-                <span style={{ color: '#059669', fontWeight: 800 }}>
-                  TAB / ₹25k Reward + Full Candidate Incentives
-                </span>
-              </div>
-            </div>
-
-            {/* THE 3 BRANDS SHOWCASED SECTION */}
-            <div style={{ marginBottom: '2.5rem' }}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h3 style={{ margin: '0 0 4px', fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Building2 size={22} color="#4f46e5" />
-                  <span>Required {totalSlotsCount} Partner Brands in this Combo Challenge</span>
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b' }}>
-                  Refer at least 1 candidate for each brand below. When that candidate is Selected or Enrolled, the slot is marked Completed!
-                </p>
-              </div>
-
-              {/* BRAND CARDS GRID */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-                {brandSlots.map((slot) => {
-                  return (
-                    <div
-                      key={slot.slotNumber}
-                      style={{
-                        background: '#ffffff',
-                        borderRadius: '16px',
-                        border: slot.isSlotCompleted ? '2px solid #10b981' : slot.isSlotInProgress ? '2px solid #f59e0b' : '1px solid #e2e8f0',
-                        boxShadow: slot.isSlotCompleted ? '0 10px 24px -4px rgba(16, 185, 129, 0.2)' : '0 4px 14px rgba(0,0,0,0.05)',
-                        padding: '1.25rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        transition: 'all 0.2s ease',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {/* TOP ACCENT LINE */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {brandSlots.map((slot) => (
                       <div
+                        key={slot.slotNumber}
                         style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: '4px',
-                          background: slot.gradient
+                          background: 'rgba(0, 0, 0, 0.22)',
+                          border: slot.isSlotCompleted
+                            ? '1.5px solid #10b981'
+                            : slot.isSlotInProgress
+                            ? '1.5px solid #f59e0b'
+                            : '1px solid rgba(255, 255, 255, 0.22)',
+                          borderRadius: '12px',
+                          padding: '10px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '10px'
                         }}
-                      />
-
-                      <div>
-                        {/* SLOT HEADER ROW */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                          <span
-                            style={{
-                              background: '#f1f5f9',
-                              color: '#475569',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              fontSize: '0.7rem',
-                              fontWeight: 800,
-                              textTransform: 'uppercase'
-                            }}
-                          >
-                            SLOT {slot.slotNumber} OF {totalSlotsCount}
-                          </span>
-
-                          {slot.isSlotCompleted ? (
-                            <span
-                              style={{
-                                background: '#dcfce7',
-                                color: '#15803d',
-                                border: '1px solid #86efac',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.7rem',
-                                fontWeight: 800,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                            >
-                              <CheckCircle2 size={12} />
-                              <span>SLOT COMPLETED</span>
-                            </span>
-                          ) : slot.isSlotInProgress ? (
-                            <span
-                              style={{
-                                background: '#fef3c7',
-                                color: '#b45309',
-                                border: '1px solid #fde68a',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.7rem',
-                                fontWeight: 800,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                            >
-                              <Flame size={12} />
-                              <span>IN PROGRESS</span>
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                background: '#f1f5f9',
-                                color: '#64748b',
-                                border: '1px solid #e2e8f0',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.7rem',
-                                fontWeight: 700
-                              }}
-                            >
-                              SLOT OPEN (0/1)
-                            </span>
-                          )}
-                        </div>
-
-                        {/* BRAND LOGO & TITLE */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      >
+                        {/* BANK LOGO + NAME */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '200px', flex: 1 }}>
                           <div
                             style={{
-                              width: '48px',
-                              height: '48px',
-                              borderRadius: '12px',
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '10px',
                               background: '#ffffff',
-                              border: '1.5px solid #e2e8f0',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               overflow: 'hidden',
-                              padding: '4px',
-                              flexShrink: 0
+                              padding: '3px',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                             }}
                           >
                             {slot.logo ? (
                               <img src={slot.logo} alt={slot.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             ) : (
-                              <Laptop size={24} color="#6366f1" />
+                              <span style={{ fontWeight: 900, color: '#1e3a8a', fontSize: '0.9rem' }}>
+                                {slot.shortName?.charAt(0) || 'B'}
+                              </span>
                             )}
                           </div>
 
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.3 }}>
+                          <div>
+                            <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#ffffff' }}>
                               {slot.name}
-                            </h4>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.82)' }}>
+                              {slot.openRoles}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* STATUS & ACTIONS */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          {slot.isSlotCompleted ? (
                             <span
                               style={{
+                                background: '#10b981',
+                                color: '#ffffff',
+                                padding: '3px 9px',
+                                borderRadius: '6px',
                                 fontSize: '0.72rem',
-                                color: '#4f46e5',
-                                fontWeight: 700,
-                                background: '#eef2ff',
-                                padding: '1px 6px',
-                                borderRadius: '4px',
-                                display: 'inline-block',
-                                marginTop: '3px'
+                                fontWeight: 800,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
                               }}
                             >
-                              {slot.tag}
+                              <CheckCircle2 size={13} />
+                              <span>Completed (1/1)</span>
                             </span>
-                          </div>
-                        </div>
-
-                        {/* ROLES & PACKAGE HIGHLIGHTS */}
-                        <div
-                          style={{
-                            background: '#f8fafc',
-                            border: '1px solid #f1f5f9',
-                            borderRadius: '10px',
-                            padding: '10px',
-                            marginBottom: '12px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '5px'
-                          }}
-                        >
-                          <div style={{ fontSize: '0.76rem', color: '#334155' }}>
-                            <strong style={{ color: '#0f172a' }}>Roles:</strong> {slot.openRoles}
-                          </div>
-                          <div style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 800 }}>
-                            💰 {slot.salaryRange}
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                            🎓 <strong>Eligibility:</strong> {slot.minQualification}
-                          </div>
-                        </div>
-
-                        {/* CANDIDATE STATUS TRACKING BOX */}
-                        <div
-                          style={{
-                            padding: '10px 12px',
-                            borderRadius: '10px',
-                            background: slot.isSlotCompleted ? '#f0fdf4' : slot.isSlotInProgress ? '#fffbeb' : '#fafafa',
-                            border: slot.isSlotCompleted ? '1px solid #bbf7d0' : slot.isSlotInProgress ? '1px solid #fde68a' : '1px solid #e5e7eb',
-                            marginBottom: '14px'
-                          }}
-                        >
-                          {slot.isSlotCompleted ? (
-                            <div>
-                              <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <CheckCheck size={14} />
-                                <span>Candidate Successfully Enrolled!</span>
-                              </div>
-                              <div style={{ fontSize: '0.72rem', color: '#166534', marginTop: '3px' }}>
-                                Placed: <strong>{slot.closedOrSelected[0]?.candidateName || slot.closedOrSelected[0]?.name || 'Placed Candidate'}</strong> ({slot.closedOrSelected[0]?.status || 'Selected'})
-                              </div>
-                            </div>
                           ) : slot.isSlotInProgress ? (
-                            <div>
-                              <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#b45309', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Flame size={14} />
-                                <span>{slot.inProgressApps.length} Candidate(s) in Pipeline</span>
-                              </div>
-                              <div style={{ fontSize: '0.72rem', color: '#78350f', marginTop: '3px' }}>
-                                Latest: <strong>{slot.inProgressApps[0]?.candidateName || slot.inProgressApps[0]?.name || 'Referred Candidate'}</strong> ({slot.inProgressApps[0]?.status || 'Interview Scheduled'})
-                              </div>
-                            </div>
+                            <span
+                              style={{
+                                background: '#f59e0b',
+                                color: '#ffffff',
+                                padding: '3px 9px',
+                                borderRadius: '6px',
+                                fontSize: '0.72rem',
+                                fontWeight: 800,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <Flame size={13} />
+                              <span>In Pipeline ({slot.inProgressApps.length})</span>
+                            </span>
                           ) : (
-                            <div style={{ fontSize: '0.74rem', color: '#64748b', lineHeight: 1.35 }}>
-                              No candidate placed yet. Share your referral link or register candidate to fill Slot {slot.slotNumber}.
-                            </div>
+                            <span
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.16)',
+                                color: '#ffffff',
+                                padding: '3px 9px',
+                                borderRadius: '6px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700
+                              }}
+                            >
+                              Slot Open (0/1)
+                            </span>
                           )}
-                        </div>
-                      </div>
 
-                      {/* ACTION BUTTONS */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                          {/* WHATSAPP SHARE */}
+                          {/* SHARE WHATSAPP BUTTON */}
                           <button
                             onClick={() => handleShareBrandWhatsApp(slot)}
+                            title="Share on WhatsApp"
                             style={{
                               background: '#25D366',
                               color: '#ffffff',
                               border: 'none',
-                              borderRadius: '8px',
-                              padding: '8px',
-                              fontSize: '0.76rem',
+                              borderRadius: '7px',
+                              padding: '5px 10px',
+                              fontSize: '0.72rem',
                               fontWeight: 800,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '5px',
                               cursor: 'pointer',
-                              boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
-                              transition: 'all 0.15s ease'
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#20ba5c'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#25D366'; }}
                           >
-                            <Share2 size={13} />
-                            <span>WhatsApp</span>
+                            <Share2 size={12} />
+                            <span>Share</span>
                           </button>
 
-                          {/* COPY REFERRAL LINK */}
+                          {/* COPY LINK BUTTON */}
                           <button
                             onClick={() => handleCopyBrandLink(slot)}
+                            title="Copy Candidate Link"
                             style={{
-                              background: copiedText === slot.shortName ? '#10b981' : '#f1f5f9',
-                              color: copiedText === slot.shortName ? '#ffffff' : '#334155',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '8px',
-                              padding: '8px',
-                              fontSize: '0.76rem',
+                              background: copiedText === slot.shortName ? '#10b981' : 'rgba(255, 255, 255, 0.2)',
+                              color: '#ffffff',
+                              border: '1px solid rgba(255, 255, 255, 0.35)',
+                              borderRadius: '7px',
+                              padding: '5px 9px',
+                              fontSize: '0.72rem',
                               fontWeight: 800,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '5px',
                               cursor: 'pointer',
-                              transition: 'all 0.15s ease'
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
                           >
-                            <Copy size={13} />
-                            <span>{copiedText === slot.shortName ? 'Copied!' : 'Copy Link'}</span>
+                            <Copy size={12} />
+                            <span>{copiedText === slot.shortName ? 'Copied' : 'Link'}</span>
                           </button>
                         </div>
-
-                        {/* DIRECT APPLICATION BUTTON */}
-                        {onNavigateTab && (
-                          <button
-                            onClick={() => onNavigateTab('job_openings')}
-                            style={{
-                              background: '#ffffff',
-                              color: '#4f46e5',
-                              border: '1.5px solid #c7d2fe',
-                              borderRadius: '8px',
-                              padding: '7px',
-                              fontSize: '0.74rem',
-                              fontWeight: 800,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '4px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#eef2ff'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; }}
-                          >
-                            <Briefcase size={13} />
-                            <span>View All {slot.shortName} Job Openings →</span>
-                          </button>
-                        )}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 3-STEP GUIDE (HOW TO COMPLETE & WIN) */}
-            <div
-              style={{
-                background: '#f8fafc',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                marginBottom: '2rem'
-              }}
-            >
-              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
-                  How to Complete this Combo Challenge & Claim Reward
-                </h4>
-                <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                  Simple 3-step process to unlock your Brand New Tablet or ₹25,000 Cash
-                </p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
-                {/* STEP 1 */}
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#4f46e5', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 900 }}>
-                      1
-                    </span>
-                    <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>Refer Candidates</strong>
+                    ))}
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
-                    Share your unique referral link for each of the {totalSlotsCount} partner brands with qualified candidates.
-                  </p>
                 </div>
 
-                {/* STEP 2 */}
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#059669', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 900 }}>
-                      2
+                {/* PROGRESS TRACKER */}
+                <div
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.24)',
+                    border: '1px solid rgba(255, 255, 255, 0.22)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    marginBottom: '1.25rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 800 }}>
+                    <span>
+                      Enrolled: <strong style={{ color: '#fef08a' }}>{completedSlotsCount}</strong> of <strong>{totalSlotsCount}</strong> Hires
                     </span>
-                    <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>Candidate Selection</strong>
+                    <span style={{ color: '#fef08a' }}>
+                      {comboPercentage}% Completed
+                    </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
-                    As candidates complete their interviews and get Selected or Enrolled, each brand slot turns green (Completed).
-                  </p>
+
+                  <div style={{ width: '100%', height: '8px', borderRadius: '5px', background: 'rgba(255, 255, 255, 0.2)', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${comboPercentage}%`,
+                        background: isComboAchieved ? '#10b981' : 'linear-gradient(90deg, #fef08a 0%, #34d399 100%)',
+                        borderRadius: '5px',
+                        transition: 'width 0.4s ease'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ fontSize: '0.74rem', color: 'rgba(255, 255, 255, 0.88)', marginTop: '8px', fontWeight: 600 }}>
+                    {isComboAchieved
+                      ? '🎉 Combo Challenge Achieved! You can now claim your Brand New TAB or ₹25,000 Cash!'
+                      : `Place 1 candidate in each of the ${remainingSlotsCount} remaining bank slot(s) above to claim your reward!`}
+                  </div>
                 </div>
 
-                {/* STEP 3 */}
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#f59e0b', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 900 }}>
-                      3
-                    </span>
-                    <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>Claim TAB or ₹25k</strong>
+                {/* BOTTOM ACTION BUTTONS */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <button
+                    onClick={handleBackToChallengeSets}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.18)',
+                      border: '1px solid rgba(255, 255, 255, 0.35)',
+                      color: '#ffffff',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.28)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)'; }}
+                  >
+                    <ArrowLeft size={15} />
+                    <span>← Back to Sets</span>
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => {
+                        const link = defaultRefLink;
+                        const msg = `🌟 *Special Banking Placement Challenge: ${selectedCombo.title}*\n\n` +
+                          `🎁 Win Brand New TAB or ₹25k Cash by placing candidates!\n` +
+                          `📌 Candidate Application Link: ${link}`;
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                      }}
+                      style={{
+                        background: '#25D366',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '8px 16px',
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
+                      }}
+                    >
+                      <Share2 size={14} />
+                      <span>Share on WhatsApp</span>
+                    </button>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', lineHeight: 1.45 }}>
-                    Once all {totalSlotsCount} slots are green, challenge is WON! Admin team delivers your Brand New Tablet or deposits ₹25,000 cash!
-                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* BOTTOM BACK BUTTON */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button
-                onClick={handleBackToChallengeSets}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 24px',
-                  borderRadius: '12px',
-                  background: '#ffffff',
-                  border: '1.5px solid #4f46e5',
-                  color: '#4338ca',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.12)',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#eef2ff'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; }}
-              >
-                <ArrowLeft size={16} />
-                <span>← Back to All Combo Challenges</span>
-              </button>
             </div>
           </div>
         );
