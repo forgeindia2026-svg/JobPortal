@@ -48,10 +48,14 @@ router.get('/', async (req, res) => {
       if (!job) {
         const itProc = (db.itTrainingProcesses || []).find(p => p.id === app.jobId);
         if (itProc) {
-          const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement';
+          const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : itProc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement';
+          const procTag = itProc.processName ? ` (${itProc.processName.toUpperCase()})` : '';
           job = {
             id: itProc.id,
-            title: itProc.role || itProc.programTitle || 'IT Trainee',
+            title: `${itProc.role || 'IT Trainee'}${procTag}`,
+            processName: itProc.processName,
+            role: itProc.role,
+            itCategory: itProc.itCategory,
             location: itProc.location || 'PAN INDIA',
             companyId: 'comp_fic_it',
             companyName: compName
@@ -131,10 +135,12 @@ router.post('/', async (req, res) => {
     if (!job) {
       const itProc = (db.itTrainingProcesses || []).find(p => p.id === jobId);
       if (itProc) {
-        const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : 'FIC IT Training & Placement';
+        const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : itProc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement';
+        const procTag = itProc.processName ? ` (${itProc.processName.toUpperCase()})` : '';
         job = {
           id: itProc.id,
-          title: itProc.role || itProc.programTitle || 'IT Trainee',
+          title: `${itProc.role || 'IT Trainee'}${procTag}`,
+          processName: itProc.processName,
           companyId: 'comp_fic_it',
           companyName: compName,
           categoryId: 'cat_it'

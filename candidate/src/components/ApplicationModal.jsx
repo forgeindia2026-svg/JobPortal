@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, CheckCircle } from 'lucide-react';
 
 export default function ApplicationModal({ job, candidate, isOpen, onClose, onSubmitSuccess, API_URL }) {
+  const [activeJob, setActiveJob] = useState(job);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -14,9 +15,15 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   const [error, setError] = useState('');
   const [successApp, setSuccessApp] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
-  const isInternship = job?.title?.toLowerCase().includes('free') || job?.title?.toLowerCase().includes('internship') || job?.companyName?.toLowerCase().includes('free') || job?.companyName?.toLowerCase().includes('internship');
-  const isCasaProcess = job?.title?.toLowerCase().includes('casa') || job?.programName?.toLowerCase().includes('casa') || job?.role?.toLowerCase().includes('casa') || job?.description?.toLowerCase().includes('casa process');
-  const feeAmount = isCasaProcess ? 149 : (job?.isFicFlow && !isInternship ? 1499 : 49);
+
+  useEffect(() => {
+    setActiveJob(job);
+  }, [job]);
+
+  const effectiveJob = activeJob || job;
+  const isInternship = effectiveJob?.title?.toLowerCase().includes('free') || effectiveJob?.title?.toLowerCase().includes('internship') || effectiveJob?.companyName?.toLowerCase().includes('free') || effectiveJob?.companyName?.toLowerCase().includes('internship');
+  const isCasaProcess = effectiveJob?.title?.toLowerCase().includes('casa') || effectiveJob?.programName?.toLowerCase().includes('casa') || effectiveJob?.role?.toLowerCase().includes('casa') || effectiveJob?.description?.toLowerCase().includes('casa process');
+  const feeAmount = isCasaProcess ? 149 : (effectiveJob?.isFicFlow && !isInternship ? 1499 : 49);
 
   useEffect(() => {
     // Load Razorpay script
@@ -129,7 +136,7 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         amount: orderData.order.amount,
         currency: "INR",
         name: "FIC RecruitPro",
-        description: `Application Fee - ${job.title}`,
+        description: `Application Fee - ${effectiveJob?.title || job?.title}`,
         order_id: orderData.order.id,
         handler: async function (response) {
           // 3. Payment Success - Update Application Status
@@ -183,12 +190,13 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
     try {
       const payload = {
         candidateId: candidate ? candidate.candidateId || candidate.id : null,
-        jobId: job.id,
+        jobId: effectiveJob ? effectiveJob.id : job.id,
         resumeUrl,
         coverNotes,
         status,
         paymentId: paymentId || 'FREE_TEST_' + Date.now(),
         paymentAmount: feeAmount,
+        processName: effectiveJob?.processName || null,
         candidateDetails: {
           userId: candidate ? candidate.id : null,
           name,
@@ -242,8 +250,26 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
           borderBottom: 'none'
         }}>
           <div>
-            <h3 style={{ fontSize: '1.35rem', color: 'white', fontWeight: 'bold' }}>Apply for {job.title}</h3>
-            <p style={{ fontSize: '0.9rem', color: '#e0e7ff', marginTop: '4px' }}>{job.companyName} • {job.location}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.35rem', color: 'white', fontWeight: 'bold', margin: 0 }}>
+                Apply for {effectiveJob?.rawRole || (effectiveJob?.title || '').replace(/\s*\(PROCESS\s*\d+\)/i, '')}
+              </h3>
+              {effectiveJob?.processName && (
+                <span style={{
+                  background: 'linear-gradient(135deg, #fef08a 0%, #facc15 100%)',
+                  color: '#713f12',
+                  padding: '3px 12px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 900,
+                  letterSpacing: '0.04em',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.18)'
+                }}>
+                  ✨ {effectiveJob.processName.toUpperCase()}
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: '0.9rem', color: '#e0e7ff', marginTop: '4px' }}>{effectiveJob?.companyName || job.companyName} • {effectiveJob?.location || job.location}</p>
           </div>
           <button className="btn-close" onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '50%', padding: '6px' }}>
             <X size={20} />
@@ -251,6 +277,73 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
         </div>
 
         <div className="modal-body" style={{ padding: '1.5rem' }}>
+          {/* TRACK PROCESS SELECTOR IF MULTIPLE PROCESSES AVAILABLE */}
+          {!showPayment && !successApp && effectiveJob?.itProcessList && effectiveJob.itProcessList.length > 1 && (
+            <div style={{
+              background: '#f8fafc',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '12px',
+              padding: '12px',
+              marginBottom: '1.25rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#334155' }}>
+                  Select Process Track:
+                </span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#2563eb' }}>
+                  Selected: {effectiveJob.processName ? effectiveJob.processName.toUpperCase() : 'PROCESS 1'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[...effectiveJob.itProcessList].sort((a, b) => {
+                  const numA = (String(a.processName || '').match(/\d+/) || [999])[0];
+                  const numB = (String(b.processName || '').match(/\d+/) || [999])[0];
+                  return parseInt(numA, 10) - parseInt(numB, 10);
+                }).map(proc => {
+                  const isSelected = effectiveJob.id === proc.id;
+                  const procNum = (String(proc.processName || '').match(/\d+/) || [''])[0];
+                  return (
+                    <button
+                      key={proc.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveJob(prev => ({
+                          ...prev,
+                          id: proc.id,
+                          title: `${proc.role || 'Software Engineer Trainee'} (${proc.processName.toUpperCase()})`,
+                          rawRole: proc.role || 'Software Engineer Trainee',
+                          processName: proc.processName ? proc.processName.toUpperCase() : '',
+                          salary: proc.salary || prev.salary,
+                          location: proc.location || prev.location,
+                          trainingPeriod: proc.trainingPeriod || prev.trainingPeriod,
+                          stipend: `STIPEND ₹${proc.stipend || '12,000'}`,
+                          trainingFee: proc.trainingFee || prev.trainingFee,
+                          bondPeriod: proc.bondPeriod || prev.bondPeriod
+                        }));
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        border: isSelected ? '2px solid #2563eb' : '1.5px solid #cbd5e1',
+                        background: isSelected ? 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)' : '#ffffff',
+                        color: isSelected ? '#ffffff' : '#334155',
+                        boxShadow: isSelected ? '0 2px 8px rgba(37,99,235,0.25)' : 'none',
+                        transition: 'all 0.15s ease',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {proc.processName ? proc.processName.toUpperCase() : `PROCESS ${procNum}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {successApp ? (
             <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
               <div style={{
