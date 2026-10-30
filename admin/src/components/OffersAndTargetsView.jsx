@@ -579,7 +579,25 @@ export default function OffersAndTargetsView({
       };
     }
     if (lower.includes('it') || lower.includes('track') || lower.includes('software') || lower.includes('training')) {
-      const role = resolvedRole || 'Full Stack Java / Python Developer';
+      let eligibleTracks = [];
+      if (resolvedRole && resolvedRole.includes(',') && !resolvedRole.toLowerCase().includes('developer')) {
+        eligibleTracks = resolvedRole.split(',').map(t => t.trim()).filter(Boolean);
+      }
+      if (eligibleTracks.length === 0) {
+        eligibleTracks = [
+          'Full Stack Java',
+          'Python Developer',
+          'MERN Stack Dev',
+          'Software Testing / QA',
+          'Data Analytics'
+        ];
+      }
+
+      const isAnyItCandidate = lower.includes('candidate') || lower.includes('any it') || lower.includes('1 it') || !resolvedRole || resolvedRole.toLowerCase().includes('candidate') || resolvedRole.toLowerCase().includes('developer');
+      const role = isAnyItCandidate
+        ? 'Any 1 Candidate (Choose from IT Tracks)'
+        : (resolvedRole || 'Full Stack Java / Python Developer');
+
       return {
         name: 'FIC IT Track',
         displayName: 'FIC IT & SOFTWARE TRACK',
@@ -587,13 +605,14 @@ export default function OffersAndTargetsView({
         brandKey: 'it_training',
         logo: null,
         isItTrack: true,
+        eligibleTracks: eligibleTracks,
         specificRole: role,
         openRoles: role,
         primary: '#4f46e5',
         gradient: 'linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #6366f1 100%)',
         glow: 'rgba(99, 102, 241, 0.45)',
         accent: '#c7d2fe',
-        tag: 'High Package Tech Placements',
+        tag: 'Any 1 of 5 IT Tracks',
         category: 'IT & Software Programs',
         salaryRange: '₹3.5L - ₹7.0L CTC with 100% Placement Guarantee',
         minQualification: 'B.E / B.Tech / BCA / MCA / B.Sc / Any Degree with coding interest',
@@ -707,15 +726,15 @@ export default function OffersAndTargetsView({
       } else if (bKey.includes('suryoday')) {
         bankMatched = fullText.includes('suryoday');
       } else if (bKey.includes('it') || brandInfo.isItTrack) {
-        bankMatched = fullText.includes('it') || fullText.includes('software') || fullText.includes('training') || fullText.includes('developer') || fullText.includes('python') || fullText.includes('java');
+        bankMatched = fullText.includes('it') || fullText.includes('software') || fullText.includes('training') || fullText.includes('developer') || fullText.includes('python') || fullText.includes('java') || fullText.includes('mern') || fullText.includes('testing') || fullText.includes('qa') || fullText.includes('data');
       } else {
         bankMatched = fullText.includes(bKey);
       }
 
       if (!bankMatched) return false;
 
-      // If specific role exists and it's not a general any-banking badge, check role match
-      if (!brandInfo.isAnyBanking && roleKey && roleKey.length > 3) {
+      // If specific role exists and it's not a general any-banking or any-it badge, check role match
+      if (!brandInfo.isAnyBanking && !brandInfo.isItTrack && roleKey && roleKey.length > 3) {
         const roleTokens = roleKey.split(/[\s,()/-]+/).filter(t => t.length > 2);
         const hasRoleTokenMatch = roleTokens.some(tok => fullText.includes(tok));
         if (hasRoleTokenMatch) return true;
@@ -2963,6 +2982,69 @@ export default function OffersAndTargetsView({
                               </span>
                             );
                           })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Eligible IT Tracks Chips for IT Slot */}
+                    {slot.isItTrack && slot.eligibleTracks && slot.eligibleTracks.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          width: '100%',
+                          background: '#f5f3ff',
+                          border: '1.5px solid #ddd6fe',
+                          borderRadius: '10px',
+                          padding: '7px 8px',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: '0.64rem',
+                            fontWeight: 800,
+                            color: '#6d28d9',
+                            marginBottom: '6px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span>💻</span>
+                          <span>Eligible IT Tracks (Any 1 Candidate):</span>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '4px',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {slot.eligibleTracks.map((tName, tIdx) => (
+                            <span
+                              key={tIdx}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '3px 6px',
+                                background: '#ffffff',
+                                border: '1px solid #c4b5fd',
+                                borderRadius: '6px',
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                color: '#4c1d95',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                              }}
+                            >
+                              <span style={{ fontSize: '0.65rem' }}>⚡</span>
+                              <span>{tName}</span>
+                            </span>
+                          ))}
                         </div>
                       </div>
                     )}
