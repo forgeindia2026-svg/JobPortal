@@ -601,11 +601,19 @@ export default function OffersAndTargetsView({
         whyJoin: 'Top IT salary packages, MNC placement opportunities, hybrid/remote work options.'
       };
     }
-    const fallbackRole = resolvedRole || 'Banking Executive';
+    const isAnyBanking = lower.includes('any') && (lower.includes('bank') || lower.includes('candidat'));
+    const cleanSlotName = isAnyBanking
+      ? 'Any Partner Bank'
+      : (bankPart || `Partner Bank Slot ${index + 1}`);
+    const cleanDisplayName = isAnyBanking
+      ? 'ANY PARTNER BANK'
+      : (cleanSlotName).toUpperCase();
+    const fallbackRole = resolvedRole || (isAnyBanking ? 'Any Bank Candidate' : 'Banking Executive');
+
     return {
-      name: bankPart || `Partner Bank Slot ${index + 1}`,
-      displayName: (bankPart || `Partner Bank Slot ${index + 1}`).toUpperCase(),
-      shortName: bankPart,
+      name: cleanSlotName,
+      displayName: cleanDisplayName,
+      shortName: cleanSlotName,
       brandKey: `slot_${index + 1}`,
       logo: BANK_LOGOS[bankPart] || null,
       specificRole: fallbackRole,
@@ -614,11 +622,11 @@ export default function OffersAndTargetsView({
       gradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
       glow: 'rgba(15, 23, 42, 0.45)',
       accent: '#e2e8f0',
-      tag: 'FIC Partner Institution',
+      tag: isAnyBanking ? 'Any 10 Partner Banks' : 'FIC Partner Institution',
       category: 'Banking / Placement Track',
       salaryRange: '₹2.2L - ₹4.5L CTC + Attractive Incentives',
       minQualification: 'Any Degree / 12th Pass',
-      description: 'Refer candidates to complete this slot towards unlocking your Brand New Tablet or ₹30,000 Cash reward.',
+      description: 'Refer candidates to complete this slot towards unlocking your Brand New Tablet or ₹25,000 Cash reward.',
       whyJoin: 'Reliable placement partner, attractive incentive payouts.'
     };
   };
@@ -2329,7 +2337,7 @@ export default function OffersAndTargetsView({
               }
               .combo-banks-grid {
                 display: grid;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: repeat(${brandSlots.length <= 2 ? brandSlots.length : 3}, minmax(0, 1fr));
                 gap: 12px;
                 margin-bottom: 14px;
               }
@@ -2541,8 +2549,8 @@ export default function OffersAndTargetsView({
                   letter-spacing: 0px !important;
                 }
                 .combo-banks-grid {
-                  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-                  gap: 5px !important;
+                  grid-template-columns: repeat(${brandSlots.length <= 2 ? brandSlots.length : 3}, minmax(0, 1fr)) !important;
+                  gap: 6px !important;
                   margin-bottom: 8px !important;
                 }
                 .combo-bank-card {
@@ -2824,41 +2832,27 @@ export default function OffersAndTargetsView({
                       {slot.specificRole || slot.openRoles}
                     </div>
 
-                    {/* Slot Status and Action Buttons */}
-                    <div className="combo-bank-action-row">
-                      <span
-                        className="combo-bank-slot-pill"
-                        style={{
-                          color: slot.isSlotCompleted ? '#065f46' : slot.isSlotInProgress ? '#92400e' : '#475569',
-                          background: slot.isSlotCompleted ? '#d1fae5' : slot.isSlotInProgress ? '#fef3c7' : '#f1f5f9'
-                        }}
-                      >
-                        {slot.isSlotCompleted ? '✓ Done' : slot.isSlotInProgress ? `Pipe (${slot.inProgressApps.length})` : '0/1'}
-                      </span>
-
-                      <div style={{ display: 'flex', gap: '3px' }}>
-                        <button
-                          onClick={() => handleShareBrandWhatsApp(slot)}
-                          title={`Share ${slot.name} on WhatsApp`}
-                          className="combo-bank-action-btn"
-                          style={{ background: '#25D366', color: '#ffffff', border: 'none' }}
-                        >
-                          <Share2 size={11} />
-                        </button>
-                        <button
-                          onClick={() => handleCopyBrandLink(slot)}
-                          title={`Copy Candidate Link for ${slot.name}`}
-                          className="combo-bank-action-btn"
+                    {/* Slot Completed Status Tag (Only when candidate is closed/hired) */}
+                    {slot.isSlotCompleted && (
+                      <div style={{ marginTop: '8px' }}>
+                        <span
                           style={{
-                            background: copiedText === slot.shortName ? '#10b981' : '#f8fafc',
-                            color: copiedText === slot.shortName ? '#ffffff' : '#334155',
-                            border: '1px solid #cbd5e1'
+                            color: '#065f46',
+                            background: '#d1fae5',
+                            border: '1px solid #6ee7b7',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
                           }}
                         >
-                          <Copy size={11} />
-                        </button>
+                          ✓ Done
+                        </span>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
