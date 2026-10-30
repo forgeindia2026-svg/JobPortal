@@ -601,14 +601,10 @@ export default function OffersAndTargetsView({
         whyJoin: 'Top IT salary packages, MNC placement opportunities, hybrid/remote work options.'
       };
     }
-    const isAnyBanking = lower.includes('any') && (lower.includes('bank') || lower.includes('candidat'));
-    const cleanSlotName = isAnyBanking
-      ? 'Any Partner Bank'
-      : (bankPart || `Partner Bank Slot ${index + 1}`);
-    const cleanDisplayName = isAnyBanking
-      ? 'ANY PARTNER BANK'
-      : (cleanSlotName).toUpperCase();
-    const fallbackRole = resolvedRole || (isAnyBanking ? 'Any Bank Candidate' : 'Banking Executive');
+    // Pure dynamic resolution: exactly what admin typed in bank and role slots
+    const cleanSlotName = bankPart || `Partner Bank Slot ${index + 1}`;
+    const cleanDisplayName = cleanSlotName.toUpperCase();
+    const fallbackRole = resolvedRole || 'Banking Executive';
 
     return {
       name: cleanSlotName,
@@ -622,11 +618,11 @@ export default function OffersAndTargetsView({
       gradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
       glow: 'rgba(15, 23, 42, 0.45)',
       accent: '#e2e8f0',
-      tag: isAnyBanking ? 'Any 10 Partner Banks' : 'FIC Partner Institution',
+      tag: 'FIC Partner Institution',
       category: 'Banking / Placement Track',
       salaryRange: '₹2.2L - ₹4.5L CTC + Attractive Incentives',
       minQualification: 'Any Degree / 12th Pass',
-      description: 'Refer candidates to complete this slot towards unlocking your Brand New Tablet or ₹25,000 Cash reward.',
+      description: 'Refer candidates to complete this slot towards unlocking your Grand Bumper Reward!',
       whyJoin: 'Reliable placement partner, attractive incentive payouts.'
     };
   };
@@ -2807,23 +2803,26 @@ export default function OffersAndTargetsView({
                         : '0 2px 10px rgba(2, 132, 199, 0.08)'
                     }}
                   >
-                    {/* Bank Logo */}
-                    <div className="combo-bank-logo-box">
-                      {slot.logo ? (
+                    {/* Bank Logo / Fallback Header */}
+                    {slot.logo ? (
+                      <div className="combo-bank-logo-box">
                         <img
                           src={slot.logo}
                           alt={slot.name}
                           className="combo-bank-logo-img"
                         />
-                      ) : (
-                        <div style={{ fontWeight: 900, fontSize: '0.9rem', color: slot.primary || '#1e3a8a' }}>
-                          {slot.name}
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : null}
 
                     {/* Bank Title */}
-                    <div className="combo-bank-name" title={slot.displayName || slot.name}>
+                    <div
+                      className="combo-bank-name"
+                      title={slot.displayName || slot.name}
+                      style={{
+                        color: slot.primary || '#1e3a8a',
+                        fontWeight: 900
+                      }}
+                    >
                       {slot.displayName || slot.name}
                     </div>
 
