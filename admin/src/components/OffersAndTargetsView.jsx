@@ -581,8 +581,8 @@ export default function OffersAndTargetsView({
     if (lower.includes('it') || lower.includes('track') || lower.includes('software') || lower.includes('training')) {
       const role = resolvedRole || 'Full Stack Java / Python Developer';
       return {
-        name: 'FIC IT & Software Training Track',
-        displayName: 'FIC IT TRACK',
+        name: 'FIC IT Track',
+        displayName: 'FIC IT & SOFTWARE TRACK',
         shortName: 'IT Training',
         brandKey: 'it_training',
         logo: null,
@@ -1672,24 +1672,29 @@ export default function OffersAndTargetsView({
                       {set.title}
                     </div>
 
-                    {/* REQUIRED COMBO ROLES PREVIEW */}
+                    {/* REQUIRED COMBO ROLES PREVIEW (SHOW CLEAN BANK NAMES ONLY) */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-                      {rolesList.map((r, rIdx) => (
-                        <span
-                          key={rIdx}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.18)',
-                            color: '#ffffff',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.66rem',
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {r}
-                        </span>
-                      ))}
+                      {rolesList.map((r, rIdx) => {
+                        const cleanBankName = typeof r === 'string'
+                          ? r.replace(/\s*\(.*?\)/g, '').split(' - ')[0].trim()
+                          : r;
+                        return (
+                          <span
+                            key={rIdx}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.22)',
+                              color: '#ffffff',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {cleanBankName}
+                          </span>
+                        );
+                      })}
                     </div>
 
                     {/* REWARD BADGE */}
@@ -2356,18 +2361,21 @@ export default function OffersAndTargetsView({
                 object-fit: contain;
               }
               .combo-bank-name {
-                font-size: 0.82rem;
+                font-size: 0.76rem;
                 font-weight: 800;
                 color: #1e293b;
-                line-height: 1.2;
-                min-height: 20px;
+                line-height: 1.25;
+                min-height: 28px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                text-align: center;
                 width: 100%;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                white-space: normal;
+                word-break: break-word;
+                overflow-wrap: break-word;
+                padding: 0 2px;
+                box-sizing: border-box;
               }
               .combo-bank-role-badge {
                 background: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%);
@@ -2551,14 +2559,20 @@ export default function OffersAndTargetsView({
                   max-width: 82px !important;
                 }
                 .combo-bank-name {
-                  font-size: 0.62rem !important;
+                  font-size: 0.58rem !important;
                   line-height: 1.15 !important;
-                  min-height: 16px !important;
-                  white-space: nowrap !important;
-                  overflow: hidden !important;
-                  text-overflow: ellipsis !important;
+                  min-height: 24px !important;
+                  white-space: normal !important;
+                  word-break: break-word !important;
+                  overflow-wrap: break-word !important;
+                  overflow: visible !important;
+                  text-overflow: unset !important;
+                  text-align: center !important;
                   width: 100% !important;
                   padding: 0 1px !important;
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
                 }
                 .combo-bank-role-badge {
                   font-size: 0.58rem !important;
