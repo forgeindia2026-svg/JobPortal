@@ -1309,7 +1309,7 @@ export default function OffersAndTargetsView({
                       fontWeight: 900
                     }}
                   >
-                    WIN TAB / ₹25k 📱
+                    WIN TAB / UP TO ₹30k 📱
                   </span>
                 </div>
 
@@ -1318,7 +1318,7 @@ export default function OffersAndTargetsView({
                 </h3>
 
                 <p style={{ margin: '0 0 12px', fontSize: '0.82rem', color: '#e0e7ff', lineHeight: 1.45 }}>
-                  Enroll candidates in any of the 4 specialized FIC Training Combo Sets. Win a Brand New TAB (Tablet) OR ₹25,000 Direct Cash Prize!
+                  Enroll candidates in any of the 4 specialized FIC Training Combo Sets. Win a Brand New TAB (Tablet) OR up to ₹30,000 Direct Cash Prize!
                 </p>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
@@ -1326,7 +1326,7 @@ export default function OffersAndTargetsView({
                     📱 Brand New TAB
                   </span>
                   <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
-                    💰 ₹25,000 Cash Prize
+                    💰 Up to ₹30,000 Cash Prize
                   </span>
                   <span style={{ background: 'rgba(255, 255, 255, 0.2)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700 }}>
                     🏆 4 Challenge Sets
@@ -1630,7 +1630,7 @@ export default function OffersAndTargetsView({
                 <span>FIC Training & Placement Combo Sets</span>
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                Select any of the 4 combo sets below to view its details and claim Brand New TAB or ₹25,000 Cash!
+                Select any of the 4 combo sets below to view its details and claim Brand New TAB or Cash Rewards up to ₹30,000!
               </p>
             </div>
             <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#4338ca', background: '#eef2ff', border: '1px solid #c7d2fe', padding: '4px 12px', borderRadius: '12px' }}>
@@ -1644,6 +1644,10 @@ export default function OffersAndTargetsView({
               grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
               gap: 14px;
             }
+            .paid-set-card {
+              min-height: 205px !important;
+              height: 100% !important;
+            }
             @media (max-width: 768px) {
               .paid-sets-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
@@ -1652,10 +1656,10 @@ export default function OffersAndTargetsView({
               .paid-set-card {
                 padding: 0.85rem 0.75rem 0.75rem !important;
                 border-radius: 14px !important;
-                min-height: 165px !important;
+                min-height: 215px !important;
               }
               .paid-set-name {
-                font-size: 0.88rem !important;
+                font-size: 0.86rem !important;
               }
             }
           `}</style>
@@ -1686,7 +1690,8 @@ export default function OffersAndTargetsView({
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    minHeight: '175px',
+                    minHeight: '205px',
+                    height: '100%',
                     boxShadow: `0 10px 24px -4px ${theme.glow}`,
                     color: '#ffffff',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1754,7 +1759,7 @@ export default function OffersAndTargetsView({
                     </div>
 
                     {/* REQUIRED COMBO ROLES PREVIEW (SHOW CLEAN BANK NAMES ONLY) */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginBottom: '8px' }}>
                       {rolesList.map((r, rIdx) => {
                         const cleanBankName = typeof r === 'string'
                           ? r.replace(/\s*\(.*?\)/g, '').split(' - ')[0].trim()
@@ -1765,11 +1770,11 @@ export default function OffersAndTargetsView({
                             style={{
                               background: 'rgba(255, 255, 255, 0.22)',
                               color: '#ffffff',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              fontSize: '0.7rem',
+                              padding: '2px 6px',
+                              borderRadius: '5px',
+                              fontSize: '0.66rem',
                               fontWeight: 800,
-                              whiteSpace: 'nowrap'
+                              lineHeight: 1.25
                             }}
                           >
                             {cleanBankName}
@@ -1778,9 +1783,19 @@ export default function OffersAndTargetsView({
                       })}
                     </div>
 
-                    {/* REWARD BADGE */}
-                    <div style={{ fontSize: '0.72rem', color: '#fef08a', fontWeight: 800 }}>
-                      🎁 Brand New TAB or ₹25,000 Cash
+                    {/* REWARD BADGE (DYNAMIC REWARD: SET 4 IS ₹30,000, OTHERS ₹25,000) */}
+                    <div
+                      style={{
+                        fontSize: '0.74rem',
+                        color: '#fef08a',
+                        fontWeight: 900,
+                        lineHeight: 1.35,
+                        marginTop: '4px',
+                        marginBottom: '4px',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                      }}
+                    >
+                      🎁 Brand New TAB or ₹{Number(set.rewardAmount || (idx === 3 ? 30000 : 25000)).toLocaleString('en-IN')} Cash
                     </div>
                   </div>
 
@@ -1847,7 +1862,7 @@ export default function OffersAndTargetsView({
           >
             <ShieldCheck size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div style={{ fontSize: '0.78rem', color: '#475569', lineHeight: 1.45 }}>
-              <strong style={{ color: '#0f172a' }}>Combo Set Guidelines:</strong> Achieving any of the 4 combo sets unlocks a Brand New Tablet or ₹25,000 Direct Cash on top of all standard candidate placement referral incentives.
+              <strong style={{ color: '#0f172a' }}>Combo Set Guidelines:</strong> Achieving any of the 4 combo sets unlocks a Brand New Tablet or Cash Rewards up to ₹30,000 on top of all standard candidate placement referral incentives.
             </div>
           </div>
         </div>
