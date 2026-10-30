@@ -8,8 +8,10 @@ import {
 const ALL_BANKS = [
   'Bandhan Bank',
   'Axis Bank',
+  'Axis Gold',
   'Suryoday Small Finance Bank',
   'Kotak Mahindra Bank',
+  'Kotak Gold',
   'IDFC First Bank',
   'YES Bank',
   'HDFC Bank',

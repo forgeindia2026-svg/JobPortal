@@ -8,8 +8,10 @@ import {
 
 const BANK_LOGOS = {
   'Axis Bank': '/logos/axis_bank.svg',
+  'Axis Gold': '/logos/axis_bank.svg',
   'IDFC First Bank': '/logos/idfc_first_bank.svg',
   'Kotak Mahindra Bank': '/logos/kotak_bank.png',
+  'Kotak Gold': '/logos/kotak_bank.png',
   'Bandhan Bank': '/logos/bandhan_bank.png',
   'Aditya Birla Capital': '/logos/aditya_birla.jpg',
   'Aditya Birla': '/logos/aditya_birla.jpg',
@@ -686,8 +688,8 @@ export default function OffersAndTargetsView({
         eligibleBanks = [
           'Suryoday Small Finance Bank',
           'Bandhan Bank',
-          'Axis Bank',
-          'Kotak Mahindra Bank',
+          'Axis Gold',
+          'Kotak Gold',
           'Aditya Birla Capital'
         ];
       }
