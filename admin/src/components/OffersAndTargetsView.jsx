@@ -601,6 +601,53 @@ export default function OffersAndTargetsView({
         whyJoin: 'Top IT salary packages, MNC placement opportunities, hybrid/remote work options.'
       };
     }
+    const isAnyBanking = (lower.includes('any') && (lower.includes('bank') || lower.includes('candidat'))) ||
+      lower.includes('any banking') || lower.includes('banking candidates');
+
+    if (isAnyBanking) {
+      let eligibleBanks = [];
+      if (resolvedRole && resolvedRole.includes(',') && !resolvedRole.toLowerCase().includes('banking executive')) {
+        eligibleBanks = resolvedRole.split(',').map(b => b.trim()).filter(Boolean);
+      }
+      if (eligibleBanks.length === 0) {
+        eligibleBanks = [
+          'Suryoday Small Finance Bank',
+          'Bandhan Bank',
+          'Axis Bank',
+          'Kotak Mahindra Bank',
+          'Aditya Birla Capital'
+        ];
+      }
+
+      const cleanSlotName = bankPart || 'Any 2 Banking Candidates';
+      const cleanDisplayName = cleanSlotName.toUpperCase();
+      const roleBadgeText = (resolvedRole && !resolvedRole.includes(',') && !resolvedRole.toLowerCase().includes('any bank'))
+        ? resolvedRole
+        : 'Any 2 Candidates (Choose from 5 Banks)';
+
+      return {
+        name: cleanSlotName,
+        displayName: cleanDisplayName,
+        shortName: 'Any Banking',
+        brandKey: `any_banking_${index + 1}`,
+        logo: null,
+        isAnyBanking: true,
+        eligibleBanks: eligibleBanks,
+        specificRole: roleBadgeText,
+        openRoles: roleBadgeText,
+        primary: '#0369a1',
+        gradient: 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #38bdf8 100%)',
+        glow: 'rgba(2, 132, 199, 0.45)',
+        accent: '#bae6fd',
+        tag: 'Choose Any 2 of 5 Banks',
+        category: 'Banking / Placement Track',
+        salaryRange: '₹2.2L - ₹4.5L CTC + Attractive Incentives',
+        minQualification: 'Any Degree / 12th Pass',
+        description: 'Enroll any 2 candidates across the 5 eligible partner banks towards unlocking your reward!',
+        whyJoin: 'Multiple banking brand options, flexible placement tracks.'
+      };
+    }
+
     // Pure dynamic resolution: exactly what admin typed in bank and role slots
     const cleanSlotName = bankPart || `Partner Bank Slot ${index + 1}`;
     const cleanDisplayName = cleanSlotName.toUpperCase();
@@ -636,7 +683,18 @@ export default function OffersAndTargetsView({
       const fullText = `${app.jobTitle || ''} ${app.company || ''} ${app.bankName || ''} ${app.role || ''} ${app.programName || ''}`.toLowerCase();
       
       let bankMatched = false;
-      if (bKey.includes('birla') || bKey.includes('aditya')) {
+      if (brandInfo.isAnyBanking) {
+        const eligible = brandInfo.eligibleBanks || [];
+        bankMatched = eligible.some(b => {
+          const bk = b.toLowerCase();
+          return fullText.includes(bk) ||
+            (bk.includes('suryoday') && fullText.includes('suryoday')) ||
+            (bk.includes('bandhan') && fullText.includes('bandhan')) ||
+            (bk.includes('axis') && fullText.includes('axis')) ||
+            (bk.includes('kotak') && fullText.includes('kotak')) ||
+            (bk.includes('birla') && (fullText.includes('birla') || fullText.includes('aditya')));
+        }) || (!brandInfo.isItTrack && (fullText.includes('bank') || fullText.includes('gold')));
+      } else if (bKey.includes('birla') || bKey.includes('aditya')) {
         bankMatched = fullText.includes('birla') || fullText.includes('aditya');
       } else if (bKey.includes('tata')) {
         bankMatched = fullText.includes('tata');
@@ -656,8 +714,8 @@ export default function OffersAndTargetsView({
 
       if (!bankMatched) return false;
 
-      // If specific role exists, check if role words match too
-      if (roleKey && roleKey.length > 3) {
+      // If specific role exists and it's not a general any-banking badge, check role match
+      if (!brandInfo.isAnyBanking && roleKey && roleKey.length > 3) {
         const roleTokens = roleKey.split(/[\s,()/-]+/).filter(t => t.length > 2);
         const hasRoleTokenMatch = roleTokens.some(tok => fullText.includes(tok));
         if (hasRoleTokenMatch) return true;
@@ -2780,7 +2838,7 @@ export default function OffersAndTargetsView({
                 <div className="combo-top-ribbon">
                   <span>For Payment Process in these </span>
                   <span style={{ color: '#fef08a', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
-                    {totalSlotsCount} Banks
+                    {brandSlots.some(s => s.isItTrack) ? 'Banking & IT Tracks' : `${totalSlotsCount} Banks`}
                   </span>
                   <span> (HR Hiring Only)</span>
                 </div>
@@ -2830,6 +2888,84 @@ export default function OffersAndTargetsView({
                     <div className="combo-bank-role-badge" title={slot.specificRole || slot.openRoles}>
                       {slot.specificRole || slot.openRoles}
                     </div>
+
+                    {/* Eligible 5 Banks Chips for Any Banking Slot (Plan A) */}
+                    {slot.isAnyBanking && slot.eligibleBanks && slot.eligibleBanks.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          width: '100%',
+                          background: '#f8fafc',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: '10px',
+                          padding: '7px 8px',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: '0.64rem',
+                            fontWeight: 800,
+                            color: '#0369a1',
+                            marginBottom: '6px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span>🏦</span>
+                          <span>Eligible 5 Banks (Choose Any 2):</span>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '4px',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {slot.eligibleBanks.map((bName, bIdx) => {
+                            const logo = BANK_LOGOS[bName];
+                            const shortLabel = bName
+                              .replace('Small Finance Bank', 'SFB')
+                              .replace('Capital', '')
+                              .trim();
+                            return (
+                              <span
+                                key={bIdx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '3px 6px',
+                                  background: '#ffffff',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: '6px',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  color: '#0f172a',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                                }}
+                              >
+                                {logo ? (
+                                  <img
+                                    src={logo}
+                                    alt={bName}
+                                    style={{ height: '12px', width: 'auto', objectFit: 'contain' }}
+                                  />
+                                ) : (
+                                  <span style={{ fontSize: '0.65rem' }}>🏦</span>
+                                )}
+                                <span>{shortLabel}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Slot Completed Status Tag (Only when candidate is closed/hired) */}
                     {slot.isSlotCompleted && (

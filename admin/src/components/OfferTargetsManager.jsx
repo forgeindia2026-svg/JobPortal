@@ -945,10 +945,11 @@ export default function OfferTargetsManager({ API_URL, currentUser }) {
                               }}
                             />
                             <datalist id={`banks-list-${idx}-${sIdx}`}>
+                              <option value="Any 2 Banking Candidates" />
+                              <option value="FIC IT Track" />
                               {ALL_BANKS.map(b => (
                                 <option key={b} value={b} />
                               ))}
-                              <option value="FIC IT Track" />
                             </datalist>
                           </div>
 
