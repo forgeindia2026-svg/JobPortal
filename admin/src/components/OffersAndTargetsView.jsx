@@ -206,12 +206,27 @@ export default function OffersAndTargetsView({
   onNavigateTab,
   showToast
 }) {
-  const [viewMode, setViewMode] = useState('categories'); // 'categories' | 'free_process' | 'paid_process' | 'bank_detail' | 'combo_detail'
+  const getInitialSubMode = () => {
+    if (typeof window === 'undefined') return 'categories';
+    const hash = window.location.hash.replace('#', '');
+    if (hash.startsWith('offers_targets/')) {
+      const sub = hash.replace('offers_targets/', '').split('/')[0];
+      if (['categories', 'free_process', 'paid_process', 'bank_detail', 'combo_detail'].includes(sub)) {
+        return sub;
+      }
+    }
+    return 'categories';
+  };
+  const [viewMode, setViewMode] = useState(getInitialSubMode); // 'categories' | 'free_process' | 'paid_process' | 'bank_detail' | 'combo_detail'
   const [selectedCombo, setSelectedCombo] = useState(null);
   const [selectedComboIdx, setSelectedComboIdx] = useState(0);
   const [copiedText, setCopiedText] = useState(null);
   const [rewardPreference, setRewardPreference] = useState('both'); // 'tab' | 'cash' | 'both'
-  const [activeProcess, setActiveProcess] = useState('free'); // 'free' | 'paid'
+  const [activeProcess, setActiveProcess] = useState(() => {
+    if (typeof window === 'undefined') return 'free';
+    const h = window.location.hash.replace('#', '');
+    return (h.includes('paid_process') || h.includes('combo_detail')) ? 'paid' : 'free';
+  });
   const [selectedBank, setSelectedBank] = useState('Bandhan Bank');
   const [loading, setLoading] = useState(true);
   const [programData, setProgramData] = useState(null);
@@ -301,46 +316,85 @@ export default function OffersAndTargetsView({
     }
   };
 
+  const pushSubView = (newMode, extra = {}) => {
+    setViewMode(newMode);
+    try {
+      if (typeof window !== 'undefined') {
+        window.history.pushState(
+          { isOffersSubView: true, offersViewMode: newMode, ...extra },
+          '',
+          `#offers_targets/${newMode}`
+        );
+      }
+    } catch (e) {
+      console.warn('History push error:', e);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleOpenFreeProcess = () => {
     setActiveProcess('free');
-    setViewMode('free_process');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    pushSubView('free_process');
   };
 
   const handleOpenPaidProcess = () => {
     setActiveProcess('paid');
-    setViewMode('paid_process');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleBackToCategories = () => {
-    setViewMode('categories');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    pushSubView('paid_process');
   };
 
   const handleOpenBankDetail = (bName) => {
     setSelectedBank(bName);
-    setViewMode('bank_detail');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleBackToBanks = () => {
-    setViewMode('free_process');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    pushSubView('bank_detail', { bank: bName });
   };
 
   const handleOpenComboDetail = (comboSet, idx) => {
     setSelectedCombo(comboSet);
     setSelectedComboIdx(idx);
-    setViewMode('combo_detail');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    pushSubView('combo_detail', { comboIdx: idx });
   };
 
-  const handleBackToChallengeSets = () => {
-    setViewMode('paid_process');
-    setActiveProcess('paid');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const goBackSubView = (fallbackMode) => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('/')) {
+      window.history.back();
+    } else {
+      setViewMode(fallbackMode);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
+
+  const handleBackToCategories = () => goBackSubView('categories');
+  const handleBackToBanks = () => goBackSubView('free_process');
+  const handleBackToChallengeSets = () => goBackSubView('paid_process');
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      const hash = window.location.hash.replace('#', '');
+      if (!hash.startsWith('offers_targets')) {
+        return;
+      }
+      const parts = hash.split('/');
+      const subMode = parts[1] || 'categories';
+      setViewMode(subMode);
+      if (subMode === 'paid_process' || subMode === 'combo_detail') {
+        setActiveProcess('paid');
+        if (subMode === 'combo_detail') {
+          const cIdx = e?.state?.comboIdx ?? selectedComboIdx ?? 0;
+          setSelectedComboIdx(cIdx);
+          if (paidComboSets && paidComboSets[cIdx]) {
+            setSelectedCombo(paidComboSets[cIdx]);
+          }
+        }
+      } else if (subMode === 'free_process' || subMode === 'bank_detail') {
+        setActiveProcess('free');
+        if (subMode === 'bank_detail' && e?.state?.bank) {
+          setSelectedBank(e.state.bank);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [paidComboSets, selectedComboIdx]);
 
   const portalBase = candidatePortalBaseUrl || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:5173' : 'https://jobs.forgeindiaconnect.in');
   const hrRefCode = currentUser?.referralCode || currentUser?.id || '';

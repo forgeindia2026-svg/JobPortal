@@ -63,15 +63,22 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [copiedItId, setCopiedItId] = useState(null);
 
   useEffect(() => {
-    if (activeTab && window.location.hash.replace('#', '') !== activeTab) {
-      window.history.pushState(null, '', `#${activeTab}`);
+    if (activeTab) {
+      const currentHash = window.location.hash.replace('#', '');
+      const currentRoot = currentHash.split('/')[0];
+      if (currentRoot !== activeTab) {
+        window.history.pushState(null, '', `#${activeTab}`);
+      }
     }
   }, [activeTab]);
 
   useEffect(() => {
     const handlePopState = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash) setActiveTab(hash);
+      if (hash) {
+        const rootTab = hash.split('/')[0];
+        setActiveTab(rootTab);
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -833,7 +840,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           />
         )}
 
-        {activeTab === 'offers_targets' && (
+        {(activeTab === 'offers_targets' || activeTab.startsWith('offers_targets')) && (
           <OffersAndTargetsView
             API_URL={API_URL}
             currentUser={currentUser}
@@ -841,7 +848,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             referralLink={referralLink}
             applications={stats?.applications || []}
             directJobs={directJobs || []}
-            onBack={() => setActiveTab('overview')}
+            onBack={() => {
+              setActiveTab('overview');
+              window.history.pushState(null, '', '#overview');
+            }}
             onNavigateTab={(tab) => setActiveTab(tab)}
             showToast={showToast}
           />
