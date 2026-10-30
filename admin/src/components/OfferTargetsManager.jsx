@@ -21,19 +21,19 @@ const ALL_BANKS = [
 const DEFAULT_COMBO_SETS = [
   {
     id: 'combo_1',
-    title: 'Set 1: Premium Banking Trio',
-    roles: 'Aditya Birla, Tata Capital, HDFC Bank',
-    targetCount: 3,
+    title: 'Banking Combo',
+    roles: 'Bandhan Bank (Customer Relationship Officer), Axis Bank (Assistant Manager), Aditya Birla Capital (Bank Relationship Officer)',
+    targetCount: 5,
     rewardType: 'both',
     rewardAmount: 25000,
-    rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+    rewardTitle: 'Brand New TAB or ₹25,000 Cash Rewards',
     extraIncentiveText: '+ Full Candidate Placement Incentives',
-    description: 'Enroll candidates across Aditya Birla, Tata, and HDFC to claim a Brand New TAB or ₹25,000 Cash!'
+    description: 'Enroll candidates claim a Brand New TAB or ₹25,000 Cash!'
   },
   {
     id: 'combo_2',
     title: 'Set 2: Hybrid Banking & IT Combo',
-    roles: 'Any 2 Banking Candidates, 1 IT Training Candidate',
+    roles: 'Axis Bank (Customer Service Officer), Aditya Birla Capital (Sales Manager), FIC IT Track (Full Stack Java / Python Developer)',
     targetCount: 3,
     rewardType: 'both',
     rewardAmount: 25000,
@@ -44,7 +44,7 @@ const DEFAULT_COMBO_SETS = [
   {
     id: 'combo_3',
     title: 'Set 3: Gold Academy Power Trio',
-    roles: 'Axis Gold Academy, Kotak Gold Academy, Suryoday Small Finance Bank',
+    roles: 'Axis Bank (Gold Appraiser), Kotak Mahindra Bank (Gold Loan Officer), Suryoday Small Finance Bank (Acquisition Manager (AM))',
     targetCount: 3,
     rewardType: 'both',
     rewardAmount: 25000,
@@ -55,7 +55,7 @@ const DEFAULT_COMBO_SETS = [
   {
     id: 'combo_4',
     title: 'Set 4: Master Placement Quad Combo',
-    roles: 'Axis Gold, Kotak Gold, Aditya Birla, Any IT Track',
+    roles: 'HDFC Bank (Personal Banker / Branch Exec), Tata Capital (Loan Relationship Executive), Kotak Mahindra Bank (Branch Banking Officer), FIC IT Track (Full Stack Java / Python Developer)',
     targetCount: 4,
     rewardType: 'both',
     rewardAmount: 30000,
@@ -181,6 +181,66 @@ export default function OfferTargetsManager({ API_URL, currentUser }) {
     const updated = [...paidComboSets];
     updated[idx] = { ...updated[idx], [field]: val };
     setPaidComboSets(updated);
+  };
+
+  // Helper to parse comma-separated roles into structured [{ bank, role }] array
+  const parseRoleSlots = (rolesStr) => {
+    if (!rolesStr) return [{ bank: '', role: '' }];
+    const items = typeof rolesStr === 'string'
+      ? rolesStr.split(',').map(s => s.trim()).filter(Boolean)
+      : (Array.isArray(rolesStr) ? rolesStr : []);
+    if (items.length === 0) return [{ bank: '', role: '' }];
+
+    return items.map(item => {
+      const match = item.match(/^(.*?)\s*\((.*?)\)$/);
+      if (match) {
+        return { bank: match[1].trim(), role: match[2].trim() };
+      }
+      if (item.includes(' - ')) {
+        const parts = item.split(' - ');
+        return { bank: parts[0].trim(), role: parts[1].trim() };
+      }
+      return { bank: item.trim(), role: '' };
+    });
+  };
+
+  // Helper to serialize slot objects back to "Bank (Role), Bank (Role)" format
+  const serializeSlots = (slots) => {
+    return slots
+      .map(s => {
+        const b = (s.bank || '').trim();
+        const r = (s.role || '').trim();
+        if (!b && !r) return '';
+        if (b && r) return `${b} (${r})`;
+        return b || r;
+      })
+      .filter(Boolean)
+      .join(', ');
+  };
+
+  const handleUpdateSlot = (comboIdx, slotIdx, field, value) => {
+    const currentSlots = parseRoleSlots(paidComboSets[comboIdx]?.roles);
+    if (!currentSlots[slotIdx]) {
+      currentSlots[slotIdx] = { bank: '', role: '' };
+    }
+    currentSlots[slotIdx][field] = value;
+    handleUpdateComboSet(comboIdx, 'roles', serializeSlots(currentSlots));
+  };
+
+  const handleAddSlot = (comboIdx) => {
+    const currentSlots = parseRoleSlots(paidComboSets[comboIdx]?.roles);
+    currentSlots.push({ bank: '', role: '' });
+    handleUpdateComboSet(comboIdx, 'roles', serializeSlots(currentSlots));
+  };
+
+  const handleRemoveSlot = (comboIdx, slotIdx) => {
+    const currentSlots = parseRoleSlots(paidComboSets[comboIdx]?.roles);
+    if (currentSlots.length <= 1) {
+      handleUpdateComboSet(comboIdx, 'roles', '');
+      return;
+    }
+    currentSlots.splice(slotIdx, 1);
+    handleUpdateComboSet(comboIdx, 'roles', serializeSlots(currentSlots));
   };
 
   // Save Campaign Master Settings
@@ -818,18 +878,128 @@ export default function OfferTargetsManager({ API_URL, currentUser }) {
                     />
                   </div>
 
-                  {/* Included Roles / Programs */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', marginBottom: '4px' }}>
-                      Included Roles / Banks (Comma Separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={set.roles}
-                      onChange={e => handleUpdateComboSet(idx, 'roles', e.target.value)}
-                      placeholder="e.g. Axis Gold, Kotak Gold, Suryoday Bank"
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', background: '#f8fafc', fontWeight: 600, fontSize: '0.85rem', color: '#0f172a' }}
-                    />
+                  {/* Structured Bank & Specific Role Slots Builder */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155' }}>
+                        Partner Banks & Specific Roles ({parseRoleSlots(set.roles).length} Banks)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleAddSlot(idx)}
+                        style={{
+                          background: '#f0fdf4',
+                          border: '1px solid #86efac',
+                          color: '#15803d',
+                          borderRadius: '6px',
+                          padding: '2px 8px',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <Plus size={11} />
+                        <span>Add Bank</span>
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {parseRoleSlots(set.roles).map((slot, sIdx) => (
+                        <div
+                          key={sIdx}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#f8fafc',
+                            border: '1.5px solid #e2e8f0',
+                            borderRadius: '8px',
+                            padding: '6px 8px'
+                          }}
+                        >
+                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', minWidth: '18px' }}>
+                            #{sIdx + 1}
+                          </span>
+
+                          {/* Bank Name Selector / Input */}
+                          <div style={{ flex: '1.1', minWidth: 0 }}>
+                            <input
+                              type="text"
+                              list={`banks-list-${idx}-${sIdx}`}
+                              value={slot.bank}
+                              onChange={e => handleUpdateSlot(idx, sIdx, 'bank', e.target.value)}
+                              placeholder="Select / Type Bank Name"
+                              style={{
+                                width: '100%',
+                                padding: '5px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                color: '#0f172a',
+                                background: '#ffffff',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                            <datalist id={`banks-list-${idx}-${sIdx}`}>
+                              {ALL_BANKS.map(b => (
+                                <option key={b} value={b} />
+                              ))}
+                              <option value="FIC IT Track" />
+                            </datalist>
+                          </div>
+
+                          {/* Specific Role Input */}
+                          <div style={{ flex: '1.3', minWidth: 0 }}>
+                            <input
+                              type="text"
+                              value={slot.role}
+                              onChange={e => handleUpdateSlot(idx, sIdx, 'role', e.target.value)}
+                              placeholder="Specific Role (e.g. Assistant Manager)"
+                              style={{
+                                width: '100%',
+                                padding: '5px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #fde047',
+                                background: '#fefce8',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                color: '#713f12',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+
+                          {/* Remove Slot Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSlot(idx, sIdx)}
+                            title="Remove this Bank Slot"
+                            style={{
+                              background: '#fee2e2',
+                              border: '1px solid #fca5a5',
+                              color: '#dc2626',
+                              borderRadius: '6px',
+                              padding: '4px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '4px' }}>
+                      💡 Bank Name select pannitu, adhuku right-la irukra box-la specific <strong>Role Name</strong> kudunga. Adhu direct-ah candidate portal poster-la display aagum.
+                    </div>
                   </div>
 
                   {/* Target Count & Cash Value */}

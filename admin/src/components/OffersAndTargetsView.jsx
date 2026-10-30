@@ -107,41 +107,58 @@ const BANK_COLORS = {
 const DEFAULT_PAID_COMBO_SETS = [
   {
     id: 'combo_1',
-    title: 'Set 1: Premium Banking Trio',
-    roles: ['Aditya Birla', 'Tata Capital', 'HDFC Bank'],
-    targetCount: 3,
+    title: 'Banking Combo',
+    roles: [
+      'Bandhan Bank (Customer Relationship Officer)',
+      'Axis Bank (Assistant Manager)',
+      'Aditya Birla Capital (Bank Relationship Officer)'
+    ],
+    targetCount: 5,
     rewardType: 'both',
     rewardAmount: 25000,
-    rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+    rewardTitle: 'Brand New TAB or ₹25,000 Cash Rewards',
     extraIncentiveText: '+ Full Candidate Placement Incentives',
-    description: 'Enroll candidates across Aditya Birla, Tata, and HDFC to claim a Brand New TAB or ₹25,000 Cash!'
+    description: 'Enroll candidates claim a Brand New TAB or ₹25,000 Cash!'
   },
   {
     id: 'combo_2',
     title: 'Set 2: Hybrid Banking & IT Combo',
-    roles: ['Any 2 Banking Candidates', '1 IT Training Candidate'],
+    roles: [
+      'Axis Bank (Customer Service Officer)',
+      'Aditya Birla Capital (Sales Manager)',
+      'FIC IT Track (Full Stack Developer)'
+    ],
     targetCount: 3,
     rewardType: 'both',
-    rewardAmount: 25000,
-    rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+    rewardAmount: 30000,
+    rewardTitle: 'GET ₹30,000 CASH OR A ₹30,000 WORTH TABLET',
     extraIncentiveText: '+ Full Candidate Placement Incentives',
-    description: 'Enroll any 2 Banking candidates + 1 IT Training candidate to unlock a Brand New TAB or ₹25,000 Cash!'
+    description: 'Enroll 2 Banking candidates + 1 IT Training candidate to unlock ₹30,000 Cash OR a ₹30,000 Worth Tablet!'
   },
   {
     id: 'combo_3',
     title: 'Set 3: Gold Academy Power Trio',
-    roles: ['Axis Gold Academy', 'Kotak Gold Academy', 'Suryoday Small Finance Bank'],
+    roles: [
+      'Axis Bank (Gold Appraiser)',
+      'Kotak Mahindra Bank (Gold Loan Officer)',
+      'Suryoday Small Finance Bank (Branch Relationship Exec)'
+    ],
     targetCount: 3,
     rewardType: 'both',
-    rewardAmount: 25000,
-    rewardTitle: 'Brand New TAB or ₹25,000 Cash',
+    rewardAmount: 30000,
+    rewardTitle: 'GET ₹30,000 CASH OR A ₹30,000 WORTH TABLET',
     extraIncentiveText: '+ Full Candidate Placement Incentives',
     description: 'Enroll candidates across Axis Gold, Kotak Gold, and Suryoday Bank to win the Mega Reward!'
   },
   {
     id: 'combo_4',
     title: 'Set 4: Master Placement Quad Combo',
-    roles: ['Axis Gold', 'Kotak Gold', 'Aditya Birla', 'Any IT Track'],
+    roles: [
+      'HDFC Bank (Personal Banker)',
+      'Tata Capital (Loan Officer)',
+      'Kotak Mahindra Bank (Branch Banking Officer)',
+      'FIC IT Track (Cloud & Python Specialist)'
+    ],
     targetCount: 4,
     rewardType: 'both',
     rewardAmount: 30000,
@@ -329,38 +346,144 @@ export default function OffersAndTargetsView({
   const hrRefCode = currentUser?.referralCode || currentUser?.id || '';
   const defaultRefLink = referralLink || `${portalBase}?ref=${hrRefCode}`;
 
-  const getBrandDetails = (roleName, index) => {
-    const lower = (roleName || '').toLowerCase().trim();
+  const getBrandDetails = (roleString, index) => {
+    let rawRole = (roleString || '').trim();
+    let bankPart = rawRole;
+    let explicitRole = '';
+
+    // Extract format: "Bank Name (Specific Role)"
+    const parenMatch = rawRole.match(/^(.*?)\s*\((.*?)\)$/);
+    if (parenMatch) {
+      bankPart = parenMatch[1].trim();
+      explicitRole = parenMatch[2].trim();
+    } else if (rawRole.includes(' - ')) {
+      const parts = rawRole.split(' - ');
+      bankPart = parts[0].trim();
+      explicitRole = parts[1].trim();
+    }
+
+    const lower = bankPart.toLowerCase().trim();
+
+    // Check if there is a matching job in directJobs with strict non-empty check
+    let dynamicJobRole = '';
+    if (directJobs && directJobs.length > 0 && lower.length >= 3) {
+      const matchedJob = directJobs.find(j => {
+        const company = (j.company || j.bankName || '').toLowerCase().trim();
+        if (!company || company.length < 3) return false;
+        return company.includes(lower) || lower.includes(company);
+      });
+      if (matchedJob && matchedJob.title) {
+        dynamicJobRole = matchedJob.title;
+      }
+    }
+
+    // Priority: Explicit Role configured in Admin > Dynamic Job Role > Fallback
+    const resolvedRole = explicitRole || dynamicJobRole;
+
     if (lower.includes('birla') || lower.includes('aditya')) {
+      const role = resolvedRole || 'Bank Relationship Officer';
       return {
         name: 'Aditya Birla Capital',
+        displayName: 'ADITYA BIRLA CAPITAL',
         shortName: 'Aditya Birla',
         brandKey: 'aditya_birla',
         logo: '/logos/aditya_birla.jpg',
+        specificRole: role,
+        openRoles: role,
+        primary: '#b91c1c',
         gradient: 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #dc2626 100%)',
         glow: 'rgba(185, 28, 28, 0.45)',
         accent: '#fecaca',
         tag: 'NBFC & Wealth Services',
         category: 'Banking / NBFC',
-        openRoles: 'Branch Relationship Officer, Sales Executive, Wealth Associate',
         salaryRange: '₹2.4L - ₹4.5L CTC + Attractive Incentives',
         minQualification: 'Any Graduate / 12th Pass / MBA',
         description: 'Leading NBFC under Aditya Birla Group with high market reputation and rapid candidate onboarding.',
         whyJoin: 'Rapid promotions, structured training, direct payroll placement, high incentive earnings.'
       };
     }
+    if (lower.includes('bandhan')) {
+      const role = resolvedRole || 'Customer Relationship Officer';
+      return {
+        name: 'Bandhan Bank',
+        displayName: 'BANDHAN BANK',
+        shortName: 'Bandhan Bank',
+        brandKey: 'bandhan_bank',
+        logo: '/logos/bandhan_bank.png',
+        specificRole: role,
+        openRoles: role,
+        primary: '#0284c7',
+        gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #075985 100%)',
+        glow: 'rgba(2, 132, 199, 0.45)',
+        accent: '#bae6fd',
+        tag: 'Universal Commercial Bank',
+        category: 'Commercial Bank',
+        salaryRange: '₹2.2L - ₹3.8L CTC + Incentives',
+        minQualification: 'Any Degree / 12th Pass',
+        description: 'Rapidly growing universal bank delivering retail banking and MSME financial products.',
+        whyJoin: 'Strong presence, reliable career increments, fast onboarding.'
+      };
+    }
+    if (lower.includes('suryoday')) {
+      const role = resolvedRole || 'Acquisition Manager (AM)';
+      return {
+        name: 'Suryoday Small Finance Bank',
+        displayName: 'Suryoday Small Finance Bank',
+        shortName: 'Suryoday Bank',
+        brandKey: 'suryoday_bank',
+        logo: '/logos/suryoday.webp',
+        specificRole: role,
+        openRoles: role,
+        primary: '#ea580c',
+        gradient: 'linear-gradient(135deg, #9a3412 0%, #ea580c 50%, #f97316 100%)',
+        glow: 'rgba(234, 88, 12, 0.45)',
+        accent: '#fed7aa',
+        tag: 'Scheduled Commercial Banking',
+        category: 'Small Finance Bank',
+        salaryRange: '₹2.2L - ₹3.8L CTC + Quarterly Incentives',
+        minQualification: 'Any Degree / +2 Passed candidates',
+        description: 'Rapidly expanding scheduled commercial bank with high community impact and fast job offers.',
+        whyJoin: 'High job stability, friendly branch environment, rapid promotion to branch team leads.'
+      };
+    }
+    if (lower.includes('axis')) {
+      const role = resolvedRole || 'Assistant Manager';
+      return {
+        name: 'Axis Bank',
+        displayName: 'AXIS BANK',
+        shortName: 'Axis Bank',
+        brandKey: 'axis_bank',
+        logo: '/logos/axis_bank.svg',
+        specificRole: role,
+        openRoles: role,
+        primary: '#831843',
+        gradient: 'linear-gradient(135deg, #701a75 0%, #831843 50%, #be185d 100%)',
+        glow: 'rgba(131, 24, 67, 0.45)',
+        accent: '#fbcfe8',
+        tag: 'Leading Private Sector Bank',
+        category: 'Private Sector Bank',
+        salaryRange: '₹2.5L - ₹4.5L CTC + Spot Commission',
+        minQualification: 'Any Degree / 10th / 12th',
+        description: 'Certified Axis Bank programs with guaranteed branch placement upon assessment.',
+        whyJoin: 'High demand specialized banking domain, quick placement turnaround, attractive spot perks.'
+      };
+    }
     if (lower.includes('tata')) {
+      const role = resolvedRole || 'Loan Relationship Executive';
       return {
         name: 'Tata Capital',
+        displayName: 'TATA CAPITAL',
         shortName: 'Tata Capital',
         brandKey: 'tata_capital',
         logo: '/logos/tata_aig.png',
+        specificRole: role,
+        openRoles: role,
+        primary: '#0284c7',
         gradient: 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #38bdf8 100%)',
         glow: 'rgba(2, 132, 199, 0.45)',
         accent: '#bae6fd',
         tag: 'Consumer Finance & Lending',
         category: 'Financial Services',
-        openRoles: 'Loan Officer, Customer Relationship Executive, Retail Credit Executive',
         salaryRange: '₹2.2L - ₹4.0L CTC + Monthly Performance Bonus',
         minQualification: 'Any Degree / Diploma / Experienced',
         description: 'The trusted financial services arm of Tata Group, delivering secure employment and great team culture.',
@@ -368,110 +491,134 @@ export default function OffersAndTargetsView({
       };
     }
     if (lower.includes('hdfc')) {
+      const role = resolvedRole || 'Personal Banker / Branch Exec';
       return {
         name: 'HDFC Bank',
+        displayName: 'HDFC BANK',
         shortName: 'HDFC Bank',
         brandKey: 'hdfc_bank',
-        logo: '/logos/Hdfc.jpg',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg',
+        specificRole: role,
+        openRoles: role,
+        primary: '#1d4ed8',
         gradient: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #3b82f6 100%)',
         glow: 'rgba(29, 78, 216, 0.45)',
         accent: '#bfdbfe',
         tag: "India's #1 Private Sector Bank",
         category: 'Commercial Bank',
-        openRoles: 'Branch Banking Officer, Retail Operations, Personal Banker, Sales Mgr',
         salaryRange: '₹2.8L - ₹5.5L CTC + Annual Banking Bonus',
         minQualification: 'Any Graduate (Freshers & Experienced eligible)',
         description: "India's largest banking titan offering premier banking certifications, nationwide postings, and executive prestige.",
         whyJoin: "India's premier banking titan, extensive career growth paths, comprehensive banking credentials."
       };
     }
-    if (lower.includes('axis')) {
-      return {
-        name: 'Axis Bank Gold Academy',
-        shortName: 'Axis Bank',
-        brandKey: 'axis_bank',
-        logo: '/logos/axis_bank.svg',
-        gradient: 'linear-gradient(135deg, #701a75 0%, #831843 50%, #be185d 100%)',
-        glow: 'rgba(131, 24, 67, 0.45)',
-        accent: '#fbcfe8',
-        tag: 'Gold Appraisal & Retail Asset Banking',
-        category: 'Private Sector Bank',
-        openRoles: 'Gold Appraiser, Relationship Officer, Operations Exec',
-        salaryRange: '₹2.5L - ₹4.2L CTC + Spot Commission',
-        minQualification: 'Any Degree / 10th / 12th with Appraisal Interest',
-        description: 'Certified Axis Gold Academy program with guaranteed branch placement upon assessment.',
-        whyJoin: 'High demand specialized banking domain, quick placement turnaround, attractive spot perks.'
-      };
-    }
     if (lower.includes('kotak')) {
+      const role = resolvedRole || 'Gold Loan Officer';
       return {
-        name: 'Kotak Mahindra Gold Academy',
+        name: 'Kotak Mahindra Bank',
+        displayName: 'KOTAK MAHINDRA BANK',
         shortName: 'Kotak Bank',
         brandKey: 'kotak_bank',
         logo: '/logos/kotak_bank.png',
+        specificRole: role,
+        openRoles: role,
+        primary: '#003366',
         gradient: 'linear-gradient(135deg, #0c4a6e 0%, #003366 50%, #1e40af 100%)',
         glow: 'rgba(0, 51, 102, 0.45)',
         accent: '#bfdbfe',
         tag: 'Gold Appraisal & High-Value Lending',
         category: 'Private Sector Bank',
-        openRoles: 'Gold Loan Officer, Customer Service Exec, Branch Mgr Track',
         salaryRange: '₹2.4L - ₹4.5L CTC + Branch Incentives',
         minQualification: 'Any Degree / Final Year Students Welcome',
         description: 'Fast-track placement in Kotak Mahindra Bank branches with professional appraisal certification.',
         whyJoin: 'Prestigious banking banner, fixed working hours, performance bonuses.'
       };
     }
-    if (lower.includes('suryoday')) {
+    if (lower.includes('icici')) {
+      const role = resolvedRole || 'Branch Relationship Executive';
       return {
-        name: 'Suryoday Small Finance Bank',
-        shortName: 'Suryoday Bank',
-        brandKey: 'suryoday_bank',
-        logo: '/logos/suryoday.webp',
-        gradient: 'linear-gradient(135deg, #9a3412 0%, #ea580c 50%, #f97316 100%)',
-        glow: 'rgba(234, 88, 12, 0.45)',
+        name: 'ICICI Bank',
+        displayName: 'ICICI BANK',
+        shortName: 'ICICI Bank',
+        brandKey: 'icici_bank',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/1/12/ICICI_Bank_Logo.svg',
+        specificRole: role,
+        openRoles: role,
+        primary: '#c2410c',
+        gradient: 'linear-gradient(135deg, #c2410c 0%, #9a3412 60%, #7c2d12 100%)',
+        glow: 'rgba(194, 65, 12, 0.45)',
         accent: '#fed7aa',
-        tag: 'Scheduled Commercial Banking',
-        category: 'Small Finance Bank',
-        openRoles: 'Branch Relationship Exec, Microfinance Officer, CASA Sales',
-        salaryRange: '₹2.2L - ₹3.8L CTC + Quarterly Incentives',
-        minQualification: 'Any Degree / +2 Passed candidates',
-        description: 'Rapidly expanding scheduled commercial bank with high community impact and fast job offers.',
-        whyJoin: 'High job stability, friendly branch environment, rapid promotion to branch team leads.'
+        tag: 'Premier Private Sector Bank',
+        category: 'Private Sector Bank',
+        salaryRange: '₹2.4L - ₹4.2L CTC + Incentives',
+        minQualification: 'Any Degree / Final Year Students',
+        description: 'Major private banking leader with excellent training programs and nationwide career opportunities.',
+        whyJoin: 'High growth potential, established corporate stature.'
+      };
+    }
+    if (lower.includes('mahindra')) {
+      const role = resolvedRole || 'Branch Executive / Relationship Officer';
+      return {
+        name: 'Mahindra Finance',
+        displayName: 'MAHINDRA FINANCE',
+        shortName: 'Mahindra Finance',
+        brandKey: 'mahindra_finance',
+        logo: '/logos/mahindra-finance-logo.png',
+        specificRole: role,
+        openRoles: role,
+        primary: '#b91c1c',
+        gradient: 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #dc2626 100%)',
+        glow: 'rgba(185, 28, 28, 0.45)',
+        accent: '#fecaca',
+        tag: 'Rural & Semi-Urban NBFC Leader',
+        category: 'Financial Services',
+        salaryRange: '₹2.2L - ₹3.8L CTC + Incentives',
+        minQualification: 'Any Graduate / 12th Pass',
+        description: 'Leading non-banking finance institution under the Mahindra Group providing vehicular and MSME loans.',
+        whyJoin: 'Mahindra brand security, extensive rural-urban branch network, rapid performance increments.'
       };
     }
     if (lower.includes('it') || lower.includes('track') || lower.includes('software') || lower.includes('training')) {
+      const role = resolvedRole || 'Full Stack Java / Python Developer';
       return {
         name: 'FIC IT & Software Training Track',
+        displayName: 'FIC IT TRACK',
         shortName: 'IT Training',
         brandKey: 'it_training',
         logo: null,
         isItTrack: true,
+        specificRole: role,
+        openRoles: role,
+        primary: '#4f46e5',
         gradient: 'linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #6366f1 100%)',
         glow: 'rgba(99, 102, 241, 0.45)',
         accent: '#c7d2fe',
         tag: 'High Package Tech Placements',
         category: 'IT & Software Programs',
-        openRoles: 'Full Stack Java, Python Developer, Data Analyst, Cloud QA',
         salaryRange: '₹3.5L - ₹7.0L CTC with 100% Placement Guarantee',
         minQualification: 'B.E / B.Tech / BCA / MCA / B.Sc / Any Degree with coding interest',
         description: 'Specialized tech curriculum with live projects and corporate interview guarantee.',
         whyJoin: 'Top IT salary packages, MNC placement opportunities, hybrid/remote work options.'
       };
     }
+    const fallbackRole = resolvedRole || 'Banking Executive';
     return {
-      name: roleName || `Partner Bank Slot ${index + 1}`,
-      shortName: roleName,
+      name: bankPart || `Partner Bank Slot ${index + 1}`,
+      displayName: (bankPart || `Partner Bank Slot ${index + 1}`).toUpperCase(),
+      shortName: bankPart,
       brandKey: `slot_${index + 1}`,
-      logo: BANK_LOGOS[roleName] || null,
+      logo: BANK_LOGOS[bankPart] || null,
+      specificRole: fallbackRole,
+      openRoles: fallbackRole,
+      primary: '#0f172a',
       gradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
       glow: 'rgba(15, 23, 42, 0.45)',
       accent: '#e2e8f0',
       tag: 'FIC Partner Institution',
       category: 'Banking / Placement Track',
-      openRoles: 'Banking Executive / Operations Associate',
       salaryRange: '₹2.2L - ₹4.5L CTC + Attractive Incentives',
       minQualification: 'Any Degree / 12th Pass',
-      description: 'Refer candidates to complete this slot towards unlocking your Brand New Tablet or ₹25k reward.',
+      description: 'Refer candidates to complete this slot towards unlocking your Brand New Tablet or ₹30,000 Cash reward.',
       whyJoin: 'Reliable placement partner, attractive incentive payouts.'
     };
   };
@@ -479,37 +626,48 @@ export default function OffersAndTargetsView({
   const getSlotMatchingCandidates = (brandInfo) => {
     if (!applications || applications.length === 0) return [];
     const bKey = (brandInfo.shortName || brandInfo.name || '').toLowerCase();
+    const roleKey = (brandInfo.specificRole || '').toLowerCase();
+
     return applications.filter(app => {
       const fullText = `${app.jobTitle || ''} ${app.company || ''} ${app.bankName || ''} ${app.role || ''} ${app.programName || ''}`.toLowerCase();
+      
+      let bankMatched = false;
       if (bKey.includes('birla') || bKey.includes('aditya')) {
-        return fullText.includes('birla') || fullText.includes('aditya');
+        bankMatched = fullText.includes('birla') || fullText.includes('aditya');
+      } else if (bKey.includes('tata')) {
+        bankMatched = fullText.includes('tata');
+      } else if (bKey.includes('hdfc')) {
+        bankMatched = fullText.includes('hdfc');
+      } else if (bKey.includes('axis')) {
+        bankMatched = fullText.includes('axis');
+      } else if (bKey.includes('kotak')) {
+        bankMatched = fullText.includes('kotak');
+      } else if (bKey.includes('suryoday')) {
+        bankMatched = fullText.includes('suryoday');
+      } else if (bKey.includes('it') || brandInfo.isItTrack) {
+        bankMatched = fullText.includes('it') || fullText.includes('software') || fullText.includes('training') || fullText.includes('developer') || fullText.includes('python') || fullText.includes('java');
+      } else {
+        bankMatched = fullText.includes(bKey);
       }
-      if (bKey.includes('tata')) {
-        return fullText.includes('tata');
+
+      if (!bankMatched) return false;
+
+      // If specific role exists, check if role words match too
+      if (roleKey && roleKey.length > 3) {
+        const roleTokens = roleKey.split(/[\s,()/-]+/).filter(t => t.length > 2);
+        const hasRoleTokenMatch = roleTokens.some(tok => fullText.includes(tok));
+        if (hasRoleTokenMatch) return true;
       }
-      if (bKey.includes('hdfc')) {
-        return fullText.includes('hdfc');
-      }
-      if (bKey.includes('axis')) {
-        return fullText.includes('axis');
-      }
-      if (bKey.includes('kotak')) {
-        return fullText.includes('kotak');
-      }
-      if (bKey.includes('suryoday')) {
-        return fullText.includes('suryoday');
-      }
-      if (bKey.includes('it') || brandInfo.isItTrack) {
-        return fullText.includes('it') || fullText.includes('software') || fullText.includes('training') || fullText.includes('developer') || fullText.includes('python') || fullText.includes('java');
-      }
-      return fullText.includes(bKey);
+
+      return bankMatched;
     });
   };
 
   const handleShareBrandWhatsApp = (brandInfo) => {
-    const link = `${portalBase}?ref=${hrRefCode}&brand=${encodeURIComponent(brandInfo.shortName)}`;
+    const roleParam = brandInfo.specificRole ? `&role=${encodeURIComponent(brandInfo.specificRole)}` : '';
+    const link = `${portalBase}?ref=${hrRefCode}&brand=${encodeURIComponent(brandInfo.shortName)}${roleParam}`;
     const msg = `🌟 *Special Recruitment Drive: ${brandInfo.name}*\n\n` +
-      `💼 *Roles:* ${brandInfo.openRoles}\n` +
+      `💼 *Designation:* ${brandInfo.specificRole || brandInfo.openRoles}\n` +
       `💰 *Salary / CTC:* ${brandInfo.salaryRange}\n` +
       `🎓 *Eligibility:* ${brandInfo.minQualification}\n\n` +
       `📌 *Direct Application Link:* ${link}\n\n` +
@@ -519,11 +677,12 @@ export default function OffersAndTargetsView({
   };
 
   const handleCopyBrandLink = (brandInfo) => {
-    const link = `${portalBase}?ref=${hrRefCode}&brand=${encodeURIComponent(brandInfo.shortName)}`;
+    const roleParam = brandInfo.specificRole ? `&role=${encodeURIComponent(brandInfo.specificRole)}` : '';
+    const link = `${portalBase}?ref=${hrRefCode}&brand=${encodeURIComponent(brandInfo.shortName)}${roleParam}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(link).then(() => {
         setCopiedText(brandInfo.shortName);
-        if (showToast) showToast(`Referral link for ${brandInfo.name} copied!`, 'success');
+        if (showToast) showToast(`Referral link for ${brandInfo.name} (${brandInfo.specificRole}) copied!`, 'success');
         setTimeout(() => setCopiedText(null), 2500);
       });
     }
@@ -2113,374 +2272,928 @@ export default function OffersAndTargetsView({
           };
         });
 
-        const completedSlotsCount = brandSlots.filter(s => s.isSlotCompleted).length;
-        const totalSlotsCount = brandSlots.length;
-        const comboPercentage = totalSlotsCount > 0 ? Math.min(100, Math.round((completedSlotsCount / totalSlotsCount) * 100)) : 0;
-        const isComboAchieved = completedSlotsCount >= totalSlotsCount;
-        const remainingSlotsCount = Math.max(0, totalSlotsCount - completedSlotsCount);
+        const targetHires = Number(selectedCombo.targetCount || brandSlots.length || 3);
+        const totalSlotsCount = brandSlots.length || 3;
+
+        // Unique candidates who have been closed/selected/hired/enrolled across this combo
+        const uniqueClosedCandidates = [];
+        brandSlots.forEach(slot => {
+          (slot.closedOrSelected || []).forEach(app => {
+            const id = app.id || app._id || `${app.candidateName || ''}_${app.jobTitle || ''}_${app.bankName || ''}`;
+            if (!uniqueClosedCandidates.includes(id)) {
+              uniqueClosedCandidates.push(id);
+            }
+          });
+        });
+        const enrolledHiresCount = Math.max(uniqueClosedCandidates.length, brandSlots.filter(s => s.isSlotCompleted).length);
+        const comboPercentage = targetHires > 0 ? Math.min(100, Math.round((enrolledHiresCount / targetHires) * 100)) : 0;
+        const isComboAchieved = enrolledHiresCount >= targetHires;
+        const remainingSlotsCount = Math.max(0, targetHires - enrolledHiresCount);
+        const rewardAmountFormatted = Number(selectedCombo.rewardAmount || 25000).toLocaleString('en-IN');
 
         return (
-          <div style={{ maxWidth: '820px', margin: '0 auto', animation: 'fadeIn 0.22s ease' }}>
-            {/* THE SINGLE KPI CARD */}
-            <div
-              style={{
-                background: theme.gradient,
-                borderRadius: '22px',
-                padding: 'clamp(1.25rem, 3.5vw, 2rem)',
-                color: '#ffffff',
-                boxShadow: `0 16px 38px -8px ${theme.glow}`,
-                border: isComboAchieved ? '2px solid #a7f3d0' : `1px solid ${theme.border}`,
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              {/* DECORATIVE BACKGROUND ACCENT */}
+          <div style={{ maxWidth: '860px', margin: '0 auto', animation: 'fadeIn 0.22s ease' }}>
+            <style>{`
+              .combo-poster-canvas {
+                background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 32%, #fffdf5 70%, #fff7ed 100%);
+                border-radius: 24px;
+                border: 2px solid #93c5fd;
+                box-shadow: 0 20px 48px -12px rgba(2, 132, 199, 0.25), 0 4px 16px rgba(0,0,0,0.06);
+                padding: 1.5rem;
+                position: relative;
+                overflow: hidden;
+              }
+              .combo-top-ribbon-wrap {
+                display: flex;
+                justifyContent: center;
+                margin-bottom: 14px;
+              }
+              .combo-top-ribbon {
+                background: linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+                color: #ffffff;
+                padding: 8px 24px;
+                border-radius: 999px;
+                font-size: 1.05rem;
+                font-weight: 900;
+                text-align: center;
+                box-shadow: 0 5px 16px rgba(185, 28, 28, 0.45), inset 0 1px 0 rgba(255,255,255,0.4);
+                border: 2px solid #ffffff;
+                letter-spacing: 0.3px;
+                line-height: 1.35;
+                display: inline-block;
+              }
+              .combo-banks-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+                margin-bottom: 14px;
+              }
+              .combo-bank-card {
+                background: #ffffff;
+                border-radius: 16px;
+                padding: 14px 10px 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                position: relative;
+                box-sizing: border-box;
+                min-width: 0 !important;
+                width: 100%;
+                overflow: hidden;
+              }
+              .combo-bank-logo-box {
+                height: 44px;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 6px;
+              }
+              .combo-bank-logo-img {
+                max-height: 42px;
+                max-width: 145px;
+                object-fit: contain;
+              }
+              .combo-bank-name {
+                font-size: 0.82rem;
+                font-weight: 800;
+                color: #1e293b;
+                line-height: 1.2;
+                min-height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .combo-bank-role-badge {
+                background: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%);
+                border: 1.5px solid #fde047;
+                color: #713f12;
+                padding: 5px 6px;
+                border-radius: 8px;
+                font-size: 0.76rem;
+                font-weight: 900;
+                margin-top: 8px;
+                width: 100%;
+                box-shadow: 0 2px 6px rgba(234, 179, 8, 0.25);
+                white-space: normal;
+                word-break: break-word;
+                line-height: 1.25;
+                min-height: 38px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                box-sizing: border-box;
+              }
+              .combo-bank-action-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                margin-top: 10px;
+                padding-top: 8px;
+                border-top: 1px solid #f1f5f9;
+                gap: 4px;
+              }
+              .combo-bank-slot-pill {
+                font-size: 0.72rem;
+                font-weight: 800;
+                padding: 3px 8px;
+                border-radius: 6px;
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                white-space: nowrap;
+              }
+              .combo-bank-action-btn {
+                border-radius: 6px;
+                padding: 4px 7px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+              }
+              .combo-blue-target {
+                background: linear-gradient(90deg, #0284c7 0%, #1e40af 50%, #0369a1 100%);
+                border-radius: 16px;
+                padding: 12px 20px;
+                color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin: 14px 0;
+                box-shadow: 0 8px 24px rgba(2, 132, 199, 0.35);
+                border: 1.5px solid #7dd3fc;
+                flex-wrap: nowrap;
+                gap: 10px;
+              }
+              .combo-target-text-main {
+                font-size: clamp(1.05rem, 2.8vw, 1.45rem);
+                font-weight: 900;
+                letter-spacing: 0.5px;
+                line-height: 1.2;
+              }
+              .combo-target-text-sub {
+                font-size: 0.84rem;
+                color: #e0f2fe;
+                font-weight: 700;
+                margin-top: 2px;
+              }
+              .combo-rewards-split {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                gap: 12px;
+                align-items: center;
+                margin: 16px 0;
+                position: relative;
+                width: 100%;
+              }
+              .combo-reward-card-inner {
+                background: #ffffff;
+                border-radius: 18px;
+                padding: 12px 14px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                box-sizing: border-box;
+                min-width: 0 !important;
+                width: 100%;
+                overflow: hidden;
+              }
+              .combo-reward-graphic {
+                width: 58px;
+                height: 58px;
+                border-radius: 12px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              }
+              .combo-reward-banner {
+                padding: 8px 10px;
+                border-radius: 8px;
+                text-align: center;
+                width: 100%;
+                box-sizing: border-box;
+              }
+              .combo-or-badge {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+                border: 3.5px solid #ffffff;
+                color: #ffffff;
+                font-weight: 900;
+                font-size: 0.92rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 12px rgba(234, 88, 12, 0.45);
+                flex-shrink: 0;
+                z-index: 2;
+              }
+              .combo-incentive-boxes {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+                margin-top: 1.25rem;
+                position: relative;
+              }
+              .combo-incentive-box {
+                border-radius: 16px;
+                padding: 14px 16px;
+                color: #ffffff;
+                position: relative;
+                box-sizing: border-box;
+              }
+
+              /* ============================================================ */
+              /* MOBILE RESPONSIVE ADAPTATIONS (MAX-WIDTH: 640PX)              */
+              /* ============================================================ */
+              @media (max-width: 640px) {
+                .combo-poster-canvas {
+                  padding: 0.75rem 0.5rem !important;
+                  border-radius: 16px !important;
+                  border-width: 1.5px !important;
+                }
+                .combo-top-ribbon-wrap {
+                  margin-bottom: 8px !important;
+                }
+                .combo-top-ribbon {
+                  padding: 6px 12px !important;
+                  font-size: 0.76rem !important;
+                  border-radius: 10px !important;
+                  width: 100% !important;
+                  line-height: 1.35 !important;
+                  letter-spacing: 0px !important;
+                }
+                .combo-banks-grid {
+                  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                  gap: 5px !important;
+                  margin-bottom: 8px !important;
+                }
+                .combo-bank-card {
+                  padding: 6px 3px 6px !important;
+                  border-radius: 10px !important;
+                  border-width: 1.5px !important;
+                }
+                .combo-bank-logo-box {
+                  height: 26px !important;
+                  margin-bottom: 2px !important;
+                }
+                .combo-bank-logo-img {
+                  max-height: 24px !important;
+                  max-width: 82px !important;
+                }
+                .combo-bank-name {
+                  font-size: 0.62rem !important;
+                  line-height: 1.15 !important;
+                  min-height: 16px !important;
+                  white-space: nowrap !important;
+                  overflow: hidden !important;
+                  text-overflow: ellipsis !important;
+                  width: 100% !important;
+                  padding: 0 1px !important;
+                }
+                .combo-bank-role-badge {
+                  font-size: 0.58rem !important;
+                  padding: 3px 2px !important;
+                  margin-top: 4px !important;
+                  border-radius: 4px !important;
+                  border-width: 1px !important;
+                  white-space: normal !important;
+                  word-break: break-word !important;
+                  overflow: visible !important;
+                  text-overflow: unset !important;
+                  width: 100% !important;
+                  line-height: 1.2 !important;
+                  min-height: 32px !important;
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+                  text-align: center !important;
+                }
+                .combo-bank-action-row {
+                  margin-top: 6px !important;
+                  padding-top: 5px !important;
+                  gap: 2px !important;
+                }
+                .combo-bank-slot-pill {
+                  font-size: 0.55rem !important;
+                  padding: 2px 4px !important;
+                  border-radius: 4px !important;
+                }
+                .combo-bank-action-btn {
+                  padding: 2px 4px !important;
+                  border-radius: 4px !important;
+                }
+                .combo-bank-action-btn svg {
+                  width: 10px !important;
+                  height: 10px !important;
+                }
+                .combo-blue-target {
+                  padding: 8px 10px !important;
+                  border-radius: 10px !important;
+                  margin: 8px 0 !important;
+                }
+                .combo-target-icon-box {
+                  width: 32px !important;
+                  height: 32px !important;
+                  border-radius: 8px !important;
+                }
+                .combo-target-icon-box svg {
+                  width: 18px !important;
+                  height: 18px !important;
+                }
+                .combo-target-text-main {
+                  font-size: 0.85rem !important;
+                }
+                .combo-target-text-sub {
+                  font-size: 0.66rem !important;
+                }
+                .combo-target-arrows {
+                  font-size: 1.1rem !important;
+                  letter-spacing: 1px !important;
+                }
+                .combo-rewards-split {
+                  grid-template-columns: 1fr auto 1fr !important;
+                  gap: 4px !important;
+                  margin: 8px 0 !important;
+                }
+                .combo-reward-card-inner {
+                  padding: 6px 4px !important;
+                  border-radius: 10px !important;
+                  gap: 5px !important;
+                  border-width: 1.5px !important;
+                }
+                .combo-reward-graphic {
+                  width: 34px !important;
+                  height: 34px !important;
+                  border-radius: 6px !important;
+                }
+                .combo-reward-graphic span {
+                  font-size: 1rem !important;
+                }
+                .combo-reward-graphic small {
+                  display: none !important;
+                }
+                .combo-reward-banner {
+                  padding: 4px 4px !important;
+                  border-radius: 6px !important;
+                }
+                .combo-reward-banner-get {
+                  font-size: 0.56rem !important;
+                  line-height: 1 !important;
+                }
+                .combo-reward-banner-amt {
+                  font-size: 0.88rem !important;
+                  line-height: 1.1 !important;
+                }
+                .combo-reward-banner-type {
+                  font-size: 0.62rem !important;
+                  line-height: 1 !important;
+                }
+                .combo-or-badge {
+                  width: 26px !important;
+                  height: 26px !important;
+                  font-size: 0.68rem !important;
+                  border-width: 2px !important;
+                }
+                .combo-incentive-boxes {
+                  grid-template-columns: 1fr !important;
+                  gap: 6px !important;
+                  margin-top: 8px !important;
+                }
+                .combo-incentive-box {
+                  padding: 8px 10px !important;
+                  border-radius: 10px !important;
+                }
+                .combo-incentive-num {
+                  width: 22px !important;
+                  height: 22px !important;
+                  font-size: 0.8rem !important;
+                }
+                .combo-incentive-title {
+                  font-size: 0.78rem !important;
+                }
+                .combo-incentive-sub {
+                  font-size: 0.66rem !important;
+                }
+                .combo-incentive-icon-box {
+                  width: 32px !important;
+                  height: 32px !important;
+                  border-radius: 8px !important;
+                }
+                .combo-incentive-icon-box svg {
+                  width: 16px !important;
+                  height: 16px !important;
+                }
+                .combo-incentive-desc {
+                  font-size: 0.7rem !important;
+                  line-height: 1.35 !important;
+                }
+              }
+            `}</style>
+
+            {/* POSTER CANVAS CONTAINER */}
+            <div className="combo-poster-canvas">
+              {/* TOP HEADER CONTROLS (SET BADGE & EXPIRY) */}
               <div
                 style={{
-                  position: 'absolute',
-                  top: '-45px',
-                  right: '-45px',
-                  width: '160px',
-                  height: '160px',
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                  pointerEvents: 'none'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '10px',
+                  flexWrap: 'wrap',
+                  gap: '6px'
                 }}
-              />
-
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                {/* CARD HEADER ROW: BADGES & ACTIVE DATES */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.22)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
-                        color: '#ffffff',
-                        padding: '3px 10px',
-                        borderRadius: '8px',
-                        fontSize: '0.72rem',
-                        fontWeight: 900,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      SET {selectedComboIdx + 1} CHALLENGE
-                    </span>
-
-                    <span
-                      style={{
-                        background: isComboAchieved ? '#10b981' : '#fef08a',
-                        color: isComboAchieved ? '#ffffff' : '#854d0e',
-                        padding: '3px 10px',
-                        borderRadius: '8px',
-                        fontSize: '0.72rem',
-                        fontWeight: 900,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <Sparkles size={12} />
-                      <span>{isComboAchieved ? 'CHALLENGE WON 🎉' : 'BUMPER PRIZE'}</span>
-                    </span>
-                  </div>
-
-                  <span style={{ fontSize: '0.74rem', color: 'rgba(255, 255, 255, 0.9)', fontWeight: 700 }}>
-                    Active until: <strong>{formatDate(program.endDate)}</strong>
-                  </span>
-                </div>
-
-                {/* SET TITLE & DESCRIPTION */}
-                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.3rem, 3vw, 1.75rem)', fontWeight: 900, color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                  {selectedCombo.title}
-                </h2>
-                <p style={{ margin: '0 0 1.25rem', fontSize: '0.86rem', color: 'rgba(255, 255, 255, 0.92)', lineHeight: 1.45 }}>
-                  {selectedCombo.description}
-                </p>
-
-                {/* GRAND REWARD HIGHLIGHT BOX */}
-                <div
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.16)',
-                    border: '1px solid rgba(255, 255, 255, 0.32)',
-                    borderRadius: '14px',
-                    padding: '12px 16px',
-                    marginBottom: '1.25rem',
-                    backdropFilter: 'blur(8px)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
-                    <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 900, color: '#fef08a', letterSpacing: '0.5px' }}>
-                      🎁 UNLOCKS ON COMPLETION
-                    </span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#854d0e', background: '#fef08a', padding: '2px 8px', borderRadius: '6px' }}>
-                      TAB or ₹25k
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Tablet size={22} color="#fef08a" style={{ flexShrink: 0 }} />
-                    <span>{selectedCombo.rewardTitle || 'Brand New TAB (Tablet) OR ₹25,000 Cash Prize!'}</span>
-                  </div>
-                  <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.95)', marginTop: '4px' }}>
-                    {selectedCombo.extraIncentiveText || '+ Full Candidate Placement Referral Incentives Included'}
-                  </div>
-                </div>
-
-                {/* COMBO PARTNER BANKS LIST (THE 3 BANKS IN THIS SET) */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.76rem', fontWeight: 900, color: 'rgba(255, 255, 255, 0.95)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Building2 size={15} color="#fef08a" />
-                    <span>Required Combo Banks / Roles ({totalSlotsCount} Hires Required):</span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {brandSlots.map((slot) => (
-                      <div
-                        key={slot.slotNumber}
-                        style={{
-                          background: 'rgba(0, 0, 0, 0.22)',
-                          border: slot.isSlotCompleted
-                            ? '1.5px solid #10b981'
-                            : slot.isSlotInProgress
-                            ? '1.5px solid #f59e0b'
-                            : '1px solid rgba(255, 255, 255, 0.22)',
-                          borderRadius: '12px',
-                          padding: '10px 14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '10px'
-                        }}
-                      >
-                        {/* BANK LOGO + NAME */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '200px', flex: 1 }}>
-                          <div
-                            style={{
-                              width: '38px',
-                              height: '38px',
-                              borderRadius: '10px',
-                              background: '#ffffff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              overflow: 'hidden',
-                              padding: '3px',
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                            }}
-                          >
-                            {slot.logo ? (
-                              <img src={slot.logo} alt={slot.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            ) : (
-                              <span style={{ fontWeight: 900, color: '#1e3a8a', fontSize: '0.9rem' }}>
-                                {slot.shortName?.charAt(0) || 'B'}
-                              </span>
-                            )}
-                          </div>
-
-                          <div>
-                            <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#ffffff' }}>
-                              {slot.name}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.82)' }}>
-                              {slot.openRoles}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* STATUS & ACTIONS */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          {slot.isSlotCompleted ? (
-                            <span
-                              style={{
-                                background: '#10b981',
-                                color: '#ffffff',
-                                padding: '3px 9px',
-                                borderRadius: '6px',
-                                fontSize: '0.72rem',
-                                fontWeight: 800,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                            >
-                              <CheckCircle2 size={13} />
-                              <span>Completed (1/1)</span>
-                            </span>
-                          ) : slot.isSlotInProgress ? (
-                            <span
-                              style={{
-                                background: '#f59e0b',
-                                color: '#ffffff',
-                                padding: '3px 9px',
-                                borderRadius: '6px',
-                                fontSize: '0.72rem',
-                                fontWeight: 800,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                            >
-                              <Flame size={13} />
-                              <span>In Pipeline ({slot.inProgressApps.length})</span>
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                background: 'rgba(255, 255, 255, 0.16)',
-                                color: '#ffffff',
-                                padding: '3px 9px',
-                                borderRadius: '6px',
-                                fontSize: '0.72rem',
-                                fontWeight: 700
-                              }}
-                            >
-                              Slot Open (0/1)
-                            </span>
-                          )}
-
-                          {/* SHARE WHATSAPP BUTTON */}
-                          <button
-                            onClick={() => handleShareBrandWhatsApp(slot)}
-                            title="Share on WhatsApp"
-                            style={{
-                              background: '#25D366',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '7px',
-                              padding: '5px 10px',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <Share2 size={12} />
-                            <span>Share</span>
-                          </button>
-
-                          {/* COPY LINK BUTTON */}
-                          <button
-                            onClick={() => handleCopyBrandLink(slot)}
-                            title="Copy Candidate Link"
-                            style={{
-                              background: copiedText === slot.shortName ? '#10b981' : 'rgba(255, 255, 255, 0.2)',
-                              color: '#ffffff',
-                              border: '1px solid rgba(255, 255, 255, 0.35)',
-                              borderRadius: '7px',
-                              padding: '5px 9px',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <Copy size={12} />
-                            <span>{copiedText === slot.shortName ? 'Copied' : 'Link'}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* PROGRESS TRACKER */}
-                <div
-                  style={{
-                    background: 'rgba(0, 0, 0, 0.24)',
-                    border: '1px solid rgba(255, 255, 255, 0.22)',
-                    borderRadius: '12px',
-                    padding: '12px 14px',
-                    marginBottom: '1.25rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 800 }}>
-                    <span>
-                      Enrolled: <strong style={{ color: '#fef08a' }}>{completedSlotsCount}</strong> of <strong>{totalSlotsCount}</strong> Hires
-                    </span>
-                    <span style={{ color: '#fef08a' }}>
-                      {comboPercentage}% Completed
-                    </span>
-                  </div>
-
-                  <div style={{ width: '100%', height: '8px', borderRadius: '5px', background: 'rgba(255, 255, 255, 0.2)', overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${comboPercentage}%`,
-                        background: isComboAchieved ? '#10b981' : 'linear-gradient(90deg, #fef08a 0%, #34d399 100%)',
-                        borderRadius: '5px',
-                        transition: 'width 0.4s ease'
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ fontSize: '0.74rem', color: 'rgba(255, 255, 255, 0.88)', marginTop: '8px', fontWeight: 600 }}>
-                    {isComboAchieved
-                      ? '🎉 Combo Challenge Achieved! You can now claim your Brand New TAB or ₹25,000 Cash!'
-                      : `Place 1 candidate in each of the ${remainingSlotsCount} remaining bank slot(s) above to claim your reward!`}
-                  </div>
-                </div>
-
-                {/* BOTTOM ACTION BUTTONS */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button
                     onClick={handleBackToChallengeSets}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.18)',
-                      border: '1px solid rgba(255, 255, 255, 0.35)',
-                      color: '#ffffff',
-                      borderRadius: '10px',
-                      padding: '8px 16px',
-                      fontSize: '0.82rem',
+                      background: '#ffffff',
+                      border: '1.5px solid #cbd5e1',
+                      color: '#334155',
+                      borderRadius: '8px',
+                      padding: '4px 10px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.15s ease'
+                      gap: '4px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.28)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)'; }}
                   >
-                    <ArrowLeft size={15} />
-                    <span>← Back to Sets</span>
+                    <ArrowLeft size={12} />
+                    <span>Back to Sets</span>
                   </button>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      onClick={() => {
-                        const link = defaultRefLink;
-                        const msg = `🌟 *Special Banking Placement Challenge: ${selectedCombo.title}*\n\n` +
-                          `🎁 Win Brand New TAB or ₹25k Cash by placing candidates!\n` +
-                          `📌 Candidate Application Link: ${link}`;
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-                      }}
+                  <span
+                    style={{
+                      background: theme.gradient,
+                      color: '#ffffff',
+                      padding: '3px 8px',
+                      borderRadius: '7px',
+                      fontSize: '0.68rem',
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {selectedCombo.title || `Set ${selectedComboIdx + 1}`}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>
+                  Active until: <strong style={{ color: '#0f172a' }}>{formatDate(program.endDate)}</strong>
+                </div>
+              </div>
+
+              {/* 1. TOP RED RIBBON BANNER */}
+              <div className="combo-top-ribbon-wrap">
+                <div className="combo-top-ribbon">
+                  <span>For Payment Process in these </span>
+                  <span style={{ color: '#fef08a', textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+                    {totalSlotsCount} Banks
+                  </span>
+                  <span> (HR Hiring Only)</span>
+                </div>
+              </div>
+
+              {/* 2. THE 3 WHITE BANK CARDS (SIDE-BY-SIDE ON BOTH DESKTOP AND MOBILE) */}
+              <div className="combo-banks-grid">
+                {brandSlots.map((slot) => (
+                  <div
+                    key={slot.slotNumber}
+                    className="combo-bank-card"
+                    style={{
+                      border: slot.isSlotCompleted
+                        ? '2px solid #10b981'
+                        : slot.isSlotInProgress
+                        ? '2px solid #f59e0b'
+                        : '1.5px solid #93c5fd',
+                      boxShadow: slot.isSlotCompleted
+                        ? '0 4px 14px rgba(16, 185, 129, 0.18)'
+                        : '0 2px 10px rgba(2, 132, 199, 0.08)'
+                    }}
+                  >
+                    {/* Bank Logo */}
+                    <div className="combo-bank-logo-box">
+                      {slot.logo ? (
+                        <img
+                          src={slot.logo}
+                          alt={slot.name}
+                          className="combo-bank-logo-img"
+                        />
+                      ) : (
+                        <div style={{ fontWeight: 900, fontSize: '0.9rem', color: slot.primary || '#1e3a8a' }}>
+                          {slot.name}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bank Title */}
+                    <div className="combo-bank-name" title={slot.displayName || slot.name}>
+                      {slot.displayName || slot.name}
+                    </div>
+
+                    {/* Exact Yellow Role Badge */}
+                    <div className="combo-bank-role-badge" title={slot.specificRole || slot.openRoles}>
+                      {slot.specificRole || slot.openRoles}
+                    </div>
+
+                    {/* Slot Status and Action Buttons */}
+                    <div className="combo-bank-action-row">
+                      <span
+                        className="combo-bank-slot-pill"
+                        style={{
+                          color: slot.isSlotCompleted ? '#065f46' : slot.isSlotInProgress ? '#92400e' : '#475569',
+                          background: slot.isSlotCompleted ? '#d1fae5' : slot.isSlotInProgress ? '#fef3c7' : '#f1f5f9'
+                        }}
+                      >
+                        {slot.isSlotCompleted ? '✓ Done' : slot.isSlotInProgress ? `Pipe (${slot.inProgressApps.length})` : '0/1'}
+                      </span>
+
+                      <div style={{ display: 'flex', gap: '3px' }}>
+                        <button
+                          onClick={() => handleShareBrandWhatsApp(slot)}
+                          title={`Share ${slot.name} on WhatsApp`}
+                          className="combo-bank-action-btn"
+                          style={{ background: '#25D366', color: '#ffffff', border: 'none' }}
+                        >
+                          <Share2 size={11} />
+                        </button>
+                        <button
+                          onClick={() => handleCopyBrandLink(slot)}
+                          title={`Copy Candidate Link for ${slot.name}`}
+                          className="combo-bank-action-btn"
+                          style={{
+                            background: copiedText === slot.shortName ? '#10b981' : '#f8fafc',
+                            color: copiedText === slot.shortName ? '#ffffff' : '#334155',
+                            border: '1px solid #cbd5e1'
+                          }}
+                        >
+                          <Copy size={11} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 3. CENTRAL BLUE TARGET BANNER */}
+              <div className="combo-blue-target">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    className="combo-target-icon-box"
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.18)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Users size={24} color="#ffffff" />
+                  </div>
+                  <div>
+                    <div className="combo-target-text-main">
+                      HIRE <span style={{ color: '#fef08a' }}>{targetHires} CANDIDATES</span>
+                    </div>
+                    <div className="combo-target-text-sub">
+                      From the above <span style={{ color: '#fef08a' }}>{totalSlotsCount} banks</span> (For Payment Process)
+                    </div>
+                  </div>
+                </div>
+
+                <div className="combo-target-arrows" style={{ fontWeight: 900, color: 'rgba(255, 255, 255, 0.85)', letterSpacing: '2px', display: 'flex', alignItems: 'center' }}>
+                  &gt;&gt;&gt;
+                </div>
+              </div>
+
+              {/* 4. CENTRAL DUAL REWARD SHOWCASE (CASH VS TABLET - SIDE BY SIDE) */}
+              <div className="combo-rewards-split">
+                {/* CASH REWARD CARD */}
+                <div
+                  className="combo-reward-card-inner"
+                  style={{
+                    border: '2px solid #fecaca',
+                    boxShadow: '0 6px 18px rgba(220, 38, 38, 0.12)'
+                  }}
+                >
+                  <div
+                    className="combo-reward-graphic"
+                    style={{
+                      background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                      border: '1.5px solid #6ee7b7'
+                    }}
+                  >
+                    <span style={{ fontSize: '1.4rem' }}>💵</span>
+                    <small style={{ fontSize: '0.62rem', fontWeight: 900, color: '#047857' }}>Cash</small>
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      className="combo-reward-banner"
                       style={{
-                        background: '#25D366',
+                        background: 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)',
                         color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '10px',
-                        padding: '8px 16px',
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
+                        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.35)',
+                        transform: 'skewX(-2deg)'
                       }}
                     >
-                      <Share2 size={14} />
-                      <span>Share on WhatsApp</span>
-                    </button>
+                      <div className="combo-reward-banner-get" style={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        GET
+                      </div>
+                      <div className="combo-reward-banner-amt" style={{ fontWeight: 900, color: '#fef08a' }}>
+                        ₹{rewardAmountFormatted}
+                      </div>
+                      <div className="combo-reward-banner-type" style={{ fontWeight: 900, letterSpacing: '0.5px' }}>
+                        CASH
+                      </div>
+                    </div>
                   </div>
+                </div>
+
+                {/* OR BADGE */}
+                <div className="combo-or-badge">
+                  OR
+                </div>
+
+                {/* TABLET REWARD CARD */}
+                <div
+                  className="combo-reward-card-inner"
+                  style={{
+                    border: '2px solid #bfdbfe',
+                    boxShadow: '0 6px 18px rgba(29, 78, 216, 0.12)'
+                  }}
+                >
+                  <div
+                    className="combo-reward-graphic"
+                    style={{
+                      background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                      border: '1.5px solid #93c5fd'
+                    }}
+                  >
+                    <Tablet size={26} color="#1d4ed8" />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      className="combo-reward-banner"
+                      style={{
+                        background: 'linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%)',
+                        color: '#ffffff',
+                        boxShadow: '0 4px 10px rgba(29, 78, 216, 0.35)',
+                        transform: 'skewX(2deg)'
+                      }}
+                    >
+                      <div className="combo-reward-banner-get" style={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        GET A
+                      </div>
+                      <div className="combo-reward-banner-amt" style={{ fontWeight: 900, color: '#fef08a' }}>
+                        ₹{rewardAmountFormatted}
+                      </div>
+                      <div className="combo-reward-banner-type" style={{ fontWeight: 900, letterSpacing: '0.5px' }}>
+                        TABLET
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. DUAL INCENTIVE BREAKDOWN (REGULAR INCENTIVE + ADDITIONAL BONUS) */}
+              <div className="combo-incentive-boxes">
+                {/* BOX 1: REGULAR INCENTIVE */}
+                <div
+                  className="combo-incentive-box"
+                  style={{
+                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #075985 100%)',
+                    border: '1.5px solid #38bdf8',
+                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.22)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <div
+                      className="combo-incentive-num"
+                      style={{
+                        width: '26px',
+                        height: '26px',
+                        borderRadius: '50%',
+                        background: '#fbbf24',
+                        color: '#78350f',
+                        fontWeight: 900,
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      1
+                    </div>
+                    <div>
+                      <div className="combo-incentive-title" style={{ fontWeight: 900, color: '#ffffff', letterSpacing: '0.3px', lineHeight: 1.15 }}>
+                        REGULAR INCENTIVE
+                      </div>
+                      <div className="combo-incentive-sub" style={{ fontWeight: 800, color: '#fef08a' }}>
+                        (Already Available)
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <div
+                      className="combo-incentive-icon-box"
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.18)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Briefcase size={18} color="#fef08a" />
+                    </div>
+                    <p className="combo-incentive-desc" style={{ margin: 0, color: '#e0f2fe' }}>
+                      You will continue to receive your existing hiring incentive as per company policy.
+                    </p>
+                  </div>
+                </div>
+
+                {/* BOX 2: ADDITIONAL BONUS */}
+                <div
+                  className="combo-incentive-box"
+                  style={{
+                    background: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 60%, #7f1d1d 100%)',
+                    border: '1.5px solid #f87171',
+                    boxShadow: '0 4px 14px rgba(185, 28, 28, 0.22)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <div
+                      className="combo-incentive-num"
+                      style={{
+                        width: '26px',
+                        height: '26px',
+                        borderRadius: '50%',
+                        background: '#fbbf24',
+                        color: '#78350f',
+                        fontWeight: 900,
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      2
+                    </div>
+                    <div>
+                      <div className="combo-incentive-title" style={{ fontWeight: 900, color: '#ffffff', letterSpacing: '0.3px', lineHeight: 1.15 }}>
+                        ADDITIONAL BONUS
+                      </div>
+                      <div className="combo-incentive-sub" style={{ fontWeight: 800, color: '#fef08a' }}>
+                        (From Management)
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <div
+                      className="combo-incentive-icon-box"
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.18)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Gift size={18} color="#fef08a" />
+                    </div>
+                    <p className="combo-incentive-desc" style={{ margin: 0, color: '#fee2e2' }}>
+                      Along with your regular incentive, you will also get a <strong style={{ color: '#ffffff', textDecoration: 'underline' }}>Cash</strong> OR a <strong style={{ color: '#ffffff', textDecoration: 'underline' }}>Tablet</strong> bonus.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. LIVE PROGRESS TRACKER */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  marginTop: '12px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.78rem', fontWeight: 800 }}>
+                  <span style={{ color: '#1e293b' }}>
+                    Enrolled: <strong style={{ color: '#0284c7', fontSize: '0.9rem' }}>{enrolledHiresCount}</strong> of <strong>{targetHires}</strong> Hires
+                  </span>
+                  <span style={{ color: isComboAchieved ? '#059669' : '#0284c7' }}>
+                    {comboPercentage}% Completed
+                  </span>
+                </div>
+
+                <div style={{ width: '100%', height: '8px', borderRadius: '5px', background: '#e2e8f0', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${comboPercentage}%`,
+                      background: isComboAchieved ? '#10b981' : 'linear-gradient(90deg, #0284c7 0%, #10b981 100%)',
+                      borderRadius: '5px',
+                      transition: 'width 0.4s ease'
+                    }}
+                  />
+                </div>
+
+                <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '6px', fontWeight: 600 }}>
+                  {isComboAchieved
+                    ? `🎉 Combo Challenge Achieved! You have unlocked your ₹${rewardAmountFormatted} Cash OR Tablet bonus!`
+                    : `Place ${remainingSlotsCount} more candidate(s) across the ${totalSlotsCount} open bank slot(s) above to claim your Grand Bumper Reward!`}
+                </div>
+              </div>
+
+              {/* 7. BOTTOM ACTION BUTTONS */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  marginTop: '12px'
+                }}
+              >
+                <button
+                  onClick={handleBackToChallengeSets}
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #0284c7',
+                    color: '#0369a1',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)'
+                  }}
+                >
+                  <ArrowLeft size={14} />
+                  <span>← Back to Sets</span>
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    onClick={() => {
+                      const link = defaultRefLink;
+                      const msg = `🌟 *Special Banking Placement Challenge: ${selectedCombo.title}*\n\n` +
+                        `🎁 Win ₹${rewardAmountFormatted} Cash OR Brand New TAB by placing candidates across these ${totalSlotsCount} partner banks!\n` +
+                        `📌 Candidate Application Link: ${link}`;
+                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                    }}
+                    style={{
+                      background: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '8px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      boxShadow: '0 2px 8px rgba(37, 211, 102, 0.35)'
+                    }}
+                  >
+                    <Share2 size={13} />
+                    <span>Share Challenge on WhatsApp</span>
+                  </button>
                 </div>
               </div>
             </div>
