@@ -21,9 +21,10 @@ export default function ApplicationModal({ job, candidate, isOpen, onClose, onSu
   }, [job]);
 
   const effectiveJob = activeJob || job;
-  const isInternship = effectiveJob?.title?.toLowerCase().includes('free') || effectiveJob?.title?.toLowerCase().includes('internship') || effectiveJob?.companyName?.toLowerCase().includes('free') || effectiveJob?.companyName?.toLowerCase().includes('internship');
+  const isInternship = effectiveJob?.itCategory === 'Internship' || effectiveJob?.title?.toLowerCase().includes('free') || effectiveJob?.title?.toLowerCase().includes('internship') || effectiveJob?.companyName?.toLowerCase().includes('free') || effectiveJob?.companyName?.toLowerCase().includes('internship');
   const isCasaProcess = effectiveJob?.title?.toLowerCase().includes('casa') || effectiveJob?.programName?.toLowerCase().includes('casa') || effectiveJob?.role?.toLowerCase().includes('casa') || effectiveJob?.description?.toLowerCase().includes('casa process');
-  const feeAmount = isCasaProcess ? 149 : (effectiveJob?.isFicFlow && !isInternship ? 1499 : 49);
+  const isFicOrItPaid = Boolean(effectiveJob?.isFicFlow || effectiveJob?.categoryId === 'cat_it' || (effectiveJob?.itCategory && effectiveJob.itCategory !== 'Internship') || /fic it|it training|fast track it|fic courses/i.test(String(effectiveJob?.companyName || '')));
+  const feeAmount = isCasaProcess ? 149 : (isFicOrItPaid && !isInternship ? 1499 : 49);
 
   useEffect(() => {
     // Load Razorpay script

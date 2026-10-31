@@ -366,7 +366,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
     companyLogo: '/logo.png',
     categoryName: 'IT & Software Development',
     categoryId: 'cat_it',
-    itCategory: proc.itCategory || 'Placement',
+    itCategory: proc.itCategory || 'Placement', isFicFlow: (proc.itCategory || 'Placement') !== 'Internship',
     programName: `${proc.processName}: ${proc.programTitle || (proc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training & 100% Placement' : 'FIC IT Training & 100% Placement Programme')}`,
     salary: proc.salary || '4.0 LPA + Incentives',
     experience: 'Fresher & Experience',
@@ -787,7 +787,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
       return;
     }
     setViewingJob(null);
-    setApplyingJob({ ...job, isFicFlow: !!ficView || !!selectedCompany?.isFicFlow });
+    setApplyingJob({ ...job, isFicFlow: Boolean(job?.isFicFlow || ficView || selectedCompany?.isFicFlow || job?.categoryId === 'cat_it' || (job?.itCategory && job.itCategory !== 'Internship') || /fic it|it training|fast track it|fic courses/i.test(String(job?.companyName || ''))) });
   };
 
   const isAlreadyApplied = (jobId) => {

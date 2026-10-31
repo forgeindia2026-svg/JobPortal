@@ -56,6 +56,7 @@ router.get('/', async (req, res) => {
             processName: itProc.processName,
             role: itProc.role,
             itCategory: itProc.itCategory,
+            isFicFlow: itProc.itCategory !== 'Internship',
             location: itProc.location || 'PAN INDIA',
             companyId: 'comp_fic_it',
             companyName: compName
@@ -72,7 +73,7 @@ router.get('/', async (req, res) => {
           computedPaymentAmount = 149;
         } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
           computedPaymentAmount = 0;
-        } else if (job && job.isFicFlow) {
+        } else if ((job && job.isFicFlow) || companyName.includes('fic') || companyName.includes('it training')) {
           computedPaymentAmount = 1499;
         } else {
           computedPaymentAmount = 49;
@@ -141,6 +142,8 @@ router.post('/', async (req, res) => {
           id: itProc.id,
           title: `${itProc.role || 'IT Trainee'}${procTag}`,
           processName: itProc.processName,
+          itCategory: itProc.itCategory,
+          isFicFlow: itProc.itCategory !== 'Internship',
           companyId: 'comp_fic_it',
           companyName: compName,
           categoryId: 'cat_it'
@@ -194,15 +197,17 @@ router.post('/', async (req, res) => {
     const effectiveCandId = cand ? cand.id : (candidateId || 'cand_' + Date.now());
 
     let finalPaymentAmount = paymentAmount;
-    if (finalPaymentAmount === undefined || finalPaymentAmount === null) {
-      const title = (job && job.title) ? String(job.title).toLowerCase() : '';
-      const companyName = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
-      if (title.includes('casa')) {
+    const jobTitleLower = (job && job.title) ? String(job.title).toLowerCase() : '';
+    const jobCompLower = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
+    const isItFreeInternship = jobTitleLower.includes('free') || jobTitleLower.includes('internship') || jobCompLower.includes('free') || jobCompLower.includes('internship') || job?.itCategory === 'Internship';
+    const isItPaidProgram = !isItFreeInternship && ((job && job.isFicFlow) || job?.categoryId === 'cat_it' || jobCompLower.includes('fic') || jobCompLower.includes('it training'));
+    if (isItPaidProgram) {
+      finalPaymentAmount = 1499;
+    } else if (finalPaymentAmount === undefined || finalPaymentAmount === null) {
+      if (jobTitleLower.includes('casa')) {
         finalPaymentAmount = 149;
-      } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
+      } else if (isItFreeInternship) {
         finalPaymentAmount = 0;
-      } else if (job && job.isFicFlow) {
-        finalPaymentAmount = 1499;
       } else {
         finalPaymentAmount = 49;
       }

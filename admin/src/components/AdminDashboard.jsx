@@ -548,7 +548,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
     const company = (app.companyName || '').toLowerCase();
     if (title.includes('casa')) return 149;
     if (title.includes('free') || title.includes('internship') || company.includes('free') || company.includes('internship')) return 0;
-    if (app.isFicFlow) return 1499;
+    if (app.isFicFlow || company.includes('fic') || company.includes('it training')) return 1499;
     return 49;
   };
 
