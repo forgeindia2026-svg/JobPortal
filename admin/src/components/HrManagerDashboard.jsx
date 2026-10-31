@@ -216,59 +216,44 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
-      {/* Sidebar Navigation */}
-      <aside
-        style={{
-          width: '260px',
-          background: '#0a1120',
-          borderRight: '1px solid #1e293b',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          zIndex: 40,
-          flexShrink: 0,
-        }}
-      >
-        {/* Brand Header */}
-        <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src="/logo.png" alt="FIC Logo" style={{ width: '32px', height: '32px', borderRadius: '8px' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: '#ffffff', fontWeight: 900, fontSize: '1.05rem' }}>FIC </span>
-              <span style={{ color: '#f59e0b', fontWeight: 900, fontSize: '1.05rem' }}>RecruitPro</span>
-            </div>
-            <div style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 800, letterSpacing: '0.5px' }}>
-              HR MANAGEMENT HUB
-            </div>
-          </div>
-        </div>
+    <div className="admin-layout">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen && setSidebarOpen(false)}
+        />
+      )}
 
-        {/* User Card */}
-        <div style={{ padding: '1rem', borderBottom: '1px solid #1e293b', background: 'rgba(255,255,255,0.02)' }}>
-          <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Logged In As</div>
-          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>{currentUser.name}</div>
-          <div style={{ display: 'inline-block', background: '#1e3a8a', color: '#93c5fd', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 800, marginTop: '4px' }}>
-            🏢 Central HR Manager
+      {/* LEFT SIDEBAR (Standard Responsive Sidebar) */}
+      <aside className={`admin-sidebar ${sidebarOpen ? 'mobile-open' : ''}`}>
+        {/* User / Role Banner */}
+        <div style={{ padding: '0 8px 1rem 8px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700 }}>
+            CENTRAL CONTROL PANEL
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '4px' }}>
-            Overseeing All Branches
+          <div style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 800, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🏢</span> Central HR Manager
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+            {currentUser.name} • All Branches
           </div>
         </div>
 
         {/* Navigation Links */}
-        <nav style={{ flex: 1, padding: '0.75rem 0.5rem', overflowY: 'auto' }}>
+        <nav className="sidebar-nav" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (setSidebarOpen) setSidebarOpen(false);
+                }}
                 style={{
-                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
@@ -280,15 +265,9 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                   fontWeight: isActive ? 800 : 600,
                   fontSize: '0.88rem',
                   cursor: 'pointer',
-                  marginBottom: '4px',
-                  transition: 'all 0.15s ease',
                   textAlign: 'left',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = '#1e293b';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'transparent';
+                  width: '100%',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 <Icon size={18} color={isActive ? '#ffffff' : '#94a3b8'} />
@@ -299,32 +278,34 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
         </nav>
 
         {/* Footer Logout */}
-        <div style={{ padding: '1rem', borderTop: '1px solid #1e293b' }}>
-          <button
-            onClick={onLogout}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '10px',
-              borderRadius: '8px',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              background: 'rgba(239, 68, 68, 0.15)',
-              color: '#ef4444',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            <LogOut size={16} /> Logout
-          </button>
-        </div>
+        {onLogout && (
+          <div style={{ padding: '1rem 0 0 0', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 'auto' }}>
+            <button
+              onClick={onLogout}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                color: '#ef4444',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+              }}
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '1.75rem 2rem', overflowX: 'hidden' }}>
+      <main className="admin-main">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem 0' }}>
             <RefreshCw size={32} className="spin" style={{ margin: '0 auto 12px auto', color: '#0284c7' }} />
@@ -375,7 +356,7 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                 </div>
 
                 {/* 6 Top KPI Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '1.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '12px', marginBottom: '1.75rem' }}>
                   <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bfdbfe', borderTop: '4px solid #2563eb' }}>
                     <div style={{ fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 800, textTransform: 'uppercase' }}>Total Branches</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#1e3a8a', margin: '4px 0' }}>{branches.length}</div>
@@ -613,8 +594,8 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                     <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Try adjusting your search query or filters.</div>
                   </div>
                 ) : (
-                  <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
+                  <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
                       <thead>
                         <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                           <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Candidate</th>
@@ -785,8 +766,8 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                   </div>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
+                <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <table style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                         <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Executive HR</th>

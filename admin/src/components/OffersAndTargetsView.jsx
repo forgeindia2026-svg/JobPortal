@@ -2410,7 +2410,7 @@ export default function OffersAndTargetsView({
           const closedOrSelected = matchingApps.filter(app => {
             const s = String(app.status || '').toLowerCase().trim();
             if (s.includes('reject') || s.includes('not interested') || s.includes('drop') || s.includes('pending')) return false;
-            return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
+            return (!s.includes('l1') && !s.includes('l2')) && (s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll'));
           });
           const inProgressApps = matchingApps.filter(app => {
             const s = String(app.status || '').toLowerCase().trim();

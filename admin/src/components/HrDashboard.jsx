@@ -1086,6 +1086,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 const closedApps = hrApps.filter(app => {
                   const s = String(app.status || '').toLowerCase().trim();
                   if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+                  if (s.includes('l1') || s.includes('l2')) return false;
                   return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
                 });
                 return {

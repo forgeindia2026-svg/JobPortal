@@ -425,10 +425,15 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
       hrApps = hrApps.filter(app => {
         const s = String(app.status || '').toLowerCase().trim();
         if (s.includes('reject') || s.includes('not interested') || s.includes('drop') || s.includes('pending') || s.includes('interviewing') || s.includes('shortlist')) return false;
+        if (s.includes('l1') || s.includes('l2')) return false;
         return CLOSED_STATUSES.includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
       });
     } else if (statusFilter === 'Selected') {
-      hrApps = hrApps.filter(app => String(app.status || '').toLowerCase().trim().includes('select'));
+      hrApps = hrApps.filter(app => {
+        const s = String(app.status || '').toLowerCase().trim();
+        if (s.includes('l1') || s.includes('l2')) return false;
+        return s.includes('select');
+      });
     }
     setActiveTab('team_leaders');
     setSelectedTlId(null);
@@ -873,6 +878,7 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                 const closedApps = hrApps.filter(app => {
                   const s = String(app.status || '').toLowerCase().trim();
                   if (s.includes('reject') || s.includes('not interested') || s.includes('drop') || s.includes('pending') || s.includes('interviewing') || s.includes('shortlist')) return false;
+                  if (s.includes('l1') || s.includes('l2')) return false;
                   return CLOSED_STATUSES.includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
                 });
                 return {

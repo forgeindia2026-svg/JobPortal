@@ -81,7 +81,8 @@ const DEFAULT_TARGETS = [
 function isSelectedApp(status) {
   const s = String(status || '').toLowerCase().trim();
   if (['rejected', 'not interested', 'cancelled', 'payment pending', 'unpaid'].includes(s)) return false;
-  return s.includes('select') || s.includes('joined') || s.includes('converted') || s.includes('hired');
+  if (s.includes('l1') || s.includes('l2')) return false;
+  return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('converted') || s.includes('hired');
 }
 
 function matchAppToBank(app, bankName) {
