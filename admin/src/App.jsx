@@ -50,7 +50,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        const allowedRoles = ['admin', 'hr', 'agent', 'branch_manager', 'team_leader', 'client'];
+        const allowedRoles = ['admin', 'hr', 'agent', 'branch_manager', 'team_leader', 'client', 'hr_manager'];
         if (allowedRoles.includes(data.user.role)) {
           localStorage.setItem('admin_user', JSON.stringify(data.user));
           setCurrentUser(data.user);
