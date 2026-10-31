@@ -1527,23 +1527,43 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
     const hrs = await UserModel.find({ role: 'hr' }).sort({ createdAt: -1 }).lean();
     const hrMap = Object.fromEntries(hrs.map(h => [(h.referralCode || '').toLowerCase(), h]));
 
-    // 4. All Applications (excluding Payment Pending)
-    const applications = await ApplicationModel.find({ status: { $ne: 'Payment Pending' } })
-      .sort({ appliedAt: -1 })
-      .lean();
-
-    // Populate candidate, job, and company details
-    const candidateIds = applications.map(a => a.candidateId).filter(Boolean);
-    const jobIds = applications.map(a => a.jobId).filter(Boolean);
-
-    const [candidates, jobs, companies] = await Promise.all([
-      CandidateModel.find({ id: { $in: candidateIds } }).lean(),
-      JobModel.find({ id: { $in: jobIds } }).lean(),
-      CompanyModel.find({}).lean()
+    // 4. All Applications & Interviews & Jobs & Candidates
+    const [allApps, allCandidates, allJobs, companies, rawInterviews] = await Promise.all([
+      ApplicationModel.find({}).sort({ appliedAt: -1 }).lean(),
+      CandidateModel.find({}).lean(),
+      JobModel.find({}).lean(),
+      CompanyModel.find({}).lean(),
+      InterviewModel.find({}).sort({ createdAt: -1 }).lean()
     ]);
 
-    const candMap = Object.fromEntries(candidates.map(c => [c.id, c]));
-    const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
+    const applications = allApps.filter(a => a.status !== 'Payment Pending');
+
+    // Calculate unique totalCandidates matching /api/reports/dashboard
+    const candidateIdsWithValidApps = new Set(applications.map(a => String(a.candidateId)));
+    const candidateIdsWithPendingApps = new Set(allApps.filter(a => a.status === 'Payment Pending').map(a => String(a.candidateId)));
+    const activeCandidates = allCandidates.filter(c => {
+      const hasValid = candidateIdsWithValidApps.has(String(c.id));
+      const hasPending = candidateIdsWithPendingApps.has(String(c.id));
+      if (hasPending && !hasValid) return false;
+      return true;
+    });
+    const seenIdentifiers = new Set();
+    let totalCandidates = 0;
+    activeCandidates.forEach(c => {
+      const email = c.email ? c.email.toLowerCase().trim() : null;
+      const mobile = c.mobile ? c.mobile.trim() : null;
+      const emailKey = email ? `email:${email}` : null;
+      const mobileKey = mobile ? `mobile:${mobile}` : null;
+      let isDuplicate = false;
+      if (emailKey && seenIdentifiers.has(emailKey)) isDuplicate = true;
+      if (mobileKey && seenIdentifiers.has(mobileKey)) isDuplicate = true;
+      if (!isDuplicate) totalCandidates++;
+      if (emailKey) seenIdentifiers.add(emailKey);
+      if (mobileKey) seenIdentifiers.add(mobileKey);
+    });
+
+    const candMap = Object.fromEntries(allCandidates.map(c => [c.id, c]));
+    const jobMap = Object.fromEntries(allJobs.map(j => [j.id, j]));
     const compMap = Object.fromEntries(companies.map(c => [c.id, c]));
 
     const populatedApps = applications.map(app => {
@@ -1562,19 +1582,48 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
         candidateLocation: cand.location || '',
         jobTitle: job.title || app.jobTitle || 'Job Role',
         companyName: comp.name || job.companyName || 'Corporate Partner',
+        hrName: refHr ? refHr.name : (app.referredBy || 'Direct'),
+        hrCode: app.referredBy || '',
         referringHrName: refHr ? refHr.name : (app.referredBy || 'Direct'),
         referringHrCode: app.referredBy || '',
+        tlName: refTl ? refTl.name : 'Unassigned',
         referringTlName: refTl ? refTl.name : '',
         referringTlId: refHr ? refHr.teamLeaderId : '',
         branchName: refBm ? refBm.branch : (refHr?.branch || refTl?.branch || 'General')
       };
     });
 
+    const appById = Object.fromEntries(populatedApps.map(a => [String(a.id), a]));
+    const appByCandId = Object.fromEntries(populatedApps.map(a => [String(a.candidateId), a]));
+
+    const populatedInterviews = (rawInterviews || []).map(int => {
+      const app = (int.applicationId && appById[String(int.applicationId)]) || (int.candidateId && appByCandId[String(int.candidateId)]) || {};
+      const cand = candMap[int.candidateId] || {};
+      const job = jobMap[int.jobId || app.jobId] || {};
+      const comp = compMap[job.companyId] || {};
+      return {
+        ...int,
+        candidateName: int.candidateName || cand.name || app.candidateName || 'Candidate',
+        candidateMobile: int.candidateMobile || cand.mobile || app.candidateMobile || '',
+        candidateEmail: int.candidateEmail || cand.email || app.candidateEmail || '',
+        jobTitle: int.jobTitle || job.title || app.jobTitle || 'Job Role',
+        companyName: int.companyName || comp.name || app.companyName || 'Corporate Partner',
+        hrName: app.hrName || 'Direct',
+        hrCode: app.hrCode || '',
+        tlName: app.tlName || 'Unassigned',
+        branchName: app.branchName || 'General'
+      };
+    });
+
     // Populate HR counts
     const appCountByCode = {};
+    const selCountByCode = {};
     applications.forEach(a => {
       const c = String(a.referredBy || '').toLowerCase();
       appCountByCode[c] = (appCountByCode[c] || 0) + 1;
+      if (['Selected', 'Converted', 'Hired', 'Joined'].includes(a.status)) {
+        selCountByCode[c] = (selCountByCode[c] || 0) + 1;
+      }
     });
 
     const populatedHrs = hrs.map(h => {
@@ -1584,8 +1633,11 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
       const myBm = bmMap[h.branchManagerId] || (myTl ? bmMap[myTl.branchManagerId] : null);
       return {
         ...safe,
+        tlName: myTl ? myTl.name : (h.branchManagerId ? 'Direct Branch HR' : 'Unassigned'),
         teamLeaderName: myTl ? myTl.name : (h.branchManagerId ? 'Direct Branch HR' : 'Unassigned'),
         branchName: myBm ? myBm.branch : (h.branch || 'General'),
+        applicationsCount: appCountByCode[code] || 0,
+        selectedCount: selCountByCode[code] || 0,
         candidatesApplied: appCountByCode[code] || 0
       };
     });
@@ -1623,15 +1675,55 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
         totalTls: bTls.length,
         totalHrs: bHrs.length,
         totalApplications: bApps.length,
-        selectedCandidates: bApps.filter(a => ['selected', 'hired', 'joined', 'converted'].includes(String(a.status || '').toLowerCase())).length,
+        selectedCandidates: bApps.filter(a => ['Selected', 'Converted'].includes(a.status)).length,
         interviewCandidates: bApps.filter(a => String(a.status || '').toLowerCase().includes('interview')).length
       };
     });
 
-    // Overall KPIs across all branches
-    const selectedCount = applications.filter(a => ['selected', 'hired', 'joined', 'converted'].includes(String(a.status || '').toLowerCase())).length;
-    const interviewCount = applications.filter(a => String(a.status || '').toLowerCase().includes('interview')).length;
-    const processingCount = applications.length - selectedCount - interviewCount;
+    // Overall KPIs matching AdminDashboard exactly
+    const docIds = new Set();
+    applications.forEach(a => {
+      const s = String(a.status || '').toLowerCase().trim();
+      if (['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document')) {
+        docIds.add(a.id);
+      }
+    });
+    populatedInterviews.forEach(int => {
+      const s = String(int.status || '').toLowerCase().trim();
+      if (['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document')) {
+        if (int.applicationId) docIds.add(int.applicationId);
+      }
+    });
+    const documentSubmissionCount = docIds.size;
+
+    const activeInterviews = populatedInterviews.filter(int => {
+      const intStatus = String(int.status || '').toLowerCase().trim();
+      if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return false;
+      if (['selected', 'hired', 'converted'].includes(intStatus)) return false;
+      if (intStatus.includes('document')) return false;
+
+      const app = allApps.find(a =>
+        (int.applicationId && String(a.id) === String(int.applicationId)) ||
+        (int.candidateId && String(a.candidateId) === String(int.candidateId))
+      );
+      if (app) {
+        const appStatus = String(app.status || '').toLowerCase().trim();
+        if (appStatus === 'payment pending' || appStatus === 'unpaid') return false;
+        if (['rejected', 'not interested'].includes(appStatus)) return false;
+        if (appStatus.includes('document')) return false;
+        if (['selected', 'converted', 'hired'].includes(appStatus)) return false;
+      }
+      return true;
+    });
+
+    const selectedCount = applications.filter(a => ['Selected', 'Converted'].includes(a.status)).length;
+    const rejectedCount = applications.filter(a => ['Rejected', 'Not Interested'].includes(a.status)).length;
+    const processingCount = applications.filter(a => {
+      const s = String(a.status || '').toLowerCase();
+      return !['selected', 'converted', 'rejected', 'not interested', 'interview scheduled'].includes(s) && !s.includes('interview') && !s.includes('document');
+    }).length;
+    const totalJobs = allJobs.length;
+    const activeJobs = allJobs.filter(j => j.status === 'Active').length;
 
     res.json({
       hrManager: hrm,
@@ -1641,14 +1733,20 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
         approvedTls: tls.filter(t => t.approvalStatus === 'approved').length,
         totalHrs: hrs.length,
         totalApplications: applications.length,
+        totalCandidates,
+        processingCandidates: processingCount,
+        interviewCandidates: activeInterviews.length,
+        documentSubmissionCount,
         selectedCandidates: selectedCount,
-        interviewCandidates: interviewCount,
-        processingCandidates: Math.max(0, processingCount)
+        rejectedCandidates: rejectedCount,
+        totalJobs,
+        activeJobs
       },
       branches: branchSummaries,
       teamLeaders: populatedTls,
       hrs: populatedHrs,
-      applications: populatedApps
+      applications: populatedApps,
+      interviews: populatedInterviews
     });
   } catch (err) {
     console.error('Error fetching HR manager overview:', err);

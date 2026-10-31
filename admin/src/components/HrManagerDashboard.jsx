@@ -51,8 +51,12 @@ const getStatusBadge = (status) => {
 };
 
 export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'applied' | 'interviews' | 'hrs' | 'branches_teams' | 'offers_targets'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'applied' | 'interviews' | 'hrs' | 'branches_teams' | 'jobs' | 'offers_targets'
   const [data, setData] = useState(null);
+  const [reportKpis, setReportKpis] = useState(null);
+  const [allInterviews, setAllInterviews] = useState([]);
+  const [jobsList, setJobsList] = useState([]);
+  const [interviewFilter, setInterviewFilter] = useState('active'); // 'active' | 'all' | 'document' | 'selected' | 'rejected'
   const [loading, setLoading] = useState(true);
 
   // Application Filters
@@ -75,10 +79,30 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
   const fetchOverview = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/users/hr-managers/${currentUser.id}/overview`);
-      if (res.ok) {
+      const [res, repRes, intRes, jobsRes] = await Promise.all([
+        fetch(`${API_URL}/api/users/hr-managers/${currentUser.id}/overview`),
+        fetch(`${API_URL}/api/reports/dashboard`).catch(() => null),
+        fetch(`${API_URL}/api/interviews`).catch(() => null),
+        fetch(`${API_URL}/api/jobs`).catch(() => null),
+      ]);
+      if (res && res.ok) {
         const json = await res.json();
         setData(json);
+        if (Array.isArray(json.interviews) && json.interviews.length > 0) {
+          setAllInterviews(json.interviews);
+        }
+      }
+      if (repRes && repRes.ok) {
+        const repJson = await repRes.json();
+        if (repJson?.kpis) setReportKpis(repJson.kpis);
+      }
+      if (intRes && intRes.ok) {
+        const intJson = await intRes.json();
+        if (Array.isArray(intJson)) setAllInterviews(intJson);
+      }
+      if (jobsRes && jobsRes.ok) {
+        const jobsJson = await jobsRes.json();
+        if (Array.isArray(jobsJson)) setJobsList(jobsJson);
       }
     } catch (err) {
       console.error('Error fetching HR manager overview:', err);
@@ -114,16 +138,127 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
   const branches = data?.branches || [];
   const teamLeaders = data?.teamLeaders || [];
   const hrs = data?.hrs || [];
-  const applications = data?.applications || [];
-  const kpis = data?.kpis || {
-    totalBranches: branches.length,
-    totalTls: teamLeaders.length,
-    totalHrs: hrs.length,
-    totalApplications: applications.length,
-    selectedCandidates: 0,
-    interviewCandidates: 0,
-    processingCandidates: 0
-  };
+  const rawApplications = data?.applications || [];
+  const applications = useMemo(
+    () => rawApplications.filter((app) => app.status !== 'Payment Pending'),
+    [rawApplications]
+  );
+
+  // Exact same Document Submission count as AdminDashboard.jsx
+  const docSubmissionCount = useMemo(() => {
+    const ids = new Set();
+    applications.forEach((a) => {
+      const s = String(a.status || '').toLowerCase().trim();
+      if (
+        ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) ||
+        s.includes('document')
+      ) {
+        ids.add(a.id);
+      }
+    });
+    (allInterviews || []).forEach((int) => {
+      const s = String(int.status || '').toLowerCase().trim();
+      if (
+        ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) ||
+        s.includes('document')
+      ) {
+        if (int.applicationId) ids.add(int.applicationId);
+      }
+    });
+    return ids.size;
+  }, [applications, allInterviews]);
+
+  // Exact same Active Interviews filter as AdminDashboard.jsx
+  const activeInterviews = useMemo(() => {
+    return (allInterviews || []).filter((int) => {
+      const intStatus = String(int.status || '').toLowerCase().trim();
+      if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return false;
+      if (['selected', 'hired', 'converted'].includes(intStatus)) return false;
+      if (intStatus.includes('document')) return false;
+
+      const app = rawApplications.find(
+        (a) =>
+          (int.applicationId && String(a.id) === String(int.applicationId)) ||
+          (int.candidateId && String(a.candidateId) === String(int.candidateId))
+      );
+
+      if (app) {
+        const appStatus = String(app.status || '').toLowerCase().trim();
+        if (appStatus === 'payment pending' || appStatus === 'unpaid') return false;
+        if (['rejected', 'not interested'].includes(appStatus)) return false;
+        if (appStatus.includes('document')) return false;
+        if (['selected', 'converted', 'hired'].includes(appStatus)) return false;
+      }
+      return true;
+    });
+  }, [allInterviews, rawApplications]);
+
+  const displayedInterviews = useMemo(() => {
+    if (interviewFilter === 'all') return allInterviews || [];
+    if (interviewFilter === 'active') return activeInterviews;
+    if (interviewFilter === 'document') {
+      return (allInterviews || []).filter((int) => {
+        const intStatus = String(int.status || '').toLowerCase().trim();
+        if (intStatus.includes('document')) return true;
+        const app = rawApplications.find(
+          (a) =>
+            (int.applicationId && String(a.id) === String(int.applicationId)) ||
+            (int.candidateId && String(a.candidateId) === String(int.candidateId))
+        );
+        return app && String(app.status || '').toLowerCase().trim().includes('document');
+      });
+    }
+    if (interviewFilter === 'selected') {
+      return (allInterviews || []).filter((int) => {
+        const intStatus = String(int.status || '').toLowerCase().trim();
+        if (['selected', 'hired', 'converted'].includes(intStatus)) return true;
+        const app = rawApplications.find(
+          (a) =>
+            (int.applicationId && String(a.id) === String(int.applicationId)) ||
+            (int.candidateId && String(a.candidateId) === String(int.candidateId))
+        );
+        return app && ['selected', 'hired', 'converted'].includes(String(app.status || '').toLowerCase().trim());
+      });
+    }
+    if (interviewFilter === 'rejected') {
+      return (allInterviews || []).filter((int) => {
+        const intStatus = String(int.status || '').toLowerCase().trim();
+        if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return true;
+        const app = rawApplications.find(
+          (a) =>
+            (int.applicationId && String(a.id) === String(int.applicationId)) ||
+            (int.candidateId && String(a.candidateId) === String(int.candidateId))
+        );
+        return app && ['rejected', 'not interested'].includes(String(app.status || '').toLowerCase().trim());
+      });
+    }
+    return activeInterviews;
+  }, [allInterviews, activeInterviews, interviewFilter, rawApplications]);
+
+  const processingCount = useMemo(() => {
+    return applications.filter((a) => {
+      const s = String(a.status || '').toLowerCase();
+      return (
+        !['selected', 'converted', 'rejected', 'not interested', 'interview scheduled'].includes(s) &&
+        !s.includes('interview') &&
+        !s.includes('document')
+      );
+    }).length;
+  }, [applications]);
+
+  const selectedCount = useMemo(
+    () => applications.filter((a) => ['Selected', 'Converted'].includes(a.status)).length,
+    [applications]
+  );
+
+  const rejectedCount = useMemo(
+    () => applications.filter((a) => ['Rejected', 'Not Interested'].includes(a.status)).length,
+    [applications]
+  );
+
+  const totalCandidatesCount = reportKpis?.totalCandidates ?? data?.kpis?.totalCandidates ?? applications.length;
+  const totalJobsCount = reportKpis?.totalJobs ?? data?.kpis?.totalJobs ?? jobsList.length;
+  const activeJobsCount = reportKpis?.activeJobs ?? data?.kpis?.activeJobs ?? jobsList.filter((j) => j.status === 'Active').length;
 
   // Date Filtered Applications
   const dateFilteredApplications = useMemo(() => {
@@ -153,7 +288,7 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
         (app.candidateMobile || '').includes(q) ||
         (app.jobTitle || '').toLowerCase().includes(q) ||
         (app.companyName || '').toLowerCase().includes(q) ||
-        (app.referringHrName || '').toLowerCase().includes(q);
+        (app.referringHrName || app.hrName || '').toLowerCase().includes(q);
 
       const matchesBranch =
         branchFilter === 'all' ||
@@ -162,32 +297,45 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
       const matchesTl =
         tlFilter === 'all' ||
         String(app.referringTlId || '') === tlFilter ||
-        String(app.referringTlName || '').toLowerCase() === tlFilter.toLowerCase();
+        String(app.referringTlName || app.tlName || '').toLowerCase() === tlFilter.toLowerCase();
 
       const matchesHr =
         hrFilter === 'all' ||
-        String(app.referringHrCode || '').toLowerCase() === hrFilter.toLowerCase();
+        String(app.referringHrCode || app.hrCode || '').toLowerCase() === hrFilter.toLowerCase();
 
       const s = String(app.status || '').toLowerCase().trim();
       const filterLower = statusFilter.toLowerCase();
       let matchesStatus = true;
       if (filterLower === 'all') {
         matchesStatus = true;
+      } else if (filterLower === 'processing' || filterLower === 'in_screening') {
+        matchesStatus =
+          !['selected', 'converted', 'rejected', 'not interested', 'interview scheduled'].includes(s) &&
+          !s.includes('interview') &&
+          !s.includes('document');
+      } else if (filterLower === 'document submission') {
+        const isDoc =
+          ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) ||
+          s.includes('document');
+        const hasDocInt = (allInterviews || []).some(
+          (int) =>
+            (String(int.candidateId) === String(app.candidateId) || String(int.applicationId) === String(app.id)) &&
+            String(int.status || '').toLowerCase().includes('document')
+        );
+        matchesStatus = isDoc || hasDocInt;
       } else if (filterLower === 'selected') {
-        matchesStatus = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected', 'hired', 'joined', 'converted', 'closed', 'joined manipal'].includes(s) || s.includes('select'));
+        matchesStatus = ['selected', 'converted'].includes(s);
+      } else if (filterLower === 'rejected') {
+        matchesStatus = ['rejected', 'not interested'].includes(s);
       } else if (filterLower === 'interview') {
         matchesStatus = s.includes('interview') || Boolean(app.interviewDate);
-      } else if (filterLower === 'in_screening') {
-        const isSel = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected', 'hired', 'joined', 'converted', 'closed', 'joined manipal'].includes(s) || s.includes('select'));
-        const isInt = s.includes('interview');
-        matchesStatus = !isSel && !isInt;
       } else {
         matchesStatus = s === filterLower;
       }
 
       return matchesSearch && matchesBranch && matchesTl && matchesHr && matchesStatus;
     });
-  }, [dateFilteredApplications, appSearch, branchFilter, tlFilter, hrFilter, statusFilter]);
+  }, [dateFilteredApplications, appSearch, branchFilter, tlFilter, hrFilter, statusFilter, allInterviews]);
 
   // Filtered HRs for Executive HRs tab
   const filteredHrs = useMemo(() => {
@@ -208,23 +356,13 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
     });
   }, [hrs, hrSearch, hrBranchFilter]);
 
-  // Interviews List
-  const interviewsList = useMemo(() => {
-    return applications.filter((app) => {
-      const s = String(app.status || '').toLowerCase().trim();
-      if (['rejected', 'not interested', 'cancelled', 'payment pending', 'unpaid', 'selected', 'joined'].includes(s)) {
-        return false;
-      }
-      return s.includes('interview') || app.interviewDate;
-    });
-  }, [applications]);
-
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Building2 },
     { id: 'applied', label: `Applied (${applications.length})`, icon: FileText },
-    { id: 'interviews', label: `Interviews (${interviewsList.length})`, icon: CalendarDays },
+    { id: 'interviews', label: `Interviews (${activeInterviews.length})`, icon: CalendarDays },
     { id: 'hrs', label: `Executive HRs (${hrs.length})`, icon: Users },
     { id: 'branches_teams', label: `Branches & Teams (${branches.length})`, icon: ShieldCheck },
+    { id: 'jobs', label: `Job Openings (${totalJobsCount})`, icon: Briefcase },
     { id: 'offers_targets', label: 'Offers & Targets 🔥', icon: Flame },
   ];
 
@@ -384,37 +522,26 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                   </div>
                 </div>
 
-                {/* 6 Top KPI Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '12px', marginBottom: '1.75rem' }}>
-                  <div
-                    onClick={() => setActiveTab('branches_teams')}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(37,99,235,0.12)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bfdbfe', borderTop: '4px solid #2563eb', cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Click to view Branches & Teams"
-                  >
-                    <div style={{ fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 800, textTransform: 'uppercase' }}>Total Branches</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#1e3a8a', margin: '4px 0' }}>{branches.length}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Active operations</div>
+                {/* Recruitment Dashboard Overview Header + Refresh */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Recruitment Dashboard Overview</h2>
+                    <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '2px 0 0 0' }}>Live candidate applications, job metrics, and interview tracking across all branches.</p>
                   </div>
-
-                  <div
-                    onClick={() => {
-                      setHrBranchFilter('all');
-                      setHrSearch('');
-                      setActiveTab('hrs');
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(124,58,237,0.12)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #ddd6fe', borderTop: '4px solid #7c3aed', cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Click to view all Executive HRs"
+                  <button
+                    className="btn-secondary"
+                    onClick={fetchOverview}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#ffffff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', color: '#0f172a' }}
                   >
-                    <div style={{ fontSize: '0.78rem', color: '#6d28d9', fontWeight: 800, textTransform: 'uppercase' }}>Executive HRs</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#5b21b6', margin: '4px 0' }}>{hrs.length}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Across all teams</div>
-                  </div>
+                    <RefreshCw size={14} /> Refresh Stats
+                  </button>
+                </div>
 
+                {/* 10 Top KPI Cards (8 Admin Overview KPI Cards + 2 Branch/HR Cards) */}
+                <div className="kpi-grid" style={{ marginBottom: '1.75rem' }}>
+                  {/* 1. Applications Received (155) */}
                   <div
+                    className="kpi-card"
                     onClick={() => {
                       setBranchFilter('all');
                       setTlFilter('all');
@@ -424,17 +551,137 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                       setAppSearch('');
                       setActiveTab('applied');
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(234,88,12,0.12)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #fed7aa', borderTop: '4px solid #ea580c', cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Click to view all Applications"
+                    style={{
+                      background: '#fffbeb', border: '1px solid #fcd34d', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view all Applications Received"
                   >
-                    <div style={{ fontSize: '0.78rem', color: '#c2410c', fontWeight: 800, textTransform: 'uppercase' }}>Total Applications</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#9a3412', margin: '4px 0' }}>{applications.length}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Submitted candidates</div>
+                    <div className="kpi-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
+                      <FileText size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#78350f' }}>{applications.length}</div>
+                      <div className="kpi-label" style={{ color: '#78350f', opacity: 0.8, fontWeight: 600 }}>Applications Received</div>
+                    </div>
                   </div>
 
+                  {/* 2. Total Candidates (147) */}
                   <div
+                    className="kpi-card"
+                    onClick={() => {
+                      setBranchFilter('all');
+                      setTlFilter('all');
+                      setHrFilter('all');
+                      setStatusFilter('all');
+                      setDateFilter('all');
+                      setAppSearch('');
+                      setActiveTab('applied');
+                    }}
+                    style={{
+                      background: '#f0fdfa', border: '1px solid #5eead4', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view Total Candidates"
+                  >
+                    <div className="kpi-icon" style={{ background: '#ccfbf1', color: '#0d9488' }}>
+                      <Users size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#134e4a' }}>{totalCandidatesCount}</div>
+                      <div className="kpi-label" style={{ color: '#134e4a', opacity: 0.8, fontWeight: 600 }}>Total Candidates</div>
+                    </div>
+                  </div>
+
+                  {/* 3. Processing (87) */}
+                  <div
+                    className="kpi-card"
+                    onClick={() => {
+                      setBranchFilter('all');
+                      setTlFilter('all');
+                      setHrFilter('all');
+                      setStatusFilter('processing');
+                      setDateFilter('all');
+                      setAppSearch('');
+                      setActiveTab('applied');
+                    }}
+                    style={{
+                      background: '#e0e7ff', border: '1px solid #a5b4fc', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view Processing candidates"
+                  >
+                    <div className="kpi-icon" style={{ background: '#c7d2fe', color: '#4f46e5' }}>
+                      <RefreshCw size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#312e81' }}>{processingCount}</div>
+                      <div className="kpi-label" style={{ color: '#312e81', opacity: 0.8, fontWeight: 600 }}>Processing</div>
+                    </div>
+                  </div>
+
+                  {/* 4. Interviews Scheduled (8) */}
+                  <div
+                    className="kpi-card"
+                    onClick={() => {
+                      setInterviewFilter('active');
+                      setActiveTab('interviews');
+                    }}
+                    style={{
+                      background: '#fdf4ff', border: '1px solid #f0abfc', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view Scheduled Interviews"
+                  >
+                    <div className="kpi-icon" style={{ background: '#fae8ff', color: '#c026d3' }}>
+                      <CalendarDays size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#701a75' }}>{activeInterviews.length}</div>
+                      <div className="kpi-label" style={{ color: '#701a75', opacity: 0.8, fontWeight: 600 }}>Interviews Scheduled</div>
+                    </div>
+                  </div>
+
+                  {/* 5. Document Submission (16) */}
+                  <div
+                    className="kpi-card"
+                    onClick={() => {
+                      setBranchFilter('all');
+                      setTlFilter('all');
+                      setHrFilter('all');
+                      setStatusFilter('document submission');
+                      setDateFilter('all');
+                      setAppSearch('');
+                      setActiveTab('applied');
+                    }}
+                    style={{
+                      background: '#ecfeff', border: '1px solid #67e8f9', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view Document Submission candidates"
+                  >
+                    <div className="kpi-icon" style={{ background: '#cffafe', color: '#0891b2' }}>
+                      <FileCheck size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#164e63' }}>{docSubmissionCount}</div>
+                      <div className="kpi-label" style={{ color: '#164e63', opacity: 0.8, fontWeight: 600 }}>Document Submission</div>
+                    </div>
+                  </div>
+
+                  {/* 6. Selected (2) */}
+                  <div
+                    className="kpi-card"
                     onClick={() => {
                       setBranchFilter('all');
                       setTlFilter('all');
@@ -444,46 +691,101 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                       setAppSearch('');
                       setActiveTab('applied');
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(22,163,74,0.12)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bbf7d0', borderTop: '4px solid #16a34a', cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Click to view Selected / Placed candidates"
+                    style={{
+                      background: '#ecfdf5', border: '1px solid #6ee7b7', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view Selected candidates"
                   >
-                    <div style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 800, textTransform: 'uppercase' }}>Selected / Placed</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#14532d', margin: '4px 0' }}>{kpis.selectedCandidates}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Hired candidates</div>
+                    <div className="kpi-icon" style={{ background: '#d1fae5', color: '#059669' }}>
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#064e3b' }}>{selectedCount}</div>
+                      <div className="kpi-label" style={{ color: '#064e3b', opacity: 0.8, fontWeight: 600 }}>Selected</div>
+                    </div>
                   </div>
 
+                  {/* 7. Rejected (48) */}
                   <div
-                    onClick={() => setActiveTab('interviews')}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(147,51,234,0.12)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #e9d5ff', borderTop: '4px solid #9333ea', cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Click to view all Interviews"
-                  >
-                    <div style={{ fontSize: '0.78rem', color: '#7e22ce', fontWeight: 800, textTransform: 'uppercase' }}>Interviews</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#6b21a8', margin: '4px 0' }}>{interviewsList.length}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Live assessment rounds</div>
-                  </div>
-
-                  <div
+                    className="kpi-card"
                     onClick={() => {
                       setBranchFilter('all');
                       setTlFilter('all');
                       setHrFilter('all');
-                      setStatusFilter('in_screening');
+                      setStatusFilter('rejected');
                       setDateFilter('all');
                       setAppSearch('');
                       setActiveTab('applied');
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(234,179,8,0.12)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #fef08a', borderTop: '4px solid #eab308', cursor: 'pointer', transition: 'all 0.2s' }}
-                    title="Click to view candidates In Screening"
+                    style={{
+                      background: '#fef2f2', border: '1px solid #fca5a5', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view Rejected candidates"
                   >
-                    <div style={{ fontSize: '0.78rem', color: '#a16207', fontWeight: 800, textTransform: 'uppercase' }}>In Screening</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#854d0e', margin: '4px 0' }}>{kpis.processingCandidates}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Under review</div>
+                    <div className="kpi-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
+                      <XCircle size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#7f1d1d' }}>{rejectedCount}</div>
+                      <div className="kpi-label" style={{ color: '#7f1d1d', opacity: 0.8, fontWeight: 600 }}>Rejected</div>
+                    </div>
+                  </div>
+
+                  {/* 8. Total Jobs (13 Active) (17) */}
+                  <div
+                    className="kpi-card"
+                    onClick={() => setActiveTab('jobs')}
+                    style={{
+                      background: '#eff6ff', border: '1px solid #93c5fd', cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    title="Click to view all Job Openings"
+                  >
+                    <div className="kpi-icon" style={{ background: '#dbeafe', color: '#2563eb' }}>
+                      <Briefcase size={22} />
+                    </div>
+                    <div>
+                      <div className="kpi-val" style={{ color: '#1e3a8a' }}>{totalJobsCount}</div>
+                      <div className="kpi-label" style={{ color: '#1e3a8a', opacity: 0.8, fontWeight: 600 }}>Total Jobs ({activeJobsCount} Active)</div>
+                    </div>
+                  </div>
+
+                  {/* 9. Extra Card 1: Total Branches (2 - Active operations) */}
+                  <div
+                    onClick={() => setActiveTab('branches_teams')}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(37,99,235,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.15rem 1.25rem', border: '1.5px solid #bfdbfe', borderTop: '4px solid #2563eb', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view Branches & Teams"
+                  >
+                    <div style={{ fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 800, textTransform: 'uppercase' }}>Total Branches</div>
+                    <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#1e3a8a', margin: '4px 0' }}>{branches.length}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Active operations</div>
+                  </div>
+
+                  {/* 10. Extra Card 2: Executive HRs (14 - Across all teams) */}
+                  <div
+                    onClick={() => {
+                      setHrBranchFilter('all');
+                      setHrSearch('');
+                      setActiveTab('hrs');
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(124,58,237,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.15rem 1.25rem', border: '1.5px solid #ddd6fe', borderTop: '4px solid #7c3aed', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view all Executive HRs"
+                  >
+                    <div style={{ fontSize: '0.78rem', color: '#6d28d9', fontWeight: 800, textTransform: 'uppercase' }}>Executive HRs</div>
+                    <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#5b21b6', margin: '4px 0' }}>{hrs.length}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Across all teams</div>
                   </div>
                 </div>
 
@@ -670,18 +972,20 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                     onChange={(e) => setStatusFilter(e.target.value)}
                     style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff', fontWeight: 600 }}
                   >
-                    <option value="all">All Statuses</option>
+                    <option value="all">All Statuses ({applications.length})</option>
+                    <option value="processing">Processing ({processingCount})</option>
+                    <option value="document submission">Document Submission ({docSubmissionCount})</option>
                     <option value="in_screening">In Screening / Under Review</option>
                     <option value="applied">Applied</option>
                     <option value="shortlisted">Shortlisted</option>
                     <option value="interview">Interview Scheduled</option>
                     <option value="l1 selected">L1 Selected</option>
                     <option value="l2 selected">L2 Selected</option>
-                    <option value="selected">Selected / Placed (Hired)</option>
+                    <option value="selected">Selected / Placed ({selectedCount})</option>
                     <option value="offer released">Offer Released</option>
                     <option value="joined">Joined</option>
                     <option value="hold">Hold</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="rejected">Rejected ({rejectedCount})</option>
                   </select>
                 </div>
 
@@ -781,51 +1085,153 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
             {/* ======================================================== */}
             {activeTab === 'interviews' && (
               <div>
-                <div style={{ marginBottom: '14px' }}>
-                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                    Scheduled Interviews ({interviewsList.length})
-                  </h2>
-                  <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
-                    Live candidate interview rounds scheduled across all company branches.
-                  </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                      Scheduled Interviews ({displayedInterviews.length})
+                    </h2>
+                    <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                      Live candidate interview rounds scheduled across all company branches.
+                    </p>
+                  </div>
+
+                  {/* Filter Pills matching AdminDashboard */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { id: 'Active Scheduled', label: `Active Scheduled (${activeInterviews.length})` },
+                      { id: 'All', label: `All History (${allInterviews.length})` },
+                      { id: 'Document Stage', label: 'Document Stage' },
+                      { id: 'Selected', label: 'Selected' },
+                      { id: 'Rejected', label: 'Rejected' }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setInterviewStatusFilter(f.id)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          border: interviewStatusFilter === f.id ? '1.5px solid #7c3aed' : '1px solid #cbd5e1',
+                          background: interviewStatusFilter === f.id ? '#f5f3ff' : '#ffffff',
+                          color: interviewStatusFilter === f.id ? '#6d28d9' : '#475569',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {interviewsList.length === 0 ? (
+                {displayedInterviews.length === 0 ? (
                   <div style={{ background: '#ffffff', borderRadius: '14px', padding: '3rem', textAlign: 'center', border: '1px solid #e2e8f0', color: '#64748b' }}>
                     <CalendarDays size={36} style={{ margin: '0 auto 10px auto', color: '#cbd5e1' }} />
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>No active interviews scheduled</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>No interviews in "{interviewStatusFilter}" stage</div>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
-                    {interviewsList.map((app) => (
-                      <div key={app.id} style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    {displayedInterviews.map((iv, idx) => (
+                      <div key={iv.id || iv._id || idx} style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                           <div>
-                            <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a' }}>{app.candidateName}</div>
-                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{app.candidateEmail} • {app.candidateMobile}</div>
+                            <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a' }}>{iv.candidateName || 'Candidate'}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              {iv.candidateEmail || ''} {iv.candidatePhone ? `• ${iv.candidatePhone}` : ''}
+                            </div>
                           </div>
                           <span style={{ background: '#ede9fe', color: '#6d28d9', padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800 }}>
-                            INTERVIEW
+                            {iv.status || 'Scheduled'}
                           </span>
+                        </div>
+
+                        <div style={{ marginTop: '10px', fontSize: '0.84rem', fontWeight: 700, color: '#1e293b' }}>
+                          💼 {iv.jobTitle || 'Role'} <span style={{ color: '#64748b', fontWeight: 600 }}>({iv.companyName || 'Company'})</span>
                         </div>
 
                         <div style={{ marginTop: '10px', background: '#f5f3ff', borderLeft: '3px solid #7c3aed', padding: '10px', borderRadius: '6px' }}>
                           <div style={{ fontWeight: 800, color: '#6d28d9', fontSize: '0.85rem' }}>
-                            🗓 {app.interviewDate ? new Date(app.interviewDate).toLocaleString() : 'Date Pending'}
+                            🗓 {iv.interviewDate || 'Date Pending'} {iv.interviewTime ? `at ${iv.interviewTime}` : ''}
                           </div>
-                          {app.interviewRound && (
-                            <div style={{ fontSize: '0.75rem', color: '#5b21b6', marginTop: '2px' }}>Round: {app.interviewRound}</div>
-                          )}
+                          <div style={{ fontSize: '0.75rem', color: '#5b21b6', marginTop: '2px' }}>
+                            Mode: {iv.mode || 'In-person / Virtual'} {iv.location ? `• ${iv.location}` : ''}
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', fontSize: '0.78rem' }}>
-                          <span style={{ color: '#1d4ed8', fontWeight: 700 }}>🏢 {app.branchName || 'General'}</span>
-                          <span style={{ color: '#64748b' }}>HR: {app.referringHrName}</span>
+                          <span style={{ color: '#1d4ed8', fontWeight: 700 }}>🏢 {iv.branchName || 'General'}</span>
+                          <span style={{ color: '#64748b' }}>HR: <strong>{iv.hrName || 'Direct / Organic'}</strong></span>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* ======================================================== */}
+            {/* TAB: JOB OPENINGS (17 Total / 13 Active)                 */}
+            {/* ======================================================== */}
+            {activeTab === 'jobs' && (
+              <div>
+                <div style={{ marginBottom: '14px' }}>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Job Openings ({jobsList.length} Total • {activeJobsCount} Active)
+                  </h2>
+                  <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                    All job openings across partner companies and banks. Click any job to filter candidates applied to that role.
+                  </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
+                  {jobsList.map((j, idx) => {
+                    const isActive = j.isActive !== false && (j.status || 'Active') !== 'Closed';
+                    const companyTitle = j.companyName || (j.company && j.company.name) || 'Partner Company';
+                    const jobAppsCount = applications.filter(a => a.jobId === (j.id || j._id) || a.jobTitle === j.title).length;
+                    return (
+                      <div
+                        key={j.id || j._id || idx}
+                        onClick={() => {
+                          setSearchQuery(j.title || '');
+                          setStatusFilter('all');
+                          setActiveTab('applied');
+                        }}
+                        style={{
+                          background: '#ffffff',
+                          borderRadius: '14px',
+                          padding: '1.25rem',
+                          border: '1.5px solid #e2e8f0',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: '1.02rem', color: '#0f172a' }}>{j.title}</div>
+                            <div style={{ fontSize: '0.82rem', color: '#2563eb', fontWeight: 700, marginTop: '2px' }}>{companyTitle}</div>
+                          </div>
+                          <span style={{
+                            background: isActive ? '#dcfce7' : '#f1f5f9',
+                            color: isActive ? '#15803d' : '#64748b',
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800
+                          }}>
+                            {isActive ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '10px' }}>
+                          📍 {j.location || 'Pan India'} {j.salary ? `• 💰 ${j.salary}` : ''}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', fontSize: '0.78rem' }}>
+                          <span style={{ color: '#475569', fontWeight: 700 }}>{jobAppsCount} Applications</span>
+                          <span style={{ color: '#2563eb', fontWeight: 700 }}>View Candidates →</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
