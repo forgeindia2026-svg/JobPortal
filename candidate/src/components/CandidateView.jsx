@@ -821,8 +821,8 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
             onApplyClick={handleApplyClick}
             isAlreadyApplied={isAlreadyApplied(viewingJob.id)}
             isFullPage={true}
-            itProcesses={viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : itProcesses}
-            onSelectItProcess={(proc) => handleViewJobDetails(convertItProcToJob(proc, viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : itProcesses))}
+            itProcesses={(viewingJob.categoryId === 'cat_it' || viewingJob.itCategory || (viewingJob.companyName && (viewingJob.companyName.includes('FIC IT') || viewingJob.companyName.includes('IT Training')))) ? (viewingJob.itProcessList || []) : []}
+            onSelectItProcess={(proc) => handleViewJobDetails(convertItProcToJob(proc, viewingJob.itProcessList && viewingJob.itProcessList.length > 0 ? viewingJob.itProcessList : []))}
             isDirectJobLink={Boolean(targetJobId)}
             onExploreAll={onClearTargetJob}
           />

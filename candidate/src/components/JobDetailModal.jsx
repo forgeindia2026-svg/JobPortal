@@ -842,8 +842,8 @@ export default function JobDetailModal({
       </div>
 
       <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) */}
-        {itProcesses && itProcesses.length > 1 && (
+        {/* IT TRAINING PROCESS BUTTONS (PROCESS 1, PROCESS 2, PROCESS 3...) - ONLY for IT Training jobs */}
+        {isItJob && itProcesses && itProcesses.length > 1 && (
           <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', borderBottom: '1.5px solid #f1f5f9' }}>
             {[...itProcesses].sort((a, b) => {
               const numA = (String(a.processName || '').match(/\d+/) || [999])[0];
