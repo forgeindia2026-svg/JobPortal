@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users, UserPlus, Clock, CheckCircle2, ShieldCheck, Mail, Phone, MapPin, Building2,
   RefreshCw, FileText, CheckCircle, Briefcase, Filter, Search, Award, TrendingUp, ChevronRight,
-  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar, Wallet, LogOut
+  LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, X, Code, FileCheck, Download, Calendar, Wallet, LogOut, Flame
 } from 'lucide-react';
 import BranchItProjectsTab from './BranchItProjectsTab';
 import ManipalPayoutManager from './ManipalPayoutManager';
+import OffersAndTargetsView from './OffersAndTargetsView';
 
 export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onBack, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_leaders' | 'branch_hrs' | 'applications' | 'interviews' | 'incentives' | 'it_projects' | 'manipal_payout'
@@ -507,6 +508,13 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
           onClick={() => handleTabChange('incentives')}
         >
           <Gift size={18} /> Incentives & Payouts
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'offers_targets' ? 'active' : ''}`}
+          onClick={() => handleTabChange('offers_targets')}
+        >
+          <Flame size={18} color="#f97316" /> Offers & Targets 🔥
         </button>
 
         {canAccessManipalPayout && (
@@ -2103,6 +2111,10 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
             onBack={() => handleTabChange('overview')}
           />
         ) : null}
+
+        {activeTab === 'offers_targets' && (
+          <OffersAndTargetsView API_URL={API_URL} currentUser={currentUser} />
+        )}
       </div>
 
       {/* CREATE TEAM LEADER MODAL */}
@@ -2231,7 +2243,8 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
-                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal (Payout & Incentive)</option>
+                  <option value="Closed" style={{ fontWeight: 'bold', color: '#059669' }}>🔒 Closed</option>
+                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>

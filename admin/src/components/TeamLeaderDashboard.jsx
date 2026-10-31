@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, UserCheck, Briefcase, Mail, Phone, MapPin, Building2, RefreshCw, FileText,
   CheckCircle2, LayoutDashboard, CalendarDays, Gift, ArrowLeft, ExternalLink, Search, LogOut,
-  UserPlus, X, Trash2, AlertCircle
+  UserPlus, X, Trash2, AlertCircle, Flame
 } from 'lucide-react';
+import OffersAndTargetsView from './OffersAndTargetsView';
 
 export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen, setSidebarOpen, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'team_hrs' | 'applications' | 'interviews' | 'incentives'
@@ -232,6 +233,13 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
           onClick={() => handleTabChange('incentives')}
         >
           <Gift size={18} /> Incentives & Payouts
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'offers_targets' ? 'active' : ''}`}
+          onClick={() => handleTabChange('offers_targets')}
+        >
+          <Flame size={18} color="#f97316" /> Offers & Targets 🔥
         </button>
 
         {onLogout && (
@@ -1220,6 +1228,10 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
             </div>
           </div>
         )}
+
+        {activeTab === 'offers_targets' && (
+          <OffersAndTargetsView API_URL={API_URL} currentUser={currentUser} />
+        )}
       </div>
 
       {/* Quick Status Update Modal for Team Leader */}
@@ -1250,7 +1262,8 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
-                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal (Payout & Incentive)</option>
+                  <option value="Closed" style={{ fontWeight: 'bold', color: '#059669' }}>🔒 Closed</option>
+                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>

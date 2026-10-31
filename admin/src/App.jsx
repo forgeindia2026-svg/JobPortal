@@ -6,6 +6,7 @@ import HrDashboard from './components/HrDashboard';
 import BranchManagerDashboard from './components/BranchManagerDashboard';
 import TeamLeaderDashboard from './components/TeamLeaderDashboard';
 import ClientDashboard from './components/ClientDashboard';
+import HrManagerDashboard from './components/HrManagerDashboard';
 
 const envApiUrl = import.meta.env.VITE_API_URL;
 const API_URL = (envApiUrl && !envApiUrl.includes('3.109.202.254')) ? envApiUrl : 'https://api.jobs.forgeindiaconnect.in';
@@ -181,6 +182,9 @@ export default function App() {
         )}
         {currentUser.role === 'client' && (
           <ClientDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />
+        )}
+        {currentUser.role === 'hr_manager' && (
+          <HrManagerDashboard API_URL={API_URL} currentUser={currentUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />
         )}
       </main>
     </div>

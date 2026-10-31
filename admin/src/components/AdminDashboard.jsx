@@ -88,13 +88,13 @@ const getBankAppCategoryStatus = (app, interviewsList = []) => {
   const s = String(app.status || '').toLowerCase().trim();
 
   // 1. Rejected
-  if (['rejected', 'not interested'].includes(s)) return 'rejected';
+  if (['rejected', 'not interested', 'cancelled'].includes(s)) return 'rejected';
 
   // 2. Closed
   if (['closed', 'joined', 'joined manipal', 'converted', 'hired'].includes(s)) return 'closed';
 
-  // 3. Selected
-  if (['selected', 'l1 selected', 'l2 selected'].includes(s)) return 'selected';
+  // 3. Selected (Final Selection only, NOT L1 / L2 interview rounds)
+  if (!s.includes('l1') && !s.includes('l2') && (['selected', 'final selected'].includes(s) || (s.includes('select') && !s.includes('l1') && !s.includes('l2')))) return 'selected';
 
   // 3. Document Submission / Verification
   const hasDocInterview = (interviewsList || []).some(i => {
@@ -108,7 +108,7 @@ const getBankAppCategoryStatus = (app, interviewsList = []) => {
     return 'document';
   }
 
-  // 4. Interviews
+  // 4. Interviews (including L1 Selected, L2 Selected, and scheduled interviews)
   const hasActiveInterview = (interviewsList || []).some(i => {
     const match = (i.applicationId && (String(i.applicationId) === String(app.id) || String(i.applicationId) === String(app._id))) ||
                   (i.candidateId && String(i.candidateId) === String(app.candidateId));
@@ -117,7 +117,7 @@ const getBankAppCategoryStatus = (app, interviewsList = []) => {
     if (['rejected', 'not interested', 'cancelled'].includes(intStatus)) return false;
     return true;
   });
-  if (s.includes('interview') || hasActiveInterview) {
+  if (s.includes('l1') || s.includes('l2') || s.includes('interview') || hasActiveInterview) {
     return 'interview';
   }
 
@@ -1430,23 +1430,39 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         const s = String(app.status || '').toLowerCase().trim();
 
         if (filterLower === 'processing') {
-          const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending', 'interview scheduled', 'scheduled'];
+          const procStatuses = ['applied', 'shortlisted', 'follow up', 'under review', 'hr screening', 'processing', 'pending', 'interview scheduled', 'scheduled', 'l1 selected', 'l2 selected'];
           const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
-          const isFinal = ['selected', 'closed', 'joined', 'converted', 'hired', 'rejected', 'not interested'].includes(s);
-          if (isDoc || isFinal) return false;
+          const isFinalSel = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected'].includes(s) || (s.includes('select') && !s.includes('l1') && !s.includes('l2')));
+          const isFinalClo = ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined');
+          const isFinalRej = ['rejected', 'not interested', 'cancelled'].includes(s) || s.includes('reject');
+          if (isDoc || isFinalSel || isFinalClo || isFinalRej) return false;
         } else if (filterLower === 'document submission' || filterLower === 'document submitted' || filterLower === 'document') {
           const isDoc = ['document submission', 'document submitted', 'documents submitted', 'documents submission', 'document verification'].includes(s) || s.includes('document');
           const hasDocInt = (interviews || []).some(int => (String(int.candidateId) === String(app.candidateId) || String(int.applicationId) === String(app.id)) && String(int.status || '').toLowerCase().includes('document'));
           if (!isDoc && !hasDocInt) return false;
+        } else if (filterLower === 'selected_closed' || filterLower === 'selected & closed') {
+          const isFinalSel = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected'].includes(s) || (s.includes('select') && !s.includes('l1') && !s.includes('l2')));
+          const isFinalClo = !['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s) &&
+            !s.includes('l1') && !s.includes('l2') &&
+            (['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired'));
+          if (!isFinalSel && !isFinalClo) return false;
         } else if (filterLower === 'selected') {
-          const isSel = ['selected', 'l1 selected', 'l2 selected'].includes(s) || s.includes('select');
-          if (!isSel) return false;
+          // Strictly final selection only - never include L1/L2
+          const isFinalSel = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected'].includes(s) || (s.includes('select') && !s.includes('l1') && !s.includes('l2')));
+          if (!isFinalSel) return false;
         } else if (filterLower === 'closed') {
-          const isCloOrSel = !['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s) && (s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll'));
-          if (!isCloOrSel) return false;
+          // Strictly closed / joined only - never include select or l1 selected
+          const isFinalClo = !['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s) &&
+            !s.includes('l1') && !s.includes('l2') &&
+            (['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired'));
+          if (!isFinalClo) return false;
         } else if (filterLower === 'rejected') {
-          const isRej = ['rejected', 'not interested'].includes(s);
+          const isRej = ['rejected', 'not interested', 'cancelled'].includes(s) || s.includes('reject');
           if (!isRej) return false;
+        } else if (filterLower === 'l1 selected') {
+          if (s !== 'l1 selected' && !s.includes('l1 select')) return false;
+        } else if (filterLower === 'l2 selected') {
+          if (s !== 'l2 selected' && !s.includes('l2 select')) return false;
         } else {
           if (s !== filterLower) return false;
         }
@@ -1481,9 +1497,24 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       return isDocStatus || hasDocInt;
     };
 
-    const isSel = (app) => ['selected', 'l1 selected', 'l2 selected'].includes(String(app.status || '').toLowerCase().trim()) || String(app.status || '').toLowerCase().trim().includes('select');
-    const isClo = (app) => ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(String(app.status || '').toLowerCase().trim()) || (!isSel(app) && (String(app.status || '').toLowerCase().trim().includes('closed') || String(app.status || '').toLowerCase().trim().includes('joined') || String(app.status || '').toLowerCase().trim().includes('hired')));
-    const isRej = (app) => ['rejected', 'not interested'].includes(String(app.status || '').toLowerCase().trim());
+    // Strictly final selected (excludes L1 and L2 interview clearances)
+    const isSel = (app) => {
+      const s = String(app.status || '').toLowerCase().trim();
+      if (s.includes('l1') || s.includes('l2')) return false;
+      return ['selected', 'final selected'].includes(s) || (s.includes('select') && !s.includes('l1') && !s.includes('l2'));
+    };
+
+    // Strictly closed (excludes select/l1/l2)
+    const isClo = (app) => {
+      const s = String(app.status || '').toLowerCase().trim();
+      if (isSel(app) || s.includes('l1') || s.includes('l2')) return false;
+      return ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined');
+    };
+
+    const isRej = (app) => {
+      const s = String(app.status || '').toLowerCase().trim();
+      return ['rejected', 'not interested', 'cancelled'].includes(s) || s.includes('reject');
+    };
 
     const documentSubmitted = hrAllCandidates.filter(a => isDoc(a) && !isSel(a) && !isClo(a) && !isRej(a)).length;
     const selected = hrAllCandidates.filter(a => isSel(a)).length;
@@ -2605,7 +2636,26 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         </span>
       );
     }
-    if (s === 'active' || s === 'selected') return <span className="badge badge-active">✓ {status}</span>;
+    // L1 and L2 Selected: Interview screening round cleared (Not final selected, not rejected!)
+    if (s.includes('l1') || s.includes('l2')) {
+      return (
+        <span style={{
+          background: '#eff6ff',
+          color: '#1d4ed8',
+          border: '1px solid #bfdbfe',
+          padding: '3px 8px',
+          borderRadius: '12px',
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          🎯 {status}
+        </span>
+      );
+    }
+    if (s === 'active' || s === 'selected' || s === 'final selected') return <span className="badge badge-active">✓ {status}</span>;
     if (s.includes('interview') || s === 'shortlisted') return <span className="badge badge-shortlisted">● {status}</span>;
     if (s === 'applied' || s === 'under review') return <span className="badge badge-applied">● {status}</span>;
     return <span className="badge badge-rejected">✕ {status}</span>;
@@ -2660,6 +2710,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           onClick={() => handleTabChange('employees')}
         >
           <Users size={18} /> HR ({hrs.length})
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'hr_managers' ? 'active' : ''}`}
+          onClick={() => handleTabChange('hr_managers')}
+        >
+          <ShieldCheck size={18} style={{ color: '#c084fc' }} /> HR Managers 👑
         </button>
 
         <button
@@ -3055,7 +3112,10 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 const closedApps = hrApps.filter(app => {
                   const s = String(app.status || '').toLowerCase().trim();
                   if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
-                  return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
+                  if (s.includes('l1') || s.includes('l2')) return false;
+                  const isSel = ['selected', 'final selected'].includes(s) || (s.includes('select') && !s.includes('l1') && !s.includes('l2'));
+                  const isClo = isCandidateClosedForIncentive(app) || ['closed', 'joined', 'converted', 'hired', 'enrollment', 'joined manipal'].includes(s) || s.includes('closed') || s.includes('joined') || s.includes('hired');
+                  return isSel || isClo;
                 });
                 return {
                   ...hr,
@@ -3185,7 +3245,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         return (
                           <div
                             key={hr.id || idx}
-                            onClick={() => handleOpenHrCandidates(hr, 'closed')}
+                            onClick={() => handleOpenHrCandidates(hr, 'selected_closed')}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -5403,13 +5463,16 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                       }}
                     >
                       <option value="all">Status: All ({hrCandidateStats.total})</option>
-                      <option value="Processing">Processing ({hrCandidateStats.processing})</option>
+                      <option value="selected_closed">Selected & Closed ({hrCandidateStats.selected + hrCandidateStats.closed})</option>
+                      <option value="Processing">Processing / In Review ({hrCandidateStats.processing})</option>
                       <option value="document submission">Document Submitted ({hrCandidateStats.documentSubmitted})</option>
                       <option value="Applied">Applied</option>
                       <option value="Under Review">Under Review</option>
                       <option value="Shortlisted">Shortlisted</option>
                       <option value="HR Screening">HR Screening</option>
                       <option value="Interview Scheduled">Interview Scheduled</option>
+                      <option value="L1 Selected">L1 Selected</option>
+                      <option value="L2 Selected">L2 Selected</option>
                       <option value="selected">Selected ({hrCandidateStats.selected})</option>
                       <option value="closed">Closed ({hrCandidateStats.closed})</option>
                       <option value="Rejected">Rejected ({hrCandidateStats.rejected})</option>
@@ -5845,14 +5908,35 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 <h2 style={{ fontSize: '1.5rem', color: '#0f172a' }}>HR / Employees Management</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Manage HR accounts and view their referral links.</p>
               </div>
-              <button className="btn-primary" onClick={() => {
-                setHrToEdit(null);
-                setHrForm({ name: '', email: '', password: '', mobile: '', profilePhoto: '' });
-                setHrError('');
-                setHrModalOpen(true);
-              }}>
-                <Plus size={16} /> Add HR
-              </button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 6px rgba(124, 58, 237, 0.3)'
+                  }}
+                  onClick={() => handleTabChange('hr_managers')}
+                >
+                  <ShieldCheck size={16} /> 👑 HR Managers & Approvals
+                </button>
+                <button className="btn-primary" onClick={() => {
+                  setHrToEdit(null);
+                  setHrForm({ name: '', email: '', password: '', mobile: '', profilePhoto: '' });
+                  setHrError('');
+                  setHrModalOpen(true);
+                }}>
+                  <Plus size={16} /> Add HR
+                </button>
+              </div>
             </div>
 
             <div className="table-container hrs-desktop-table">
@@ -6538,11 +6622,12 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             onBack={() => handleTabChange('dashboard')}
           />
         )}
-        {activeTab === 'hierarchy' && (
+        {(activeTab === 'hierarchy' || activeTab === 'hr_managers') && (
           <HierarchyManager
             API_URL={API_URL}
             currentUser={currentUser}
             hrs={hrs}
+            initialMainView={activeTab === 'hr_managers' ? 'hr_managers' : 'branches'}
             onRefresh={fetchAllData}
           />
         )}
@@ -8407,7 +8492,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
                   <option value="Closed" style={{ fontWeight: 'bold', color: '#059669' }}>🔒 Closed</option>
-                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal (Payout & Incentive)</option>
+                  <option value="Joined Manipal" style={{ fontWeight: 'bold', color: '#059669' }}>🎓 Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
                 </select>
               </div>

@@ -670,6 +670,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     if (status === 'Interview Scheduled') return <span style={{ color: '#1d4ed8', background: '#dbeafe', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Interview Scheduled</span>;
     if (status === 'Joined Manipal') return <span style={{ color: '#047857', background: '#dcfce7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid #86efac' }}>🎓 Joined Manipal</span>;
     if (status === 'Selected' || status === 'Converted') return <span style={{ color: '#047857', background: '#ecfdf5', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid #10b981' }}>{status}</span>;
+    if (status === 'L1 Selected' || status === 'L2 Selected') return <span style={{ color: '#1d4ed8', background: '#eff6ff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid #bfdbfe' }}>🎯 {status}</span>;
     if (status === 'Rejected' || status === 'Not Interested') return <span style={{ color: '#be123c', background: '#ffe4e6', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>{status}</span>;
     if (status === 'Follow up') return <span style={{ color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Follow up</span>;
     return <span style={{ color: '#475569', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>{status}</span>;
@@ -3051,14 +3052,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 <label>Candidate: {statusModalApp.candidateName}</label>
                 <select value={newAppStatus} onChange={e => setNewAppStatus(e.target.value)} className="form-input" required>
                   <option value="Applied">Applied</option>
+                  <option value="Under Review">Under Review</option>
                   <option value="Shortlisted">Shortlisted</option>
+                  <option value="HR Screening">HR Screening</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Document Submission">Document Submission</option>
                   <option value="Selected">Selected</option>
-                  <option value="Converted">Converted</option>
-                  <option value="Follow up">Follow up</option>
+                  <option value="Closed">🔒 Closed</option>
+                  <option value="Joined Manipal">🎓 Joined Manipal</option>
                   <option value="Rejected">Rejected</option>
-                  <option value="Not Interested">Not Interested</option>
                 </select>
               </div>
 

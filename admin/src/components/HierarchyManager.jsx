@@ -7,9 +7,13 @@ import {
 import BranchManagerDashboard from './BranchManagerDashboard';
 import BranchItProjectsTab from './BranchItProjectsTab';
 
-export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRefresh }) {
+export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRefresh, initialMainView = 'branches' }) {
   // Navigation State
-  const [mainView, setMainView] = useState('branches'); // 'branches' | 'pending_approvals' | 'it_projects'
+  const [mainView, setMainView] = useState(initialMainView || 'branches'); // 'branches' | 'pending_approvals' | 'it_projects' | 'hr_managers'
+
+  useEffect(() => {
+    if (initialMainView) setMainView(initialMainView);
+  }, [initialMainView]);
   const [branchTab, setBranchTab] = useState('team_leaders'); // 'team_leaders' | 'it_projects' | 'branch_hrs' | 'recruitment'
   const [branchSearch, setBranchSearch] = useState('');
 
@@ -17,7 +21,15 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
   const [bms, setBms] = useState([]);
   const [tls, setTls] = useState([]);
   const [itProjects, setItProjects] = useState([]);
+  const [hrManagers, setHrManagers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // HR Manager Modal State
+  const [hrManagerModalOpen, setHrManagerModalOpen] = useState(false);
+  const [hrManagerToEdit, setHrManagerToEdit] = useState(null);
+  const [hrManagerForm, setHrManagerForm] = useState({ name: '', email: '', password: '', mobile: '' });
+  const [hrManagerSaving, setHrManagerSaving] = useState(false);
+  const [hrManagerError, setHrManagerError] = useState('');
 
   // Selected Entities
   const [selectedBmId, setSelectedBmId] = useState(null);
@@ -79,18 +91,84 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
   const fetchHierarchy = async () => {
     try {
       setLoading(true);
-      const [bmRes, tlRes, itRes] = await Promise.all([
+      const [bmRes, tlRes, itRes, hrmRes] = await Promise.all([
         fetch(`${API_URL}/api/users/branch-managers`),
         fetch(`${API_URL}/api/users/team-leaders`),
-        fetch(`${API_URL}/api/branch-it-projects`)
+        fetch(`${API_URL}/api/branch-it-projects`),
+        fetch(`${API_URL}/api/users/hr-managers`)
       ]);
       if (bmRes.ok) setBms(await bmRes.json());
       if (tlRes.ok) setTls(await tlRes.json());
       if (itRes.ok) setItProjects(await itRes.json());
+      if (hrmRes.ok) setHrManagers(await hrmRes.json());
     } catch (err) {
       console.error('Error fetching hierarchy data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- HR Manager Handlers ---
+  const handleOpenHrManagerModal = (hrm = null) => {
+    setHrManagerToEdit(hrm);
+    setHrManagerForm({
+      name: hrm ? hrm.name : '',
+      email: hrm ? hrm.email : '',
+      password: '',
+      mobile: hrm ? (hrm.mobile || '') : ''
+    });
+    setHrManagerError('');
+    setHrManagerModalOpen(true);
+  };
+
+  const handleSaveHrManager = async (e) => {
+    e.preventDefault();
+    setHrManagerSaving(true);
+    setHrManagerError('');
+    try {
+      const url = hrManagerToEdit
+        ? `${API_URL}/api/users/hr-managers/${hrManagerToEdit.id}`
+        : `${API_URL}/api/users/hr-managers`;
+      const method = hrManagerToEdit ? 'PUT' : 'POST';
+      const body = { ...hrManagerForm };
+      if (hrManagerToEdit && !body.password) delete body.password;
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        data = { error: res.status === 404 ? 'HR Manager API endpoint not found on server (404)' : `Server error (${res.status})` };
+      }
+      if (res.ok) {
+        showSuccess(hrManagerToEdit ? `HR Manager "${data.name || data.hrManager?.name || hrManagerForm.name}" updated!` : `HR Manager "${data.name || data.hrManager?.name || hrManagerForm.name}" created!`);
+        setHrManagerModalOpen(false);
+        fetchHierarchy();
+      } else {
+        setHrManagerError(data.error || 'Failed to save HR Manager');
+      }
+    } catch (err) {
+      console.error('Error saving HR Manager:', err);
+      setHrManagerError(err.message || 'Network error saving HR Manager');
+    } finally {
+      setHrManagerSaving(false);
+    }
+  };
+
+  const handleDeleteHrManager = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete HR Manager "${name}"?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/users/hr-managers/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showSuccess(`HR Manager "${name}" deleted.`);
+        fetchHierarchy();
+      }
+    } catch (err) {
+      console.error('Error deleting HR Manager:', err);
     }
   };
 
@@ -1389,6 +1467,32 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{itProjects.length}</div>
               <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Branch projects & countdowns</span>
             </div>
+
+            <div
+              className="dashboard-kpi-card"
+              onClick={() => setMainView('hr_managers')}
+              style={{
+                background: '#fff',
+                padding: '1.25rem',
+                borderRadius: '14px',
+                border: mainView === 'hr_managers' ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase' }}>
+                  👑 HR Managers
+                </span>
+                <div className="dashboard-kpi-icon-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ShieldCheck size={18} color="#7c3aed" />
+                </div>
+              </div>
+              <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#7c3aed' }}>{hrManagers.length}</div>
+              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                Centralized All Branches Oversight
+              </span>
+            </div>
           </div>
 
           {/* Pending Approval High-Priority Banner */}
@@ -1421,6 +1525,18 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               }}
             >
               <Building2 size={16} /> All Branches ({bms.length})
+            </button>
+
+            <button
+              onClick={() => setMainView('hr_managers')}
+              className="branch-pill-btn"
+              style={{
+                background: mainView === 'hr_managers' ? '#7c3aed' : '#fff',
+                color: mainView === 'hr_managers' ? '#fff' : '#475569',
+                border: mainView === 'hr_managers' ? '1px solid #7c3aed' : '1px solid #cbd5e1'
+              }}
+            >
+              <ShieldCheck size={16} /> 👑 HR Managers ({hrManagers.length})
             </button>
 
             <button
@@ -1744,12 +1860,127 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
           {/* --------------------------------------------------------------------- */}
           {/* VIEW C: COMPANY-WIDE IT PROJECTS                                     */}
           {/* --------------------------------------------------------------------- */}
+          {/* --------------------------------------------------------------------- */}
+          {/* VIEW C: COMPANY-WIDE IT PROJECTS                                     */}
+          {/* --------------------------------------------------------------------- */}
           {mainView === 'it_projects' && (
             <BranchItProjectsTab
               API_URL={API_URL}
               currentUser={currentUser || { role: 'admin', name: 'Super Admin' }}
               onRefresh={fetchHierarchy}
             />
+          )}
+
+          {/* --------------------------------------------------------------------- */}
+          {/* VIEW D: HR MANAGERS (Centralized All Branches Oversight)                 */}
+          {/* --------------------------------------------------------------------- */}
+          {mainView === 'hr_managers' && (
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#5b21b6' }}>
+                      👑 Centralized HR Managers ({hrManagers.length})
+                    </h3>
+                    <span style={{ background: '#7c3aed', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+                      All Branches Access
+                    </span>
+                  </div>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#6d28d9' }}>
+                    HR Managers have global oversight across all branches (Bangalore, Hosur, Coimbatore, etc.) to review Applied candidates, Executive HRs, Scheduled Interviews, and Campaign Targets.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleOpenHrManagerModal()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)' }}
+                >
+                  <UserPlus size={16} /> + Add HR Manager
+                </button>
+              </div>
+
+              <div style={{ padding: '1.5rem' }}>
+                {hrManagers.length === 0 ? (
+                  <div style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                    <ShieldCheck size={48} color="#c4b5fd" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                    <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>No HR Managers Registered Yet</div>
+                    <p style={{ margin: '6px 0 16px 0', fontSize: '0.88rem' }}>
+                      Click below to create login credentials for your company's centralized HR Manager.
+                    </p>
+                    <button
+                      onClick={() => handleOpenHrManagerModal()}
+                      style={{ padding: '10px 20px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      + Add First HR Manager
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                    {hrManagers.map(hrm => (
+                      <div
+                        key={hrm.id}
+                        style={{
+                          background: '#fff',
+                          border: '1.5px solid #ede9fe',
+                          borderRadius: '14px',
+                          padding: '1.25rem',
+                          boxShadow: '0 2px 8px rgba(124, 58, 237, 0.06)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '12px'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.1rem' }}>
+                                {(hrm.name || 'H')[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>{hrm.name}</div>
+                                <div style={{ fontSize: '0.78rem', color: '#7c3aed', fontWeight: 700 }}>HR Manager (Centralized)</div>
+                              </div>
+                            </div>
+                            <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+                              Active
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '0.82rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', background: '#f8fafc', padding: '10px 12px', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Mail size={13} color="#94a3b8" /> <span style={{ color: '#1e293b' }}>{hrm.email}</span>
+                            </div>
+                            {hrm.mobile && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Phone size={13} color="#94a3b8" /> <span style={{ color: '#1e293b' }}>{hrm.mobile}</span>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', color: '#7c3aed', fontWeight: 700 }}>
+                              <MapPin size={13} color="#7c3aed" /> <span>Scope: All Branches (Bangalore, Hosur, Coimbatore...)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                          <button
+                            onClick={() => handleOpenHrManagerModal(hrm)}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#334155', cursor: 'pointer' }}
+                          >
+                            <Edit size={13} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteHrManager(hrm.id, hrm.name)}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#dc2626', cursor: 'pointer' }}
+                          >
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -2080,6 +2311,100 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: ADD / EDIT HR MANAGER                                             */}
+      {/* ========================================================================= */}
+      {hrManagerModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '480px', padding: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+              {hrManagerToEdit ? 'Edit HR Manager' : 'Add New HR Manager'}
+            </h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1.5rem 0' }}>
+              HR Managers have centralized oversight across ALL branches with access to Applied candidates, HRs, and Interviews.
+            </p>
+
+            {hrManagerError && (
+              <div style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                {hrManagerError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveHrManager} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Shalini Menon"
+                  value={hrManagerForm.name}
+                  onChange={e => setHrManagerForm({ ...hrManagerForm, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. hrmanager@forgeindia.com"
+                  value={hrManagerForm.email}
+                  onChange={e => setHrManagerForm({ ...hrManagerForm, email: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                  {hrManagerToEdit ? 'Password (leave blank to keep current)' : 'Password *'}
+                </label>
+                <input
+                  type="password"
+                  required={!hrManagerToEdit}
+                  placeholder={hrManagerToEdit ? 'Leave blank to keep unchanged' : 'Minimum 6 characters'}
+                  value={hrManagerForm.password}
+                  onChange={e => setHrManagerForm({ ...hrManagerForm, password: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>Mobile Number</label>
+                <input
+                  type="tel"
+                  placeholder="10-digit mobile number"
+                  value={hrManagerForm.mobile}
+                  onChange={e => setHrManagerForm({ ...hrManagerForm, mobile: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '10px 12px', borderRadius: '8px', fontSize: '0.8rem', color: '#6d28d9' }}>
+                👑 Role: <strong>hr_manager</strong> • Centralized access to all branches.
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setHrManagerModalOpen(false)}
+                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={hrManagerSaving}
+                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', fontWeight: 700, cursor: hrManagerSaving ? 'not-allowed' : 'pointer' }}
+                >
+                  {hrManagerSaving ? 'Saving...' : hrManagerToEdit ? 'Update HR Manager' : 'Create HR Manager'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

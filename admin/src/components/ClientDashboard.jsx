@@ -376,8 +376,8 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
     // 1. Rejected
     if (['rejected', 'not interested'].includes(s)) return 'rejected';
 
-    // 2. Selected / Joined
-    if (['selected', 'l1 selected', 'l2 selected', 'hired', 'converted'].includes(s)) return 'selected';
+    // 2. Selected / Joined (Final Selection only, not L1/L2)
+    if (!s.includes('l1') && !s.includes('l2') && ['selected', 'final selected', 'hired', 'converted'].includes(s)) return 'selected';
 
     // 3. Document Submission / Verification
     const hasDocInterview = (interviews || []).some(i => {
@@ -403,7 +403,7 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
       return true;
     });
 
-    if (hasActiveInterview) {
+    if (s.includes('l1') || s.includes('l2') || hasActiveInterview) {
       return 'interview';
     }
 
@@ -600,10 +600,18 @@ export default function ClientDashboard({ API_URL, currentUser, sidebarOpen, set
 
   const getStatusBadge = (status, app = null) => {
     const s = String(status || '').toLowerCase().trim();
-    if (['selected', 'l1 selected', 'l2 selected', 'hired', 'converted'].includes(s)) {
+    if (!s.includes('l1') && !s.includes('l2') && ['selected', 'final selected', 'hired', 'converted'].includes(s)) {
       return (
         <span style={{ background: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
           <CheckCircle size={13} /> {status}
+        </span>
+      );
+    }
+
+    if (s.includes('l1') || s.includes('l2')) {
+      return (
+        <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', border: '1px solid #bfdbfe' }}>
+          🎯 {status}
         </span>
       );
     }

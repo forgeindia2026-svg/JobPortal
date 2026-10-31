@@ -1412,5 +1412,250 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
   }
 });
 
+// ==========================================
+// HR MANAGER MANAGEMENT (Centralized All-Branches)
+// ==========================================
+
+// GET all HR Managers
+router.get('/hr-managers', async (req, res) => {
+  try {
+    const managers = await UserModel.find({ role: 'hr_manager' })
+      .select('-passwordHash')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(managers);
+  } catch (err) {
+    console.error('Error fetching HR managers:', err);
+    res.status(500).json({ error: 'Failed to fetch HR managers.' });
+  }
+});
+
+// POST create HR Manager
+router.post('/hr-managers', async (req, res) => {
+  try {
+    const { name, email, password, mobile } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    }
+
+    const existing = await UserModel.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ error: 'User with this email already exists.' });
+    }
+
+    const id = 'hrm_' + Date.now();
+    const newManager = {
+      id,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      passwordHash: 'dummy_hash_' + password,
+      role: 'hr_manager',
+      mobile: mobile ? mobile.trim() : '',
+      createdAt: new Date().toISOString()
+    };
+
+    const saved = await UserModel.create(newManager);
+    const { passwordHash, ...safe } = saved.toObject();
+    res.status(201).json({ message: 'HR Manager created successfully', hrManager: safe });
+  } catch (err) {
+    console.error('Error creating HR manager:', err);
+    res.status(500).json({ error: 'Failed to create HR manager.' });
+  }
+});
+
+// PUT update HR Manager
+router.put('/hr-managers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, mobile } = req.body;
+    const update = {};
+    if (name) update.name = name.trim();
+    if (email) update.email = email.toLowerCase().trim();
+    if (mobile !== undefined) update.mobile = mobile.trim();
+    if (password) update.passwordHash = 'dummy_hash_' + password;
+
+    const updated = await UserModel.findOneAndUpdate(
+      { id, role: 'hr_manager' },
+      { $set: update },
+      { new: true }
+    ).select('-passwordHash').lean();
+
+    if (!updated) {
+      return res.status(404).json({ error: 'HR Manager not found.' });
+    }
+
+    res.json({ message: 'HR Manager updated successfully', hrManager: updated });
+  } catch (err) {
+    console.error('Error updating HR manager:', err);
+    res.status(500).json({ error: 'Failed to update HR manager.' });
+  }
+});
+
+// DELETE HR Manager
+router.delete('/hr-managers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await UserModel.deleteOne({ id, role: 'hr_manager' });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'HR Manager not found.' });
+    }
+    res.json({ message: 'HR Manager deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting HR manager:', err);
+    res.status(500).json({ error: 'Failed to delete HR manager.' });
+  }
+});
+
+// GET HR Manager Overview across ALL BRANCHES
+router.get('/hr-managers/:id/overview', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const hrm = await UserModel.findOne({ id, role: 'hr_manager' }).select('-passwordHash').lean();
+    if (!hrm) {
+      return res.status(404).json({ error: 'HR Manager not found.' });
+    }
+
+    // 1. All Branches (Branch Managers)
+    const bms = await UserModel.find({ role: 'branch_manager' }).sort({ createdAt: -1 }).lean();
+    const bmMap = Object.fromEntries(bms.map(b => [b.id, b]));
+
+    // 2. All Team Leaders
+    const tls = await UserModel.find({ role: 'team_leader' }).sort({ createdAt: -1 }).lean();
+    const tlMap = Object.fromEntries(tls.map(t => [t.id, t]));
+
+    // 3. All HRs
+    const hrs = await UserModel.find({ role: 'hr' }).sort({ createdAt: -1 }).lean();
+    const hrMap = Object.fromEntries(hrs.map(h => [(h.referralCode || '').toLowerCase(), h]));
+
+    // 4. All Applications (excluding Payment Pending)
+    const applications = await ApplicationModel.find({ status: { $ne: 'Payment Pending' } })
+      .sort({ appliedAt: -1 })
+      .lean();
+
+    // Populate candidate, job, and company details
+    const candidateIds = applications.map(a => a.candidateId).filter(Boolean);
+    const jobIds = applications.map(a => a.jobId).filter(Boolean);
+
+    const [candidates, jobs, companies] = await Promise.all([
+      CandidateModel.find({ id: { $in: candidateIds } }).lean(),
+      JobModel.find({ id: { $in: jobIds } }).lean(),
+      CompanyModel.find({}).lean()
+    ]);
+
+    const candMap = Object.fromEntries(candidates.map(c => [c.id, c]));
+    const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
+    const compMap = Object.fromEntries(companies.map(c => [c.id, c]));
+
+    const populatedApps = applications.map(app => {
+      const cand = candMap[app.candidateId] || {};
+      const job = jobMap[app.jobId] || {};
+      const comp = compMap[job.companyId] || {};
+      const refHr = hrMap[String(app.referredBy || '').toLowerCase()];
+      const refTl = refHr && tlMap[refHr.teamLeaderId];
+      const refBm = (refTl && bmMap[refTl.branchManagerId]) || (refHr && bmMap[refHr.branchManagerId]);
+
+      return {
+        ...app,
+        candidateName: cand.name || app.candidateName || 'Applicant',
+        candidateEmail: cand.email || app.candidateEmail || '',
+        candidateMobile: cand.mobile || app.candidateMobile || '',
+        candidateLocation: cand.location || '',
+        jobTitle: job.title || app.jobTitle || 'Job Role',
+        companyName: comp.name || job.companyName || 'Corporate Partner',
+        referringHrName: refHr ? refHr.name : (app.referredBy || 'Direct'),
+        referringHrCode: app.referredBy || '',
+        referringTlName: refTl ? refTl.name : '',
+        referringTlId: refHr ? refHr.teamLeaderId : '',
+        branchName: refBm ? refBm.branch : (refHr?.branch || refTl?.branch || 'General')
+      };
+    });
+
+    // Populate HR counts
+    const appCountByCode = {};
+    applications.forEach(a => {
+      const c = String(a.referredBy || '').toLowerCase();
+      appCountByCode[c] = (appCountByCode[c] || 0) + 1;
+    });
+
+    const populatedHrs = hrs.map(h => {
+      const { passwordHash, ...safe } = h;
+      const code = (h.referralCode || '').toLowerCase();
+      const myTl = tlMap[h.teamLeaderId];
+      const myBm = bmMap[h.branchManagerId] || (myTl ? bmMap[myTl.branchManagerId] : null);
+      return {
+        ...safe,
+        teamLeaderName: myTl ? myTl.name : (h.branchManagerId ? 'Direct Branch HR' : 'Unassigned'),
+        branchName: myBm ? myBm.branch : (h.branch || 'General'),
+        candidatesApplied: appCountByCode[code] || 0
+      };
+    });
+
+    // Populate TL counts
+    const hrCountByTl = {};
+    hrs.forEach(h => {
+      if (h.teamLeaderId) {
+        hrCountByTl[h.teamLeaderId] = (hrCountByTl[h.teamLeaderId] || 0) + 1;
+      }
+    });
+
+    const populatedTls = tls.map(t => {
+      const { passwordHash, ...safe } = t;
+      const myBm = bmMap[t.branchManagerId];
+      return {
+        ...safe,
+        branchName: myBm ? myBm.branch : (t.branch || 'General'),
+        assignedHrsCount: hrCountByTl[t.id] || 0
+      };
+    });
+
+    // Branch Summaries
+    const branchSummaries = bms.map(b => {
+      const bTls = populatedTls.filter(t => t.branchManagerId === b.id || t.branchName.toLowerCase() === b.branch.toLowerCase());
+      const bHrs = populatedHrs.filter(h => h.branchManagerId === b.id || h.branchName.toLowerCase() === b.branch.toLowerCase());
+      const bApps = populatedApps.filter(a => a.branchName.toLowerCase() === b.branch.toLowerCase());
+      return {
+        branchId: b.id,
+        branchName: b.branch,
+        managerName: b.name,
+        managerEmail: b.email,
+        managerMobile: b.mobile,
+        location: b.location || '',
+        totalTls: bTls.length,
+        totalHrs: bHrs.length,
+        totalApplications: bApps.length,
+        selectedCandidates: bApps.filter(a => ['selected', 'hired', 'joined', 'converted'].includes(String(a.status || '').toLowerCase())).length,
+        interviewCandidates: bApps.filter(a => String(a.status || '').toLowerCase().includes('interview')).length
+      };
+    });
+
+    // Overall KPIs across all branches
+    const selectedCount = applications.filter(a => ['selected', 'hired', 'joined', 'converted'].includes(String(a.status || '').toLowerCase())).length;
+    const interviewCount = applications.filter(a => String(a.status || '').toLowerCase().includes('interview')).length;
+    const processingCount = applications.length - selectedCount - interviewCount;
+
+    res.json({
+      hrManager: hrm,
+      kpis: {
+        totalBranches: bms.length,
+        totalTls: tls.length,
+        approvedTls: tls.filter(t => t.approvalStatus === 'approved').length,
+        totalHrs: hrs.length,
+        totalApplications: applications.length,
+        selectedCandidates: selectedCount,
+        interviewCandidates: interviewCount,
+        processingCandidates: Math.max(0, processingCount)
+      },
+      branches: branchSummaries,
+      teamLeaders: populatedTls,
+      hrs: populatedHrs,
+      applications: populatedApps
+    });
+  } catch (err) {
+    console.error('Error fetching HR manager overview:', err);
+    res.status(500).json({ error: 'Failed to fetch HR manager overview.' });
+  }
+});
+
 module.exports = router;
+
 
