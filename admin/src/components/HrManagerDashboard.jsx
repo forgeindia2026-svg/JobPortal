@@ -168,9 +168,22 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
         hrFilter === 'all' ||
         String(app.referringHrCode || '').toLowerCase() === hrFilter.toLowerCase();
 
-      const matchesStatus =
-        statusFilter === 'all' ||
-        String(app.status || '').toLowerCase() === statusFilter.toLowerCase();
+      const s = String(app.status || '').toLowerCase().trim();
+      const filterLower = statusFilter.toLowerCase();
+      let matchesStatus = true;
+      if (filterLower === 'all') {
+        matchesStatus = true;
+      } else if (filterLower === 'selected') {
+        matchesStatus = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected', 'hired', 'joined', 'converted', 'closed', 'joined manipal'].includes(s) || s.includes('select'));
+      } else if (filterLower === 'interview') {
+        matchesStatus = s.includes('interview') || Boolean(app.interviewDate);
+      } else if (filterLower === 'in_screening') {
+        const isSel = !s.includes('l1') && !s.includes('l2') && (['selected', 'final selected', 'hired', 'joined', 'converted', 'closed', 'joined manipal'].includes(s) || s.includes('select'));
+        const isInt = s.includes('interview');
+        matchesStatus = !isSel && !isInt;
+      } else {
+        matchesStatus = s === filterLower;
+      }
 
       return matchesSearch && matchesBranch && matchesTl && matchesHr && matchesStatus;
     });
@@ -337,17 +350,33 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                     </div>
 
                     <div style={{ display: 'flex', gap: '14px', background: 'rgba(255,255,255,0.05)', padding: '10px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      <div style={{ textAlign: 'center' }}>
+                      <div
+                        onClick={() => setActiveTab('branches_teams')}
+                        style={{ textAlign: 'center', cursor: 'pointer' }}
+                        title="View Branches & Teams"
+                      >
                         <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#60a5fa' }}>{branches.length}</div>
                         <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>Branches</div>
                       </div>
                       <div style={{ width: '1px', background: 'rgba(255,255,255,0.15)' }} />
-                      <div style={{ textAlign: 'center' }}>
+                      <div
+                        onClick={() => setActiveTab('branches_teams')}
+                        style={{ textAlign: 'center', cursor: 'pointer' }}
+                        title="View Team Leaders"
+                      >
                         <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#a78bfa' }}>{teamLeaders.length}</div>
                         <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>Team Leaders</div>
                       </div>
                       <div style={{ width: '1px', background: 'rgba(255,255,255,0.15)' }} />
-                      <div style={{ textAlign: 'center' }}>
+                      <div
+                        onClick={() => {
+                          setHrBranchFilter('all');
+                          setHrSearch('');
+                          setActiveTab('hrs');
+                        }}
+                        style={{ textAlign: 'center', cursor: 'pointer' }}
+                        title="View Executive HRs"
+                      >
                         <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399' }}>{hrs.length}</div>
                         <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>Executive HRs</div>
                       </div>
@@ -357,37 +386,101 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
 
                 {/* 6 Top KPI Cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '12px', marginBottom: '1.75rem' }}>
-                  <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bfdbfe', borderTop: '4px solid #2563eb' }}>
+                  <div
+                    onClick={() => setActiveTab('branches_teams')}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(37,99,235,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bfdbfe', borderTop: '4px solid #2563eb', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view Branches & Teams"
+                  >
                     <div style={{ fontSize: '0.78rem', color: '#1d4ed8', fontWeight: 800, textTransform: 'uppercase' }}>Total Branches</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#1e3a8a', margin: '4px 0' }}>{branches.length}</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Active operations</div>
                   </div>
 
-                  <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #ddd6fe', borderTop: '4px solid #7c3aed' }}>
+                  <div
+                    onClick={() => {
+                      setHrBranchFilter('all');
+                      setHrSearch('');
+                      setActiveTab('hrs');
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(124,58,237,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #ddd6fe', borderTop: '4px solid #7c3aed', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view all Executive HRs"
+                  >
                     <div style={{ fontSize: '0.78rem', color: '#6d28d9', fontWeight: 800, textTransform: 'uppercase' }}>Executive HRs</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#5b21b6', margin: '4px 0' }}>{hrs.length}</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Across all teams</div>
                   </div>
 
-                  <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #fed7aa', borderTop: '4px solid #ea580c' }}>
+                  <div
+                    onClick={() => {
+                      setBranchFilter('all');
+                      setTlFilter('all');
+                      setHrFilter('all');
+                      setStatusFilter('all');
+                      setDateFilter('all');
+                      setAppSearch('');
+                      setActiveTab('applied');
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(234,88,12,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #fed7aa', borderTop: '4px solid #ea580c', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view all Applications"
+                  >
                     <div style={{ fontSize: '0.78rem', color: '#c2410c', fontWeight: 800, textTransform: 'uppercase' }}>Total Applications</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#9a3412', margin: '4px 0' }}>{applications.length}</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Submitted candidates</div>
                   </div>
 
-                  <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bbf7d0', borderTop: '4px solid #16a34a' }}>
+                  <div
+                    onClick={() => {
+                      setBranchFilter('all');
+                      setTlFilter('all');
+                      setHrFilter('all');
+                      setStatusFilter('selected');
+                      setDateFilter('all');
+                      setAppSearch('');
+                      setActiveTab('applied');
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(22,163,74,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #bbf7d0', borderTop: '4px solid #16a34a', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view Selected / Placed candidates"
+                  >
                     <div style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 800, textTransform: 'uppercase' }}>Selected / Placed</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#14532d', margin: '4px 0' }}>{kpis.selectedCandidates}</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Hired candidates</div>
                   </div>
 
-                  <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #e9d5ff', borderTop: '4px solid #9333ea' }}>
+                  <div
+                    onClick={() => setActiveTab('interviews')}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(147,51,234,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #e9d5ff', borderTop: '4px solid #9333ea', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view all Interviews"
+                  >
                     <div style={{ fontSize: '0.78rem', color: '#7e22ce', fontWeight: 800, textTransform: 'uppercase' }}>Interviews</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#6b21a8', margin: '4px 0' }}>{interviewsList.length}</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Live assessment rounds</div>
                   </div>
 
-                  <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #fef08a', borderTop: '4px solid #eab308' }}>
+                  <div
+                    onClick={() => {
+                      setBranchFilter('all');
+                      setTlFilter('all');
+                      setHrFilter('all');
+                      setStatusFilter('in_screening');
+                      setDateFilter('all');
+                      setAppSearch('');
+                      setActiveTab('applied');
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(234,179,8,0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                    style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem', border: '1.5px solid #fef08a', borderTop: '4px solid #eab308', cursor: 'pointer', transition: 'all 0.2s' }}
+                    title="Click to view candidates In Screening"
+                  >
                     <div style={{ fontSize: '0.78rem', color: '#a16207', fontWeight: 800, textTransform: 'uppercase' }}>In Screening</div>
                     <div style={{ fontSize: '2rem', fontWeight: 900, color: '#854d0e', margin: '4px 0' }}>{kpis.processingCandidates}</div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Under review</div>
@@ -578,10 +671,16 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                     style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff', fontWeight: 600 }}
                   >
                     <option value="all">All Statuses</option>
+                    <option value="in_screening">In Screening / Under Review</option>
                     <option value="applied">Applied</option>
                     <option value="shortlisted">Shortlisted</option>
                     <option value="interview">Interview Scheduled</option>
-                    <option value="selected">Selected / Hired</option>
+                    <option value="l1 selected">L1 Selected</option>
+                    <option value="l2 selected">L2 Selected</option>
+                    <option value="selected">Selected / Placed (Hired)</option>
+                    <option value="offer released">Offer Released</option>
+                    <option value="joined">Joined</option>
+                    <option value="hold">Hold</option>
                     <option value="rejected">Rejected</option>
                   </select>
                 </div>
