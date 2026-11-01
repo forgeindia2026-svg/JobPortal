@@ -1382,9 +1382,34 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                         <div style={{ fontSize: '0.82rem', color: '#64748b' }}>{app.candidateMobile}</div>
                       </div>
                     </div>
-                    <div style={{ flex: 1, minWidth: '150px' }}>
-                      <div style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>{app.jobTitle}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{app.companyName}</div>
+                    <div style={{ flex: 1, minWidth: '180px' }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem' }}>
+                        {(() => {
+                          if (app.jobTitle && app.jobTitle.includes('(PROCESS')) return app.jobTitle;
+                          const matchedIt = (itProcesses || []).find(p => p.id === app.jobId);
+                          if (matchedIt && matchedIt.processName) {
+                            return `${matchedIt.role || matchedIt.programTitle || app.jobTitle} (${matchedIt.processName.toUpperCase()})`;
+                          }
+                          return app.jobTitle;
+                        })()}
+                      </div>
+                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.76rem', color: '#2563eb', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                          {(() => {
+                            if (app.companyName && app.companyName !== 'FIC IT') return app.companyName;
+                            const matchedIt = (itProcesses || []).find(p => p.id === app.jobId);
+                            if (matchedIt) {
+                              return matchedIt.itCategory === 'Course' ? 'FIC IT Courses' : matchedIt.itCategory === 'Internship' ? 'FIC Free IT Internship' : matchedIt.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement';
+                            }
+                            return app.companyName;
+                          })()}
+                        </span>
+                        {app.programTitle && (
+                          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
+                            • {app.programTitle}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {getStatusBadge(app.status)}

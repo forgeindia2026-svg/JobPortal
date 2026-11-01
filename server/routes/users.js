@@ -1,6 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { UserModel, ApplicationModel, PartnerIncentiveModel, GlobalSettingsModel, readDBAsync, JobModel, CandidateModel, CompanyModel, InterviewModel, BranchItProjectModel } = require('../db');
+const { UserModel, ApplicationModel, PartnerIncentiveModel, GlobalSettingsModel, readDBAsync, JobModel, CandidateModel, CompanyModel, InterviewModel, BranchItProjectModel, ItTrainingProcessModel } = require('../db');
+
+const formatItProcessAsJob = (itProc) => {
+  if (!itProc) return null;
+  const compName = itProc.itCategory === 'Course'
+    ? 'FIC IT Courses'
+    : itProc.itCategory === 'Internship'
+    ? 'FIC Free IT Internship'
+    : itProc.itCategory === 'Fast Track'
+    ? 'FIC Fast Track IT Training'
+    : 'FIC IT Training & Placement';
+  const procTag = itProc.processName ? ` (${itProc.processName.toUpperCase()})` : '';
+  return {
+    id: itProc.id,
+    title: `${itProc.role || itProc.programTitle || 'IT Trainee'}${procTag}`,
+    processName: itProc.processName,
+    role: itProc.role,
+    programTitle: itProc.programTitle,
+    itCategory: itProc.itCategory,
+    isFicFlow: itProc.itCategory !== 'Internship',
+    location: itProc.location || 'PAN INDIA',
+    companyId: 'comp_fic_it',
+    companyName: compName
+  };
+};
 
 // GET all HRs / Employees
 router.get('/hr', async (req, res) => {
@@ -733,11 +757,12 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
 
     const populated = applications.map(app => {
       const candidate = db.candidates.find(c => c.id === app.candidateId) || {};
+      const cDet = app.candidateDetails || {};
       let job = db.jobs.find(j => j.id === app.jobId);
       if (!job) {
         const itProc = (db.itTrainingProcesses || []).find(p => p.id === app.jobId);
         if (itProc) {
-          job = { title: itProc.role || itProc.programTitle, companyName: 'FIC IT' };
+          job = formatItProcessAsJob(itProc);
         }
       }
       const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
@@ -763,13 +788,16 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
         ...app,
         incentiveAmount: actualHrIncentive !== undefined ? actualHrIncentive : fallbackHrIncentive,
         agentIncentiveAmount: app.agentIncentiveAmount || (fallbackHrIncentive * agentCut / 100),
-        candidateName: candidate.name || 'Anonymous',
-        candidateEmail: candidate.email || '',
-        candidateMobile: candidate.mobile || '',
-        candidateLocation: candidate.location || '',
-        candidateDOB: candidate.qualification || '',
-        candidateExperience: candidate.experience || '',
+        candidateName: candidate.name || cDet.name || 'Anonymous',
+        candidateEmail: candidate.email || cDet.email || '',
+        candidateMobile: candidate.mobile || cDet.mobile || cDet.phone || '',
+        candidateLocation: candidate.location || cDet.location || cDet.city || '',
+        candidateDOB: candidate.qualification || cDet.dob || cDet.qualification || '',
+        candidateExperience: candidate.experience || cDet.experience || '',
         jobTitle: job ? (job.title || job.companyName) : 'Untitled Job',
+        processName: job?.processName || '',
+        itCategory: job?.itCategory || '',
+        programTitle: job?.programTitle || '',
         companyName: (job && job.companyName) ? job.companyName : (company.name || 'Unknown Company'),
         companyLogo: company.logo || ''
       };
@@ -877,14 +905,18 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
     const candidateIds = applications.map(a => a.candidateId).filter(Boolean);
     const jobIds = applications.map(a => a.jobId).filter(Boolean);
 
-    const [candidates, jobs, companies] = await Promise.all([
+    const [candidates, jobs, itProcesses, companies] = await Promise.all([
       CandidateModel.find({ id: { $in: candidateIds } }).lean(),
       JobModel.find({ id: { $in: jobIds } }).lean(),
+      ItTrainingProcessModel.find({ id: { $in: jobIds } }).lean(),
       CompanyModel.find({}).lean()
     ]);
 
     const candMap = Object.fromEntries(candidates.map(c => [c.id, c]));
     const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
+    (itProcesses || []).forEach(p => {
+      if (!jobMap[p.id]) jobMap[p.id] = formatItProcessAsJob(p);
+    });
     const compMap = Object.fromEntries(companies.map(c => [c.id, c]));
 
     const populatedApps = applications.map(app => {
@@ -1318,13 +1350,17 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
 
     const candidateIds = applications.map(a => a.candidateId).filter(Boolean);
     const jobIds = applications.map(a => a.jobId).filter(Boolean);
-    const [candidates, jobs] = await Promise.all([
+    const [candidates, jobs, itProcesses] = await Promise.all([
       CandidateModel.find({ id: { $in: candidateIds } }).lean(),
-      JobModel.find({ id: { $in: jobIds } }).lean()
+      JobModel.find({ id: { $in: jobIds } }).lean(),
+      ItTrainingProcessModel.find({ id: { $in: jobIds } }).lean()
     ]);
 
     const candMap = Object.fromEntries(candidates.map(c => [c.id, c]));
     const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
+    (itProcesses || []).forEach(p => {
+      if (!jobMap[p.id]) jobMap[p.id] = formatItProcessAsJob(p);
+    });
     const hrCodeMap = Object.fromEntries(hrs.map(h => [String(h.referralCode).toUpperCase(), h]));
 
     const enrichedApps = applications.map(app => {
@@ -1528,10 +1564,11 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
     const hrMap = Object.fromEntries(hrs.map(h => [(h.referralCode || '').toLowerCase(), h]));
 
     // 4. All Applications & Interviews & Jobs & Candidates
-    const [allApps, allCandidates, allJobs, companies, rawInterviews] = await Promise.all([
+    const [allApps, allCandidates, allJobs, allItProcesses, companies, rawInterviews] = await Promise.all([
       ApplicationModel.find({}).sort({ appliedAt: -1 }).lean(),
       CandidateModel.find({}).lean(),
       JobModel.find({}).lean(),
+      ItTrainingProcessModel.find({}).lean(),
       CompanyModel.find({}).lean(),
       InterviewModel.find({}).sort({ createdAt: -1 }).lean()
     ]);
@@ -1564,6 +1601,9 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
 
     const candMap = Object.fromEntries(allCandidates.map(c => [c.id, c]));
     const jobMap = Object.fromEntries(allJobs.map(j => [j.id, j]));
+    (allItProcesses || []).forEach(p => {
+      if (!jobMap[p.id]) jobMap[p.id] = formatItProcessAsJob(p);
+    });
     const compMap = Object.fromEntries(companies.map(c => [c.id, c]));
 
     const populatedApps = applications.map(app => {
