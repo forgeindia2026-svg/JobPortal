@@ -1366,135 +1366,249 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {filteredApps.map(app => (
-                <div key={app.id} style={{
-                  background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden',
-                  transition: 'box-shadow 0.2s', boxShadow: expandedApp === app.id ? '0 4px 15px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)'
-                }}>
-                  <div onClick={() => toggleExpand(app.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '200px' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1rem', flexShrink: 0 }}>
-                        {app.candidateName?.charAt(0)?.toUpperCase() || '?'}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>{app.candidateName}</div>
-                        <div style={{ fontSize: '0.82rem', color: '#64748b' }}>{app.candidateMobile}</div>
-                      </div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: '180px' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.92rem' }}>
-                        {(() => {
-                          if (app.jobTitle && app.jobTitle.includes('(PROCESS')) return app.jobTitle;
-                          const matchedIt = (itProcesses || []).find(p => p.id === app.jobId);
-                          if (matchedIt && matchedIt.processName) {
-                            return `${matchedIt.role || matchedIt.programTitle || app.jobTitle} (${matchedIt.processName.toUpperCase()})`;
-                          }
-                          return app.jobTitle;
-                        })()}
-                      </div>
-                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.76rem', color: '#2563eb', background: '#eff6ff', border: '1px solid #dbeafe', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
-                          {(() => {
-                            if (app.companyName && app.companyName !== 'FIC IT') return app.companyName;
-                            const matchedIt = (itProcesses || []).find(p => p.id === app.jobId);
-                            if (matchedIt) {
-                              return matchedIt.itCategory === 'Course' ? 'FIC IT Courses' : matchedIt.itCategory === 'Internship' ? 'FIC Free IT Internship' : matchedIt.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement';
-                            }
-                            return app.companyName;
-                          })()}
-                        </span>
-                        {app.programTitle && (
-                          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>
-                            • {app.programTitle}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {getStatusBadge(app.status)}
-                      <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                      {expandedApp === app.id ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
-                    </div>
+            {(() => {
+              const getHrBankGradient = (name) => {
+                const n = (name || '').toLowerCase();
+                if (n.includes('idfc')) return 'linear-gradient(135deg, #881337 0%, #991b1b 50%, #7f1d1d 100%)';
+                if (n.includes('bandhan')) return 'linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f766e 100%)';
+                if (n.includes('hdfc')) return 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1e40af 100%)';
+                if (n.includes('aditya birla')) return 'linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #991b1b 100%)';
+                if (n.includes('kotak')) return 'linear-gradient(135deg, #0f2b48 0%, #003366 50%, #1e3a8a 100%)';
+                if (n.includes('mahindra')) return 'linear-gradient(135deg, #be123c 0%, #e11d48 50%, #9f1239 100%)';
+                if (n.includes('axis')) return 'linear-gradient(135deg, #701a75 0%, #831843 50%, #581c87 100%)';
+                if (n.includes('icici')) return 'linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #9a3412 100%)';
+                if (n.includes('yes')) return 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #075985 100%)';
+                if (n.includes('tata')) return 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #172554 100%)';
+                return 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
+              };
+              const getHrPaymentAmount = (app) => {
+                if (app.paymentAmount && Number(app.paymentAmount) > 0) return Number(app.paymentAmount);
+                const t = (app.jobTitle || '').toLowerCase();
+                const c = (app.companyName || '').toLowerCase();
+                if (t.includes('casa')) return 149;
+                if (t.includes('free') || t.includes('internship') || c.includes('free') || c.includes('internship')) return 0;
+                if (c.includes('fic') || c.includes('it training')) return 1499;
+                return 49;
+              };
+              const getReferrerLabel = (app) => {
+                const isSelf = String(app.referredBy || '').toLowerCase() === String(currentUser.referralCode || '').toLowerCase();
+                return isSelf ? (currentUser.name || 'You') : `Partner (${app.referredBy})`;
+              };
+              const getMyIncentive = (app) => Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
+              const openStatus = (app) => {
+                setStatusModalApp(app);
+                setNewAppStatus(app.status);
+                setAdminNoteInput(app.adminNotes || '');
+              };
+              const openInterview = (app) => {
+                setAppToSchedule(app);
+                setInterviewModalOpen(true);
+              };
+              const pill = (bg, color) => ({ color, background: bg, padding: '4px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 });
+              const glassPill = { color: '#ffffff', background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.32)', padding: '4px 9px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, textDecoration: 'none' };
+
+              if (filteredApps.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0' }}>
+                    <Search size={40} style={{ marginBottom: '12px', opacity: 0.4 }} />
+                    <p style={{ fontSize: '1rem', fontWeight: 500 }}>No candidates found.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  {/* Desktop Table View (same as Admin Applications) */}
+                  <div className="table-container applications-desktop-table">
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>App ID</th>
+                          <th>Candidate Details</th>
+                          <th>Applied Job</th>
+                          <th>Company</th>
+                          <th>Applied On</th>
+                          <th>Referred By</th>
+                          <th>Payment</th>
+                          <th>My Incentive</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredApps.map(app => {
+                          const paymentAmt = getHrPaymentAmount(app);
+                          const myInc = getMyIncentive(app);
+                          return (
+                            <tr key={app.id}>
+                              <td style={{ fontWeight: 700, color: '#2563eb' }}>{app.applicationNumber || '-'}</td>
+                              <td>
+                                <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.05rem', marginBottom: '6px' }}>{app.candidateName}</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.85rem' }}>
+                                  <div style={pill('#d1fae5', '#047857')}>📱 {app.candidateMobile || 'N/A'}</div>
+                                  <div style={{ ...pill('#dbeafe', '#1d4ed8'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={app.candidateEmail}>✉️ {app.candidateEmail || 'N/A'}</div>
+                                  <div style={pill('#fef3c7', '#b45309')}>🎂 DOB: {app.candidateDOB || 'N/A'}</div>
+                                  <div style={pill('#f3e8ff', '#6d28d9')}>🏙️ City: {app.candidateLocation || 'N/A'}</div>
+                                  <div style={{ ...pill('#fce7f3', '#be185d'), gridColumn: 'span 2' }}>💼 Experience: {app.candidateExperience || 'N/A'}</div>
+                                </div>
+                                {app.candidateResumeUrl && (
+                                  <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '8px', fontWeight: 600, padding: '4px 8px', background: '#eff6ff', borderRadius: '6px' }}>
+                                    <FileText size={14} /> View Resume
+                                  </a>
+                                )}
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{app.jobTitle}</td>
+                              <td>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  {app.companyName}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: '#1e293b' }}>
+                                  {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-GB') : '-'}
+                                </div>
+                                {app.appliedAt && (
+                                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '3px', fontWeight: 500 }}>
+                                    🕒 {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.85rem' }}>{getReferrerLabel(app)}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: paymentAmt > 100 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>₹{paymentAmt}</div>
+                                {app.paymentId && (
+                                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', wordBreak: 'break-all', maxWidth: '100px' }}>
+                                    {String(app.paymentId).replace('FREE_TEST_', 'Free-')}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 700, color: myInc > 0 ? '#10b981' : '#64748b', fontSize: '0.9rem' }}>₹{myInc}</div>
+                                {myInc > 0 && app.incentiveStatus === 'Paid' && (
+                                  <span style={{ fontSize: '0.7rem', background: '#10b981', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Paid ✓</span>
+                                )}
+                              </td>
+                              <td>{getStatusBadge(app.status)}</td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
+                                  <button className="btn-primary" style={{ padding: '4px 10px', fontSize: '0.775rem' }} onClick={() => openStatus(app)}>
+                                    Update Status
+                                  </button>
+                                  <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.775rem', background: '#eff6ff', color: '#1d4ed8' }} onClick={() => openInterview(app)}>
+                                    <Calendar size={12} /> Schedule Interview
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
 
-                  {expandedApp === app.id && (
-                    <div style={{ borderTop: '1px solid #e2e8f0', padding: '20px', background: '#f8fafc' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}><Users size={16} /></div>
-                            <div><div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Full Name</div><div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateName}</div></div>
+                  {/* Mobile Cards View (same as Admin Applications) */}
+                  <div className="applications-mobile-cards">
+                    {filteredApps.map(app => {
+                      const paymentAmt = getHrPaymentAmount(app);
+                      const myInc = getMyIncentive(app);
+                      return (
+                        <div
+                          key={app.id}
+                          style={{
+                            background: getHrBankGradient(app.companyName),
+                            borderRadius: '18px',
+                            border: '1.5px solid rgba(255, 255, 255, 0.22)',
+                            boxShadow: '0 10px 24px rgba(30, 41, 59, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+                            padding: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                            color: '#ffffff',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '110px', height: '110px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+                          {/* Name + Job + Company + Status */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', position: 'relative', zIndex: 1 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 800, color: '#ffffff', fontSize: '1.15rem', lineHeight: 1.2 }}>{app.candidateName}</div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255, 255, 255, 0.95)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span>{app.jobTitle}</span>
+                                <span style={{ background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.35)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem' }}>
+                                  🏛️ {app.companyName}
+                                </span>
+                              </div>
+                            </div>
+                            <div style={{ flexShrink: 0 }}>{getStatusBadge(app.status)}</div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}><Phone size={16} /></div>
-                            <div><div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Mobile Number</div><div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateMobile || 'N/A'}</div></div>
+
+                          {/* App ID + Date/Time */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '8px', position: 'relative', zIndex: 1 }}>
+                            <span style={{ fontWeight: 800, color: '#ffffff' }}>#{app.applicationNumber || '-'}</span>
+                            <span style={{ color: '#ffffff', fontWeight: 600 }}>
+                              {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                              {app.appliedAt && ` • 🕒 ${new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}`}
+                            </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}><Calendar size={16} /></div>
-                            <div><div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Date of Birth</div><div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateDOB ? new Date(app.candidateDOB).toLocaleDateString('en-IN') : 'N/A'}</div></div>
+
+                          {/* Contact & Bio Pills */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '0.78rem', position: 'relative', zIndex: 1 }}>
+                            {app.candidateMobile && <a href={`tel:${app.candidateMobile}`} style={glassPill}>📱 {app.candidateMobile}</a>}
+                            {app.candidateEmail && (
+                              <a href={`mailto:${app.candidateEmail}`} style={{ ...glassPill, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={app.candidateEmail}>
+                                ✉️ {app.candidateEmail}
+                              </a>
+                            )}
+                            <span style={{ ...glassPill, fontWeight: 600 }}>💼 {app.candidateExperience || 'Fresher'}</span>
+                            <span style={{ ...glassPill, fontWeight: 600 }}>🏙️ {app.candidateLocation || 'N/A'}</span>
+                            {app.candidateDOB && <span style={{ ...glassPill, fontWeight: 600 }}>🎂 {app.candidateDOB}</span>}
+                            {app.candidateResumeUrl && (
+                              <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={glassPill}>
+                                <FileText size={12} color="#ffffff" /> Resume
+                              </a>
+                            )}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a855f7' }}><MapPin size={16} /></div>
-                            <div><div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>City</div><div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateLocation || 'N/A'}</div></div>
+
+                          {/* Referrer + Fee + Incentive */}
+                          <div style={{ background: 'rgba(0, 0, 0, 0.22)', borderRadius: '10px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', border: '1px solid rgba(255, 255, 255, 0.18)', position: 'relative', zIndex: 1, gap: '8px', flexWrap: 'wrap' }}>
+                            <div>
+                              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>HR: </span>
+                              <span style={{ fontWeight: 800 }}>{getReferrerLabel(app)}</span>
+                            </div>
+                            <div>
+                              <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Fee: </span>
+                              <span style={{ fontWeight: 800, color: '#fef08a' }}>₹{paymentAmt}</span>
+                              {myInc > 0 && <span style={{ marginLeft: '6px', color: '#bbf7d0', fontWeight: 800 }}>(Inc: ₹{myInc})</span>}
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ec4899' }}><Briefcase size={16} /></div>
-                            <div><div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Experience</div><div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateExperience || 'N/A'}</div></div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f97316' }}><Mail size={16} /></div>
-                            <div><div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Email Address</div><div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.92rem' }}>{app.candidateEmail || 'N/A'}</div></div>
-                          </div>
-                        </div>
-                        
-                        {/* HR Actions Panel */}
-                        <div style={{ minWidth: '220px', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
-                          <h4 style={{ fontSize: '0.85rem', color: '#334155', marginBottom: '12px', marginTop: 0 }}>HR Actions</h4>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+                          {/* Actions */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', position: 'relative', zIndex: 1 }}>
                             <button
-                              className="btn-primary"
-                              style={{ width: '100%', padding: '8px 12px', fontSize: '0.8rem', display: 'flex', justifyContent: 'center' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setStatusModalApp(app);
-                                setNewAppStatus(app.status);
-                                setAdminNoteInput(app.adminNotes || '');
-                              }}
+                              style={{ padding: '8px 12px', fontSize: '0.8rem', fontWeight: 800, borderRadius: '8px', border: 'none', background: '#ffffff', color: '#0f172a', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }}
+                              onClick={() => openStatus(app)}
                             >
                               Update Status
                             </button>
                             <button
-                              className="btn-secondary"
-                              style={{ width: '100%', padding: '8px 12px', fontSize: '0.8rem', display: 'flex', justifyContent: 'center', background: '#f8fafc', color: '#2563eb', border: '1px solid #bfdbfe' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setAppToSchedule(app);
-                                setInterviewModalOpen(true);
-                              }}
+                              style={{ padding: '8px 12px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.4)', background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                              onClick={() => openInterview(app)}
                             >
-                              Schedule Interview
+                              <Calendar size={13} color="#ffffff" /> Interview
                             </button>
-                            {app.candidateResumeUrl && (
-                              <a href={app.candidateResumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px 12px', background: '#ecfdf5', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}>
-                                <FileText size={14} /> View Resume
-                              </a>
-                            )}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {filteredApps.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0' }}>
-                  <Search size={40} style={{ marginBottom: '12px', opacity: 0.4 }} />
-                  <p style={{ fontSize: '1rem', fontWeight: 500 }}>No candidates found.</p>
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
