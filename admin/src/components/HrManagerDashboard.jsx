@@ -9,6 +9,51 @@ import OffersAndTargetsView from './OffersAndTargetsView';
 
 const CLOSED_STATUSES = ['selected', 'joined', 'joined manipal', 'converted', 'hired'];
 
+const getBankBrandGradient = (name) => {
+  const lowerName = (name || '').toLowerCase();
+  if (lowerName.includes('idfc')) return 'linear-gradient(135deg, #881337 0%, #991b1b 50%, #7f1d1d 100%)';
+  if (lowerName.includes('bandhan')) return 'linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f766e 100%)';
+  if (lowerName.includes('hdfc')) return 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1e40af 100%)';
+  if (lowerName.includes('aditya birla')) return 'linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #991b1b 100%)';
+  if (lowerName.includes('kotak')) return 'linear-gradient(135deg, #0f2b48 0%, #003366 50%, #1e3a8a 100%)';
+  if (lowerName.includes('mahindra finance') || (lowerName.includes('mahindra') && !lowerName.includes('kotak'))) return 'linear-gradient(135deg, #be123c 0%, #e11d48 50%, #9f1239 100%)';
+  if (lowerName.includes('axis')) return 'linear-gradient(135deg, #701a75 0%, #831843 50%, #581c87 100%)';
+  if (lowerName.includes('icici')) return 'linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #9a3412 100%)';
+  if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #075985 100%)';
+  if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #172554 100%)';
+  if (lowerName.includes('suryoday')) return 'linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #9a3412 100%)';
+  if (lowerName.includes('fic') || lowerName.includes('it training') || lowerName.includes('software')) return 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)';
+  return 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
+};
+
+const getBankShadowColor = (name) => {
+  const lowerName = (name || '').toLowerCase();
+  if (lowerName.includes('idfc')) return 'rgba(153, 27, 27, 0.45)';
+  if (lowerName.includes('bandhan')) return 'rgba(3, 105, 161, 0.45)';
+  if (lowerName.includes('hdfc')) return 'rgba(29, 78, 216, 0.45)';
+  if (lowerName.includes('aditya birla')) return 'rgba(185, 28, 28, 0.45)';
+  if (lowerName.includes('kotak')) return 'rgba(0, 51, 102, 0.45)';
+  if (lowerName.includes('mahindra finance') || (lowerName.includes('mahindra') && !lowerName.includes('kotak'))) return 'rgba(225, 29, 72, 0.45)';
+  if (lowerName.includes('axis')) return 'rgba(131, 24, 67, 0.45)';
+  if (lowerName.includes('icici')) return 'rgba(234, 88, 12, 0.45)';
+  if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'rgba(2, 132, 199, 0.45)';
+  if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'rgba(30, 58, 138, 0.45)';
+  if (lowerName.includes('suryoday')) return 'rgba(234, 88, 12, 0.45)';
+  return 'rgba(30, 41, 59, 0.35)';
+};
+
+const getAppPaymentAmount = (app) => {
+  if (app.paymentAmount && Number(app.paymentAmount) > 0) {
+    return Number(app.paymentAmount);
+  }
+  const title = (app.jobTitle || app.title || '').toLowerCase();
+  const company = (app.companyName || '').toLowerCase();
+  if (title.includes('casa')) return 149;
+  if (title.includes('free') || title.includes('internship') || company.includes('free') || company.includes('internship')) return 0;
+  if (app.isFicFlow || company.includes('fic') || company.includes('it training')) return 1499;
+  return 49;
+};
+
 const BANK_BRAND_COLORS = {
   'axis': '#97144D',
   'kotak': '#003366',
@@ -920,8 +965,8 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                   </div>
                 </div>
 
-                {/* Filter Controls Bar */}
-                <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '14px', border: '1px solid #e2e8f0', marginBottom: '14px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                {/* Filter Controls Bar (Desktop: table controls, Mobile: matches Admin mobile filters) */}
+                <div className="applications-desktop-controls" style={{ background: '#ffffff', padding: '1rem', borderRadius: '14px', border: '1px solid #e2e8f0', marginBottom: '14px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                   <div style={{ flex: '1 1 200px', minWidth: '180px' }}>
                     <div style={{ position: 'relative' }}>
                       <Search size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: '#94a3b8' }} />
@@ -989,7 +1034,107 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                   </select>
                 </div>
 
-                {/* Applications Table */}
+                {/* Mobile Filter Controls Bar (Visible on Mobile <= 768px matching Admin) */}
+                <div className="applications-mobile-controls" style={{ background: '#ffffff', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Swipeable Date Pills */}
+                  <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '2px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+                    {[
+                      { key: 'all', label: `All (${applications.length})` },
+                      { key: 'today', label: 'Today' },
+                      { key: 'yesterday', label: 'Yesterday 🟡' },
+                      { key: 'last7', label: 'Last 7D' },
+                    ].map((d) => (
+                      <button
+                        key={d.key}
+                        onClick={() => setDateFilter(d.key)}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '16px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          border: 'none',
+                          flexShrink: 0,
+                          background: dateFilter === d.key ? '#2563eb' : '#f1f5f9',
+                          color: dateFilter === d.key ? '#fff' : '#475569',
+                        }}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Compact Search Bar */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="🔍 Search name, phone, email, role..."
+                      value={appSearch}
+                      onChange={(e) => setAppSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        background: '#ffffff',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {/* Compact Dropdown Row: Branch + Status */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <select
+                      value={branchFilter}
+                      onChange={(e) => setBranchFilter(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '7px 8px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        outline: 'none',
+                        background: '#ffffff',
+                        color: '#334155',
+                      }}
+                    >
+                      <option value="all">🏢 Branch: All ({branches.length})</option>
+                      {branches.map((b) => (
+                        <option key={b.branchId} value={b.branchName}>{b.branchName}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '7px 8px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        outline: 'none',
+                        background: '#ffffff',
+                        color: '#334155',
+                      }}
+                    >
+                      <option value="all">Status: All</option>
+                      <option value="processing">Processing</option>
+                      <option value="document submission">Doc Submission</option>
+                      <option value="applied">Applied</option>
+                      <option value="shortlisted">Shortlisted</option>
+                      <option value="interview">Interview</option>
+                      <option value="selected">Selected</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Applications Desktop Table */}
                 {filteredApps.length === 0 ? (
                   <div style={{ background: '#ffffff', borderRadius: '14px', padding: '3rem', textAlign: 'center', border: '1px solid #e2e8f0', color: '#64748b' }}>
                     <FileText size={36} style={{ margin: '0 auto 10px auto', color: '#cbd5e1' }} />
@@ -997,85 +1142,324 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                     <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Try adjusting your search query or filters.</div>
                   </div>
                 ) : (
-                  <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                          <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Candidate</th>
-                          <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Branch & Squad</th>
-                          <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Company / Role</th>
-                          <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Status</th>
-                          <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Applied Date</th>
-                          <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569', textAlign: 'right' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredApps.map((app) => {
-                          const badge = getStatusBadge(app.status);
-                          const bankColor = getBankColor(app.companyName);
+                  <>
+                    <div className="applications-desktop-table" style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                      <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
+                        <thead>
+                          <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                            <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Candidate</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Branch & Squad</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Company / Role</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Status</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569' }}>Applied Date</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 800, color: '#475569', textAlign: 'right' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredApps.map((app) => {
+                            const badge = getStatusBadge(app.status);
+                            const bankColor = getBankColor(app.companyName);
 
-                          return (
-                            <tr key={app.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                              <td style={{ padding: '12px 16px' }}>
-                                <div style={{ fontWeight: 800, color: '#0f172a' }}>{app.candidateName}</div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                  {app.candidateEmail} {app.candidateMobile ? `• ${app.candidateMobile}` : ''}
+                            return (
+                              <tr key={app.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <div style={{ fontWeight: 800, color: '#0f172a' }}>{app.candidateName}</div>
+                                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    {app.candidateEmail} {app.candidateMobile ? `• ${app.candidateMobile}` : ''}
+                                  </div>
+                                </td>
+
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800 }}>
+                                    🏢 {app.branchName || 'General'}
+                                  </span>
+                                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '4px' }}>
+                                    HR: <strong>{app.referringHrName}</strong> {app.referringTlName ? `(TL: ${app.referringTlName})` : ''}
+                                  </div>
+                                </td>
+
+                                <td style={{ padding: '12px 16px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bankColor }} />
+                                    <strong style={{ color: '#0f172a' }}>{app.companyName}</strong>
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.jobTitle}</div>
+                                </td>
+
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{ background: badge.bg, color: badge.text, padding: '3px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                                    {badge.label}
+                                  </span>
+                                </td>
+
+                                <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '0.8rem' }}>
+                                  {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'N/A'}
+                                </td>
+
+                                <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                  <button
+                                    onClick={() => {
+                                      setStatusModalApp(app);
+                                      setNewStatus(app.status || 'Shortlisted');
+                                    }}
+                                    style={{
+                                      padding: '6px 12px',
+                                      borderRadius: '6px',
+                                      border: '1px solid #bfdbfe',
+                                      background: '#eff6ff',
+                                      color: '#1d4ed8',
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Update Status
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Applications Mobile Cards Grid (Admin-grade Rich Gradient Cards with Bank Themes) */}
+                    <div className="applications-mobile-cards">
+                      {filteredApps.map((app) => {
+                        const paymentAmt = getAppPaymentAmount(app);
+                        const gradientBg = getBankBrandGradient(app.companyName || app.jobTitle);
+                        const shadowClr = getBankShadowColor(app.companyName || app.jobTitle);
+
+                        return (
+                          <div
+                            key={app.id}
+                            style={{
+                              background: gradientBg,
+                              borderRadius: '18px',
+                              border: '1.5px solid rgba(255, 255, 255, 0.22)',
+                              boxShadow: `0 10px 24px ${shadowClr}, inset 0 1px 0 rgba(255,255,255,0.2)`,
+                              padding: '16px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '12px',
+                              color: '#ffffff',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            {/* Decorative Radial Lights */}
+                            <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '110px', height: '110px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                            <div style={{ position: 'absolute', bottom: '-20px', left: '20px', width: '80px', height: '80px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+                            {/* Top Row: Candidate Name + Status Badge */}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', position: 'relative', zIndex: 1 }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 800, color: '#ffffff', fontSize: '1.15rem', lineHeight: 1.2 }}>
+                                  {app.candidateName}
                                 </div>
-                              </td>
-
-                              <td style={{ padding: '12px 16px' }}>
-                                <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800 }}>
-                                  🏢 {app.branchName || 'General'}
-                                </span>
-                                <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '4px' }}>
-                                  HR: <strong>{app.referringHrName}</strong> {app.referringTlName ? `(TL: ${app.referringTlName})` : ''}
-                                </div>
-                              </td>
-
-                              <td style={{ padding: '12px 16px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: bankColor }} />
-                                  <strong style={{ color: '#0f172a' }}>{app.companyName}</strong>
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.jobTitle}</div>
-                              </td>
-
-                              <td style={{ padding: '12px 16px' }}>
-                                <span style={{ background: badge.bg, color: badge.text, padding: '3px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
-                                  {badge.label}
-                                </span>
-                              </td>
-
-                              <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '0.8rem' }}>
-                                {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : 'N/A'}
-                              </td>
-
-                              <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                                <button
-                                  onClick={() => {
-                                    setStatusModalApp(app);
-                                    setNewStatus(app.status || 'Shortlisted');
-                                  }}
-                                  style={{
-                                    padding: '6px 12px',
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255, 255, 255, 0.95)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                  <span>{app.jobTitle}</span>
+                                  <span style={{
+                                    background: 'rgba(255, 255, 255, 0.22)',
+                                    color: '#ffffff',
+                                    border: '1px solid rgba(255, 255, 255, 0.35)',
+                                    padding: '2px 8px',
                                     borderRadius: '6px',
-                                    border: '1px solid #bfdbfe',
-                                    background: '#eff6ff',
-                                    color: '#1d4ed8',
                                     fontWeight: 700,
-                                    fontSize: '0.78rem',
-                                    cursor: 'pointer',
+                                    fontSize: '0.78rem'
+                                  }}>
+                                    🏛️ {app.companyName}
+                                  </span>
+                                </div>
+                              </div>
+                              <div style={{ flexShrink: 0 }}>
+                                {(() => {
+                                  const b = getStatusBadge(app.status);
+                                  return (
+                                    <span style={{ background: b.bg, color: b.text, padding: '3px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>
+                                      {b.label}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+
+                            {/* Meta sub-line: App ID & Date */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.85)', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '8px', position: 'relative', zIndex: 1 }}>
+                              <span style={{ fontWeight: 800, color: '#ffffff' }}>#{app.applicationNumber || app.id}</span>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ffffff', fontWeight: 600 }}>
+                                <span>{app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</span>
+                                {app.appliedAt && (
+                                  <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                    • <Clock size={11} color="#ffffff" /> {new Date(app.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Hierarchy Tags: Branch + Referring HR + TL */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', position: 'relative', zIndex: 1 }}>
+                              <span style={{
+                                background: 'rgba(255, 255, 255, 0.25)',
+                                color: '#ffffff',
+                                border: '1px solid rgba(255, 255, 255, 0.35)',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                fontWeight: 800,
+                                fontSize: '0.75rem'
+                              }}>
+                                🏢 {app.branchName || 'General'}
+                              </span>
+                              <span style={{
+                                background: 'rgba(255, 255, 255, 0.18)',
+                                color: '#ffffff',
+                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                fontWeight: 700,
+                                fontSize: '0.75rem'
+                              }}>
+                                👤 HR: {app.referringHrName || 'Direct'}
+                              </span>
+                              {app.referringTlName && (
+                                <span style={{
+                                  background: 'rgba(255, 255, 255, 0.18)',
+                                  color: '#ffffff',
+                                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px',
+                                  fontWeight: 700,
+                                  fontSize: '0.75rem'
+                                }}>
+                                  👥 TL: {app.referringTlName}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Contact & Bio Info */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '0.78rem', position: 'relative', zIndex: 1 }}>
+                              {app.candidateMobile && (
+                                <a
+                                  href={`tel:${app.candidateMobile}`}
+                                  style={{
+                                    color: '#ffffff',
+                                    background: 'rgba(255, 255, 255, 0.22)',
+                                    border: '1px solid rgba(255, 255, 255, 0.35)',
+                                    padding: '4px 9px',
+                                    borderRadius: '8px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontWeight: 700,
+                                    textDecoration: 'none'
                                   }}
                                 >
-                                  Update Status
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                                  📱 {app.candidateMobile}
+                                </a>
+                              )}
+                              {app.candidateEmail && (
+                                <a
+                                  href={`mailto:${app.candidateEmail}`}
+                                  style={{
+                                    color: '#ffffff',
+                                    background: 'rgba(255, 255, 255, 0.22)',
+                                    border: '1px solid rgba(255, 255, 255, 0.35)',
+                                    padding: '4px 9px',
+                                    borderRadius: '8px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    wordBreak: 'break-all'
+                                  }}
+                                  title={app.candidateEmail}
+                                >
+                                  ✉️ {app.candidateEmail}
+                                </a>
+                              )}
+                              <span style={{ color: '#ffffff', background: 'rgba(255, 255, 255, 0.16)', border: '1px solid rgba(255, 255, 255, 0.25)', padding: '4px 9px', borderRadius: '8px', fontWeight: 600 }}>
+                                💼 {app.candidateExperience || 'Fresher'}
+                              </span>
+                              <span style={{ color: '#ffffff', background: 'rgba(255, 255, 255, 0.16)', border: '1px solid rgba(255, 255, 255, 0.25)', padding: '4px 9px', borderRadius: '8px', fontWeight: 600 }}>
+                                🏙️ {app.candidateLocation || 'N/A'}
+                              </span>
+                              {app.candidateDOB && (
+                                <span style={{ color: '#ffffff', background: 'rgba(255, 255, 255, 0.16)', border: '1px solid rgba(255, 255, 255, 0.25)', padding: '4px 9px', borderRadius: '8px', fontWeight: 600 }}>
+                                  🎂 {app.candidateDOB}
+                                </span>
+                              )}
+                              {app.candidateResumeUrl && (
+                                <a
+                                  href={app.candidateResumeUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    color: '#ffffff',
+                                    background: 'rgba(255, 255, 255, 0.25)',
+                                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                                    padding: '4px 9px',
+                                    borderRadius: '8px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontWeight: 700,
+                                    textDecoration: 'none'
+                                  }}
+                                >
+                                  <FileText size={12} color="#ffffff" /> Resume
+                                </a>
+                              )}
+                            </div>
+
+                            {/* Fee & Action Bar */}
+                            <div style={{
+                              background: 'rgba(0, 0, 0, 0.22)',
+                              borderRadius: '10px',
+                              padding: '8px 12px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              fontSize: '0.8rem',
+                              border: '1px solid rgba(255, 255, 255, 0.18)',
+                              color: '#ffffff',
+                              position: 'relative',
+                              zIndex: 1
+                            }}>
+                              <div>
+                                <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Application Fee: </span>
+                                <span style={{ fontWeight: 800, color: '#fef08a' }}>
+                                  ₹{paymentAmt}
+                                </span>
+                              </div>
+                              <button
+                                style={{
+                                  padding: '6px 14px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 800,
+                                  borderRadius: '8px',
+                                  border: 'none',
+                                  background: '#ffffff',
+                                  color: '#0f172a',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                onClick={() => {
+                                  setStatusModalApp(app);
+                                  setNewStatus(app.status || 'Shortlisted');
+                                }}
+                              >
+                                Update Status
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             )}
