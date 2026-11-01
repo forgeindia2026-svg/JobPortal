@@ -2416,10 +2416,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                       gap: '4px',
                       fontWeight: 700,
                       textDecoration: 'none',
-                      maxWidth: '180px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
+                      wordBreak: 'break-all'
                     }}
                     title={app.candidateEmail}
                   >
@@ -4764,10 +4761,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                             gap: '4px',
                             fontWeight: 700,
                             textDecoration: 'none',
-                            maxWidth: '180px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
+                            wordBreak: 'break-all'
                           }}
                           title={app.candidateEmail}
                         >
@@ -5761,10 +5755,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                                   gap: '4px',
                                   fontWeight: 700,
                                   textDecoration: 'none',
-                                  maxWidth: '180px',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
+                                  wordBreak: 'break-all'
                                 }}
                                 title={app.candidateEmail}
                               >

@@ -1560,7 +1560,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '0.78rem', position: 'relative', zIndex: 1 }}>
                             {app.candidateMobile && <a href={`tel:${app.candidateMobile}`} style={glassPill}>📱 {app.candidateMobile}</a>}
                             {app.candidateEmail && (
-                              <a href={`mailto:${app.candidateEmail}`} style={{ ...glassPill, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={app.candidateEmail}>
+                              <a href={`mailto:${app.candidateEmail}`} style={{ ...glassPill, wordBreak: 'break-all' }} title={app.candidateEmail}>
                                 ✉️ {app.candidateEmail}
                               </a>
                             )}
