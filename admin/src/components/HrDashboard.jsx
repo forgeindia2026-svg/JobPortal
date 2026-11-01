@@ -700,11 +700,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           </button>
 
           <button className={`nav-item ${activeTab === 'job_openings' ? 'active' : ''}`} onClick={() => { setActiveTab('job_openings'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
-            <Briefcase size={18} /><span>Job Openings ({directJobs.length || 14})</span>
+            <Briefcase size={18} /><span>Bank Jobs ({directJobs.length || 14})</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'it_programs' ? 'active' : ''}`} onClick={() => { setActiveTab('it_programs'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
-            <GraduationCap size={18} /><span>IT Programs ({itProcesses.length || 29})</span>
+            <GraduationCap size={18} /><span>IT Jobs ({itProcesses.length || 29})</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'applied' ? 'active' : ''}`} onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
@@ -772,9 +772,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 : activeTab === 'offers_targets'
                 ? 'Offers & Targets Hub 🎯'
                 : activeTab === 'job_openings'
-                ? 'Job Openings & Referral Links'
+                ? 'Bank Jobs & Referral Links'
                 : activeTab === 'it_programs'
-                ? 'IT Programs & Referral Links'
+                ? 'IT Jobs & Referral Links'
                 : activeTab === 'jobs'
                 ? 'Incentive Slot'
                 : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
