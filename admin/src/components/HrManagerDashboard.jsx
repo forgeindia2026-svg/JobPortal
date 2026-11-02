@@ -1472,7 +1472,12 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                                   <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800 }}>
                                     🏢 {app.branchName || 'General'}
                                   </span>
-                                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '4px' }}>
+                                  {app.partnerName && (
+                                    <div style={{ fontSize: '0.75rem', color: '#047857', marginTop: '4px', fontWeight: 700 }}>
+                                      🤝 Partner: <span style={{ color: '#065f46' }}>{app.partnerName}</span> <span style={{ fontSize: '0.7rem', color: '#059669' }}>({app.referredBy})</span>
+                                    </div>
+                                  )}
+                                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: app.partnerName ? '2px' : '4px' }}>
                                     HR: <strong>{app.referringHrName}</strong> {app.referringTlName ? `(TL: ${app.referringTlName})` : ''}
                                   </div>
                                 </td>
@@ -1620,6 +1625,19 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                               }}>
                                 👤 HR: {app.referringHrName || 'Direct'}
                               </span>
+                              {app.partnerName && (
+                                <span style={{
+                                  background: 'rgba(16, 185, 129, 0.28)',
+                                  color: '#a7f3d0',
+                                  border: '1px solid rgba(16, 185, 129, 0.45)',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px',
+                                  fontWeight: 700,
+                                  fontSize: '0.75rem'
+                                }}>
+                                  🤝 Partner: {app.partnerName} ({app.referredBy})
+                                </span>
+                              )}
                               {app.referringTlName && (
                                 <span style={{
                                   background: 'rgba(255, 255, 255, 0.18)',

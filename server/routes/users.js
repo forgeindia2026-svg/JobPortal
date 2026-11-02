@@ -1618,6 +1618,7 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
 
     // 3. All HRs & Agents/Partners
     const hrs = await UserModel.find({ role: 'hr' }).sort({ createdAt: -1 }).lean();
+    const hrById = Object.fromEntries(hrs.map(h => [h.id, h]));
     const allAgentsList = await UserModel.find({ role: 'agent' }).lean();
     const hrMap = Object.fromEntries([...hrs, ...allAgentsList].map(h => [(h.referralCode || '').toLowerCase(), h]));
 
@@ -1668,9 +1669,16 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
       const cand = candMap[app.candidateId] || {};
       const job = jobMap[app.jobId] || {};
       const comp = compMap[job.companyId] || {};
-      const refHr = hrMap[String(app.referredBy || '').toLowerCase()];
-      const refTl = refHr && tlMap[refHr.teamLeaderId];
-      const refBm = (refTl && bmMap[refTl.branchManagerId]) || (refHr && bmMap[refHr.branchManagerId]);
+      const refUser = hrMap[String(app.referredBy || '').toLowerCase()];
+      const isAgent = refUser?.role === 'agent';
+      const partnerName = isAgent ? refUser.name : (app.partnerName || null);
+      const parentHr = isAgent && refUser.parentHrId ? hrById[refUser.parentHrId] : null;
+      const effectiveHr = isAgent ? (parentHr || refUser) : refUser;
+      const refTl = effectiveHr && tlMap[effectiveHr.teamLeaderId];
+      const refBm = (refTl && bmMap[refTl.branchManagerId]) || (effectiveHr && bmMap[effectiveHr.branchManagerId]);
+
+      const hrDisplayName = effectiveHr ? effectiveHr.name : (app.hrName || app.referringHrName || (isAgent ? '' : app.referredBy) || 'Direct');
+      const branchDisplayName = refBm ? (refBm.branch || refBm.location) : (refTl?.branch || effectiveHr?.branch || app.branch || 'General');
 
       return {
         ...app,
@@ -1680,14 +1688,18 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
         candidateLocation: cand.location || '',
         jobTitle: job.title || app.jobTitle || 'Job Role',
         companyName: comp.name || job.companyName || 'Corporate Partner',
-        hrName: refHr ? refHr.name : (app.referredBy || 'Direct'),
-        hrCode: app.referredBy || '',
-        referringHrName: refHr ? refHr.name : (app.referredBy || 'Direct'),
-        referringHrCode: app.referredBy || '',
+        partnerName: partnerName,
+        isPartnerReferral: isAgent || Boolean(app.isPartnerReferral || app.partnerName),
+        referringAgentCode: isAgent ? refUser.referralCode : null,
+        hrName: hrDisplayName,
+        hrCode: effectiveHr?.referralCode || app.referredBy || '',
+        referringHrName: hrDisplayName,
+        referringHrCode: effectiveHr?.referralCode || app.referredBy || '',
         tlName: refTl ? refTl.name : 'Unassigned',
         referringTlName: refTl ? refTl.name : '',
-        referringTlId: refHr ? refHr.teamLeaderId : '',
-        branchName: refBm ? refBm.branch : (refHr?.branch || refTl?.branch || 'General')
+        referringTlId: effectiveHr ? effectiveHr.teamLeaderId : '',
+        branchName: branchDisplayName,
+        branch: branchDisplayName
       };
     });
 
