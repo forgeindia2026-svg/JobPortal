@@ -2324,7 +2324,9 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             const referrer = app.referredBy
               ? (hrs.find(h => h.referralCode === app.referredBy) || (allAgents || []).find(a => a.referralCode === app.referredBy))
               : null;
-            const displayHrName = referrer ? referrer.name : (app.partnerName || app.referringHrName || app.hrName || app.referredBy || 'Direct');
+            const isPartner = Boolean(app.isPartnerReferral || app.partnerName || (allAgents || []).some(a => a.referralCode === app.referredBy));
+            const displayLabel = !app.referredBy || app.referredBy === 'Direct' ? '' : (isPartner ? 'Partner: ' : 'HR: ');
+                  const displayHrName = referrer ? referrer.name : (app.partnerName || app.referringHrName || app.hrName || app.referredBy || 'Direct');
             const paymentAmt = getAppPaymentAmount(app);
             const gradientBg = getBankBrandGradient(app.companyName);
             const shadowClr = getBankShadowColor(app.companyName);
@@ -2476,7 +2478,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   zIndex: 1
                 }}>
                   <div>
-                    <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>HR: </span>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>{displayLabel}</span>
                     <span style={{ fontWeight: 800, color: '#ffffff' }}>
                       {displayHrName}
                     </span>
@@ -4545,7 +4547,12 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                               const nameToShow = refUser ? refUser.name : (app.partnerName || app.referringHrName || app.hrName || 'Unknown HR');
                               return (
                                 <div>
-                                  <div style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.85rem' }}>{nameToShow}</div>
+                                  <div style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.85rem' }}>
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600, marginRight: '4px' }}>
+                                      {(app.isPartnerReferral || app.partnerName || (allAgents || []).some(a => a.referralCode === app.referredBy)) ? 'Partner:' : 'HR:'}
+                                    </span>
+                                    {nameToShow}
+                                  </div>
                                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
                                 </div>
                               );
@@ -4825,7 +4832,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         zIndex: 1
                       }}>
                         <div>
-                          <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>HR: </span>
+                          <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>{displayLabel}</span>
                           <span style={{ fontWeight: 800, color: '#ffffff' }}>
                             {displayHrName}
                           </span>
