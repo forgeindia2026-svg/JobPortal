@@ -485,6 +485,55 @@ router.delete('/hr/:hrId/agents/:agentId', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete agent.' });
   }
 });
+
+// PUT to update an Agent/Partner (Admin or HR edit)
+router.put('/agents/:agentId', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const { name, email, password, mobile, profilePhoto } = req.body;
+
+    const agent = await UserModel.findOne({ id: agentId, role: 'agent' });
+    if (!agent) {
+      return res.status(404).json({ error: 'Partner not found.' });
+    }
+
+    if (email && email.toLowerCase() !== agent.email) {
+      const clash = await UserModel.findOne({ email: email.toLowerCase(), id: { $ne: agentId } });
+      if (clash) {
+        return res.status(400).json({ error: 'Account with this email already exists.' });
+      }
+      agent.email = email.toLowerCase();
+    }
+
+    if (name) agent.name = name;
+    if (mobile !== undefined) agent.mobile = mobile;
+    if (profilePhoto !== undefined) agent.profilePhoto = profilePhoto;
+    if (password && password.trim()) {
+      agent.passwordHash = 'dummy_hash_' + password;
+    }
+
+    await agent.save();
+    const { passwordHash, ...safe } = agent.toObject();
+    res.json(safe);
+  } catch (error) {
+    console.error('Error updating partner:', error);
+    res.status(500).json({ error: 'Failed to update partner.' });
+  }
+});
+
+// DELETE an agent/partner (by Admin)
+router.delete('/agents/:agentId', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const result = await UserModel.deleteOne({ id: agentId, role: 'agent' });
+    if (!result.deletedCount) {
+      return res.status(404).json({ error: 'Partner not found.' });
+    }
+    res.json({ message: 'Partner deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete partner.' });
+  }
+});
 // ================= SUB-AGENTS (MLM) =================
 
 // GET all sub-agents of an Agent (with applied count)

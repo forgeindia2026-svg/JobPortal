@@ -575,6 +575,14 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const [photoUploading, setPhotoUploading] = useState(false);
   const [hrError, setHrError] = useState('');
 
+  // Partner Modal & Form State (Matches HR modal for Partner Management)
+  const [partnerModalOpen, setPartnerModalOpen] = useState(false);
+  const [partnerToEdit, setPartnerToEdit] = useState(null);
+  const [partnerForm, setPartnerForm] = useState({ name: '', email: '', password: '', mobile: '', parentHrId: '', profilePhoto: '' });
+  const [partnerSaving, setPartnerSaving] = useState(false);
+  const [partnerPhotoUploading, setPartnerPhotoUploading] = useState(false);
+  const [partnerError, setPartnerError] = useState('');
+
   const [incentiveModalOpen, setIncentiveModalOpen] = useState(false);
   const [selectedHrForIncentive, setSelectedHrForIncentive] = useState(null);
   const [incentiveInput, setIncentiveInput] = useState({}); // { [applicationId]: amount }
@@ -6648,82 +6656,366 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         )}
         {activeTab === 'partners_admin' && (
           <div>
-            {selectedHrForPartners ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-                  <button 
-                    onClick={() => setSelectedHrForPartners(null)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', fontWeight: 600 }}
-                  >
-                    ← Back to HR List
-                  </button>
-                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Partners for {selectedHrForPartners.name}</h2>
-                </div>
-                <div style={{ background: '#fff', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)' }}>
-                  <AgentsManager 
-                    API_URL={API_URL} 
-                    currentUser={{ id: selectedHrForPartners.id, role: 'hr' }} 
-                    candidatePortalBaseUrl={window.location.origin} 
-                  />
-                </div>
+                <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Partners Management</h2>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Manage partners/agents, referral tracking, and incentives.</p>
               </div>
-            ) : (
-              <div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>Partner Management</h2>
-                  <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
-                    Select an HR to view and manage their partners.
-                  </p>
-                </div>
-                
-                <div className="kpi-grid">
-                  {hrs.map((hr, i) => {
-                    const colors = [
-                      { bg: '#fef2f2', iconBg: '#fee2e2', iconColor: '#ef4444', text: '#7f1d1d', border: '#fca5a5' },
-                      { bg: '#eff6ff', iconBg: '#dbeafe', iconColor: '#3b82f6', text: '#1e3a8a', border: '#93c5fd' },
-                      { bg: '#ecfdf5', iconBg: '#d1fae5', iconColor: '#10b981', text: '#064e3b', border: '#6ee7b7' },
-                      { bg: '#fdf4ff', iconBg: '#fae8ff', iconColor: '#d946ef', text: '#701a75', border: '#f0abfc' },
-                      { bg: '#fffbeb', iconBg: '#fef3c7', iconColor: '#f59e0b', text: '#78350f', border: '#fcd34d' },
-                      { bg: '#f5f3ff', iconBg: '#ede9fe', iconColor: '#8b5cf6', text: '#4c1d95', border: '#c4b5fd' },
-                      { bg: '#f0fdfa', iconBg: '#ccfbf1', iconColor: '#14b8a6', text: '#134e4a', border: '#5eead4' },
-                      { bg: '#fff1f2', iconBg: '#ffe4e6', iconColor: '#f43f5e', text: '#881337', border: '#fda4af' }
-                    ];
-                    const color = colors[i % colors.length];
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button className="btn-primary" onClick={() => {
+                  setPartnerToEdit(null);
+                  setPartnerForm({ name: '', email: '', password: '', mobile: '', parentHrId: hrs[0]?.id || '', profilePhoto: '' });
+                  setPartnerError('');
+                  setPartnerModalOpen(true);
+                }}>
+                  <Plus size={16} /> Add Partner
+                </button>
+              </div>
+            </div>
 
+            {/* Desktop Table View */}
+            <div className="table-container hrs-desktop-table">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email / Mobile</th>
+                    <th>Referral Code</th>
+                    <th>Link Clicks</th>
+                    <th>Candidates Applied</th>
+                    <th>Incentives Earned</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allAgents.map(partner => {
+                    const partnerApps = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(partner.referralCode || '').toLowerCase());
+                    const closedCount = partnerApps.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
+                    const parentHr = hrs.find(h => h.id === partner.parentHrId);
                     return (
-                    <div 
-                      key={hr.id} 
-                      className="kpi-card" 
-                      onClick={() => setSelectedHrForPartners(hr)}
-                      style={{ 
-                        cursor: 'pointer', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '16px',
-                        background: color.bg,
-                        border: `1px solid ${color.border}`,
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'; }}
-                    >
-                      <div className="kpi-icon" style={{ background: color.iconBg, color: color.iconColor }}>
-                        <Users size={22} />
-                      </div>
-                      <div>
-                        <div className="kpi-val" style={{ fontSize: '1.25rem', marginBottom: '4px', color: color.text }}>{hr.name}</div>
-                        <div className="kpi-label" style={{ color: color.text, opacity: 0.8, fontWeight: 600 }}>HR Ref: {hr.referralCode}</div>
-                      </div>
-                    </div>
-                  )})}
-                  {hrs.length === 0 && (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                      No HR accounts found.
-                    </div>
+                      <tr key={partner.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#f1f5f9', border: '1.5px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {partner.profilePhoto ? (
+                                <img src={partner.profilePhoto} alt={partner.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>
+                                  {partner.name?.charAt(0)?.toUpperCase() || 'P'}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#1e293b' }}>{partner.name}</div>
+                              {parentHr && (
+                                <div style={{ fontSize: '0.72rem', color: '#6366f1', fontWeight: 600, marginTop: '2px' }}>
+                                  HR: {parentHr.name}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#1e293b' }}>{partner.email}</div>
+                          {(partner.mobile || partner.phone) ? (
+                            <div style={{ fontSize: '0.78rem', color: '#047857', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                              <span>📱</span>
+                              <a href={'tel:' + (partner.mobile || partner.phone)} style={{ color: '#047857', textDecoration: 'none' }}>
+                                {partner.mobile || partner.phone}
+                              </a>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>📱</span> <span>—</span>
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                            {partner.referralCode}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 600, color: '#3b82f6' }}>{partner.linkClicks || 0}</td>
+                        <td>
+                          <div
+                            onClick={() => {
+                              setSelectedHrForCandidates(partner);
+                              setHrCandidateSearch('');
+                              setHrCandidateStatusFilter('all');
+                            }}
+                            style={{
+                              background: '#ecfdf5',
+                              color: '#065f46',
+                              padding: '6px 12px',
+                              borderRadius: '8px',
+                              border: '1.5px solid #a7f3d0',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              flexDirection: 'column',
+                              gap: '2px',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.background = '#d1fae5';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                              e.currentTarget.style.boxShadow = '0 3px 6px rgba(16, 185, 129, 0.2)';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.background = '#ecfdf5';
+                              e.currentTarget.style.transform = 'none';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                            title={'Click to view all candidates referred by ' + partner.name}
+                          >
+                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#047857', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              👥 {partnerApps.length}
+                              <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>Candidates</span>
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>
+                              {closedCount} closed →
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: 700, color: '#059669' }}>
+                          ₹{(partner.incentives || 0).toLocaleString()}
+                        </td>
+                        <td><span className="badge badge-active">Active</span></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 8px', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
+                              title="Edit Partner Details"
+                              onClick={() => {
+                                setPartnerToEdit(partner);
+                                setPartnerForm({
+                                  name: partner.name || '',
+                                  email: partner.email || '',
+                                  password: '',
+                                  mobile: partner.mobile || '',
+                                  parentHrId: partner.parentHrId || (hrs[0]?.id || ''),
+                                  profilePhoto: partner.profilePhoto || ''
+                                });
+                                setPartnerError('');
+                                setPartnerModalOpen(true);
+                              }}
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 10px', fontSize: '0.775rem', color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              title="Edit Partner Incentives"
+                              onClick={() => {
+                                setSelectedHrForIncentive(partner);
+                                const initial = {};
+                                partnerApps.forEach(app => { initial[app.id] = Number(app.incentiveAmount) || 0; });
+                                setIncentiveInput(initial);
+                                setIncentiveError('');
+                                setIncentiveModalOpen(true);
+                              }}
+                            >
+                              <Gift size={12} /> Candidate Incentives
+                            </button>
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '4px 8px', color: '#ef4444' }}
+                              onClick={async () => {
+                                if (!window.confirm('Delete Partner ' + partner.name + '?')) return;
+                                try {
+                                  const hrId = partner.parentHrId;
+                                  const url = hrId ? (API_URL + '/api/users/hr/' + hrId + '/agents/' + partner.id) : (API_URL + '/api/users/agents/' + partner.id);
+                                  await fetch(url, { method: 'DELETE' });
+                                  fetchAllData();
+                                } catch (e) {
+                                  console.error(e);
+                                }
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {allAgents.length === 0 && (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>No partners found. Add one to get started.</td>
+                    </tr>
                   )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Partner Cards Grid (Visible on Mobile <= 768px, Hidden on Desktop) */}
+            <div className="hrs-mobile-cards">
+              {allAgents.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#64748b', padding: '2rem', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  No partners found. Add one to get started.
                 </div>
-              </div>
-            )}
+              ) : (
+                allAgents.map(partner => {
+                  const partnerApps = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(partner.referralCode || '').toLowerCase());
+                  const closedCount = partnerApps.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
+                  return (
+                    <div
+                      key={partner.id}
+                      style={{
+                        background: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                        padding: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                          <div style={{
+                            width: '46px',
+                            height: '46px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            background: '#f8fafc',
+                            border: '2px solid #e2e8f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.06)'
+                          }}>
+                            {partner.profilePhoto ? (
+                              <img src={partner.profilePhoto} alt={partner.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ fontWeight: 800, color: '#059669', fontSize: '1.15rem' }}>
+                                {partner.name?.charAt(0)?.toUpperCase() || 'P'}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {partner.name}
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {partner.email}
+                            </div>
+                            {partner.mobile && (
+                              <div style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 600 }}>
+                                📱 {partner.mobile}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ flexShrink: 0 }}>
+                          <span className="badge badge-active" style={{ fontSize: '0.7rem', padding: '3px 8px' }}>Active</span>
+                        </div>
+                      </div>
+
+                      {/* Metrics Pill Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem' }}>
+                        <div style={{ background: '#fef3c7', color: '#92400e', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#b45309', fontWeight: 600 }}>Referral:</span>
+                          <span style={{ fontWeight: 800 }}>{partner.referralCode}</span>
+                        </div>
+                        <div style={{ background: '#eff6ff', color: '#1e40af', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#3b82f6', fontWeight: 600 }}>Clicks:</span>
+                          <span style={{ fontWeight: 800 }}>{partner.linkClicks || 0}</span>
+                        </div>
+                        <div 
+                          onClick={() => {
+                            setSelectedHrForCandidates(partner);
+                            setHrCandidateSearch('');
+                            setHrCandidateStatusFilter('all');
+                          }}
+                          style={{ 
+                            background: '#ecfdf5', 
+                            color: '#065f46', 
+                            padding: '6px 10px', 
+                            borderRadius: '8px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            border: '1.5px solid #a7f3d0',
+                            cursor: 'pointer'
+                          }}
+                          title={'View candidates for ' + partner.name}
+                        >
+                          <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 700 }}>Candidates:</span>
+                          <span style={{ fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            {partnerApps.length} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#047857' }}>({closedCount} closed)</span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#059669' }}>→</span>
+                          </span>
+                        </div>
+                        <div style={{ background: '#f0fdf4', color: '#166534', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 600 }}>Earned:</span>
+                          <span style={{ fontWeight: 800 }}>₹{(partner.incentives || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      {/* Actions Bar */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem', color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe', justifyContent: 'center' }}
+                          onClick={() => {
+                            setPartnerToEdit(partner);
+                            setPartnerForm({
+                              name: partner.name || '',
+                              email: partner.email || '',
+                              password: '',
+                              mobile: partner.mobile || '',
+                              parentHrId: partner.parentHrId || (hrs[0]?.id || ''),
+                              profilePhoto: partner.profilePhoto || ''
+                            });
+                            setPartnerError('');
+                            setPartnerModalOpen(true);
+                          }}
+                        >
+                          <Edit size={13} /> Edit Partner
+                        </button>
+
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem', color: '#059669', background: '#ecfdf5', borderColor: '#a7f3d0', justifyContent: 'center' }}
+                          onClick={() => {
+                            setSelectedHrForIncentive(partner);
+                            const initial = {};
+                            partnerApps.forEach(app => { initial[app.id] = Number(app.incentiveAmount) || 0; });
+                            setIncentiveInput(initial);
+                            setIncentiveError('');
+                            setIncentiveModalOpen(true);
+                          }}
+                        >
+                          <Gift size={13} /> Incentives
+                        </button>
+
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem', color: '#ef4444', background: '#fef2f2', borderColor: '#fecaca', justifyContent: 'center' }}
+                          onClick={async () => {
+                            if (!window.confirm('Delete Partner ' + partner.name + '?')) return;
+                            try {
+                              const hrId = partner.parentHrId;
+                              const url = hrId ? (API_URL + '/api/users/hr/' + hrId + '/agents/' + partner.id) : (API_URL + '/api/users/agents/' + partner.id);
+                              await fetch(url, { method: 'DELETE' });
+                              fetchAllData();
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
         
@@ -8582,6 +8874,206 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   style={{ background: '#2563eb' }}
                 >
                   {savingHrRef ? 'Saving...' : 'Save HR Reference'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== ADD / EDIT PARTNER MODAL ===== */}
+      {partnerModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }}>
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: 'white', margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
+                  {partnerToEdit ? 'Edit Partner Details' : 'Add New Partner'}
+                </h3>
+                <p style={{ color: '#d1fae5', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                  {partnerToEdit ? 'Update details, photo and credentials' : 'Create login credentials for the Partner'}
+                </p>
+              </div>
+              <button onClick={() => { setPartnerModalOpen(false); setPartnerToEdit(null); }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'white', display: 'flex' }}>
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <div style={{ padding: '2rem' }}>
+              {partnerError && (
+                <div style={{ background: '#fef2f2', color: '#ef4444', padding: '10px 14px', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem', border: '1px solid #fecaca' }}>
+                  ⚠️ {partnerError}
+                </div>
+              )}
+
+              {/* Profile Photo Upload */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ position: 'relative', width: '84px', height: '84px', borderRadius: '50%', background: '#f1f5f9', border: '3px solid #e2e8f0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                  {partnerForm.profilePhoto ? (
+                    <img src={partnerForm.profilePhoto} alt="Partner Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ fontSize: '2rem', color: '#059669', fontWeight: 800 }}>
+                      {partnerForm.name ? partnerForm.name.charAt(0).toUpperCase() : 'P'}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center' }}>
+                  <label style={{ cursor: partnerPhotoUploading ? 'not-allowed' : 'pointer', background: '#ecfdf5', color: '#059669', padding: '6px 14px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid #a7f3d0', display: 'inline-flex', alignItems: 'center', gap: '4px', opacity: partnerPhotoUploading ? 0.7 : 1 }}>
+                    {partnerPhotoUploading ? '⏳ Uploading...' : '📷 Upload Photo'}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      disabled={partnerPhotoUploading}
+                      style={{ display: 'none' }} 
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 5 * 1024 * 1024) {
+                          setPartnerError('Image file is too large! Please select under 5MB.');
+                          return;
+                        }
+                        setPartnerPhotoUploading(true);
+                        setPartnerError('');
+                        try {
+                          const cloudUrl = await uploadToCloudinary(file);
+                          setPartnerForm(prev => ({ ...prev, profilePhoto: cloudUrl }));
+                        } catch (err) {
+                          setPartnerError('Failed to upload image: ' + (err.message || ''));
+                        } finally {
+                          setPartnerPhotoUploading(false);
+                        }
+                      }}
+                    />
+                  </label>
+                  {partnerForm.profilePhoto && (
+                    <button 
+                      type="button"
+                      onClick={() => setPartnerForm(prev => ({ ...prev, profilePhoto: '' }))}
+                      style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '6px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ramesh K"
+                  value={partnerForm.name}
+                  onChange={e => setPartnerForm(f => ({ ...f, name: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Email Address *</label>
+                <input
+                  type="email"
+                  placeholder="e.g. ramesh@partner.com"
+                  value={partnerForm.email}
+                  onChange={e => setPartnerForm(f => ({ ...f, email: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Mobile Number</label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={partnerForm.mobile}
+                  onChange={e => setPartnerForm(f => ({ ...f, mobile: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              {!partnerToEdit && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>Assign Under HR *</label>
+                  <select
+                    value={partnerForm.parentHrId}
+                    onChange={e => setPartnerForm(f => ({ ...f, parentHrId: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                  >
+                    {hrs.map(h => (
+                      <option key={h.id} value={h.id}>{h.name} ({h.referralCode})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>
+                  {partnerToEdit ? 'New Password (optional)' : 'Login Password *'}
+                </label>
+                <input
+                  type="password"
+                  placeholder={partnerToEdit ? "Leave blank to keep current password" : "Set a password for this Partner"}
+                  value={partnerForm.password}
+                  onChange={e => setPartnerForm(f => ({ ...f, password: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => { setPartnerModalOpen(false); setPartnerToEdit(null); }}
+                  style={{ flex: 1, padding: '11px', borderRadius: '8px', border: '1.5px solid #e5e7eb', background: 'white', color: '#374151', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={partnerSaving || partnerPhotoUploading}
+                  onClick={async () => {
+                    if (!partnerForm.name || !partnerForm.email) {
+                      setPartnerError('Name and Email are required!');
+                      return;
+                    }
+                    if (!partnerToEdit && !partnerForm.password) {
+                      setPartnerError('Password is required for new Partner accounts!');
+                      return;
+                    }
+                    setPartnerSaving(true);
+                    setPartnerError('');
+                    try {
+                      let res;
+                      if (partnerToEdit) {
+                        res = await fetch(API_URL + '/api/users/agents/' + partnerToEdit.id, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(partnerForm)
+                        });
+                      } else {
+                        const hrId = partnerForm.parentHrId || (hrs[0]?.id);
+                        res = await fetch(API_URL + '/api/users/hr/' + hrId + '/agents', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(partnerForm)
+                        });
+                      }
+
+                      const data = await res.json();
+                      if (!res.ok || data.error) {
+                        setPartnerError(data.error || 'Failed to save partner account');
+                      } else {
+                        setPartnerModalOpen(false);
+                        setPartnerToEdit(null);
+                        fetchAllData();
+                      }
+                    } catch (err) {
+                      setPartnerError('Network error. Failed to save partner.');
+                    } finally {
+                      setPartnerSaving(false);
+                    }
+                  }}
+                  style={{ flex: 1, padding: '11px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', opacity: partnerSaving ? 0.7 : 1 }}
+                >
+                  {partnerSaving ? 'Saving...' : (partnerToEdit ? 'Save Changes' : 'Create Partner Account')}
                 </button>
               </div>
             </div>
