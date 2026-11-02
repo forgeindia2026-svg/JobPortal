@@ -4680,6 +4680,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   const referrer = app.referredBy
                     ? (hrs.find(h => h.referralCode === app.referredBy) || (allAgents || []).find(a => a.referralCode === app.referredBy))
                     : null;
+                  const isPartner = Boolean(app.isPartnerReferral || app.partnerName || (allAgents || []).some(a => a.referralCode === app.referredBy));
+                  const displayLabel = !app.referredBy || app.referredBy === 'Direct' ? '' : (isPartner ? 'Partner: ' : 'HR: ');
                   const displayHrName = referrer ? referrer.name : (app.partnerName || app.referringHrName || app.hrName || app.referredBy || 'Direct');
                   const paymentAmt = getAppPaymentAmount(app);
                   const gradientBg = getBankBrandGradient(app.companyName);
