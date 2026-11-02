@@ -784,8 +784,14 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
          }
       }
 
+      const refAgent = agents.find(a => String(a.referralCode).toLowerCase() === String(app.referredBy).toLowerCase());
+      const partnerDisplayName = refAgent ? refAgent.name : null;
+
       return {
         ...app,
+        partnerName: partnerDisplayName,
+        referringHrName: partnerDisplayName || hrUser?.name || 'Assigned HR',
+        hrName: partnerDisplayName || hrUser?.name || 'Assigned HR',
         incentiveAmount: actualHrIncentive !== undefined ? actualHrIncentive : fallbackHrIncentive,
         agentIncentiveAmount: app.agentIncentiveAmount || (fallbackHrIncentive * agentCut / 100),
         candidateName: candidate.name || cDet.name || 'Anonymous',
@@ -883,11 +889,12 @@ router.get('/branch-managers/:id/overview', async (req, res) => {
       ] 
     }).sort({ createdAt: -1 }).lean();
     const hrCodes = hrs.map(h => (h.referralCode || '').toLowerCase()).filter(Boolean);
-    const hrMap = Object.fromEntries(hrs.map(h => [(h.referralCode || '').toLowerCase(), h]));
 
     // Also get agents owned by these HRs (if any)
     const hrIds = hrs.map(h => h.id);
     const agents = await UserModel.find({ role: 'agent', parentHrId: { $in: hrIds } }).lean();
+    const allHrAndAgents = [...hrs, ...agents];
+    const hrMap = Object.fromEntries(allHrAndAgents.map(h => [(h.referralCode || '').toLowerCase(), h]));
     const agentCodes = agents.map(a => (a.referralCode || '').toLowerCase()).filter(Boolean);
     const allBranchCodes = [...new Set([...hrCodes, ...agentCodes])];
 
@@ -1361,7 +1368,8 @@ router.get('/team-leaders/:tlId/overview', async (req, res) => {
     (itProcesses || []).forEach(p => {
       if (!jobMap[p.id]) jobMap[p.id] = formatItProcessAsJob(p);
     });
-    const hrCodeMap = Object.fromEntries(hrs.map(h => [String(h.referralCode).toUpperCase(), h]));
+    const tlAgents = await UserModel.find({ role: 'agent', parentHrId: { $in: hrs.map(h => h.id) } }).lean();
+    const hrCodeMap = Object.fromEntries([...hrs, ...tlAgents].map(h => [String(h.referralCode).toUpperCase(), h]));
 
     const enrichedApps = applications.map(app => {
       const cand = candMap[app.candidateId];
@@ -1559,9 +1567,10 @@ router.get('/hr-managers/:id/overview', async (req, res) => {
     const tls = await UserModel.find({ role: 'team_leader' }).sort({ createdAt: -1 }).lean();
     const tlMap = Object.fromEntries(tls.map(t => [t.id, t]));
 
-    // 3. All HRs
+    // 3. All HRs & Agents/Partners
     const hrs = await UserModel.find({ role: 'hr' }).sort({ createdAt: -1 }).lean();
-    const hrMap = Object.fromEntries(hrs.map(h => [(h.referralCode || '').toLowerCase(), h]));
+    const allAgentsList = await UserModel.find({ role: 'agent' }).lean();
+    const hrMap = Object.fromEntries([...hrs, ...allAgentsList].map(h => [(h.referralCode || '').toLowerCase(), h]));
 
     // 4. All Applications & Interviews & Jobs & Candidates
     const [allApps, allCandidates, allJobs, allItProcesses, companies, rawInterviews] = await Promise.all([

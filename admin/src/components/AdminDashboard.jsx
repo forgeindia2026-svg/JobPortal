@@ -1739,7 +1739,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       let hrRef = 'Direct';
       if (app.referredBy) {
         const hr = hrs.find(h => h.referralCode === app.referredBy);
-        hrRef = hr ? `${hr.name} (${hr.referralCode})` : `Agent (${app.referredBy})`;
+        const refAg = (allAgents || []).find(a => a.referralCode === app.referredBy);
+        hrRef = hr ? `${hr.name} (${hr.referralCode})` : (refAg ? `${refAg.name} (${refAg.referralCode})` : (app.partnerName ? `${app.partnerName} (${app.referredBy})` : `Agent (${app.referredBy})`));
       }
       return [
         app.applicationNumber,
@@ -1780,7 +1781,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       let hrRef = 'Direct';
       if (app.referredBy) {
         const hr = hrs.find(h => h.referralCode === app.referredBy);
-        hrRef = hr ? `${hr.name} (${hr.referralCode})` : `Agent (${app.referredBy})`;
+        const refAg = (allAgents || []).find(a => a.referralCode === app.referredBy);
+        hrRef = hr ? `${hr.name} (${hr.referralCode})` : (refAg ? `${refAg.name} (${refAg.referralCode})` : (app.partnerName ? `${app.partnerName} (${app.referredBy})` : `Agent (${app.referredBy})`));
       }
       return [
         app.applicationNumber,
@@ -2319,7 +2321,10 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           gap: '14px'
         }}>
           {filteredDashboardBankCandidates.map(app => {
-            const hr = app.referredBy ? hrs.find(h => h.referralCode === app.referredBy) : null;
+            const referrer = app.referredBy
+              ? (hrs.find(h => h.referralCode === app.referredBy) || (allAgents || []).find(a => a.referralCode === app.referredBy))
+              : null;
+            const displayHrName = referrer ? referrer.name : (app.partnerName || app.referringHrName || app.hrName || app.referredBy || 'Direct');
             const paymentAmt = getAppPaymentAmount(app);
             const gradientBg = getBankBrandGradient(app.companyName);
             const shadowClr = getBankShadowColor(app.companyName);
@@ -2473,7 +2478,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   <div>
                     <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>HR: </span>
                     <span style={{ fontWeight: 800, color: '#ffffff' }}>
-                      {hr ? hr.name : (app.referredBy || 'Direct')}
+                      {displayHrName}
                     </span>
                     <button
                       onClick={() => {
@@ -4536,10 +4541,11 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minWidth: '135px' }}>
                           <div>
                             {app.referredBy ? (() => {
-                              const hr = hrs.find(h => h.referralCode === app.referredBy);
+                              const refUser = hrs.find(h => h.referralCode === app.referredBy) || (allAgents || []).find(a => a.referralCode === app.referredBy);
+                              const nameToShow = refUser ? refUser.name : (app.partnerName || app.referringHrName || app.hrName || 'Unknown HR');
                               return (
                                 <div>
-                                  <div style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.85rem' }}>{hr ? hr.name : 'Unknown HR'}</div>
+                                  <div style={{ fontWeight: 700, color: '#2563eb', fontSize: '0.85rem' }}>{nameToShow}</div>
                                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{app.referredBy}</div>
                                 </div>
                               );
@@ -4664,7 +4670,10 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 </div>
               ) : (
                 filteredApplications.map(app => {
-                  const hr = app.referredBy ? hrs.find(h => h.referralCode === app.referredBy) : null;
+                  const referrer = app.referredBy
+                    ? (hrs.find(h => h.referralCode === app.referredBy) || (allAgents || []).find(a => a.referralCode === app.referredBy))
+                    : null;
+                  const displayHrName = referrer ? referrer.name : (app.partnerName || app.referringHrName || app.hrName || app.referredBy || 'Direct');
                   const paymentAmt = getAppPaymentAmount(app);
                   const gradientBg = getBankBrandGradient(app.companyName);
                   const shadowClr = getBankShadowColor(app.companyName);
@@ -4818,7 +4827,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         <div>
                           <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>HR: </span>
                           <span style={{ fontWeight: 800, color: '#ffffff' }}>
-                            {hr ? hr.name : (app.referredBy || 'Direct')}
+                            {displayHrName}
                           </span>
                           <button
                             onClick={() => {

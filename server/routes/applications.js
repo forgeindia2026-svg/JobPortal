@@ -42,7 +42,10 @@ router.get('/', async (req, res) => {
     }
 
     // Populate references
+    const hrUsersMap = Object.fromEntries((db.users || []).map(u => [String(u.referralCode || '').toLowerCase(), u]));
+
     const populated = apps.map(app => {
+      const refUser = hrUsersMap[String(app.referredBy || '').toLowerCase()];
       const candidate = db.candidates.find(c => c.id === app.candidateId) || app.candidateDetails || {};
       let job = db.jobs.find(j => j.id === app.jobId);
       if (!job) {
@@ -111,7 +114,11 @@ router.get('/', async (req, res) => {
         companyLogo: company.logo || '/logo.png',
         companyId: company?.id || job?.companyId || app.companyId || null,
         categoryId: job?.categoryId || company?.categoryId || null,
-        paymentAmount: Number(computedPaymentAmount)
+        paymentAmount: Number(computedPaymentAmount),
+        hrName: refUser ? refUser.name : (app.referredBy || 'Direct'),
+        referringHrName: refUser ? refUser.name : (app.referredBy || 'Direct'),
+        partnerName: (refUser && refUser.role === 'agent') ? refUser.name : null,
+        isPartnerReferral: Boolean(refUser && refUser.role === 'agent')
       };
     });
 
