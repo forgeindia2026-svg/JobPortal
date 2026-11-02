@@ -415,3 +415,4 @@ content = content.replace("container: {", extraStyles + "\r\n  container: {");
 
 fs.writeFileSync(file, content, 'utf8');
 console.log('SUCCESSFULLY_UPDATED_ADMIN_HR_SCREEN');
+

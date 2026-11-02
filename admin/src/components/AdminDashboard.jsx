@@ -5167,7 +5167,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           </div>
         )}
 
-        {activeTab === 'employees' && (
+        {(activeTab === 'employees' || (activeTab === 'partners_admin' && selectedHrForCandidates)) && (
           <div>
             {selectedHrForCandidates ? (
               <div>
@@ -5217,7 +5217,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                     onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.borderColor = '#94a3b8'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
                   >
-                    All HRs List
+                    {activeTab === 'partners_admin' || selectedHrForCandidates.role === 'agent' ? 'All Partners List' : 'All HRs List'}
                   </button>
                 </div>
 
@@ -5270,7 +5270,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                           borderRadius: '12px',
                           border: '1px solid #bfdbfe'
                         }}>
-                          Referral Code: {selectedHrForCandidates.referralCode}
+                          {selectedHrForCandidates.role === 'agent' ? 'Partner Referral: ' : 'Referral Code: '}{selectedHrForCandidates.referralCode}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginTop: '6px', fontSize: '0.85rem', color: '#475569' }}>
@@ -6654,7 +6654,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             currentUser={currentUser}
           />
         )}
-        {activeTab === 'partners_admin' && (
+        {activeTab === 'partners_admin' && !selectedHrForCandidates && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
               <div>
