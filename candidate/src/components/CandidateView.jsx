@@ -4,6 +4,7 @@ import {
   Code, TrendingUp, Headphones, Award, X, Wallet, User, Clock, Banknote, IndianRupee, ShieldCheck, CheckCircle2, Layers, Zap
 } from 'lucide-react';
 import JobDetailModal from './JobDetailModal';
+import CandidateLandingGrid from './CandidateLandingGrid';
 import ApplicationModal from './ApplicationModal';
 import CandidateDashboard from './CandidateDashboard';
 import fallbackJobsData from '../fallback_jobs.json';
@@ -175,7 +176,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [companies, setCompanies] = useState(FALLBACK_COMPANIES);
   const [jobs, setJobs] = useState(FALLBACK_JOBS);
-  const [selectedCategory, setSelectedCategory] = useState(FALLBACK_CATEGORIES[0]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -293,13 +294,8 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
         .then(cats => {
           if (Array.isArray(cats) && cats.length > 0) {
             setCategories(cats);
-            const bankingCat = cats.find(c =>
-              c.id === 'cat_banking' ||
-              (c.name || '').toLowerCase().includes('banking')
-            ) || cats[0];
-            if (bankingCat) {
-              setSelectedCategory(bankingCat);
-            }
+            // Retain landing page categories view by default
+            // (selectedCategory remains null until user clicks a card)
           }
         })
         .catch(err => console.error('Categories fetch error:', err));
@@ -792,6 +788,27 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
 
   const isAlreadyApplied = (jobId) => {
     return userApplications.some(a => a.jobId === jobId && a.status !== 'Payment Pending');
+  };
+
+  
+  const handleLandingCardSelect = (cardKey) => {
+    if (cardKey === 'banking') {
+      const bankCat = categories.find(c => c.id === 'cat_banking' || (c.name || '').toLowerCase().includes('banking')) || { id: 'cat_banking', name: 'Banking & Financial Services' };
+      window.history.pushState({ page: 'category', categoryId: bankCat.id }, '');
+      setSelectedCategory(bankCat);
+    } else if (cardKey === 'fic_banking_training') {
+      handleOpenFicBankSelection();
+    } else if (cardKey === 'fic_it_placement') {
+      handleOpenItTraining('Placement');
+    } else if (cardKey === 'mnc_it') {
+      const mncCat = { id: 'cat_mnc_it', name: 'MNC IT Jobs', isMnc: true };
+      window.history.pushState({ page: 'category', categoryId: mncCat.id }, '');
+      setSelectedCategory(mncCat);
+    } else if (cardKey === 'fic_it_course') {
+      handleOpenItTraining('Course');
+    } else if (cardKey === 'fic_it_internship') {
+      handleOpenItTraining('Internship');
+    }
   };
 
   const goToCategoriesPage = () => {
@@ -1358,7 +1375,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
               }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}
             >
-              <ArrowLeft size={16} /> Back to Browse
+              <ArrowLeft size={16} /> Back to Categories
             </button>
           </div>
 
@@ -1532,12 +1549,12 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
               <div className="section-header">
                 <div>
                   <h2 className="section-title">
-                    {searchQuery ? `Search Results for "${searchQuery}"` : 'Select Job Category'}
+                    {searchQuery ? `Search Results for "${searchQuery}"` : 'Explore Career Opportunities'}
                   </h2>
                   <p className="section-subtitle">
                     {searchQuery
                       ? `Found ${filteredJobs.length} matching job openings`
-                      : 'Click on a domain category to view hiring companies and active job openings'}
+                      : 'Choose a program or job category below to explore openings and begin your application'}
                   </p>
                 </div>
               </div>
@@ -1630,60 +1647,11 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                   <span>Loading job categories...</span>
                 </div>
               ) : (
-                <div className="category-grid" style={{ marginBottom: '2.5rem' }}>
-                  {categories.map(cat => {
-                    const posCount = jobs.filter(j => j.categoryId === cat.id).length;
-                    const compCount = companies.filter(c => c.categoryId === cat.id).length;
-                    const styleConfig = getCategoryStyle(cat.id, cat.name);
-
-                    return (
-                      <div
-                        key={cat.id}
-                        className="category-card-vibrant"
-                        onClick={() => setSelectedCategory(cat)}
-                        style={{ background: styleConfig.cardBg, color: styleConfig.textColor }}
-                      >
-                        <div className="vibrant-cat-header">
-                          <div
-                            className="vibrant-cat-icon"
-                            style={{
-                              background: styleConfig.iconBg,
-                              boxShadow: styleConfig.shadow
-                            }}
-                          >
-                            {styleConfig.icon}
-                          </div>
-                          <span
-                            className="vibrant-pos-badge"
-                            style={{
-                              background: styleConfig.badgeBg,
-                              color: styleConfig.badgeText,
-                              backdropFilter: 'blur(8px)',
-                              border: '1px solid rgba(255, 255, 255, 0.3)'
-                            }}
-                          >
-                            <Building2 size={13} style={{ marginRight: '3px' }} /> {compCount} Companies
-                          </span>
-                        </div>
-
-                        <div className="vibrant-cat-content">
-                          <h3 className="vibrant-cat-name" style={{ color: styleConfig.textColor }}>{cat.name}</h3>
-                          {cat.description && (
-                            <p className="vibrant-cat-desc" style={{ color: styleConfig.mutedText }}>{cat.description}</p>
-                          )}
-                          <div className="vibrant-cat-footer" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.25)' }}>
-                            <span className="vibrant-jobs-count" style={{ background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.35)', whiteSpace: 'nowrap' }}>
-                              ⚡ {posCount} Openings
-                            </span>
-                            <span className="vibrant-explore-btn" style={{ background: styleConfig.btnBg, color: styleConfig.btnColor, border: 'none', whiteSpace: 'nowrap' }}>
-                              Explore <ChevronRight size={16} />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <CandidateLandingGrid
+                  onSelectCard={handleLandingCardSelect}
+                  jobsCount={jobs.length}
+                  companiesCount={companies.length}
+                />
               )}
             </div>
           )}
@@ -1754,7 +1722,29 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
 
               <div className="section-header">
                 <div>
-                  <h2 className="section-title">{selectedCategory.name} Companies</h2>
+                  <div style={{ marginBottom: '1.25rem' }}>
+                <button
+                  className="btn-secondary"
+                  onClick={goToCategoriesPage}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 18px',
+                    borderRadius: '24px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    background: '#f8fafc',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  <ArrowLeft size={16} /> ← Back to Categories
+                </button>
+              </div>
+              <h2 className="section-title">{selectedCategory.name} Companies</h2>
                   <p className="section-subtitle">Select a bank or hiring company below to view active job roles</p>
                 </div>
               </div>
@@ -2267,7 +2257,47 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
 
               <div className="section-header">
                 <div>
-                  <h2 className="section-title">Openings at {selectedCompany.name}</h2>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                <button
+                  className="btn-secondary"
+                  onClick={goToCompaniesPage}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    borderRadius: '24px',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    background: '#f8fafc',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#1e293b',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ArrowLeft size={15} /> Back to {selectedCategory.name}
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={goToCategoriesPage}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '24px',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    background: '#f8fafc',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#64748b',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Categories Home
+                </button>
+              </div>
+              <h2 className="section-title">Openings at {selectedCompany.name}</h2>
                   <p className="section-subtitle">Showing {filteredJobs.length} available openings</p>
                 </div>
               </div>
