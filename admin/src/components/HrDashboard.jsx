@@ -6,6 +6,7 @@ import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
 import OffersAndTargetsModal from './OffersAndTargetsModal';
 import OffersAndTargetsView from './OffersAndTargetsView';
+import OfferLettersManager from './OfferLettersManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 const getCompanyColor = (name) => {
@@ -841,6 +842,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           />
         )}
 
+        {activeTab === 'offer_letters' && (
+          <OfferLettersManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+          />
+        )}
+
         {(activeTab === 'offers_targets' || activeTab.startsWith('offers_targets')) && (
           <OffersAndTargetsView
             API_URL={API_URL}
@@ -1079,18 +1087,29 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
             {/* Leaderboards */}
             {(() => {
-              const validApps = allApplications.filter(app => app.status !== 'Payment Pending');
+              const validApps = allApplications.filter(app => {
+                const s = String(app.status || '').toLowerCase().trim();
+                return s !== 'payment pending' && s !== 'unpaid';
+              });
               const hrStats = hrs.map(hr => {
-                const hrCode = String(hr.referralCode || '').toLowerCase();
-                const hrApps = validApps.filter(app => String(app.referredBy || '').toLowerCase() === hrCode);
+                const hrCode = String(hr.referralCode || '').toLowerCase().trim();
+                const agentCodes = Array.isArray(hr.agentCodes) ? hr.agentCodes.map(c => String(c).toLowerCase().trim()) : [];
+                const matchCodes = [hrCode, ...agentCodes].filter(Boolean);
+
+                const hrApps = validApps.filter(app => {
+                  const ref = String(app.referredBy || '').toLowerCase().trim();
+                  const appHrCode = String(app.hrCode || app.referringHrCode || '').toLowerCase().trim();
+                  return matchCodes.includes(ref) || (hrCode && appHrCode === hrCode);
+                });
                 const closedApps = hrApps.filter(app => {
                   const s = String(app.status || '').toLowerCase().trim();
-                  if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled'].includes(s)) return false;
+                  if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled', 'dropped'].includes(s)) return false;
                   if (s.includes('l1') || s.includes('l2')) return false;
                   return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
                 });
                 return {
                   ...hr,
+                  name: hr.name || 'HR Executive',
                   totalSourced: hrApps.length,
                   totalClosed: closedApps.length
                 };

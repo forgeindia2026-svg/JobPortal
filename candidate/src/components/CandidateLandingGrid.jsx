@@ -427,3 +427,4 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
     </div>
   );
 }
+

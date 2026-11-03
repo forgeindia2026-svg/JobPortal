@@ -871,24 +871,33 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
 
             {/* 2 Leadership Boards: Top Applications Received & Top Closers (Branch HRs Only) */}
             {(() => {
-              const CLOSED_STATUSES = ['closed', 'joined', 'converted', 'hired', 'joined manipal', 'enrollment', 'selected'];
+              const validApps = (validApplications || []).filter(app => {
+                const s = String(app.status || '').toLowerCase().trim();
+                return s !== 'payment pending' && s !== 'unpaid';
+              });
               const hrStats = hrs.map(hr => {
-                const hrCode = hr.referralCode;
-                const hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hrCode || '').toUpperCase());
+                const hrCode = String(hr.referralCode || '').toLowerCase().trim();
+                const agentCodes = Array.isArray(hr.agentCodes) ? hr.agentCodes.map(c => String(c).toLowerCase().trim()) : [];
+                const matchCodes = [hrCode, ...agentCodes].filter(Boolean);
+
+                const hrApps = validApps.filter(app => {
+                  const ref = String(app.referredBy || '').toLowerCase().trim();
+                  const appHrCode = String(app.hrCode || app.referringHrCode || '').toLowerCase().trim();
+                  return matchCodes.includes(ref) || (hrCode && appHrCode === hrCode);
+                });
                 const closedApps = hrApps.filter(app => {
                   const s = String(app.status || '').toLowerCase().trim();
-                  if (s.includes('reject') || s.includes('not interested') || s.includes('drop') || s.includes('pending') || s.includes('interviewing') || s.includes('shortlist')) return false;
+                  if (['payment pending', 'unpaid', 'rejected', 'not interested', 'cancelled', 'dropped'].includes(s)) return false;
                   if (s.includes('l1') || s.includes('l2')) return false;
-                  return CLOSED_STATUSES.includes(s) || s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
+                  return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired') || s.includes('convert') || s.includes('enroll');
                 });
                 return {
                   ...hr,
-                  name: hr.name || hr.hrName,
+                  name: hr.name || hr.hrName || 'HR Executive',
                   totalSourced: hrApps.length,
                   totalClosed: closedApps.length
                 };
               });
-              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced);
               const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed);
 
               return (

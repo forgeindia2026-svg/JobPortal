@@ -17,6 +17,7 @@ import HierarchyManager from './HierarchyManager';
 import ClientDashboard from './ClientDashboard';
 import ManipalPayoutManager from './ManipalPayoutManager';
 import OfferTargetsManager from './OfferTargetsManager';
+import OfferLettersManager from './OfferLettersManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Bank themes & styling helpers for Admin Dashboard
@@ -6672,6 +6673,105 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                 </button>
               </div>
             </div>
+
+            {/* DEDICATED PARTNER LEADERBOARDS (Top Sourced & Top Closers) */}
+            {(() => {
+              const partnerStats = (allAgents || []).map(p => {
+                const pCode = String(p.referralCode || '').toLowerCase().trim();
+                const pApps = validApplications.filter(a => {
+                  const ref = String(a.referredBy || '').toLowerCase().trim();
+                  return pCode && ref === pCode;
+                });
+                const closedApps = pApps.filter(a => {
+                  const s = String(a.status || '').toLowerCase().trim();
+                  return ['selected', 'closed', 'joined', 'joined manipal', 'converted', 'hired'].includes(s) || s.includes('select');
+                });
+                return {
+                  ...p,
+                  totalSourced: pApps.length,
+                  totalClosed: closedApps.length
+                };
+              });
+
+              const topPartnerSourcers = [...partnerStats].sort((a,b) => b.totalSourced - a.totalSourced);
+              const topPartnerClosers = [...partnerStats].sort((a,b) => b.totalClosed - a.totalClosed);
+
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
+                  {/* Card 1: Top Applications Received (Partners) */}
+                  <div style={{ background: '#fff', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>🚀 Top Applications Received (Partners)</h4>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Ranked by candidate applications sourced</span>
+                      </div>
+                      <span style={{ background: '#eff6ff', color: '#2563eb', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                        {topPartnerSourcers.length} Partners
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {topPartnerSourcers.slice(0, 5).map((partner, idx) => (
+                        <div
+                          key={partner.id || idx}
+                          onClick={() => { setSelectedHrForCandidates(partner); setHrCandidateSearch(''); setHrCandidateStatusFilter('all'); }}
+                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '10px', cursor: 'pointer' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : '#e2e8f0', color: idx === 0 ? '#a16207' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                              {idx + 1}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{partner.name}</div>
+                              <div style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>{partner.referralCode}</div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '1rem' }}>{partner.totalSourced}</span>
+                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Applied</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Card 2: Top Closers (Partners) */}
+                  <div style={{ background: '#fff', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>🏆 Top Closers (Partners)</h4>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Ranked by selected / closed candidates</span>
+                      </div>
+                      <span style={{ background: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                        {topPartnerClosers.length} Closers
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {topPartnerClosers.slice(0, 5).map((partner, idx) => (
+                        <div
+                          key={partner.id || idx}
+                          onClick={() => { setSelectedHrForCandidates(partner); setHrCandidateSearch(''); setHrCandidateStatusFilter('all'); }}
+                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '10px', cursor: 'pointer' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : '#dcfce7', color: idx === 0 ? '#a16207' : '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                              {idx + 1}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{partner.name}</div>
+                              <div style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>{partner.referralCode}</div>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontWeight: 800, color: '#059669', fontSize: '1rem' }}>{partner.totalClosed}</span>
+                            <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Closed</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Desktop Table View */}
             <div className="table-container hrs-desktop-table">

@@ -62,6 +62,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/partner-incentives', partnerIncentivesRoutes);
 app.use('/api/branch-it-projects', require('./routes/branchItProjects'));
 app.use('/api/offer-targets', require('./routes/offerTargets'));
+app.use('/api/offer-letters', require('./routes/offerLetters'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
