@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+  Headphones,
+  PhoneCall,
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
   Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut,
@@ -375,6 +377,23 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       setAdminPasswordMsg({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setAdminPasswordSaving(false);
+    }
+  };
+
+
+  const handleToggleFollowUpHr = async (hr) => {
+    const newStatus = !hr.isFollowUpHr;
+    try {
+      const res = await fetch(`${API_URL}/api/follow-ups/toggle-hr/${hr.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isFollowUpHr: newStatus })
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      setHrs(prev => prev.map(h => h.id === hr.id ? { ...h, isFollowUpHr: newStatus } : h));
+    } catch (err) {
+      console.error('Error toggling Follow-up HR:', err);
+      alert('Failed to update Follow-up HR access: ' + err.message);
     }
   };
 
@@ -2754,6 +2773,18 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           onClick={() => handleTabChange('payouts')}
         >
           <Gift size={18} /> Incentives & Payouts
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'follow_ups' ? 'active' : ''}`}
+          onClick={() => handleTabChange('follow_ups')}
+          style={{
+            background: activeTab === 'follow_ups' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)' : undefined,
+            color: activeTab === 'follow_ups' ? '#059669' : undefined,
+            fontWeight: activeTab === 'follow_ups' ? 700 : undefined
+          }}
+        >
+          <Headphones size={18} color={activeTab === 'follow_ups' ? '#059669' : undefined} /> Follow-up Central 🎧
         </button>
 
         <button
@@ -5970,6 +6001,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                     <th>Link Clicks</th>
                     <th>Candidates Applied</th>
                     <th>Incentives Earned</th>
+                    <th>Follow-up HR</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -6063,6 +6095,30 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                       </td>
                       <td style={{ fontWeight: 700, color: '#059669' }}>
                         ₹{(hr.incentives || 0).toLocaleString()}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFollowUpHr(hr)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            border: hr.isFollowUpHr ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
+                            background: hr.isFollowUpHr ? '#ecfdf5' : '#f8fafc',
+                            color: hr.isFollowUpHr ? '#047857' : '#64748b',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          title={hr.isFollowUpHr ? 'Click to disable Follow-up access' : 'Click to enable Follow-up access'}
+                        >
+                          <Headphones size={13} color={hr.isFollowUpHr ? '#059669' : '#94a3b8'} />
+                          {hr.isFollowUpHr ? 'Assigned ✓' : 'Assign +'}
+                        </button>
                       </td>
                       <td><span className="badge badge-active">Active</span></td>
                       <td>
@@ -6237,6 +6293,28 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                         </div>
                       </div>
 
+                      {/* Follow-up Access Row */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: hr.isFollowUpHr ? '#ecfdf5' : '#f8fafc', borderRadius: '8px', border: hr.isFollowUpHr ? '1.5px solid #a7f3d0' : '1px solid #e2e8f0', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: hr.isFollowUpHr ? '#047857' : '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <Headphones size={14} color={hr.isFollowUpHr ? '#059669' : '#94a3b8'} /> Follow-up Central:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFollowUpHr(hr)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: hr.isFollowUpHr ? '#10b981' : '#e2e8f0',
+                            color: hr.isFollowUpHr ? '#ffffff' : '#475569',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {hr.isFollowUpHr ? 'Assigned ✓' : 'Assign +'}
+                        </button>
+                      </div>
                       {/* Actions Bar */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
                         <button
@@ -6652,6 +6730,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             onRefresh={fetchAllData}
           />
         )}
+        {activeTab === 'follow_ups' && (
+          <FollowUpCentralManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+          />
+        )}
+
         {activeTab === 'offer_targets' && (
           <OfferTargetsManager
             API_URL={API_URL}

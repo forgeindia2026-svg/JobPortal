@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut, Target } from 'lucide-react';
+import {
+  Headphones, Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
@@ -729,6 +730,21 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <Gift size={18} /><span>Incentives</span>
           </button>
 
+          {Boolean(currentUser?.isFollowUpHr) && (
+            <button
+              className={`nav-item ${activeTab === 'follow_ups' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('follow_ups'); setSidebarOpen && setSidebarOpen(false); }}
+              style={{
+                whiteSpace: 'nowrap',
+                background: activeTab === 'follow_ups' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)' : 'transparent',
+                color: activeTab === 'follow_ups' ? '#059669' : '#10b981',
+                fontWeight: 700
+              }}
+            >
+              <Headphones size={18} color={activeTab === 'follow_ups' ? '#059669' : '#10b981'} />
+              <span>Follow-up Central 🎧</span>
+            </button>
+          )}
           <button className={`nav-item ${activeTab === 'offers_targets' ? 'active' : ''}`} onClick={() => { setActiveTab('offers_targets'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap', background: activeTab === 'offers_targets' ? 'linear-gradient(135deg, rgba(234, 88, 12, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%)' : 'transparent', color: activeTab === 'offers_targets' ? '#ea580c' : undefined }}>
             <Target size={18} color={activeTab === 'offers_targets' ? '#ea580c' : undefined} /><span>Offers & Targets 🔥</span>
           </button>

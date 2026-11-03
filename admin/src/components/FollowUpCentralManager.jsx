@@ -569,3 +569,4 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
     </div>
   );
 }
+
