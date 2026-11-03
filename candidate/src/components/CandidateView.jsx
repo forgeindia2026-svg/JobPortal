@@ -1338,7 +1338,9 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '0.5rem' }}>
                 <button
                   onClick={() => {
-                    handleCompanyClick({ ...selectedFicBank, isFicFlow: true });
+                    const bankCat = categories.find(c => c.id === 'cat_banking' || (c.name || '').toLowerCase().includes('banking')) || { id: 'cat_banking', name: 'Banking & Financial Services' };
+                    setSelectedCategory(bankCat);
+                    handleCompanyClick({ ...selectedFicBank, isFicFlow: true, categoryId: bankCat.id });
                     setFicView(null);
                   }}
                   style={{
@@ -1845,7 +1847,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
           )}
 
           {/* PAGE 3: JOB OPENINGS VIEW (e.g. Axis Bank Jobs) */}
-          {selectedCategory && selectedCompany && (
+          {selectedCompany && (
             <div>
 
               <div className="section-header">
@@ -1868,7 +1870,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
                     cursor: 'pointer'
                   }}
                 >
-                  <ArrowLeft size={15} /> Back to {selectedCategory.name}
+                  <ArrowLeft size={15} /> Back to {selectedCategory ? selectedCategory.name : 'Companies'}
                 </button>
                 <button
                   className="btn-secondary"
