@@ -7,6 +7,7 @@ import SubAgentsManager from './SubAgentsManager';
 import OffersAndTargetsModal from './OffersAndTargetsModal';
 import OffersAndTargetsView from './OffersAndTargetsView';
 import OfferLettersManager from './OfferLettersManager';
+import FollowUpCentralManager from './FollowUpCentralManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 const getCompanyColor = (name) => {
@@ -844,6 +845,13 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
         {activeTab === 'offer_letters' && (
           <OfferLettersManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+          />
+        )}
+
+        {activeTab === 'follow_ups' && (
+          <FollowUpCentralManager
             API_URL={API_URL}
             currentUser={currentUser}
           />

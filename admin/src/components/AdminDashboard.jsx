@@ -18,6 +18,7 @@ import ClientDashboard from './ClientDashboard';
 import ManipalPayoutManager from './ManipalPayoutManager';
 import OfferTargetsManager from './OfferTargetsManager';
 import OfferLettersManager from './OfferLettersManager';
+import FollowUpCentralManager from './FollowUpCentralManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Bank themes & styling helpers for Admin Dashboard
