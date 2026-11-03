@@ -355,7 +355,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
 
   const convertItProcToJob = (proc, processList = null) => ({
     id: proc.id,
-    title: proc.processName ? `${proc.role || 'Software Engineer Trainee'} (${proc.processName.toUpperCase()})` : (proc.role || 'Software Engineer Trainee'),
+    title: (proc.itCategory === 'Course' || proc.itCategory === 'Internship') ? (proc.role || 'Software Engineer Trainee') : (proc.processName ? `${proc.role || 'Software Engineer Trainee'} (${proc.processName.toUpperCase()})` : (proc.role || 'Software Engineer Trainee')),
     rawRole: proc.role || 'Software Engineer Trainee',
     processName: proc.processName ? proc.processName.toUpperCase() : '',
     companyName: proc.itCategory === 'Course' ? 'FIC IT Courses' : proc.itCategory === 'Internship' ? 'FIC Free IT Internship' : proc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement',
