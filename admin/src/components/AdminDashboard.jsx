@@ -417,6 +417,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const [itProcesses, setItProcesses] = useState([]);
   const [globalItIncentives, setGlobalItIncentives] = useState({});
   const [hrs, setHrs] = useState([]);
+  const [branchManagers, setBranchManagers] = useState([]);
+  const [teamLeaders, setTeamLeaders] = useState([]);
   const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState([]);
