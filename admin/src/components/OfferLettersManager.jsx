@@ -500,3 +500,4 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
     </div>
   );
 }
+
