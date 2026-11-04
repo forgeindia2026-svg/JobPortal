@@ -16,7 +16,44 @@ import {
   Filter
 } from 'lucide-react';
 
-export default function OfferLettersManager({ API_URL, currentUser }) {
+// Helper to reliably extract offer letter from document fields or encoded notes
+export function extractOffer(app) {
+  if (!app) return null;
+  if (app.offerLetterUrl && String(app.offerLetterUrl).trim()) {
+    return {
+      url: app.offerLetterUrl,
+      ctc: app.offeredCtc || '',
+      date: app.offerJoiningDate || app.joiningDate || ''
+    };
+  }
+  const notes = app.adminNotes || app.coverNotes || app.notes;
+  if (notes && typeof notes === 'string') {
+    const match = notes.match(/\[OFFER:(\{.*?\})\]/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        if (parsed.url) {
+          return {
+            url: parsed.url,
+            ctc: parsed.ctc || app.offeredCtc || '',
+            date: parsed.date || app.offerJoiningDate || app.joiningDate || ''
+          };
+        }
+      } catch (e) {}
+    }
+    const cldMatch = notes.match(/(https:\/\/res\.cloudinary\.com[^\s"'>]+)/);
+    if (cldMatch) {
+      return {
+        url: cldMatch[1],
+        ctc: app.offeredCtc || '',
+        date: app.offerJoiningDate || app.joiningDate || ''
+      };
+    }
+  }
+  return null;
+}
+
+export default function OfferLettersManager({ API_URL, currentUser, hrApplications, adminApplications }) {
   const [offerLetters, setOfferLetters] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,46 +96,79 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
 
       const validOffers = Array.isArray(offersRes) ? offersRes : [];
       const validApps = Array.isArray(appsRes) ? appsRes : [];
-      setApplications(validApps);
+      
+      // Combine all available application pools (props + API)
+      const allSourceApps = [
+        ...(Array.isArray(hrApplications) ? hrApplications : []),
+        ...(Array.isArray(adminApplications) ? adminApplications : []),
+        ...validApps
+      ];
 
-      // Consolidate offer letters from both dedicated endpoint and direct applications
-      const offerAppIds = new Set(validOffers.map(o => String(o.id || o._id || '')));
+      // Deduplicate applications by ID
+      const appMap = new Map();
+      allSourceApps.forEach(a => {
+        const key = String(a.id || a._id || '');
+        if (key && !appMap.has(key)) appMap.set(key, a);
+      });
+      const combinedApps = Array.from(appMap.values());
+      setApplications(combinedApps);
+
+      const seenIds = new Set();
+      const consolidated = [];
+
+      // 1. Process items from dedicated /api/offer-letters
+      validOffers.forEach(o => {
+        const idKey = String(o.id || o._id || '');
+        if (idKey && !seenIds.has(idKey)) {
+          seenIds.add(idKey);
+          consolidated.push(o);
+        }
+      });
+
+      // 2. Extract any applications having offerLetterUrl or encoded in adminNotes
       const hrCode = String(currentUser?.referralCode || '').toLowerCase();
       const hrId = String(currentUser?.id || currentUser?._id || '');
 
-      const appsWithOffer = validApps.filter(a => {
-        if (!a.offerLetterUrl || !String(a.offerLetterUrl).trim()) return false;
-        if (offerAppIds.has(String(a.id || a._id || ''))) return false;
+      combinedApps.forEach(a => {
+        const idKey = String(a.id || a._id || '');
+        if (seenIds.has(idKey)) return;
+
+        const offer = extractOffer(a);
+        if (!offer) return;
+
         if (isHr) {
           const matchCode = hrCode && String(a.referredBy || '').toLowerCase() === hrCode;
           const matchHrId = hrId && (String(a.offerLetterUploadedBy || '') === hrId || String(a.hrId || '') === hrId);
-          return matchCode || matchHrId;
+          if (!matchCode && !matchHrId) return;
         }
-        return true;
-      }).map(a => ({
-        ...a,
-        candidateName: a.candidateName || a.candidateDetails?.name || 'Candidate',
-        candidateEmail: a.candidateEmail || a.candidateDetails?.email || '',
-        candidateMobile: a.candidateMobile || a.candidateDetails?.mobile || '',
-        jobTitle: a.jobTitle || 'Designation',
-        companyName: a.companyName || 'Company',
-        hrName: a.hrName || a.referringHrName || currentUser?.name || 'HR Executive',
-        hrCode: a.referredBy || '',
-        offerLetterUrl: a.offerLetterUrl,
-        offeredCtc: a.offeredCtc || '',
-        offerJoiningDate: a.offerJoiningDate || a.joiningDate || '',
-        offerLetterUploadedAt: a.offerLetterUploadedAt || a.updatedAt || new Date().toISOString(),
-        uploaderName: a.offerLetterUploaderName || a.uploaderName || currentUser?.name || 'HR Executive'
-      }));
 
-      setOfferLetters([...validOffers, ...appsWithOffer]);
+        seenIds.add(idKey);
+        consolidated.push({
+          ...a,
+          id: idKey,
+          candidateName: a.candidateName || a.candidateDetails?.name || 'Candidate',
+          candidateEmail: a.candidateEmail || a.candidateDetails?.email || '',
+          candidateMobile: a.candidateMobile || a.candidateDetails?.mobile || '',
+          jobTitle: a.jobTitle || 'Designation',
+          companyName: a.companyName || 'Company',
+          hrName: a.hrName || a.referringHrName || currentUser?.name || 'HR Executive',
+          hrCode: a.referredBy || '',
+          offerLetterUrl: offer.url,
+          offeredCtc: offer.ctc,
+          offerJoiningDate: offer.date,
+          offerLetterUploadedAt: a.offerLetterUploadedAt || a.updatedAt || new Date().toISOString(),
+          uploaderName: a.offerLetterUploaderName || a.uploaderName || currentUser?.name || 'HR Executive'
+        });
+      });
+
+      setOfferLetters(consolidated);
     } catch (err) {
       console.error('Error fetching offer letters:', err);
       setError('Failed to load offer letters');
     } finally {
       setLoading(false);
     }
-  }, [API_URL, role, currentUser]);
+  }, [API_URL, role, currentUser, hrApplications, adminApplications]);
 
   useEffect(() => {
     loadData();
@@ -207,6 +277,7 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
             offeredCtc,
             joiningDate,
             offerNotes: notes,
+            adminNotes: notes ? `${notes} [OFFER:${JSON.stringify({ url: finalOfferUrl, ctc: offeredCtc, date: joiningDate })}]` : `[OFFER:${JSON.stringify({ url: finalOfferUrl, ctc: offeredCtc, date: joiningDate })}]`,
             uploadedBy: currentUser?.id || currentUser?._id || '',
             uploaderName: currentUser?.name || 'HR Executive'
           })
