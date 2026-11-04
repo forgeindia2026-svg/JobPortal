@@ -101,13 +101,21 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
         teamLeaderId: currentUser?.teamLeaderId || ''
       }).toString();
 
-      const [offersRes, appsRes] = await Promise.all([
+      const [offersRes, appsRes, hrsRes] = await Promise.all([
         fetch(`${API_URL}/api/offer-letters?${queryParams}`).then(r => r.json()).catch(() => []),
-        fetch(`${API_URL}/api/applications`).then(r => r.json()).catch(() => [])
+        fetch(`${API_URL}/api/applications`).then(r => r.json()).catch(() => []),
+        fetch(`${API_URL}/api/users/hr`).then(r => r.json()).catch(() => [])
       ]);
 
       const validOffers = Array.isArray(offersRes) ? offersRes : [];
       const validApps = Array.isArray(appsRes) ? appsRes : [];
+      const hrList = Array.isArray(hrsRes) ? hrsRes : [];
+      const hrMap = {};
+      hrList.forEach(h => {
+        if (h.referralCode) {
+          hrMap[String(h.referralCode).trim().toLowerCase()] = h.name;
+        }
+      });
       
       // Combine all available application pools (props + API)
       const allSourceApps = [
@@ -163,13 +171,19 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
           candidateMobile: a.candidateMobile || a.candidateDetails?.mobile || '',
           jobTitle: a.jobTitle || 'Designation',
           companyName: a.companyName || 'Company',
-          hrName: a.hrName || a.referringHrName || currentUser?.name || 'HR Executive',
+          hrName: (() => {
+            const refCode = String(a.referredBy || '').trim().toLowerCase();
+            return hrMap[refCode] || a.hrName || a.referringHrName || (a.referredBy ? `HR (${a.referredBy})` : 'Direct');
+          })(),
           hrCode: a.referredBy || '',
           offerLetterUrl: offer.url,
           offeredCtc: offer.ctc,
           offerJoiningDate: offer.date,
           offerLetterUploadedAt: a.offerLetterUploadedAt || a.updatedAt || new Date().toISOString(),
-          uploaderName: a.offerLetterUploaderName || a.uploaderName || currentUser?.name || 'HR Executive'
+          uploaderName: (() => {
+            const refCode = String(a.referredBy || '').trim().toLowerCase();
+            return a.offerLetterUploaderName || a.uploaderName || hrMap[refCode] || a.hrName || 'HR Executive';
+          })()
         });
       });
 

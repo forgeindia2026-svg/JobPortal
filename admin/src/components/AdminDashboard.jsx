@@ -2809,6 +2809,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         </button>
 
         <button
+          className={`nav-item ${activeTab === 'team_leaders' ? 'active' : ''}`}
+          onClick={() => handleTabChange('team_leaders')}
+        >
+          <UserCheck size={18} style={{ color: activeTab === 'team_leaders' ? '#0284c7' : undefined }} /> Team Leaders ({teamLeaders.length})
+        </button>
+
+        <button
           className={`nav-item ${activeTab === 'hr_managers' ? 'active' : ''}`}
           onClick={() => handleTabChange('hr_managers')}
         >
@@ -6795,12 +6802,12 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             onBack={() => handleTabChange('dashboard')}
           />
         )}
-        {(activeTab === 'hierarchy' || activeTab === 'hr_managers') && (
+        {(activeTab === 'hierarchy' || activeTab === 'hr_managers' || activeTab === 'team_leaders') && (
           <HierarchyManager
             API_URL={API_URL}
             currentUser={currentUser}
             hrs={hrs}
-            initialMainView={activeTab === 'hr_managers' ? 'hr_managers' : 'branches'}
+            initialMainView={activeTab === 'hr_managers' ? 'hr_managers' : activeTab === 'team_leaders' ? 'team_leaders' : 'branches'}
             onRefresh={fetchAllData}
           />
         )}

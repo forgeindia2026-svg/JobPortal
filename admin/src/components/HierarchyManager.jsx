@@ -1415,7 +1415,15 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
 
             <div
               className="dashboard-kpi-card"
-              style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}
+              onClick={() => setMainView('team_leaders')}
+              style={{
+                background: '#fff',
+                padding: '1.25rem',
+                borderRadius: '14px',
+                border: mainView === 'team_leaders' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                cursor: 'pointer'
+              }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Team Leaders</span>
@@ -1424,7 +1432,7 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                 </div>
               </div>
               <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalTls}</div>
-              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Across all company branches</span>
+              <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 600 }}>Click to view all Team Leaders</span>
             </div>
 
             <div
@@ -1528,6 +1536,18 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
             </button>
 
             <button
+              onClick={() => setMainView('team_leaders')}
+              className="branch-pill-btn"
+              style={{
+                background: mainView === 'team_leaders' ? '#0284c7' : '#fff',
+                color: mainView === 'team_leaders' ? '#fff' : '#475569',
+                border: mainView === 'team_leaders' ? '1px solid #0284c7' : '1px solid #cbd5e1'
+              }}
+            >
+              <Users size={16} /> Team Leaders ({tls.length})
+            </button>
+
+            <button
               onClick={() => setMainView('hr_managers')}
               className="branch-pill-btn"
               style={{
@@ -1563,6 +1583,78 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
               <Code size={16} /> Company IT Projects ({itProjects.length})
             </button>
           </div>
+
+          {/* --------------------------------------------------------------------- */}
+          {/* VIEW: ALL TEAM LEADERS DIRECTORY                                      */}
+          {/* --------------------------------------------------------------------- */}
+          {mainView === 'team_leaders' && (
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>All Company Team Leaders ({tls.length})</h3>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                    Click "Open TL Dashboard" on any Team Leader to view their assigned HR team, candidate pipeline, and metrics.
+                  </p>
+                </div>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                      <th style={{ padding: '14px 20px' }}>Team Leader</th>
+                      <th style={{ padding: '14px 20px' }}>Branch</th>
+                      <th style={{ padding: '14px 20px' }}>Branch Manager</th>
+                      <th style={{ padding: '14px 20px' }}>Assigned HRs</th>
+                      <th style={{ padding: '14px 20px' }}>Status</th>
+                      <th style={{ padding: '14px 20px', textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tls.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+                          No Team Leaders found.
+                        </td>
+                      </tr>
+                    ) : (
+                      tls.map(tl => (
+                        <tr key={tl.id || tl._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '16px 20px' }}>
+                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>{tl.name}</div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{tl.email} • {tl.mobile}</div>
+                          </td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', textTransform: 'capitalize' }}>
+                              {tl.branch || 'Main Branch'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 20px', color: '#334155', fontWeight: 600 }}>
+                            {tl.branchManagerName || 'General Management'}
+                          </td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <span style={{ fontWeight: 800, color: '#0f172a' }}>{tl.assignedHrsCount || 0} HRs</span>
+                          </td>
+                          <td style={{ padding: '16px 20px' }}>
+                            <span style={{ background: tl.approvalStatus === 'approved' ? '#ecfdf5' : '#fffbeb', color: tl.approvalStatus === 'approved' ? '#059669' : '#b45309', padding: '3px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700 }}>
+                              {tl.approvalStatus === 'approved' ? '✓ Approved' : '⏳ Pending'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => handleOpenTlDetails(tl.id || tl._id)}
+                              style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)' }}
+                            >
+                              Open TL Dashboard →
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* --------------------------------------------------------------------- */}
           {/* VIEW A: ALL BRANCHES CARDS DIRECTORY                                  */}

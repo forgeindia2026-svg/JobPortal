@@ -92,10 +92,13 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
 
+  const tlId = currentUser?.id || currentUser?._id;
+
   const fetchTlOverview = async () => {
+    if (!tlId) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/users/team-leaders/${currentUser.id}/overview`);
+      const res = await fetch(`${API_URL}/api/users/team-leaders/${tlId}/overview`);
       if (res.ok) {
         const data = await res.json();
         setOverviewData(data);
@@ -109,7 +112,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
 
   useEffect(() => {
     fetchTlOverview();
-  }, [currentUser.id]);
+  }, [tlId]);
 
   const kpis = overviewData?.kpis || {
     totalHrs: 0,
@@ -126,6 +129,9 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
     setSelectedHrForCandidateBreakdown(null);
     if (setSidebarOpen) setSidebarOpen(false);
   };
+
+  // Exclude Payment Pending from Applied tab (they belong in Incentives & Payouts)
+  const validApplications = applications.filter(app => app.status !== 'Payment Pending');
 
   const handleOpenHrCandidates = (hr, statusFilter = 'all') => {
     let hrApps = validApplications.filter(app => String(app.referredBy || '').toUpperCase() === String(hr.referralCode || '').toUpperCase());
@@ -152,9 +158,6 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
     });
     if (setSidebarOpen) setSidebarOpen(false);
   };
-
-  // Exclude Payment Pending from Applied tab (they belong in Incentives & Payouts)
-  const validApplications = applications.filter(app => app.status !== 'Payment Pending');
 
   // Filtered applications
   const filteredApps = validApplications.filter(app => {
