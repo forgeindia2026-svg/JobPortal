@@ -2849,13 +2849,6 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         </button>
 
         <button
-          className={`nav-item ${activeTab === 'offer_targets' ? 'active' : ''}`}
-          onClick={() => handleTabChange('offer_targets')}
-        >
-          <Trophy size={18} style={{ color: '#f59e0b' }} /> Offers & Targets
-        </button>
-
-        <button
           className={`nav-item ${activeTab === 'payments' ? 'active' : ''}`}
           onClick={() => handleTabChange('payments')}
         >

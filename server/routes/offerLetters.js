@@ -9,30 +9,20 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Helper to save Base64 file (PDF or Image)
+// Helper: Resolve offer letter URL/data for persistent storage.
+// - If it's already an HTTP URL, return as-is (Cloudinary/external URL)
+// - If it's a base64 Data URL, return as-is (stored directly in MongoDB)
+// - Otherwise return the string as-is
 function saveOfferLetterBase64(dataString) {
   if (!dataString || typeof dataString !== 'string') return '';
-  if (dataString.startsWith('/uploads/') || dataString.startsWith('http')) return dataString;
-
-  const matches = dataString.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-  if (!matches || matches.length !== 3) {
-    return dataString;
-  }
-
-  const mimeType = matches[1].toLowerCase();
-  let extension = 'pdf';
-  if (mimeType.includes('jpeg') || mimeType.includes('jpg')) extension = 'jpg';
-  else if (mimeType.includes('png')) extension = 'png';
-  else if (mimeType.includes('webp')) extension = 'webp';
-  else if (mimeType.includes('pdf')) extension = 'pdf';
-
-  const filename = `offer_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${extension}`;
-  const filePath = path.join(uploadsDir, filename);
-
-  const buffer = Buffer.from(matches[2], 'base64');
-  fs.writeFileSync(filePath, buffer);
-
-  return `/uploads/${filename}`;
+  // Already a persistent URL (Cloudinary, etc.)
+  if (dataString.startsWith('http://') || dataString.startsWith('https://')) return dataString;
+  // Legacy local uploads path - return as-is
+  if (dataString.startsWith('/uploads/')) return dataString;
+  // Base64 Data URL - store directly in MongoDB (works on ephemeral servers like Render)
+  if (dataString.startsWith('data:')) return dataString;
+  // Any other string (e.g. plain URL without protocol)
+  return dataString;
 }
 
 // GET /api/offer-letters (Role-filtered)
