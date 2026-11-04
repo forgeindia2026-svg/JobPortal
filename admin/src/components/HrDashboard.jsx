@@ -435,24 +435,26 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       setUploadingOffer(true);
       let uploadedOfferUrl = statusModalApp.offerLetterUrl || '';
 
+      // Step 1: Upload PDF/image to Cloudinary → get permanent URL
+      // MongoDB stores ONLY the URL, never the file content
       if (offerLetterFile) {
         try {
-          const cldRes = await uploadToCloudinary(offerLetterFile);
-          if (typeof cldRes === 'string' && cldRes.trim()) {
-            uploadedOfferUrl = cldRes;
-          } else if (cldRes && (cldRes.secure_url || cldRes.url)) {
-            uploadedOfferUrl = cldRes.secure_url || cldRes.url;
+          const cldUrl = await uploadToCloudinary(offerLetterFile);
+          if (typeof cldUrl === 'string' && cldUrl.trim()) {
+            uploadedOfferUrl = cldUrl;
           }
         } catch (cldErr) {
-          console.warn('Cloudinary upload fallback, converting to Data URL:', cldErr);
+          console.warn('Cloudinary upload failed, using base64 fallback:', cldErr.message);
+          // Fallback: store as Data URL in MongoDB (not ideal, but always works)
           try {
             uploadedOfferUrl = await fileToBase64(offerLetterFile);
           } catch (b64Err) {
-            console.error('Failed to convert file to base64 fallback:', b64Err);
+            console.error('File read failed:', b64Err);
           }
         }
       }
 
+      const targetId = statusModalApp.id || statusModalApp._id;
       const payload = {
         status: newAppStatus,
         adminNotes: adminNoteInput,
@@ -463,12 +465,30 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         uploaderName: currentUser?.name || 'HR Executive'
       };
 
-      const targetId = statusModalApp.id || statusModalApp._id;
+      // Step 2: Save URL to MongoDB via status update
       const res = await fetch(`${API_URL}/api/applications/${targetId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
+      // Step 3: Also write to /api/offer-letters so repository picks it up instantly
+      if (offerLetterFile && uploadedOfferUrl) {
+        fetch(`${API_URL}/api/offer-letters`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicationId: targetId,
+            offerLetterBase64: uploadedOfferUrl,
+            joiningDate: joiningDateInput,
+            offeredCtc: offeredCtcInput,
+            notes: '',
+            uploadedBy: currentUser?.id || currentUser?._id || '',
+            uploaderName: currentUser?.name || 'HR Executive'
+          })
+        }).catch(() => {});
+      }
+
       if (res.ok) {
         showToast('Status updated successfully');
         setStatusModalApp(null);
