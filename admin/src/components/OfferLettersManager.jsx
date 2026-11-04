@@ -1,3 +1,4 @@
+import { uploadToCloudinary } from '../utils/cloudinary';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FileText,
@@ -30,6 +31,7 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
   const [offeredCtc, setOfferedCtc] = useState('');
   const [notes, setNotes] = useState('');
   const [fileBase64, setFileBase64] = useState('');
+  const [rawFile, setRawFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -55,8 +57,41 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
         fetch(`${API_URL}/api/applications`).then(r => r.json()).catch(() => [])
       ]);
 
-      setOfferLetters(Array.isArray(offersRes) ? offersRes : []);
-      setApplications(Array.isArray(appsRes) ? appsRes : []);
+      const validOffers = Array.isArray(offersRes) ? offersRes : [];
+      const validApps = Array.isArray(appsRes) ? appsRes : [];
+      setApplications(validApps);
+
+      // Consolidate offer letters from both dedicated endpoint and direct applications
+      const offerAppIds = new Set(validOffers.map(o => String(o.id || o._id || '')));
+      const hrCode = String(currentUser?.referralCode || '').toLowerCase();
+      const hrId = String(currentUser?.id || currentUser?._id || '');
+
+      const appsWithOffer = validApps.filter(a => {
+        if (!a.offerLetterUrl || !String(a.offerLetterUrl).trim()) return false;
+        if (offerAppIds.has(String(a.id || a._id || ''))) return false;
+        if (isHr) {
+          const matchCode = hrCode && String(a.referredBy || '').toLowerCase() === hrCode;
+          const matchHrId = hrId && (String(a.offerLetterUploadedBy || '') === hrId || String(a.hrId || '') === hrId);
+          return matchCode || matchHrId;
+        }
+        return true;
+      }).map(a => ({
+        ...a,
+        candidateName: a.candidateName || a.candidateDetails?.name || 'Candidate',
+        candidateEmail: a.candidateEmail || a.candidateDetails?.email || '',
+        candidateMobile: a.candidateMobile || a.candidateDetails?.mobile || '',
+        jobTitle: a.jobTitle || 'Designation',
+        companyName: a.companyName || 'Company',
+        hrName: a.hrName || a.referringHrName || currentUser?.name || 'HR Executive',
+        hrCode: a.referredBy || '',
+        offerLetterUrl: a.offerLetterUrl,
+        offeredCtc: a.offeredCtc || '',
+        offerJoiningDate: a.offerJoiningDate || a.joiningDate || '',
+        offerLetterUploadedAt: a.offerLetterUploadedAt || a.updatedAt || new Date().toISOString(),
+        uploaderName: a.offerLetterUploaderName || a.uploaderName || currentUser?.name || 'HR Executive'
+      }));
+
+      setOfferLetters([...validOffers, ...appsWithOffer]);
     } catch (err) {
       console.error('Error fetching offer letters:', err);
       setError('Failed to load offer letters');
@@ -106,6 +141,7 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
     }
 
     setFileName(file.name);
+    setRawFile(file);
     setError('');
 
     const reader = new FileReader();
@@ -129,22 +165,53 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
     try {
       setUploading(true);
       setError('');
-      const res = await fetch(`${API_URL}/api/offer-letters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          applicationId: selectedAppId,
-          offerLetterBase64: fileBase64,
-          joiningDate,
-          offeredCtc,
-          notes,
-          uploadedBy: currentUser?.id || '',
-          uploaderName: currentUser?.name || 'HR Executive'
-        })
-      });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      let finalOfferUrl = fileBase64;
+      if (rawFile) {
+        try {
+          const cldRes = await uploadToCloudinary(rawFile);
+          if (typeof cldRes === 'string' && cldRes.trim()) {
+            finalOfferUrl = cldRes;
+          } else if (cldRes && (cldRes.secure_url || cldRes.url)) {
+            finalOfferUrl = cldRes.secure_url || cldRes.url;
+          }
+        } catch (cldErr) {
+          console.warn('Cloudinary upload fallback to data URL:', cldErr);
+        }
+      }
+
+      // Dual write: send to both /api/offer-letters and /api/applications/:id/status
+      const payload = {
+        applicationId: selectedAppId,
+        offerLetterBase64: finalOfferUrl,
+        offerLetterUrl: finalOfferUrl,
+        joiningDate,
+        offeredCtc,
+        notes,
+        offerNotes: notes,
+        uploadedBy: currentUser?.id || currentUser?._id || '',
+        uploaderName: currentUser?.name || 'HR Executive'
+      };
+
+      await Promise.allSettled([
+        fetch(`${API_URL}/api/offer-letters`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }),
+        fetch(`${API_URL}/api/applications/${selectedAppId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            offerLetterUrl: finalOfferUrl,
+            offeredCtc,
+            joiningDate,
+            offerNotes: notes,
+            uploadedBy: currentUser?.id || currentUser?._id || '',
+            uploaderName: currentUser?.name || 'HR Executive'
+          })
+        })
+      ]);
 
       setSuccess('Offer letter uploaded and attached successfully!');
       setTimeout(() => setSuccess(''), 4000);
@@ -152,6 +219,7 @@ export default function OfferLettersManager({ API_URL, currentUser }) {
       setSelectedAppId('');
       setFileBase64('');
       setFileName('');
+      setRawFile(null);
       setJoiningDate('');
       setOfferedCtc('');
       setNotes('');

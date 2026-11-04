@@ -335,7 +335,7 @@ router.post('/', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, adminNotes, referredBy, paymentId, offerLetterUrl, offeredCtc, joiningDate, offerNotes } = req.body;
+    const { status, adminNotes, referredBy, paymentId, offerLetterUrl, offeredCtc, joiningDate, offerNotes, uploadedBy, uploaderName } = req.body;
 
     const updateObj = { updatedAt: new Date().toISOString() };
     if (status) updateObj.status = status;
@@ -346,9 +346,18 @@ router.put('/:id/status', async (req, res) => {
     if (offeredCtc) updateObj.offeredCtc = offeredCtc;
     if (joiningDate) updateObj.offerJoiningDate = joiningDate;
     if (offerNotes) updateObj.offerNotes = offerNotes;
+    if (uploadedBy) updateObj.offerLetterUploadedBy = uploadedBy;
+    if (uploaderName) updateObj.offerLetterUploaderName = uploaderName;
     if (offerLetterUrl) updateObj.offerLetterUploadedAt = new Date().toISOString();
 
-    const updated = await ApplicationModel.findOneAndUpdate({ id }, { $set: updateObj }, { new: true }).lean();
+    const query = {
+      $or: [
+        { id: id },
+        ...(id && id.length === 24 ? [{ _id: id }] : [])
+      ]
+    };
+
+    const updated = await ApplicationModel.findOneAndUpdate(query, { $set: updateObj }, { new: true }).lean();
 
     if (!updated) {
       return res.status(404).json({ error: 'Application not found.' });

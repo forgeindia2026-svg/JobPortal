@@ -9,7 +9,7 @@ import OffersAndTargetsModal from './OffersAndTargetsModal';
 import OffersAndTargetsView from './OffersAndTargetsView';
 import OfferLettersManager from './OfferLettersManager';
 import FollowUpCentralManager from './FollowUpCentralManager';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, fileToBase64 } from '../utils/cloudinary';
 
 const getCompanyColor = (name) => {
   const lowerName = (name || '').toLowerCase();
@@ -438,24 +438,36 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
       if (offerLetterFile) {
         try {
           const cldRes = await uploadToCloudinary(offerLetterFile);
-          if (cldRes && cldRes.url) {
-            uploadedOfferUrl = cldRes.url;
+          if (typeof cldRes === 'string' && cldRes.trim()) {
+            uploadedOfferUrl = cldRes;
+          } else if (cldRes && (cldRes.secure_url || cldRes.url)) {
+            uploadedOfferUrl = cldRes.secure_url || cldRes.url;
           }
         } catch (cldErr) {
-          console.warn('Cloudinary upload fallback, trying direct base64');
+          console.warn('Cloudinary upload fallback, converting to Data URL:', cldErr);
+          try {
+            uploadedOfferUrl = await fileToBase64(offerLetterFile);
+          } catch (b64Err) {
+            console.error('Failed to convert file to base64 fallback:', b64Err);
+          }
         }
       }
 
-      const res = await fetch(`${API_URL}/api/applications/${statusModalApp.id}/status`, {
+      const payload = {
+        status: newAppStatus,
+        adminNotes: adminNoteInput,
+        offerLetterUrl: uploadedOfferUrl,
+        offeredCtc: offeredCtcInput,
+        joiningDate: joiningDateInput,
+        uploadedBy: currentUser?.id || currentUser?._id || '',
+        uploaderName: currentUser?.name || 'HR Executive'
+      };
+
+      const targetId = statusModalApp.id || statusModalApp._id;
+      const res = await fetch(`${API_URL}/api/applications/${targetId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newAppStatus,
-          adminNotes: adminNoteInput,
-          offerLetterUrl: uploadedOfferUrl,
-          offeredCtc: offeredCtcInput,
-          joiningDate: joiningDateInput
-        })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         showToast('Status updated successfully');
