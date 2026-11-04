@@ -1388,13 +1388,31 @@ router.get('/team-leaders/:tlId/hrs', async (req, res) => {
 router.get('/team-leaders/:tlId/overview', async (req, res) => {
   try {
     const { tlId } = req.params;
-    const tl = await UserModel.findOne({ id: tlId, role: 'team_leader' }).lean();
+    let tl = await UserModel.findOne({ id: tlId, role: 'team_leader' }).lean();
+    if (!tl && mongoose.Types.ObjectId.isValid(tlId)) {
+      tl = await UserModel.findOne({ _id: tlId, role: 'team_leader' }).lean();
+    }
+    if (!tl) {
+      tl = await UserModel.findOne({
+        $or: [{ id: tlId }, { email: tlId }, { name: new RegExp('^' + tlId + '$', 'i') }],
+        role: 'team_leader'
+      }).lean();
+    }
     if (!tl) {
       return res.status(404).json({ error: 'Team Leader not found.' });
     }
 
     const bm = tl.branchManagerId ? await UserModel.findOne({ id: tl.branchManagerId }).lean() : null;
-    const hrs = await UserModel.find({ role: 'hr', teamLeaderId: tlId }).lean();
+    const tlBranch = tl.branch ? String(tl.branch).toLowerCase().trim() : '';
+    const hrs = await UserModel.find({
+      role: 'hr',
+      $or: [
+        { teamLeaderId: tl.id },
+        { teamLeaderId: String(tl._id) },
+        { teamLeaderId: tlId },
+        ...(tlBranch ? [{ branch: new RegExp('^' + tlBranch + '$', 'i') }] : [])
+      ]
+    }).lean();
     const codes = hrs.map(h => h.referralCode).filter(Boolean);
 
     const applications = codes.length

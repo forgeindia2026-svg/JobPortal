@@ -95,14 +95,81 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
   const tlId = currentUser?.id || currentUser?._id;
 
   const fetchTlOverview = async () => {
-    if (!tlId) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/users/team-leaders/${tlId}/overview`);
-      if (res.ok) {
-        const data = await res.json();
-        setOverviewData(data);
+      if (tlId) {
+        try {
+          const res = await fetch(`${API_URL}/api/users/team-leaders/${tlId}/overview`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && (data.tl || data.hrs || data.kpis)) {
+              setOverviewData(data);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Overview direct fetch failed, using aggregate fetch:', e);
+        }
       }
+
+      // Resilient fallback: aggregate from /api/users/hr and /api/applications
+      const [hrsRes, appsRes] = await Promise.all([
+        fetch(`${API_URL}/api/users/hr`).catch(() => null),
+        fetch(`${API_URL}/api/applications`).catch(() => null)
+      ]);
+
+      const allHrs = hrsRes && hrsRes.ok ? await hrsRes.json() : [];
+      const allApps = appsRes && appsRes.ok ? await appsRes.json() : [];
+
+      const currentBranch = String(currentUser?.branch || '').toLowerCase().trim();
+      const currentName = String(currentUser?.name || '').toLowerCase().trim();
+      const tlIdStr = String(tlId || '').toLowerCase().trim();
+
+      // Find HRs belonging to this Team Leader (by teamLeaderId, name, or branch)
+      const myHrs = (Array.isArray(allHrs) ? allHrs : []).filter(h => {
+        const hTlId = String(h.teamLeaderId || '').toLowerCase().trim();
+        const hBranch = String(h.branch || '').toLowerCase().trim();
+        const hTlName = String(h.teamLeaderName || '').toLowerCase().trim();
+        return (tlIdStr && hTlId === tlIdStr) || (currentName && hTlName === currentName) || (currentBranch && hBranch === currentBranch);
+      });
+
+      const myCodes = new Set();
+      myHrs.forEach(h => {
+        if (h.referralCode) myCodes.add(String(h.referralCode).toLowerCase().trim());
+        if (Array.isArray(h.agentCodes)) {
+          h.agentCodes.forEach(c => myCodes.add(String(c).toLowerCase().trim()));
+        }
+      });
+
+      const validApps = (Array.isArray(allApps) ? allApps : []).filter(a => {
+        const s = String(a.status || '').toLowerCase().trim();
+        return s !== 'payment pending' && s !== 'unpaid';
+      });
+
+      const myApps = validApps.filter(a => {
+        const ref = String(a.referredBy || '').toLowerCase().trim();
+        return myCodes.has(ref);
+      });
+
+      const selectedCount = myApps.filter(a => {
+        const s = String(a.status || '').toLowerCase().trim();
+        return s.includes('select') || s.includes('closed') || s.includes('joined') || s.includes('hired');
+      }).length;
+
+      const totalAmount = myApps.reduce((sum, a) => sum + (Number(a.incentiveAmount) || 1000), 0);
+
+      setOverviewData({
+        tl: currentUser,
+        kpis: {
+          totalHrs: myHrs.length,
+          totalCandidates: myApps.length,
+          totalAmount,
+          selectedCount
+        },
+        hrs: myHrs,
+        applications: myApps
+      });
     } catch (err) {
       console.error('Error fetching team leader overview:', err);
     } finally {
@@ -418,6 +485,7 @@ export default function TeamLeaderDashboard({ API_URL, currentUser, sidebarOpen,
                 };
               });
               const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed);
+              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced);
 
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '0.5rem' }}>
