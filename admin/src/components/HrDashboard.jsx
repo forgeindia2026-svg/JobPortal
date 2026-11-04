@@ -156,6 +156,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [statusModalApp, setStatusModalApp] = useState(null);
   const [newAppStatus, setNewAppStatus] = useState('');
   const [adminNoteInput, setAdminNoteInput] = useState('');
+  const [offerLetterFile, setOfferLetterFile] = useState(null);
+  const [offeredCtcInput, setOfferedCtcInput] = useState('');
+  const [joiningDateInput, setJoiningDateInput] = useState('');
+  const [uploadingOffer, setUploadingOffer] = useState(false);
   
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [appToSchedule, setAppToSchedule] = useState(null);
@@ -428,10 +432,30 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const handleUpdateStatus = async (e) => {
     e.preventDefault();
     try {
+      setUploadingOffer(true);
+      let uploadedOfferUrl = statusModalApp.offerLetterUrl || '';
+
+      if (offerLetterFile) {
+        try {
+          const cldRes = await uploadToCloudinary(offerLetterFile);
+          if (cldRes && cldRes.url) {
+            uploadedOfferUrl = cldRes.url;
+          }
+        } catch (cldErr) {
+          console.warn('Cloudinary upload fallback, trying direct base64');
+        }
+      }
+
       const res = await fetch(`${API_URL}/api/applications/${statusModalApp.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newAppStatus, adminNotes: adminNoteInput })
+        body: JSON.stringify({
+          status: newAppStatus,
+          adminNotes: adminNoteInput,
+          offerLetterUrl: uploadedOfferUrl,
+          offeredCtc: offeredCtcInput,
+          joiningDate: joiningDateInput
+        })
       });
       if (res.ok) {
         showToast('Status updated successfully');
@@ -443,6 +467,8 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     } catch (err) {
       console.error(err);
       showToast('Error updating status', 'error');
+    } finally {
+      setUploadingOffer(false);
     }
   };
 
@@ -741,6 +767,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
 
           <button className={`nav-item ${activeTab === 'applied' ? 'active' : ''}`} onClick={() => { setActiveTab('applied'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
             <Users size={18} /><span>Applied</span>
+          </button>
+
+          <button className={`nav-item ${activeTab === 'offer_letters' ? 'active' : ''}`} onClick={() => { setActiveTab('offer_letters'); if (setSidebarOpen) setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <FileText size={18} /><span>Offer Letters 📄</span>
           </button>
 
           <button className={`nav-item ${activeTab === 'interviews' ? 'active' : ''}`} onClick={() => { setActiveTab('interviews'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
@@ -1471,6 +1501,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 setStatusModalApp(app);
                 setNewAppStatus(app.status);
                 setAdminNoteInput(app.adminNotes || '');
+                setOfferLetterFile(null);
+                setOfferedCtcInput(app.offeredCtc || '');
+                setJoiningDateInput(app.offerJoiningDate || '');
               };
               const openInterview = (app) => {
                 setAppToSchedule(app);
@@ -1576,6 +1609,11 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                   <button className="btn-primary" style={{ padding: '4px 10px', fontSize: '0.775rem' }} onClick={() => openStatus(app)}>
                                     Update Status
                                   </button>
+                                  {app.offerLetterUrl && (
+                                    <a href={app.offerLetterUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', padding: '4px 10px', fontSize: '0.74rem', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '6px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                                      📄 Offer Letter ✓
+                                    </a>
+                                  )}
                                   <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.775rem', background: '#eff6ff', color: '#1d4ed8' }} onClick={() => openInterview(app)}>
                                     <Calendar size={12} /> Schedule Interview
                                   </button>
@@ -1681,6 +1719,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                             >
                               Update Status
                             </button>
+                            {app.offerLetterUrl && (
+                              <a
+                                href={app.offerLetterUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ padding: '8px 12px', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', border: '1px solid #86efac', background: '#ecfdf5', color: '#047857', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                              >
+                                📄 Offer Letter ✓
+                              </a>
+                            )}
                             <button
                               style={{ padding: '8px 12px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.4)', background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                               onClick={() => openInterview(app)}
@@ -3290,9 +3338,59 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </select>
               </div>
 
+              {/* Offer Letter Upload & Details if Selected */}
+              {(newAppStatus === 'Selected' || newAppStatus === 'Closed') && (
+                <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1.5px solid #86efac', marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📄 Candidate Offer Letter
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                      Upload Offer Letter (PDF / JPG / PNG)
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={(e) => setOfferLetterFile(e.target.files[0])}
+                      style={{ fontSize: '0.78rem', width: '100%' }}
+                    />
+                    {statusModalApp.offerLetterUrl && (
+                      <div style={{ marginTop: '4px', fontSize: '0.72rem', color: '#047857' }}>
+                        ✓ Existing Offer Letter: <a href={statusModalApp.offerLetterUrl} target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 700 }}>View / Download</a>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        Offered CTC (₹)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 3,50,000"
+                        value={offeredCtcInput}
+                        onChange={(e) => setOfferedCtcInput(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                        Joining Date
+                      </label>
+                      <input
+                        type="date"
+                        value={joiningDateInput}
+                        onChange={(e) => setJoiningDateInput(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="modal-actions" style={{ padding: 0, marginTop: '20px' }}>
                 <button type="button" className="btn-secondary" onClick={() => setStatusModalApp(null)}>Cancel</button>
-                <button type="submit" className="btn-primary">Save Status</button>
+                <button type="submit" className="btn-primary" disabled={uploadingOffer}>{uploadingOffer ? 'Uploading & Saving...' : 'Save Status'}</button>
               </div>
             </form>
           </div>

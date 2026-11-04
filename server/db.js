@@ -150,8 +150,15 @@ const applicationSchema = new mongoose.Schema({
   manipalPayoutDate: String,
   manipalPayoutNotes: String,
   manipalPayoutUpdatedAt: String,
+  offerLetterUrl: String,
+  offerLetterUploadedAt: String,
+  offerLetterUploadedBy: String,
+  offerLetterUploaderName: String,
+  offerJoiningDate: String,
+  offeredCtc: String,
+  offerNotes: String,
   updatedAt: String
-});
+}, { strict: false });
 
 const interviewSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },

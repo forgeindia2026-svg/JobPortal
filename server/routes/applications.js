@@ -335,13 +335,18 @@ router.post('/', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, adminNotes, referredBy, paymentId } = req.body;
+    const { status, adminNotes, referredBy, paymentId, offerLetterUrl, offeredCtc, joiningDate, offerNotes } = req.body;
 
     const updateObj = { updatedAt: new Date().toISOString() };
     if (status) updateObj.status = status;
     if (adminNotes !== undefined) updateObj.adminNotes = adminNotes;
     if (referredBy !== undefined) updateObj.referredBy = referredBy || null;
     if (paymentId) updateObj.paymentId = paymentId;
+    if (offerLetterUrl) updateObj.offerLetterUrl = offerLetterUrl;
+    if (offeredCtc) updateObj.offeredCtc = offeredCtc;
+    if (joiningDate) updateObj.offerJoiningDate = joiningDate;
+    if (offerNotes) updateObj.offerNotes = offerNotes;
+    if (offerLetterUrl) updateObj.offerLetterUploadedAt = new Date().toISOString();
 
     const updated = await ApplicationModel.findOneAndUpdate({ id }, { $set: updateObj }, { new: true }).lean();
 
