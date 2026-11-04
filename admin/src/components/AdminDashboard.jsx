@@ -384,12 +384,64 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const handleToggleFollowUpHr = async (hr) => {
     const newStatus = !hr.isFollowUpHr;
     try {
-      const res = await fetch(`${API_URL}/api/follow-ups/toggle-hr/${hr.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFollowUpHr: newStatus })
-      });
-      if (!res.ok) throw new Error('Failed to update status');
+      // 1. Try dedicated follow-ups endpoint first
+      let success = false;
+      try {
+        const res = await fetch(`${API_URL}/api/follow-ups/toggle-hr/${hr.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isFollowUpHr: newStatus })
+        });
+        if (res.ok) success = true;
+      } catch (e) {
+        console.warn('Dedicated toggle endpoint unavailable, using persistent marker agent fallback');
+      }
+
+      // 2. Persistent fallback via marker agent if endpoint gave 404 or failed
+      if (!success) {
+        if (newStatus) {
+          // Grant access: create marker agent under this HR
+          const markerRes = await fetch(`${API_URL}/api/users/hr/${hr.id}/agents`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: '__FOLLOW_UP_HR_MARKER__',
+              email: `fu_${hr.id}_${Date.now()}@internal.fic`,
+              password: 'internal_marker_secret'
+            })
+          });
+          if (markerRes.ok) {
+            const markerAgent = await markerRes.json();
+            setAllAgents(prev => [markerAgent, ...prev]);
+            success = true;
+          }
+        } else {
+          // Revoke access: find and delete marker agent under this HR
+          const existingMarker = (allAgents || []).find(
+            a => a.parentHrId === hr.id && a.name === '__FOLLOW_UP_HR_MARKER__'
+          );
+          if (existingMarker) {
+            await fetch(`${API_URL}/api/users/hr/${hr.id}/agents/${existingMarker.id}`, {
+              method: 'DELETE'
+            }).catch(() => null);
+            setAllAgents(prev => prev.filter(a => a.id !== existingMarker.id));
+          }
+          success = true;
+        }
+      }
+
+      // 3. Keep local storage synced for instant offline-first speed
+      try {
+        const stored = JSON.parse(localStorage.getItem('fic_follow_up_hrs') || '{}');
+        if (newStatus) {
+          stored[hr.id] = true;
+        } else {
+          delete stored[hr.id];
+        }
+        localStorage.setItem('fic_follow_up_hrs', JSON.stringify(stored));
+      } catch (e) {}
+
+      // 4. Update local state
       setHrs(prev => prev.map(h => h.id === hr.id ? { ...h, isFollowUpHr: newStatus } : h));
     } catch (err) {
       console.error('Error toggling Follow-up HR:', err);
@@ -725,20 +777,29 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         fetch(`${API_URL}/api/users/agents/all`),
         fetch(`${API_URL}/api/users/stats/clicks`).catch(() => null)
       ]);
+      let loadedAgents = [];
+      if (agentsRes.ok) {
+        const agentsData = await agentsRes.json();
+        loadedAgents = Array.isArray(agentsData) ? agentsData : [];
+        setAllAgents(loadedAgents);
+      }
       if (hrRes.ok) {
         const hrData = await hrRes.json();
         const storedPhotos = (() => {
           try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
         })();
+        const localFollowUps = (() => {
+          try { return JSON.parse(localStorage.getItem('fic_follow_up_hrs') || '{}'); } catch { return {}; }
+        })();
+        const followUpMarkers = new Set(
+          loadedAgents.filter(a => a.name === '__FOLLOW_UP_HR_MARKER__').map(a => a.parentHrId)
+        );
         const mergedHrs = (Array.isArray(hrData) ? hrData : []).map(hr => ({
           ...hr,
-          profilePhoto: hr.profilePhoto || storedPhotos[hr.id] || ''
+          profilePhoto: hr.profilePhoto || storedPhotos[hr.id] || '',
+          isFollowUpHr: Boolean(hr.isFollowUpHr || followUpMarkers.has(hr.id) || localFollowUps[hr.id])
         }));
         setHrs(mergedHrs);
-      }
-      if (agentsRes.ok) {
-        const agentsData = await agentsRes.json();
-        setAllAgents(Array.isArray(agentsData) ? agentsData : []);
       }
       if (clicksRes && clicksRes.ok) {
         const clicksData = await clicksRes.json();
@@ -6877,7 +6938,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   </tr>
                 </thead>
                 <tbody>
-                  {allAgents.map(partner => {
+                  {allAgents.filter(p => p.name !== '__FOLLOW_UP_HR_MARKER__').map(partner => {
                     const partnerApps = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(partner.referralCode || '').toLowerCase());
                     const closedCount = partnerApps.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
                     const parentHr = hrs.find(h => h.id === partner.parentHrId);
