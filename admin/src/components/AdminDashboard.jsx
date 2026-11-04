@@ -6822,6 +6822,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           <OfferLettersManager
             API_URL={API_URL}
             currentUser={currentUser}
+            adminApplications={applications}
           />
         )}
         {activeTab === 'partners_admin' && !selectedHrForCandidates && (

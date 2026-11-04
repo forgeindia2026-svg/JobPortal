@@ -7,7 +7,7 @@ import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
 import OffersAndTargetsModal from './OffersAndTargetsModal';
 import OffersAndTargetsView from './OffersAndTargetsView';
-import OfferLettersManager from './OfferLettersManager';
+import OfferLettersManager, { extractOffer } from './OfferLettersManager';
 import FollowUpCentralManager from './FollowUpCentralManager';
 import { uploadToCloudinary, fileToBase64 } from '../utils/cloudinary';
 
@@ -454,13 +454,29 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         }
       }
 
+      // Prepare notes with [OFFER:...] metadata tag so EC2 MongoDB Atlas always retains it
+      let finalAdminNotes = (adminNoteInput || '').trim();
+      if (uploadedOfferUrl) {
+        const offerTag = `[OFFER:${JSON.stringify({
+          url: uploadedOfferUrl,
+          ctc: offeredCtcInput || '',
+          date: joiningDateInput || ''
+        })}]`;
+        if (finalAdminNotes.includes('[OFFER:')) {
+          finalAdminNotes = finalAdminNotes.replace(/\[OFFER:.*?\]/, offerTag).trim();
+        } else {
+          finalAdminNotes = finalAdminNotes ? `${finalAdminNotes} ${offerTag}` : offerTag;
+        }
+      }
+
       const targetId = statusModalApp.id || statusModalApp._id;
       const payload = {
         status: newAppStatus,
-        adminNotes: adminNoteInput,
+        adminNotes: finalAdminNotes,
         offerLetterUrl: uploadedOfferUrl,
         offeredCtc: offeredCtcInput,
         joiningDate: joiningDateInput,
+        offerNotes: finalAdminNotes,
         uploadedBy: currentUser?.id || currentUser?._id || '',
         uploaderName: currentUser?.name || 'HR Executive'
       };
@@ -504,7 +520,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 return {
                   ...a,
                   status: newAppStatus,
-                  adminNotes: adminNoteInput,
+                  adminNotes: finalAdminNotes,
                   offerLetterUrl: uploadedOfferUrl,
                   offeredCtc: offeredCtcInput,
                   offerJoiningDate: joiningDateInput
@@ -979,6 +995,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           <OfferLettersManager
             API_URL={API_URL}
             currentUser={currentUser}
+            hrApplications={stats?.applications || []}
           />
         )}
 
@@ -1555,12 +1572,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
               };
               const getMyIncentive = (app) => Number(isAgent ? app.agentIncentiveAmount : app.incentiveAmount) || 0;
               const openStatus = (app) => {
-                setStatusModalApp(app);
+                const offer = extractOffer(app) || {};
+                setStatusModalApp({
+                  ...app,
+                  offerLetterUrl: offer.url || app.offerLetterUrl || ''
+                });
                 setNewAppStatus(app.status);
                 setAdminNoteInput(app.adminNotes || '');
                 setOfferLetterFile(null);
-                setOfferedCtcInput(app.offeredCtc || '');
-                setJoiningDateInput(app.offerJoiningDate || '');
+                setOfferedCtcInput(offer.ctc || app.offeredCtc || '');
+                setJoiningDateInput(offer.date || app.offerJoiningDate || '');
               };
               const openInterview = (app) => {
                 setAppToSchedule(app);
@@ -1666,11 +1687,15 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                   <button className="btn-primary" style={{ padding: '4px 10px', fontSize: '0.775rem' }} onClick={() => openStatus(app)}>
                                     Update Status
                                   </button>
-                                  {app.offerLetterUrl && (
-                                    <a href={app.offerLetterUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', padding: '4px 10px', fontSize: '0.74rem', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '6px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-                                      📄 Offer Letter ✓
-                                    </a>
-                                  )}
+                                  {(() => {
+                                    const offer = extractOffer(app);
+                                    if (!offer || !offer.url) return null;
+                                    return (
+                                      <a href={offer.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', padding: '4px 10px', fontSize: '0.74rem', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '6px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                                        📄 Offer Letter ✓
+                                      </a>
+                                    );
+                                  })()}
                                   <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.775rem', background: '#eff6ff', color: '#1d4ed8' }} onClick={() => openInterview(app)}>
                                     <Calendar size={12} /> Schedule Interview
                                   </button>
@@ -1776,16 +1801,20 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                             >
                               Update Status
                             </button>
-                            {app.offerLetterUrl && (
-                              <a
-                                href={app.offerLetterUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{ padding: '8px 12px', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', border: '1px solid #86efac', background: '#ecfdf5', color: '#047857', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                              >
-                                📄 Offer Letter ✓
-                              </a>
-                            )}
+                            {(() => {
+                              const offer = extractOffer(app);
+                              if (!offer || !offer.url) return null;
+                              return (
+                                <a
+                                  href={offer.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ padding: '8px 12px', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', border: '1px solid #86efac', background: '#ecfdf5', color: '#047857', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                                >
+                                  📄 Offer Letter ✓
+                                </a>
+                              );
+                            })()}
                             <button
                               style={{ padding: '8px 12px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.4)', background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                               onClick={() => openInterview(app)}

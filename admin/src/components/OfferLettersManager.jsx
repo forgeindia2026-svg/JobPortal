@@ -19,9 +19,21 @@ import {
 // Helper to reliably extract offer letter from document fields or encoded notes
 export function extractOffer(app) {
   if (!app) return null;
+  const formatUrl = (u) => {
+    if (!u) return '';
+    let res = String(u).trim();
+    if (res.includes('res.cloudinary.com')) {
+      res = res.replace('/raw/upload/', '/image/upload/');
+      if (res.toLowerCase().endsWith('.pdf')) {
+        res = res.replace(/\.pdf$/i, '.jpg');
+      }
+    }
+    return res;
+  };
+
   if (app.offerLetterUrl && String(app.offerLetterUrl).trim()) {
     return {
-      url: app.offerLetterUrl,
+      url: formatUrl(app.offerLetterUrl),
       ctc: app.offeredCtc || '',
       date: app.offerJoiningDate || app.joiningDate || ''
     };
@@ -34,7 +46,7 @@ export function extractOffer(app) {
         const parsed = JSON.parse(match[1]);
         if (parsed.url) {
           return {
-            url: parsed.url,
+            url: formatUrl(parsed.url),
             ctc: parsed.ctc || app.offeredCtc || '',
             date: parsed.date || app.offerJoiningDate || app.joiningDate || ''
           };
@@ -44,7 +56,7 @@ export function extractOffer(app) {
     const cldMatch = notes.match(/(https:\/\/res\.cloudinary\.com[^\s"'>]+)/);
     if (cldMatch) {
       return {
-        url: cldMatch[1],
+        url: formatUrl(cldMatch[1]),
         ctc: app.offeredCtc || '',
         date: app.offerJoiningDate || app.joiningDate || ''
       };
