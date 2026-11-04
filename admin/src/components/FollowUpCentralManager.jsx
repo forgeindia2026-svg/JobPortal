@@ -126,6 +126,15 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
   // Claim application (Pick to My Follow-ups) with local storage sync
   const handleClaim = async (app) => {
     if (!currentUser?.id) return;
+
+    // Safety Prompt if the referring HR has already closed this candidate
+    const st = String(app.status || '').toLowerCase();
+    if (st.includes('select') || st.includes('join') || st.includes('convert')) {
+      const confirmClaim = window.confirm(
+        `⚠️ Warning: This candidate is already marked as "${app.status}" by HR Ref: ${app.hrName || app.referredBy}.\n\nAre you sure you want to pick this candidate for follow-up?`
+      );
+      if (!confirmClaim) return;
+    }
     try {
       let claimedOnServer = false;
       try {
@@ -247,6 +256,43 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
     }
   };
 
+  // Distinct HR Application Status Badge (Selected, Shortlisted, Interview, etc.)
+  const renderHrStatusBadge = (status) => {
+    if (!status || status === 'Applied' || status === 'Payment Pending') return null;
+    const lower = String(status).toLowerCase();
+    const isClosed = lower.includes('select') || lower.includes('join') || lower.includes('convert');
+    const isInterview = lower.includes('interview');
+    const isReject = lower.includes('reject') || lower.includes('not interest');
+
+    let bg = '#eff6ff', color = '#1d4ed8', border = '#93c5fd', icon = '📌';
+    if (isClosed) {
+      bg = '#ecfdf5'; color = '#047857'; border = '#10b981'; icon = '🎉';
+    } else if (isInterview) {
+      bg = '#fef3c7'; color = '#b45309'; border = '#f59e0b'; icon = '📅';
+    } else if (isReject) {
+      bg = '#fef2f2'; color = '#b91c1c'; border = '#f87171'; icon = '✕';
+    }
+
+    return (
+      <span style={{
+        marginLeft: '6px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        background: bg,
+        color: color,
+        border: `1.5px solid ${border}`,
+        padding: '2px 8px',
+        borderRadius: '6px',
+        fontSize: '0.72rem',
+        fontWeight: 800,
+        boxShadow: isClosed ? '0 1px 3px rgba(16, 185, 129, 0.2)' : 'none'
+      }}>
+        {icon} HR Status: {status}
+      </span>
+    );
+  };
+
   const filteredApps = applications.filter(a => {
     const q = search.toLowerCase().trim();
     const matchesSearch =
@@ -257,9 +303,17 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
       (a.companyName || '').toLowerCase().includes(q) ||
       (a.followUpAssignedName || '').toLowerCase().includes(q);
 
-    const matchesStatus =
-      statusFilter === 'all' ||
-      String(a.followUpStatus || 'Unclaimed').toLowerCase() === statusFilter.toLowerCase();
+    const hrStatusLower = String(a.status || '').toLowerCase();
+    const isHrClosed = hrStatusLower.includes('select') || hrStatusLower.includes('join') || hrStatusLower.includes('convert');
+
+    let matchesStatus = true;
+    if (statusFilter === 'hide_closed') {
+      matchesStatus = !isHrClosed;
+    } else if (statusFilter === 'closed_only') {
+      matchesStatus = isHrClosed;
+    } else if (statusFilter !== 'all') {
+      matchesStatus = String(a.followUpStatus || 'Unclaimed').toLowerCase() === statusFilter.toLowerCase();
+    }
 
     return matchesSearch && matchesStatus;
   });
@@ -378,7 +432,9 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: '#fff' }}
         >
-          <option value="all">All Follow-up Statuses</option>
+          <option value="all">All Statuses</option>
+          <option value="hide_closed">⚡ Active Only (Hide Placed/Selected)</option>
+          <option value="closed_only">🎉 Placed / Selected by HR</option>
           <option value="Unclaimed">Unclaimed</option>
           <option value="In Follow-up">In Follow-up</option>
           <option value="Call Later">Call Later / Follow-up</option>
@@ -412,15 +468,17 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
           {filteredApps.map((app) => {
             const isClaimedByMe = currentUser?.id && app.followUpAssignedTo === currentUser.id;
             const isClaimedByOther = app.followUpAssignedTo && app.followUpAssignedTo !== currentUser?.id;
+            const appStatusLower = String(app.status || '').toLowerCase();
+            const isCandidateClosed = appStatusLower.includes('select') || appStatusLower.includes('join') || appStatusLower.includes('convert');
 
             return (
               <div
                 key={app.id}
                 style={{
-                  background: '#ffffff',
+                  background: isCandidateClosed ? '#f0fdf4' : '#ffffff',
                   borderRadius: '12px',
                   padding: '14px 16px',
-                  border: isClaimedByMe ? '1.5px solid #10b981' : isClaimedByOther ? '1px solid #e2e8f0' : '1.5px solid #fde68a',
+                  border: isCandidateClosed ? '1.5px solid #86efac' : isClaimedByMe ? '1.5px solid #10b981' : isClaimedByOther ? '1px solid #e2e8f0' : '1.5px solid #fde68a',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -466,15 +524,14 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
                         </span>
                       )}
                       {!app.isPartnerReferral && app.referredBy && (
-                        <span style={{ marginLeft: '6px', background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
-                          HR Ref: {app.hrName || app.referredBy}
-                          {app.status && app.status !== 'Applied' && app.status !== 'Payment Pending' && (
-                            <span style={{ marginLeft: '4px', background: '#dbeafe', color: '#1e40af', padding: '0 4px', borderRadius: '3px', fontWeight: 700, fontSize: '0.68rem' }}>
-                              ({app.status})
-                            </span>
-                          )}
-                        </span>
+                        <>
+                          <span style={{ marginLeft: '6px', background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '4px', fontSize: '0.74rem', fontWeight: 700, border: '1px solid #fde68a' }}>
+                            👤 HR Ref: {app.hrName || app.referredBy}
+                          </span>
+                          {renderHrStatusBadge(app.status)}
+                        </>
                       )}
+                      {app.isPartnerReferral && renderHrStatusBadge(app.status)}
                     </div>
                   </div>
 
