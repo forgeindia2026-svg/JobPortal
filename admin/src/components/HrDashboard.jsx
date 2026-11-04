@@ -1563,7 +1563,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                   <span style={{ fontSize: '0.7rem', background: '#10b981', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>Paid ✓</span>
                                 )}
                               </td>
-                              <td>{getStatusBadge(app.status)}</td>
+                              <td>
+                                <div>{getStatusBadge(app.status)}</div>
+                                {(app.followUpAssignedName || app.followUpStatus) && (
+                                  <div style={{ marginTop: '4px', fontSize: '0.72rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '2px 5px', fontWeight: 600 }}>
+                                    🎧 {app.followUpAssignedName || 'Follow-up HR'}: <strong style={{ color: '#047857' }}>{app.followUpStatus || 'Assigned'}</strong>
+                                  </div>
+                                )}
+                              </td>
                               <td>
                                 <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
                                   <button className="btn-primary" style={{ padding: '4px 10px', fontSize: '0.775rem' }} onClick={() => openStatus(app)}>
@@ -1616,7 +1623,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                                 </span>
                               </div>
                             </div>
-                            <div style={{ flexShrink: 0 }}>{getStatusBadge(app.status)}</div>
+                            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                              {getStatusBadge(app.status)}
+                              {(app.followUpAssignedName || app.followUpStatus) && (
+                                <span style={{ fontSize: '0.7rem', background: 'rgba(255, 255, 255, 0.22)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.35)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                  🎧 {app.followUpAssignedName || 'Follow-up'}: {app.followUpStatus || 'Assigned'}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* App ID + Date/Time */}

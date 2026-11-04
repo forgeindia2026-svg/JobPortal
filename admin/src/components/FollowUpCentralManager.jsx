@@ -468,6 +468,11 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
                       {!app.isPartnerReferral && app.referredBy && (
                         <span style={{ marginLeft: '6px', background: '#fef3c7', color: '#92400e', padding: '1px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
                           HR Ref: {app.hrName || app.referredBy}
+                          {app.status && app.status !== 'Applied' && app.status !== 'Payment Pending' && (
+                            <span style={{ marginLeft: '4px', background: '#dbeafe', color: '#1e40af', padding: '0 4px', borderRadius: '3px', fontWeight: 700, fontSize: '0.68rem' }}>
+                              ({app.status})
+                            </span>
+                          )}
                         </span>
                       )}
                     </div>
