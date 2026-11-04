@@ -5,7 +5,7 @@ import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
   Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut,
-  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield, Trophy
+  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield, Trophy, UserCheck
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
