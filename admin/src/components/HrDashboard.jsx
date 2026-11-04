@@ -472,25 +472,50 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
         body: JSON.stringify(payload)
       });
 
-      // Step 3: Also write to /api/offer-letters so repository picks it up instantly
-      if (offerLetterFile && uploadedOfferUrl) {
-        fetch(`${API_URL}/api/offer-letters`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            applicationId: targetId,
-            offerLetterBase64: uploadedOfferUrl,
-            joiningDate: joiningDateInput,
-            offeredCtc: offeredCtcInput,
-            notes: '',
-            uploadedBy: currentUser?.id || currentUser?._id || '',
-            uploaderName: currentUser?.name || 'HR Executive'
-          })
-        }).catch(() => {});
-      }
-
       if (res.ok) {
-        showToast('Status updated successfully');
+        // Step 3: Write to /api/offer-letters for repository sync
+        if (offerLetterFile && uploadedOfferUrl) {
+          try {
+            await fetch(`${API_URL}/api/offer-letters`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                applicationId: targetId,
+                offerLetterBase64: uploadedOfferUrl,
+                joiningDate: joiningDateInput,
+                offeredCtc: offeredCtcInput,
+                notes: adminNoteInput,
+                uploadedBy: currentUser?.id || currentUser?._id || '',
+                uploaderName: currentUser?.name || 'HR Executive'
+              })
+            });
+          } catch (postErr) {
+            console.warn('Sync to /api/offer-letters:', postErr);
+          }
+        }
+
+        // Optimistically update local application so button shows immediately
+        setStats(prev => {
+          if (!prev || !prev.applications) return prev;
+          return {
+            ...prev,
+            applications: prev.applications.map(a => {
+              if (String(a.id) === String(targetId) || String(a._id) === String(targetId)) {
+                return {
+                  ...a,
+                  status: newAppStatus,
+                  adminNotes: adminNoteInput,
+                  offerLetterUrl: uploadedOfferUrl,
+                  offeredCtc: offeredCtcInput,
+                  offerJoiningDate: joiningDateInput
+                };
+              }
+              return a;
+            })
+          };
+        });
+
+        showToast('Status & Offer Letter updated successfully');
         setStatusModalApp(null);
         fetchStats();
       } else {

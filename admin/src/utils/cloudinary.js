@@ -1,20 +1,26 @@
 const CLOUD_NAME = 'giteeaam';
-// Unsigned upload preset - created in Cloudinary dashboard
-// Settings: unsigned=true, resource_type=auto, folder=offer_letters
-// Supports: pdf, jpg, jpeg, png, webp
 const UNSIGNED_PRESET = 'offer_letters_unsigned';
 
 /**
- * Uploads any file (PDF, image) to Cloudinary using unsigned preset.
- * Returns a permanent HTTPS CDN URL.
- * MongoDB stores ONLY this URL — never the file data itself.
+ * Uploads a file (PDF document or image) to Cloudinary using the unsigned preset.
+ * PDFs are routed to /raw/upload, images to /auto/upload.
+ * Returns the permanent HTTPS CDN URL.
  */
 export async function uploadToCloudinary(file) {
+  if (!file) throw new Error('No file provided for upload');
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', UNSIGNED_PRESET);
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+  // Determine resource endpoint based on file type / extension
+  const isPdf =
+    file.type === 'application/pdf' ||
+    (typeof file.name === 'string' && file.name.toLowerCase().endsWith('.pdf'));
+
+  const endpoint = isPdf ? 'raw' : 'auto';
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${endpoint}/upload`, {
     method: 'POST',
     body: formData
   });
@@ -22,15 +28,20 @@ export async function uploadToCloudinary(file) {
   const data = await res.json();
 
   if (!res.ok || data.error) {
-    throw new Error(data.error?.message || 'Cloudinary upload failed');
+    console.error('Cloudinary upload error:', data.error);
+    throw new Error(data.error?.message || 'Failed to upload to Cloudinary');
   }
 
-  return data.secure_url || data.url;
+  const resultUrl = data.secure_url || data.url;
+  if (!resultUrl) {
+    throw new Error('Cloudinary response missing URL');
+  }
+
+  return resultUrl;
 }
 
 /**
  * Fallback: converts a File/Blob to a base64 Data URL.
- * Used only if Cloudinary upload fails.
  */
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
