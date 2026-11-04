@@ -2870,14 +2870,15 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
         </button>
 
         <button
-          className={`nav-item ${activeTab === 'offer_targets' ? 'active' : ''}`}
-          onClick={() => handleTabChange('offer_targets')}
+          className={`nav-item ${activeTab === 'offer_letters' ? 'active' : ''}`}
+          onClick={() => handleTabChange('offer_letters')}
           style={{
-            background: activeTab === 'offer_targets' ? 'rgba(234, 88, 12, 0.2)' : undefined,
-            color: activeTab === 'offer_targets' ? '#fb923c' : undefined
+            background: activeTab === 'offer_letters' ? 'rgba(37, 99, 235, 0.15)' : undefined,
+            color: activeTab === 'offer_letters' ? '#2563eb' : undefined,
+            fontWeight: activeTab === 'offer_letters' ? 700 : undefined
           }}
         >
-          <Trophy size={18} color="#fb923c" /> Offers & Targets
+          <FileText size={18} color={activeTab === 'offer_letters' ? '#2563eb' : undefined} /> Offer Letters 📄
         </button>
 
         <button
@@ -6819,6 +6820,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
 
         {activeTab === 'offer_targets' && (
           <OfferTargetsManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+          />
+        )}
+
+        {activeTab === 'offer_letters' && (
+          <OfferLettersManager
             API_URL={API_URL}
             currentUser={currentUser}
           />
