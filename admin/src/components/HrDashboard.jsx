@@ -97,6 +97,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   const [jobs, setJobs] = useState([]);
   const [hrs, setHrs] = useState([]);
   const [allApplications, setAllApplications] = useState([]);
+  const [isFollowUpAssigned, setIsFollowUpAssigned] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('fic_follow_up_hrs') || '{}');
+      return Boolean(currentUser?.isFollowUpHr || (currentUser?.id && local[currentUser.id]));
+    } catch {
+      return Boolean(currentUser?.isFollowUpHr);
+    }
+  });
 
   const filteredDirectJobs = useMemo(() => {
     return directJobs.filter(job => {
@@ -273,6 +281,27 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   useEffect(() => {
     fetchStats();
     fetchLeaderboardData();
+    // Live check if current HR has follow-up assignment via marker agent
+    if (currentUser?.id) {
+      fetch(`${API_URL}/api/users/agents/all`)
+        .then(res => res.json())
+        .then(agents => {
+          if (Array.isArray(agents)) {
+            const hasMarker = agents.some(
+              a => a.parentHrId === currentUser.id && a.name === '__FOLLOW_UP_HR_MARKER__'
+            );
+            if (hasMarker) {
+              setIsFollowUpAssigned(true);
+              try {
+                const local = JSON.parse(localStorage.getItem('fic_follow_up_hrs') || '{}');
+                local[currentUser.id] = true;
+                localStorage.setItem('fic_follow_up_hrs', JSON.stringify(local));
+              } catch (e) {}
+            }
+          }
+        })
+        .catch(() => null);
+    }
     const interval = setInterval(() => {
       fetchStats();
       fetchLeaderboardData();
@@ -730,7 +759,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <Gift size={18} /><span>Incentives</span>
           </button>
 
-          {Boolean(currentUser?.isFollowUpHr) && (
+          {Boolean(isFollowUpAssigned || currentUser?.isFollowUpHr) && (
             <button
               className={`nav-item ${activeTab === 'follow_ups' ? 'active' : ''}`}
               onClick={() => { setActiveTab('follow_ups'); setSidebarOpen && setSidebarOpen(false); }}

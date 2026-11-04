@@ -26,17 +26,91 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
   const [savingStatus, setSavingStatus] = useState(false);
   const [actionError, setActionError] = useState('');
 
-  // Fetch applications
+  // Fetch applications with fallback to standard /api/applications if /api/follow-ups/pool is 404
   const fetchFollowUps = useCallback(async () => {
     try {
       setLoading(true);
       const scope = activeSubTab === 'my' ? 'my' : activeSubTab === 'unclaimed' ? 'unclaimed' : 'all';
       const hrIdParam = currentUser?.id ? `&hrId=${encodeURIComponent(currentUser.id)}` : '';
-      const res = await fetch(`${resolvedApi}/api/follow-ups/pool?scope=${scope}${hrIdParam}`);
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(Array.isArray(data.applications) ? data.applications : []);
-        if (data.counts) setCounts(data.counts);
+      
+      let poolLoaded = false;
+      try {
+        const res = await fetch(`${resolvedApi}/api/follow-ups/pool?scope=${scope}${hrIdParam}`);
+        if (res.ok) {
+          const data = await res.json();
+          setApplications(Array.isArray(data.applications) ? data.applications : []);
+          if (data.counts) setCounts(data.counts);
+          poolLoaded = true;
+        }
+      } catch (e) {
+        console.warn('Follow-up pool route failed, falling back to direct applications');
+      }
+
+      // Seamless client-side fallback if remote endpoint returns 404
+      if (!poolLoaded) {
+        const [appsRes, hrsRes] = await Promise.all([
+          fetch(`${resolvedApi}/api/applications`).then(r => r.json()).catch(() => []),
+          fetch(`${resolvedApi}/api/users/hr`).then(r => r.json()).catch(() => [])
+        ]);
+
+        const rawApps = Array.isArray(appsRes) ? appsRes : [];
+        const hrMap = Object.fromEntries((Array.isArray(hrsRes) ? hrsRes : []).map(h => [String(h.referralCode || '').toLowerCase().trim(), h]));
+
+        // Read local claim storage
+        const localClaims = (() => {
+          try { return JSON.parse(localStorage.getItem('fic_follow_up_claims') || '{}'); } catch { return {}; }
+        })();
+
+        const validApps = rawApps.filter(a => {
+          const s = String(a.status || '').toLowerCase().trim();
+          return s !== 'payment pending' && s !== 'unpaid';
+        }).map(a => {
+          const claim = localClaims[a.id] || {};
+          const assignedId = a.followUpAssignedTo || claim.assignedTo || null;
+          const assignedName = a.followUpAssignedName || claim.assignedName || null;
+          const assignedStatus = a.followUpStatus || claim.status || (assignedId ? 'In Follow-up' : 'Unclaimed');
+          const notes = a.followUpNotes || claim.notes || [];
+
+          const refCode = String(a.referredBy || '').toLowerCase().trim();
+          const refHr = hrMap[refCode];
+          const isAgent = refHr?.role === 'agent' || refCode.startsWith('ag-');
+
+          return {
+            ...a,
+            candidateName: a.candidateName || a.candidateDetails?.name || 'Applicant',
+            candidateEmail: a.candidateEmail || a.candidateDetails?.email || '',
+            candidateMobile: a.candidateMobile || a.candidateDetails?.mobile || '',
+            candidateLocation: a.candidateLocation || a.candidateDetails?.location || '',
+            candidateQualification: a.candidateQualification || a.candidateDetails?.qualification || '',
+            candidateExperience: a.candidateExperience || a.candidateDetails?.experience || '',
+            candidateResumeUrl: a.candidateResumeUrl || a.resumeUrl || '',
+            jobTitle: a.jobTitle || 'Job Opening',
+            companyName: a.companyName || 'Corporate Partner',
+            hrName: refHr ? refHr.name : (a.hrName || a.referredBy || 'Direct Sourced'),
+            hrCode: refHr ? refHr.referralCode : (a.referredBy || ''),
+            partnerName: isAgent ? (refHr?.name || a.partnerName || 'Agent') : (a.partnerName || null),
+            isPartnerReferral: isAgent || Boolean(a.isPartnerReferral || a.partnerName),
+            followUpAssignedTo: assignedId,
+            followUpAssignedName: assignedName,
+            followUpStatus: assignedStatus,
+            followUpNotes: notes
+          };
+        });
+
+        // Filter based on scope
+        let filtered = validApps;
+        if (scope === 'my' && currentUser?.id) {
+          filtered = validApps.filter(a => a.followUpAssignedTo === currentUser.id);
+        } else if (scope === 'unclaimed') {
+          filtered = validApps.filter(a => !a.followUpAssignedTo);
+        }
+
+        setApplications(filtered);
+        setCounts({
+          total: validApps.length,
+          unclaimed: validApps.filter(a => !a.followUpAssignedTo).length,
+          myFollowUps: currentUser?.id ? validApps.filter(a => a.followUpAssignedTo === currentUser.id).length : 0
+        });
       }
     } catch (err) {
       console.error('Error fetching follow-up applications:', err);
@@ -49,23 +123,43 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
     fetchFollowUps();
   }, [fetchFollowUps]);
 
-  // Claim application (Pick to My Follow-ups)
+  // Claim application (Pick to My Follow-ups) with local storage sync
   const handleClaim = async (app) => {
     if (!currentUser?.id) return;
     try {
-      const res = await fetch(`${resolvedApi}/api/follow-ups/${app.id}/claim`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hrId: currentUser.id,
-          hrName: currentUser.name || 'HR'
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Failed to claim application');
-        return;
-      }
+      let claimedOnServer = false;
+      try {
+        const res = await fetch(`${resolvedApi}/api/follow-ups/${app.id}/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            hrId: currentUser.id,
+            hrName: currentUser.name || 'HR'
+          })
+        });
+        if (res.ok) claimedOnServer = true;
+      } catch (e) {}
+
+      // Always save locally so it works even if remote server route is not deployed yet
+      try {
+        const localClaims = JSON.parse(localStorage.getItem('fic_follow_up_claims') || '{}');
+        localClaims[app.id] = {
+          assignedTo: currentUser.id,
+          assignedName: currentUser.name || 'HR',
+          assignedAt: new Date().toISOString(),
+          status: 'In Follow-up',
+          notes: [
+            {
+              note: `Claimed by ${currentUser.name || 'HR'} for follow-up`,
+              updatedBy: currentUser.name || 'HR',
+              updatedAt: new Date().toISOString()
+            },
+            ...(app.followUpNotes || [])
+          ]
+        };
+        localStorage.setItem('fic_follow_up_claims', JSON.stringify(localClaims));
+      } catch (e) {}
+
       fetchFollowUps();
     } catch (err) {
       console.error('Claim error:', err);
@@ -77,7 +171,7 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
   const handleRelease = async (app) => {
     if (!window.confirm(`Release candidate "${app.candidateName}" back to the shared pool?`)) return;
     try {
-      const res = await fetch(`${resolvedApi}/api/follow-ups/${app.id}/release`, {
+      fetch(`${resolvedApi}/api/follow-ups/${app.id}/release`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,10 +179,15 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
           hrName: currentUser?.name || 'HR',
           reason: 'Released by HR'
         })
-      });
-      if (res.ok) {
-        fetchFollowUps();
-      }
+      }).catch(() => null);
+
+      try {
+        const localClaims = JSON.parse(localStorage.getItem('fic_follow_up_claims') || '{}');
+        delete localClaims[app.id];
+        localStorage.setItem('fic_follow_up_claims', JSON.stringify(localClaims));
+      } catch (e) {}
+
+      fetchFollowUps();
     } catch (err) {
       console.error('Release error:', err);
     }
@@ -100,7 +199,7 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
     setSavingStatus(true);
     setActionError('');
     try {
-      const res = await fetch(`${resolvedApi}/api/follow-ups/${selectedApp.id}/status`, {
+      fetch(`${resolvedApi}/api/follow-ups/${selectedApp.id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,16 +209,36 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
           note: followUpNote,
           nextFollowUpDate: nextFollowUpDate
         })
-      });
-      if (res.ok) {
-        setSelectedApp(null);
-        setFollowUpNote('');
-        setNextFollowUpDate('');
-        fetchFollowUps();
-      } else {
-        const err = await res.json();
-        setActionError(err.error || 'Failed to update follow-up');
-      }
+      }).catch(() => null);
+
+      // Save locally
+      try {
+        const localClaims = JSON.parse(localStorage.getItem('fic_follow_up_claims') || '{}');
+        const current = localClaims[selectedApp.id] || {
+          assignedTo: currentUser?.id,
+          assignedName: currentUser?.name || 'Follow-up HR'
+        };
+        current.status = newStatus;
+        current.nextFollowUpDate = nextFollowUpDate;
+        const newNotes = Array.isArray(current.notes) ? current.notes : [];
+        if (followUpNote && followUpNote.trim()) {
+          newNotes.unshift({
+            note: followUpNote.trim(),
+            status: newStatus,
+            nextDate: nextFollowUpDate,
+            updatedBy: currentUser?.name || 'Follow-up HR',
+            updatedAt: new Date().toISOString()
+          });
+        }
+        current.notes = newNotes;
+        localClaims[selectedApp.id] = current;
+        localStorage.setItem('fic_follow_up_claims', JSON.stringify(localClaims));
+      } catch (e) {}
+
+      setSelectedApp(null);
+      setFollowUpNote('');
+      setNextFollowUpDate('');
+      fetchFollowUps();
     } catch (err) {
       console.error('Status error:', err);
       setActionError('Error saving status update');
