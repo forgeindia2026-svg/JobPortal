@@ -256,21 +256,24 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
     }
   };
 
-  // Distinct HR Application Status Badge (Selected, Shortlisted, Interview, etc.)
+  // Distinct HR Application Status Badge (Selected, Shortlisted, Interview, Applied, etc.)
   const renderHrStatusBadge = (status) => {
-    if (!status || status === 'Applied' || status === 'Payment Pending') return null;
-    const lower = String(status).toLowerCase();
+    const raw = status || 'Applied';
+    const lower = String(raw).toLowerCase();
     const isClosed = lower.includes('select') || lower.includes('join') || lower.includes('convert');
     const isInterview = lower.includes('interview');
     const isReject = lower.includes('reject') || lower.includes('not interest');
+    const isApplied = lower === 'applied' || lower === 'payment pending';
 
-    let bg = '#eff6ff', color = '#1d4ed8', border = '#93c5fd', icon = '📌';
+    let bg = '#f8fafc', color = '#475569', border = '#cbd5e1', icon = '📌';
     if (isClosed) {
       bg = '#ecfdf5'; color = '#047857'; border = '#10b981'; icon = '🎉';
     } else if (isInterview) {
       bg = '#fef3c7'; color = '#b45309'; border = '#f59e0b'; icon = '📅';
     } else if (isReject) {
       bg = '#fef2f2'; color = '#b91c1c'; border = '#f87171'; icon = '✕';
+    } else if (isApplied) {
+      bg = '#f1f5f9'; color = '#334155'; border = '#94a3b8'; icon = '📝';
     }
 
     return (
@@ -288,7 +291,7 @@ export default function FollowUpCentralManager({ API_URL, currentUser }) {
         fontWeight: 800,
         boxShadow: isClosed ? '0 1px 3px rgba(16, 185, 129, 0.2)' : 'none'
       }}>
-        {icon} HR Status: {status}
+        {icon} HR Status: {raw}
       </span>
     );
   };
