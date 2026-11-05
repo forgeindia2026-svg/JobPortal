@@ -21,7 +21,13 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
   const fetchAgents = () => {
     fetch(`${API_URL}/api/users/hr/${currentUser.id}/agents`)
       .then(res => res.json())
-      .then(data => { setAgents(Array.isArray(data) ? data : []); setLoading(false); })
+      .then(data => {
+        const clean = Array.isArray(data)
+          ? data.filter(a => a.name !== '__FOLLOW_UP_HR_MARKER__' && !String(a.email || '').startsWith('fu_'))
+          : [];
+        setAgents(clean);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   };
 
@@ -155,6 +161,9 @@ export default function AgentsManager({ API_URL, currentUser, candidatePortalBas
               <tr key={agent.id}>
                 <td>
                   <div style={{ fontWeight: 700, color: '#0f172a' }}>{agent.name}</div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '1px 6px', fontSize: '0.7rem', fontWeight: 700, marginTop: '2px', marginBottom: '2px' }}>
+                    👤 HR: {currentUser?.name || 'Managing HR'} ({currentUser?.referralCode || 'HR'})
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{agent.email}</div>
                   {agent.mobile && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{agent.mobile}</div>}
                 </td>

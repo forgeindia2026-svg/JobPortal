@@ -6869,27 +6869,36 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                       </span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {topPartnerSourcers.slice(0, 5).map((partner, idx) => (
-                        <div
-                          key={partner.id || idx}
-                          onClick={() => { setSelectedHrForCandidates(partner); setHrCandidateSearch(''); setHrCandidateStatusFilter('all'); }}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '10px', cursor: 'pointer' }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : '#e2e8f0', color: idx === 0 ? '#a16207' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
-                              {idx + 1}
+                      {topPartnerSourcers.slice(0, 5).map((partner, idx) => {
+                        const parentHr = hrs.find(h => String(h.id || h._id) === String(partner.parentHrId)) ||
+                          hrs.find(h => Array.isArray(h.agentCodes) && h.agentCodes.map(c => String(c).toLowerCase()).includes(String(partner.referralCode || '').toLowerCase()));
+                        return (
+                          <div
+                            key={partner.id || idx}
+                            onClick={() => { setSelectedHrForCandidates(partner); setHrCandidateSearch(''); setHrCandidateStatusFilter('all'); }}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '10px', cursor: 'pointer' }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : '#e2e8f0', color: idx === 0 ? '#a16207' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{partner.name}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                                  <span style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>{partner.referralCode}</span>
+                                  {parentHr && (
+                                    <span style={{ fontSize: '0.72rem', color: '#4f46e5', fontWeight: 700 }}>• HR: {parentHr.name}</span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{partner.name}</div>
-                              <div style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>{partner.referralCode}</div>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '1rem' }}>{partner.totalSourced}</span>
+                              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Applied</div>
                             </div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontWeight: 800, color: '#2563eb', fontSize: '1rem' }}>{partner.totalSourced}</span>
-                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Applied</div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -6905,27 +6914,36 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                       </span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {topPartnerClosers.slice(0, 5).map((partner, idx) => (
-                        <div
-                          key={partner.id || idx}
-                          onClick={() => { setSelectedHrForCandidates(partner); setHrCandidateSearch(''); setHrCandidateStatusFilter('all'); }}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '10px', cursor: 'pointer' }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : '#dcfce7', color: idx === 0 ? '#a16207' : '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
-                              {idx + 1}
+                      {topPartnerClosers.slice(0, 5).map((partner, idx) => {
+                        const parentHr = hrs.find(h => String(h.id || h._id) === String(partner.parentHrId)) ||
+                          hrs.find(h => Array.isArray(h.agentCodes) && h.agentCodes.map(c => String(c).toLowerCase()).includes(String(partner.referralCode || '').toLowerCase()));
+                        return (
+                          <div
+                            key={partner.id || idx}
+                            onClick={() => { setSelectedHrForCandidates(partner); setHrCandidateSearch(''); setHrCandidateStatusFilter('all'); }}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '10px', cursor: 'pointer' }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: idx === 0 ? '#fef08a' : '#dcfce7', color: idx === 0 ? '#a16207' : '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{partner.name}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                                  <span style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>{partner.referralCode}</span>
+                                  {parentHr && (
+                                    <span style={{ fontSize: '0.72rem', color: '#4f46e5', fontWeight: 700 }}>• HR: {parentHr.name}</span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{partner.name}</div>
-                              <div style={{ fontSize: '0.72rem', color: '#b45309', fontWeight: 600 }}>{partner.referralCode}</div>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontWeight: 800, color: '#059669', fontSize: '1rem' }}>{partner.totalClosed}</span>
+                              <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Closed</div>
                             </div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontWeight: 800, color: '#059669', fontSize: '1rem' }}>{partner.totalClosed}</span>
-                            <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Closed</div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -7115,9 +7133,11 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                   No partners found. Add one to get started.
                 </div>
               ) : (
-                allAgents.map(partner => {
+                allAgents.filter(p => p.name !== '__FOLLOW_UP_HR_MARKER__' && !String(p.email || '').startsWith('fu_')).map(partner => {
                   const partnerApps = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === String(partner.referralCode || '').toLowerCase());
                   const closedCount = partnerApps.filter(a => CLOSED_STATUSES.includes(String(a.status || '').toLowerCase())).length;
+                  const parentHr = hrs.find(h => String(h.id || h._id) === String(partner.parentHrId)) ||
+                    hrs.find(h => Array.isArray(h.agentCodes) && h.agentCodes.map(c => String(c).toLowerCase()).includes(String(partner.referralCode || '').toLowerCase()));
                   return (
                     <div
                       key={partner.id}
@@ -7159,6 +7179,11 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
                             <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {partner.name}
                             </div>
+                            {parentHr && (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '2px 8px', fontSize: '0.74rem', fontWeight: 700, marginTop: '3px', marginBottom: '3px' }}>
+                                👤 Managing HR: {parentHr.name} ({parentHr.referralCode || 'HR'})
+                              </div>
+                            )}
                             <div style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {partner.email}
                             </div>
