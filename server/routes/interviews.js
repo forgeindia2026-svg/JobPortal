@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { readDBAsync, InterviewModel, ApplicationModel } = require('../db');
+const { readDBAsync, InterviewModel, ApplicationModel, UserModel } = require('../db');
 
-// GET /api/interviews (supports ?candidateId=xxx or ?applicationId=xxx)
+// GET /api/interviews (supports ?candidateId=xxx or ?applicationId=xxx or ?role=xxx&referralCode=xxx)
 router.get('/', async (req, res) => {
   try {
-    const { candidateId, applicationId } = req.query;
+    const { candidateId, applicationId, role, referralCode, userId } = req.query;
 
     // Clean up duplicate interviews in MongoDB Atlas if any exist
     try {
@@ -46,6 +46,49 @@ router.get('/', async (req, res) => {
     }
     if (applicationId) {
       interviews = interviews.filter(i => i.applicationId === applicationId);
+    }
+
+    if (role === 'agent' || role === 'partner') {
+      const code = String(referralCode || '').toLowerCase().trim();
+      const matchedAppIds = new Set();
+      const matchedCandIds = new Set();
+      (db.applications || []).forEach(a => {
+        const ref = String(a.referredBy || '').toLowerCase().trim();
+        const candRef = String(a.candidateDetails?.referredBy || '').toLowerCase().trim();
+        if (code && (ref === code || candRef === code)) {
+          if (a.id) matchedAppIds.add(String(a.id));
+          if (a._id) matchedAppIds.add(String(a._id));
+          if (a.candidateId) matchedCandIds.add(String(a.candidateId));
+        }
+      });
+      interviews = interviews.filter(i => 
+        (i.applicationId && matchedAppIds.has(String(i.applicationId))) ||
+        (i.candidateId && matchedCandIds.has(String(i.candidateId)))
+      );
+    } else if (role === 'hr') {
+      const code = String(referralCode || '').toLowerCase().trim();
+      const allUsers = db.users || [];
+      const hrUser = allUsers.find(u => u.role === 'hr' && (String(u.referralCode || '').toLowerCase().trim() === code || String(u.id) === String(userId)));
+      const agentCodes = allUsers
+        .filter(u => u.role === 'agent' && hrUser && (String(u.parentHrId) === String(hrUser.id) || String(u.assignedHrId) === String(hrUser.id)))
+        .map(u => String(u.referralCode || '').toLowerCase().trim());
+      const matchCodes = new Set([code, ...agentCodes].filter(Boolean));
+
+      const matchedAppIds = new Set();
+      const matchedCandIds = new Set();
+      (db.applications || []).forEach(a => {
+        const ref = String(a.referredBy || '').toLowerCase().trim();
+        const appHrCode = String(a.hrCode || a.referringHrCode || '').toLowerCase().trim();
+        if (matchCodes.has(ref) || (code && appHrCode === code)) {
+          if (a.id) matchedAppIds.add(String(a.id));
+          if (a._id) matchedAppIds.add(String(a._id));
+          if (a.candidateId) matchedCandIds.add(String(a.candidateId));
+        }
+      });
+      interviews = interviews.filter(i => 
+        (i.applicationId && matchedAppIds.has(String(i.applicationId))) ||
+        (i.candidateId && matchedCandIds.has(String(i.candidateId)))
+      );
     }
 
     // Deduplicate in response list as safety net

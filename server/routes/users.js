@@ -408,6 +408,26 @@ router.get('/stats/clicks', async (req, res) => {
 
 // ================= AGENTS (owned by an HR) =================
 
+// GET all agents / partners
+router.get('/agents', async (req, res) => {
+  try {
+    const { hrId } = req.query;
+    const filter = {
+      role: 'agent',
+      name: { $ne: '__FOLLOW_UP_HR_MARKER__' },
+      email: { $not: /^fu_/ }
+    };
+    if (hrId) filter.parentHrId = hrId;
+    const agents = await UserModel.find(filter).sort({ createdAt: -1 }).lean();
+    res.json(agents.map(a => {
+      const { passwordHash, ...rest } = a;
+      return rest;
+    }));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch agents.' });
+  }
+});
+
 // GET all agents (for admin)
 router.get('/agents/all', async (req, res) => {
   try {

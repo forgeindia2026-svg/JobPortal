@@ -99,6 +99,7 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
 
   const role = currentUser?.role || 'admin';
   const isHr = role === 'hr';
+  const isAgent = role === 'agent' || role === 'partner';
 
   const loadData = useCallback(async () => {
     try {
@@ -148,6 +149,10 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
 
       // 1. Process items from dedicated /api/offer-letters
       validOffers.forEach(o => {
+        if (isAgent) {
+          const matchCode = hrCode && (String(o.referredBy || '').toLowerCase().trim() === hrCode || String(o.hrCode || '').toLowerCase().trim() === hrCode);
+          if (!matchCode) return;
+        }
         const idKey = String(o.id || o._id || '');
         if (idKey && !seenIds.has(idKey)) {
           seenIds.add(idKey);
@@ -166,7 +171,10 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
         const offer = extractOffer(a);
         if (!offer) return;
 
-        if (isHr) {
+        if (isAgent) {
+          const matchCode = hrCode && String(a.referredBy || '').toLowerCase().trim() === hrCode;
+          if (!matchCode) return;
+        } else if (isHr) {
           const matchCode = hrCode && String(a.referredBy || '').toLowerCase() === hrCode;
           const matchHrId = hrId && (String(a.offerLetterUploadedBy || '') === hrId || String(a.hrId || '') === hrId);
           if (!matchCode && !matchHrId) return;

@@ -84,7 +84,17 @@ router.get('/', async (req, res) => {
     // Role filtering:
     let filtered = populated;
 
-    if (role === 'hr') {
+    if (role === 'agent' || role === 'partner') {
+      const code = String(referralCode || '').toLowerCase().trim();
+      filtered = populated.filter(a => {
+        const ref = String(a.referredBy || '').toLowerCase().trim();
+        const candRef = String(a.candidateDetails?.referredBy || '').toLowerCase().trim();
+        const candUserId = String(a.candidateDetails?.userId || '');
+        const matchCode = code && (ref === code || candRef === code);
+        const matchUser = userId && (String(a.agentId) === String(userId) || String(a.partnerId) === String(userId) || candUserId === String(userId));
+        return matchCode || matchUser;
+      });
+    } else if (role === 'hr') {
       const code = String(referralCode || '').toLowerCase();
       filtered = populated.filter(a => 
         (code && String(a.referredBy || '').toLowerCase() === code) ||

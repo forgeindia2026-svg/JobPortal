@@ -264,19 +264,20 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   };
 
   const fetchLeaderboardData = () => {
+    const usersEndpoint = isAgent ? `${API_URL}/api/users/agents/all` : `${API_URL}/api/users/hr`;
     Promise.all([
-      fetch(`${API_URL}/api/users/hr`).then(res => res.json()).catch(() => []),
+      fetch(usersEndpoint).then(res => res.json()).catch(() => []),
       fetch(`${API_URL}/api/applications`).then(res => res.json()).catch(() => [])
     ])
-    .then(([hrData, appsData]) => {
+    .then(([userData, appsData]) => {
       const storedPhotos = (() => {
         try { return JSON.parse(localStorage.getItem('hr_profile_photos') || '{}'); } catch { return {}; }
       })();
-      const mergedHrs = (Array.isArray(hrData) ? hrData : []).map(hr => ({
-        ...hr,
-        profilePhoto: hr.profilePhoto || storedPhotos[hr.id] || ''
+      const mergedUsers = (Array.isArray(userData) ? userData : []).map(u => ({
+        ...u,
+        profilePhoto: u.profilePhoto || storedPhotos[u.id] || ''
       }));
-      setHrs(mergedHrs);
+      setHrs(mergedUsers);
       setAllApplications(Array.isArray(appsData) ? appsData : []);
     })
     .catch(err => console.error('Error fetching leaderboard data:', err));
@@ -1289,7 +1290,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   {/* Top Applications Received Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Most Apps)</span>
+                      🚀 Top Applications Received <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>({isAgent ? 'Top Partners' : 'Most Apps'})</span>
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topSourcers.map((hr, idx) => {
@@ -1363,7 +1364,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                   {/* Top Closers Card */}
                   <div style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>(Selected & Closed Candidates)</span>
+                      🏆 Top Closers <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>({isAgent ? 'Top Partners - Selected & Closed' : 'Selected & Closed Candidates'})</span>
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {topClosers.map((hr, idx) => {
