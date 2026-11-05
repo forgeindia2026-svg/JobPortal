@@ -3188,7 +3188,9 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             </div>
 
             {(() => {
-              const hrStats = hrs.map(hr => {
+              const hrStats = hrs
+                .filter(hr => hr.name !== '__FOLLOW_UP_HR_MARKER__' && !String(hr.email || '').startsWith('fu_'))
+                .map(hr => {
                 const hrCode = String(hr.referralCode || '').toLowerCase();
                 const hrApps = validApplications.filter(app => String(app.referredBy || '').toLowerCase() === hrCode);
                 const closedApps = hrApps.filter(app => {
