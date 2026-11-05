@@ -22,6 +22,7 @@ const getBankBrandGradient = (name) => {
   if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #075985 100%)';
   if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #172554 100%)';
   if (lowerName.includes('suryoday')) return 'linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #9a3412 100%)';
+  if (lowerName.includes('hero')) return 'linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #7f1d1d 100%)';
   if (lowerName.includes('fic') || lowerName.includes('it training') || lowerName.includes('software')) return 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)';
   return 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
 };
@@ -39,6 +40,7 @@ const getBankShadowColor = (name) => {
   if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'rgba(2, 132, 199, 0.45)';
   if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'rgba(30, 58, 138, 0.45)';
   if (lowerName.includes('suryoday')) return 'rgba(234, 88, 12, 0.45)';
+  if (lowerName.includes('hero')) return 'rgba(220, 38, 38, 0.45)';
   return 'rgba(30, 41, 59, 0.35)';
 };
 
@@ -65,6 +67,7 @@ const BANK_BRAND_COLORS = {
   'hdfc': '#004C8F',
   'tata aig': '#003366',
   'suryoday': '#E84B18',
+  'hero': '#E31837',
 };
 
 const getBankColor = (name) => {

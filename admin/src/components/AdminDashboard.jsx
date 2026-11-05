@@ -36,6 +36,7 @@ const getBankBrandGradient = (name) => {
   if (lowerName.includes('icici')) return 'linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #9a3412 100%)';
   if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #075985 100%)';
   if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #172554 100%)';
+  if (lowerName.includes('hero')) return 'linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #7f1d1d 100%)';
   return 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
 };
 
@@ -52,6 +53,7 @@ const getBankShadowColor = (name) => {
   if (lowerName.includes('yes bank') || lowerName.includes('yes')) return 'rgba(2, 132, 199, 0.45)';
   if (lowerName.includes('tata aig') || lowerName.includes('tata')) return 'rgba(30, 58, 138, 0.45)';
   if (lowerName.includes('suryoday')) return 'rgba(234, 88, 12, 0.45)';
+  if (lowerName.includes('hero')) return 'rgba(220, 38, 38, 0.45)';
   return 'rgba(30, 41, 59, 0.35)';
 };
 
@@ -69,6 +71,7 @@ const getNormalizedBankName = (rawName) => {
   if (n.includes('aditya birla')) return 'Aditya Birla Capital';
   if (n.includes('yes bank') || n.includes('yes')) return 'YES Bank';
   if (n.includes('suryoday')) return 'Suryoday Small Finance Bank';
+  if (n.includes('hero')) return 'Hero Housing Finance';
   return rawName || 'Banking Partner';
 };
 
@@ -84,6 +87,7 @@ const getBankLogo = (bankName) => {
   if (n.includes('aditya birla')) return '/logos/aditya_birla.jpg';
   if (n.includes('yes bank') || n.includes('yes')) return '/logos/Yes_Bank_Logo.jpg';
   if (n.includes('suryoday')) return '/logos/suryoday.webp';
+  if (n.includes('hero')) return '/logos/hero_housing_finance.webp';
   return '/logo.png';
 };
 
@@ -216,6 +220,14 @@ const getBankBrandTheme = (rawName) => {
       bg: '#fff7ed',
       border: '#fed7aa',
       name: 'Suryoday Small Finance Bank'
+    };
+  }
+  if (n.includes('hero')) {
+    return {
+      color: '#b91c1c',
+      bg: '#fef2f2',
+      border: '#fca5a5',
+      name: 'Hero Housing Finance'
     };
   }
   return {
@@ -491,7 +503,8 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
       'Mahindra Finance',
       'TATA AIG',
       'YES Bank',
-      'Suryoday Small Finance Bank'
+      'Suryoday Small Finance Bank',
+      'Hero Housing Finance'
     ];
     (companies || []).filter(c => c.categoryId === 'cat_banking').forEach(c => {
       const bName = getNormalizedBankName(c.name);

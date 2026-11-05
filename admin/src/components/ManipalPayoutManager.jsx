@@ -18,6 +18,7 @@ const getNormalizedBankName = (rawName) => {
   if (n.includes('aditya birla')) return 'Aditya Birla Capital';
   if (n.includes('yes bank') || n.includes('yes')) return 'YES Bank';
   if (n.includes('suryoday')) return 'Suryoday Small Finance Bank';
+  if (n.includes('hero')) return 'Hero Housing Finance';
   return rawName || 'Banking Partner';
 };
 
@@ -33,6 +34,7 @@ const getBankLogo = (bankName) => {
   if (n.includes('aditya birla')) return '/logos/aditya_birla.jpg';
   if (n.includes('yes bank') || n.includes('yes')) return '/logos/Yes_Bank_Logo.jpg';
   if (n.includes('suryoday')) return '/logos/suryoday.webp';
+  if (n.includes('hero')) return '/logos/hero_housing_finance.webp';
   return '/logo.png';
 };
 

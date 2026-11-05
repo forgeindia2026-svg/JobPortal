@@ -168,6 +168,7 @@ export default function JobDetailModal({
     'YES Bank': '/logos/Yes_Bank_Logo.jpg',
     'TATA AIG': '/logos/tata_aig.png',
     'Suryoday Small Finance Bank': '/logos/suryoday.webp',
+      'Hero Housing Finance': '/logos/hero_housing_finance.webp',
     'FIC IT Training & Placement': '/logo.png',
     'FIC IT Training': '/logo.png',
     'FIC': '/logo.png'

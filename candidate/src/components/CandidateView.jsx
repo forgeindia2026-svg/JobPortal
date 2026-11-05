@@ -23,6 +23,7 @@ const getCompanyColor = (name) => {
   if (lowerName.includes('yes bank')) return '#0284c7';
   if (lowerName.includes('tata aig')) return '#1e3a8a';
   if (lowerName.includes('suryoday')) return '#ea580c';
+  if (lowerName.includes('hero')) return '#b91c1c';
   if (lowerName.includes('fic') || lowerName.includes('it training') || lowerName.includes('software')) return '#4f46e5';
   return '#ea580c';
 };
@@ -586,6 +587,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
       'TATA AIG': '/logos/tata_aig.png',
       'YES Bank': '/logos/Yes_Bank_Logo.jpg',
       'Suryoday Small Finance Bank': '/logos/suryoday.webp',
+      'Hero Housing Finance': '/logos/hero_housing_finance.webp',
       'FIC IT Training & Placement': '/logo.png',
       'FIC IT Training': '/logo.png',
       'FIC': '/logo.png'
