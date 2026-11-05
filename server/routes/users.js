@@ -143,6 +143,7 @@ router.put('/hr/:id', async (req, res) => {
     if (name) hrUser.name = name;
     if (mobile !== undefined) hrUser.mobile = mobile;
     if (profilePhoto !== undefined) hrUser.profilePhoto = profilePhoto;
+    if (req.body.isFollowUpHr !== undefined) hrUser.isFollowUpHr = Boolean(req.body.isFollowUpHr);
     if (password && password.trim()) {
       hrUser.passwordHash = 'dummy_hash_' + password;
     }
@@ -153,6 +154,25 @@ router.put('/hr/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating HR user:', error);
     res.status(500).json({ error: 'Failed to update HR user.' });
+  }
+});
+
+// PUT to toggle follow-up access for an HR user
+router.put('/hr/:id/follow-up', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFollowUpHr } = req.body;
+    const hrUser = await UserModel.findOneAndUpdate(
+      { $or: [{ id }, { _id: id }], role: 'hr' },
+      { $set: { isFollowUpHr: Boolean(isFollowUpHr) } },
+      { returnDocument: 'after' }
+    );
+    if (!hrUser) return res.status(404).json({ error: 'HR user not found.' });
+    const { passwordHash, ...safe } = hrUser.toObject ? hrUser.toObject() : hrUser;
+    res.json(safe);
+  } catch (error) {
+    console.error('Error updating HR follow-up status:', error);
+    res.status(500).json({ error: 'Failed to update HR follow-up status.' });
   }
 });
 
@@ -391,7 +411,11 @@ router.get('/stats/clicks', async (req, res) => {
 // GET all agents (for admin)
 router.get('/agents/all', async (req, res) => {
   try {
-    const agents = await UserModel.find({ role: 'agent' }).sort({ createdAt: -1 }).lean();
+    const agents = await UserModel.find({
+      role: 'agent',
+      name: { $ne: '__FOLLOW_UP_HR_MARKER__' },
+      email: { $not: /^fu_/ }
+    }).sort({ createdAt: -1 }).lean();
     res.json(agents.map(a => {
       const { passwordHash, ...rest } = a;
       return rest;
@@ -405,7 +429,12 @@ router.get('/agents/all', async (req, res) => {
 router.get('/hr/:hrId/agents', async (req, res) => {
   try {
     const { hrId } = req.params;
-    const agents = await UserModel.find({ role: 'agent', parentHrId: hrId }).sort({ createdAt: -1 }).lean();
+    const agents = await UserModel.find({
+      role: 'agent',
+      parentHrId: hrId,
+      name: { $ne: '__FOLLOW_UP_HR_MARKER__' },
+      email: { $not: /^fu_/ }
+    }).sort({ createdAt: -1 }).lean();
     const codes = agents.map(a => a.referralCode).filter(Boolean);
     const counts = codes.length
       ? await ApplicationModel.aggregate([
@@ -490,7 +519,7 @@ router.delete('/hr/:hrId/agents/:agentId', async (req, res) => {
 router.put('/agents/:agentId', async (req, res) => {
   try {
     const { agentId } = req.params;
-    const { name, email, password, mobile, profilePhoto } = req.body;
+    const { name, email, password, mobile, profilePhoto, parentHrId } = req.body;
 
     const agent = await UserModel.findOne({ id: agentId, role: 'agent' });
     if (!agent) {
@@ -508,6 +537,7 @@ router.put('/agents/:agentId', async (req, res) => {
     if (name) agent.name = name;
     if (mobile !== undefined) agent.mobile = mobile;
     if (profilePhoto !== undefined) agent.profilePhoto = profilePhoto;
+    if (parentHrId) agent.parentHrId = parentHrId;
     if (password && password.trim()) {
       agent.passwordHash = 'dummy_hash_' + password;
     }

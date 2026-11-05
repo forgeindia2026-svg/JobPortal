@@ -384,53 +384,26 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
   const handleToggleFollowUpHr = async (hr) => {
     const newStatus = !hr.isFollowUpHr;
     try {
-      // 1. Try dedicated follow-ups endpoint first
-      let success = false;
-      try {
-        const res = await fetch(`${API_URL}/api/follow-ups/toggle-hr/${hr.id}`, {
+      // 1. Update HR document directly in backend MongoDB
+      await Promise.allSettled([
+        fetch(`${API_URL}/api/users/hr/${hr.id}/follow-up`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isFollowUpHr: newStatus })
+        }),
+        fetch(`${API_URL}/api/users/hr/${hr.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isFollowUpHr: newStatus })
+        }),
+        fetch(`${API_URL}/api/follow-ups/toggle-hr/${hr.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isFollowUpHr: newStatus })
-        });
-        if (res.ok) success = true;
-      } catch (e) {
-        console.warn('Dedicated toggle endpoint unavailable, using persistent marker agent fallback');
-      }
+        })
+      ]);
 
-      // 2. Persistent fallback via marker agent if endpoint gave 404 or failed
-      if (!success) {
-        if (newStatus) {
-          // Grant access: create marker agent under this HR
-          const markerRes = await fetch(`${API_URL}/api/users/hr/${hr.id}/agents`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: '__FOLLOW_UP_HR_MARKER__',
-              email: `fu_${hr.id}_${Date.now()}@internal.fic`,
-              password: 'internal_marker_secret'
-            })
-          });
-          if (markerRes.ok) {
-            const markerAgent = await markerRes.json();
-            setAllAgents(prev => [markerAgent, ...prev]);
-            success = true;
-          }
-        } else {
-          // Revoke access: find and delete marker agent under this HR
-          const existingMarker = (allAgents || []).find(
-            a => a.parentHrId === hr.id && a.name === '__FOLLOW_UP_HR_MARKER__'
-          );
-          if (existingMarker) {
-            await fetch(`${API_URL}/api/users/hr/${hr.id}/agents/${existingMarker.id}`, {
-              method: 'DELETE'
-            }).catch(() => null);
-            setAllAgents(prev => prev.filter(a => a.id !== existingMarker.id));
-          }
-          success = true;
-        }
-      }
-
-      // 3. Keep local storage synced for instant offline-first speed
+      // 2. Keep local storage synced for instant offline-first speed
       try {
         const stored = JSON.parse(localStorage.getItem('fic_follow_up_hrs') || '{}');
         if (newStatus) {
@@ -6860,7 +6833,9 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
 
             {/* DEDICATED PARTNER LEADERBOARDS (Top Sourced & Top Closers) */}
             {(() => {
-              const partnerStats = (allAgents || []).map(p => {
+              const partnerStats = (allAgents || [])
+                .filter(p => p.name !== '__FOLLOW_UP_HR_MARKER__' && !String(p.email || '').startsWith('fu_'))
+                .map(p => {
                 const pCode = String(p.referralCode || '').toLowerCase().trim();
                 const pApps = validApplications.filter(a => {
                   const ref = String(a.referredBy || '').toLowerCase().trim();

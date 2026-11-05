@@ -285,16 +285,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
   useEffect(() => {
     fetchStats();
     fetchLeaderboardData();
-    // Live check if current HR has follow-up assignment via marker agent
-    if (currentUser?.id) {
-      fetch(`${API_URL}/api/users/agents/all`)
+    // Live check if current HR has follow-up assignment directly on HR profile
+    if (currentUser?.isFollowUpHr) {
+      setIsFollowUpAssigned(true);
+    } else if (currentUser?.id) {
+      fetch(`${API_URL}/api/users/hr`)
         .then(res => res.json())
-        .then(agents => {
-          if (Array.isArray(agents)) {
-            const hasMarker = agents.some(
-              a => a.parentHrId === currentUser.id && a.name === '__FOLLOW_UP_HR_MARKER__'
-            );
-            if (hasMarker) {
+        .then(hrs => {
+          if (Array.isArray(hrs)) {
+            const myHr = hrs.find(h => String(h.id || h._id) === String(currentUser.id || currentUser._id));
+            if (myHr?.isFollowUpHr) {
               setIsFollowUpAssigned(true);
               try {
                 const local = JSON.parse(localStorage.getItem('fic_follow_up_hrs') || '{}');
