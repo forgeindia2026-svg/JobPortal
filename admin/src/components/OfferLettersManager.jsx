@@ -1,4 +1,5 @@
 import { uploadToCloudinary, getDocumentPages } from '../utils/cloudinary';
+import { createMultiPagePdf, downloadOfferLetterAsPdf } from '../utils/pdfHelper';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FileText,
@@ -93,6 +94,8 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
 
   // Preview Lightbox State (Multi-page document view)
   const [previewModal, setPreviewModal] = useState(null);
+  const [downloadingId, setDownloadingId] = useState('');
+  const [viewMode, setViewMode] = useState('pdf'); // 'pdf' | 'pages'
 
   const role = currentUser?.role || 'admin';
   const isHr = role === 'hr';
@@ -354,15 +357,51 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
     }
   };
 
-  const handleOpenPreview = (item) => {
+  const handleOpenPreview = async (item) => {
     const fileUrl = getFullFileUrl(item.offerLetterUrl);
     if (!fileUrl) return;
     const initialPages = getDocumentPages(fileUrl, item.pages || 10);
     setPreviewModal({
       url: fileUrl,
       candidateName: item.candidateName || 'Candidate',
-      pages: initialPages
+      pages: initialPages,
+      pdfBlobUrl: null,
+      loadingPdf: true
     });
+    setViewMode('pdf');
+
+    try {
+      const compiled = await createMultiPagePdf(fileUrl, item.pages || 10);
+      setPreviewModal(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          pdfBlobUrl: compiled.blobUrl,
+          loadingPdf: false,
+          pageCount: compiled.pageCount || initialPages.length
+        };
+      });
+    } catch (err) {
+      console.warn('PDF generation failed, falling back to page view:', err);
+      setPreviewModal(prev => prev ? { ...prev, loadingPdf: false } : null);
+      setViewMode('pages');
+    }
+  };
+
+  const handleDownloadPdf = async (item) => {
+    const fileUrl = getFullFileUrl(item.offerLetterUrl);
+    if (!fileUrl) return;
+    const itemId = item.id || item._id;
+    try {
+      setDownloadingId(itemId);
+      await downloadOfferLetterAsPdf(fileUrl, item.candidateName);
+    } catch (err) {
+      console.error('Failed to download PDF:', err);
+      alert('Could not compile PDF. Opening document directly in a new tab.');
+      window.open(fileUrl, '_blank');
+    } finally {
+      setDownloadingId('');
+    }
   };
 
   const handlePageError = (failedPageNum) => {
@@ -603,17 +642,15 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
                             <Eye size={14} /> View
                           </button>
 
-                          <a
-                            href={fileUrl}
-                            download={`${item.candidateName}_Offer_Letter`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            onClick={() => handleDownloadPdf(item)}
+                            disabled={downloadingId === (item.id || item._id)}
                             className="btn-secondary"
-                            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#f8fafc', color: '#475569', textDecoration: 'none' }}
-                            title="Download Offer Letter"
+                            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0' }}
+                            title="Download Multi-Page PDF Document"
                           >
-                            <Download size={14} />
-                          </a>
+                            <Download size={14} /> {downloadingId === (item.id || item._id) ? 'Saving PDF...' : 'Download PDF'}
+                          </button>
 
                           {(role === 'admin' || isHr) && (
                             <button
@@ -752,52 +789,144 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
         </div>
       )}
 
-      {/* Lightbox Preview Modal (All Pages) */}
+      {/* Lightbox Preview Modal (True Multi-Page PDF Viewer) */}
       {previewModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '880px', width: '100%', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '16px' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '960px', width: '100%', maxHeight: '94vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>
                   📄 {previewModal.candidateName} — Offer Letter
                 </span>
-                <span style={{ fontSize: '0.8rem', background: '#dbeafe', color: '#1e40af', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
-                  {previewModal.pages.length} {previewModal.pages.length === 1 ? 'Page' : 'Pages'}
+                <span style={{ fontSize: '0.78rem', background: '#dbeafe', color: '#1e40af', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                  {previewModal.pageCount || previewModal.pages?.length || 1} {((previewModal.pageCount || previewModal.pages?.length || 1) === 1) ? 'Page' : 'Pages'}
                 </span>
               </div>
-              <button onClick={() => setPreviewModal(null)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
-            </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-              {previewModal.pages.map((p) => (
-                <div key={p.page} style={{ background: '#fff', borderRadius: '10px', boxShadow: '0 4px 14px rgba(0,0,0,0.12)', overflow: 'hidden', width: '100%', maxWidth: '820px' }}>
-                  <div style={{ background: '#f8fafc', padding: '8px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
-                      Page {p.page} of {previewModal.pages.length}
-                    </span>
-                    <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>
-                      Open High-Res ↗
-                    </a>
-                  </div>
-                  <div style={{ padding: '12px', background: '#ffffff', display: 'flex', justifyContent: 'center' }}>
-                    <img
-                      src={p.url}
-                      alt={`Offer Letter Page ${p.page}`}
-                      onError={() => handlePageError(p.page)}
-                      style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px' }}
-                    />
-                  </div>
+              {/* View Mode Switcher */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ background: '#e2e8f0', padding: '3px', borderRadius: '8px', display: 'flex', gap: '2px' }}>
+                  <button
+                    onClick={() => setViewMode('pdf')}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: viewMode === 'pdf' ? '#ffffff' : 'transparent',
+                      color: viewMode === 'pdf' ? '#1d4ed8' : '#64748b',
+                      boxShadow: viewMode === 'pdf' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    📄 PDF Document View
+                  </button>
+                  <button
+                    onClick={() => setViewMode('pages')}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: viewMode === 'pages' ? '#ffffff' : 'transparent',
+                      color: viewMode === 'pages' ? '#1d4ed8' : '#64748b',
+                      boxShadow: viewMode === 'pages' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    🖼️ Page Cards
+                  </button>
                 </div>
-              ))}
+                <button
+                  onClick={() => setPreviewModal(null)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#64748b', marginLeft: '6px', padding: '2px 8px' }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
-            <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: '#fff' }}>
-              <button onClick={() => setPreviewModal(null)} className="btn-secondary" style={{ padding: '8px 16px', borderRadius: '8px' }}>
+            {/* Modal Body */}
+            {viewMode === 'pdf' ? (
+              <div style={{ flex: 1, minHeight: '68vh', maxHeight: '74vh', background: '#323639', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                {previewModal.loadingPdf ? (
+                  <div style={{ textAlign: 'center', color: '#f8fafc', padding: '40px' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔄</div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>Generating multi-page PDF document...</div>
+                    <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '6px' }}>
+                      Assembling all letter pages into a single continuous PDF
+                    </div>
+                  </div>
+                ) : previewModal.pdfBlobUrl ? (
+                  <iframe
+                    src={previewModal.pdfBlobUrl}
+                    title={`${previewModal.candidateName} Offer Letter`}
+                    style={{ width: '100%', height: '74vh', border: 'none', display: 'block' }}
+                  />
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#f8fafc', padding: '40px' }}>
+                    <div>Failed to display embedded PDF. Please switch to Page Cards or download below.</div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                {previewModal.pages?.map((p) => (
+                  <div key={p.page} style={{ background: '#fff', borderRadius: '10px', boxShadow: '0 4px 14px rgba(0,0,0,0.12)', overflow: 'hidden', width: '100%', maxWidth: '820px' }}>
+                    <div style={{ background: '#f8fafc', padding: '8px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                        Page {p.page} of {previewModal.pages.length}
+                      </span>
+                      <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>
+                        Open High-Res ↗
+                      </a>
+                    </div>
+                    <div style={{ padding: '16px', background: '#ffffff', display: 'flex', justifyContent: 'center' }}>
+                      <img
+                        src={p.url}
+                        alt={`Offer Letter Page ${p.page}`}
+                        onError={() => handlePageError(p.page)}
+                        style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px', maxWidth: '780px' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', flexWrap: 'wrap', gap: '10px' }}>
+              <button
+                onClick={() => setPreviewModal(null)}
+                className="btn-secondary"
+                style={{ padding: '8px 18px', borderRadius: '8px' }}
+              >
                 Close
               </button>
-              <a href={previewModal.url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 20px', borderRadius: '8px' }}>
-                Open Original Document
-              </a>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleDownloadPdf({ offerLetterUrl: previewModal.url, candidateName: previewModal.candidateName })}
+                  className="btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '8px', background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0', fontWeight: 700 }}
+                >
+                  <Download size={15} /> Download PDF
+                </button>
+
+                {previewModal.pdfBlobUrl && (
+                  <button
+                    onClick={() => window.open(previewModal.pdfBlobUrl, '_blank')}
+                    className="btn-primary"
+                    style={{ padding: '8px 18px', borderRadius: '8px', fontWeight: 700 }}
+                  >
+                    Open in Full Tab ↗
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
