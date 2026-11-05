@@ -65,7 +65,7 @@ export function extractOffer(app) {
   return null;
 }
 
-export default function OfferLettersManager({ API_URL, currentUser, hrApplications, adminApplications }) {
+export default function OfferLettersManager({ API_URL, currentUser, hrApplications, adminApplications, onUpdateApplication }) {
   const [offerLetters, setOfferLetters] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -331,13 +331,61 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
   const handleDelete = async (appId, candName) => {
     if (!window.confirm(`Delete offer letter record for ${candName}?`)) return;
     try {
-      const res = await fetch(`${API_URL}/api/offer-letters/${appId}`, { method: 'DELETE' });
-      if (res.ok) {
-        setSuccess('Offer letter removed successfully');
-        setTimeout(() => setSuccess(''), 3000);
-        loadData();
+      // Find matching application to clean up adminNotes
+      const matchingApp = applications.find(a => String(a.id || a._id) === String(appId));
+      let cleanedNotes = matchingApp?.adminNotes || '';
+      if (cleanedNotes) {
+        cleanedNotes = cleanedNotes.replace(/\[OFFER:.*?\]/g, '').replace(/https:\/\/res\.cloudinary\.com[^\s"'>]+/g, '').trim();
       }
+
+      // Optimistically remove from state so the card immediately disappears from UI
+      setOfferLetters(prev => prev.filter(o => String(o.id || o._id || o.applicationId) !== String(appId)));
+      setApplications(prev => prev.map(a => {
+        if (String(a.id || a._id) === String(appId)) {
+          return {
+            ...a,
+            offerLetterUrl: '',
+            offeredCtc: '',
+            offerJoiningDate: '',
+            joiningDate: '',
+            offerNotes: '',
+            adminNotes: cleanedNotes
+          };
+        }
+        return a;
+      }));
+
+      // Dual write deletion: call DELETE /api/offer-letters/:id AND PUT /api/applications/:id/status
+      await Promise.allSettled([
+        fetch(`${API_URL}/api/offer-letters/${appId}`, { method: 'DELETE' }),
+        fetch(`${API_URL}/api/applications/${appId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            offerLetterUrl: '',
+            offeredCtc: '',
+            joiningDate: '',
+            offerNotes: '',
+            adminNotes: cleanedNotes
+          })
+        })
+      ]);
+
+      if (typeof onUpdateApplication === 'function' && matchingApp) {
+        onUpdateApplication({
+          ...matchingApp,
+          offerLetterUrl: '',
+          offeredCtc: '',
+          offerJoiningDate: '',
+          adminNotes: cleanedNotes
+        });
+      }
+
+      setSuccess('Offer letter removed successfully');
+      setTimeout(() => setSuccess(''), 3000);
+      loadData();
     } catch (err) {
+      console.error('Delete error:', err);
       setError('Failed to remove offer letter');
     }
   };

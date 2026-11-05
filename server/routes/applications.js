@@ -342,12 +342,12 @@ router.put('/:id/status', async (req, res) => {
     if (adminNotes !== undefined) updateObj.adminNotes = adminNotes;
     if (referredBy !== undefined) updateObj.referredBy = referredBy || null;
     if (paymentId) updateObj.paymentId = paymentId;
-    if (offerLetterUrl) updateObj.offerLetterUrl = offerLetterUrl;
-    if (offeredCtc) updateObj.offeredCtc = offeredCtc;
-    if (joiningDate) updateObj.offerJoiningDate = joiningDate;
-    if (offerNotes) updateObj.offerNotes = offerNotes;
-    if (uploadedBy) updateObj.offerLetterUploadedBy = uploadedBy;
-    if (uploaderName) updateObj.offerLetterUploaderName = uploaderName;
+    if (offerLetterUrl !== undefined) updateObj.offerLetterUrl = offerLetterUrl;
+    if (offeredCtc !== undefined) updateObj.offeredCtc = offeredCtc;
+    if (joiningDate !== undefined) updateObj.offerJoiningDate = joiningDate;
+    if (offerNotes !== undefined) updateObj.offerNotes = offerNotes;
+    if (uploadedBy !== undefined) updateObj.offerLetterUploadedBy = uploadedBy;
+    if (uploaderName !== undefined) updateObj.offerLetterUploaderName = uploaderName;
     if (offerLetterUrl) updateObj.offerLetterUploadedAt = new Date().toISOString();
 
     const query = {

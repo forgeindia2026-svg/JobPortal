@@ -6830,6 +6830,13 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
             API_URL={API_URL}
             currentUser={currentUser}
             adminApplications={applications}
+            onUpdateApplication={(updatedApp) => {
+              setApplications(prev => prev.map(a => 
+                (String(a.id) === String(updatedApp.id) || String(a._id) === String(updatedApp._id) || (updatedApp.id && String(a._id) === String(updatedApp.id)))
+                  ? { ...a, ...updatedApp }
+                  : a
+              ));
+            }}
           />
         )}
         {activeTab === 'partners_admin' && !selectedHrForCandidates && (

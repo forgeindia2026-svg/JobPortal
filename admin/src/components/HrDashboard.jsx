@@ -996,6 +996,16 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             API_URL={API_URL}
             currentUser={currentUser}
             hrApplications={stats?.applications || []}
+            onUpdateApplication={(updatedApp) => {
+              setStats(prev => ({
+                ...prev,
+                applications: (prev?.applications || []).map(a => 
+                  (String(a.id) === String(updatedApp.id) || String(a._id) === String(updatedApp._id))
+                    ? { ...a, ...updatedApp }
+                    : a
+                )
+              }));
+            }}
           />
         )}
 

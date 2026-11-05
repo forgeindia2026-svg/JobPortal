@@ -207,6 +207,18 @@ router.delete('/:id', async (req, res) => {
     app.offerJoiningDate = '';
     app.offeredCtc = '';
     app.offerNotes = '';
+
+    // Strip [OFFER:...] and Cloudinary URLs from adminNotes, notes, and coverNotes
+    if (app.adminNotes) {
+      app.adminNotes = app.adminNotes.replace(/\[OFFER:.*?\]/g, '').replace(/https:\/\/res\.cloudinary\.com[^\s"'>]+/g, '').trim();
+    }
+    if (app.notes) {
+      app.notes = app.notes.replace(/\[OFFER:.*?\]/g, '').replace(/https:\/\/res\.cloudinary\.com[^\s"'>]+/g, '').trim();
+    }
+    if (app.coverNotes) {
+      app.coverNotes = app.coverNotes.replace(/\[OFFER:.*?\]/g, '').replace(/https:\/\/res\.cloudinary\.com[^\s"'>]+/g, '').trim();
+    }
+
     await app.save();
 
     res.json({ message: 'Offer letter removed successfully' });
