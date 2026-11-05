@@ -65,8 +65,6 @@ export default function ManualApplicationModal({
 
     if (selected.isCasa) {
       setPaymentAmount(149);
-    } else if (selected.isFree) {
-      setPaymentAmount(0);
     } else if (selected.isFic) {
       setPaymentAmount(1499);
     } else {
@@ -293,7 +291,7 @@ export default function ManualApplicationModal({
                   <span style={{ color: '#475569' }}>🏢 <strong>Company:</strong> {selectedJob.company}</span>
                   <span style={{ color: '#475569' }}>📍 <strong>Location:</strong> {selectedJob.location}</span>
                   <span style={{ color: '#047857' }}>💰 <strong>Salary/Stipend:</strong> {selectedJob.salary}</span>
-                  <span style={{ color: '#2563eb' }}>🏷️ <strong>Default Fee:</strong> ₹{selectedJob.isCasa ? 149 : selectedJob.isFree ? 0 : selectedJob.isFic ? 1499 : 49}</span>
+                  <span style={{ color: '#2563eb' }}>🏷️ <strong>Default Fee:</strong> ₹{selectedJob.isCasa ? 149 : selectedJob.isFic ? 1499 : 49}</span>
                 </div>
               )}
             </div>

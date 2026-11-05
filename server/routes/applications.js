@@ -74,8 +74,6 @@ router.get('/', async (req, res) => {
         const companyName = (job && job.companyName) ? String(job.companyName).toLowerCase() : '';
         if (title.includes('casa')) {
           computedPaymentAmount = 149;
-        } else if (title.includes('free') || title.includes('internship') || companyName.includes('free') || companyName.includes('internship')) {
-          computedPaymentAmount = 0;
         } else if ((job && job.isFicFlow) || companyName.includes('fic') || companyName.includes('it training')) {
           computedPaymentAmount = 1499;
         } else {
@@ -213,8 +211,6 @@ router.post('/', async (req, res) => {
     } else if (finalPaymentAmount === undefined || finalPaymentAmount === null) {
       if (jobTitleLower.includes('casa')) {
         finalPaymentAmount = 149;
-      } else if (isItFreeInternship) {
-        finalPaymentAmount = 0;
       } else {
         finalPaymentAmount = 49;
       }
