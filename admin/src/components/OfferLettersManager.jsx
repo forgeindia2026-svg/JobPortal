@@ -1,4 +1,4 @@
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, getDocumentPages } from '../utils/cloudinary';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FileText,
@@ -35,7 +35,9 @@ export function extractOffer(app) {
     return {
       url: formatUrl(app.offerLetterUrl),
       ctc: app.offeredCtc || '',
-      date: app.offerJoiningDate || app.joiningDate || ''
+      date: app.offerJoiningDate || app.joiningDate || '',
+      selectedDate: app.selectedDate || app.selectionDate || '',
+      pages: Number(app.offerPages || app.pages) || 10
     };
   }
   const notes = app.adminNotes || app.coverNotes || app.notes;
@@ -48,7 +50,9 @@ export function extractOffer(app) {
           return {
             url: formatUrl(parsed.url),
             ctc: parsed.ctc || app.offeredCtc || '',
-            date: parsed.date || app.offerJoiningDate || app.joiningDate || ''
+            date: parsed.date || app.offerJoiningDate || app.joiningDate || '',
+            selectedDate: parsed.selectedDate || app.selectedDate || app.selectionDate || '',
+            pages: Number(parsed.pages || app.offerPages || app.pages) || 10
           };
         }
       } catch (e) {}
@@ -58,7 +62,9 @@ export function extractOffer(app) {
       return {
         url: formatUrl(cldMatch[1]),
         ctc: app.offeredCtc || '',
-        date: app.offerJoiningDate || app.joiningDate || ''
+        date: app.offerJoiningDate || app.joiningDate || '',
+        selectedDate: app.selectedDate || app.selectionDate || '',
+        pages: 10
       };
     }
   }
@@ -76,6 +82,7 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
   // Upload Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [joiningDate, setJoiningDate] = useState('');
   const [offeredCtc, setOfferedCtc] = useState('');
   const [notes, setNotes] = useState('');
@@ -84,8 +91,8 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
   const [fileName, setFileName] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // Preview Lightbox State
-  const [previewFile, setPreviewFile] = useState(null);
+  // Preview Lightbox State (Multi-page document view)
+  const [previewModal, setPreviewModal] = useState(null);
 
   const role = currentUser?.role || 'admin';
   const isHr = role === 'hr';
@@ -179,6 +186,8 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
           offerLetterUrl: offer.url,
           offeredCtc: offer.ctc,
           offerJoiningDate: offer.date,
+          selectedDate: offer.selectedDate || a.selectedDate || a.selectionDate || '',
+          pages: offer.pages || 10,
           offerLetterUploadedAt: a.offerLetterUploadedAt || a.updatedAt || new Date().toISOString(),
           uploaderName: (() => {
             const refCode = String(a.referredBy || '').trim().toLowerCase();
@@ -263,28 +272,42 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
       setError('');
 
       let finalOfferUrl = fileBase64;
+      let pagesCount = 1;
       if (rawFile) {
         try {
           const cldRes = await uploadToCloudinary(rawFile);
           if (typeof cldRes === 'string' && cldRes.trim()) {
             finalOfferUrl = cldRes;
+            pagesCount = Number(cldRes.pages) || 1;
           } else if (cldRes && (cldRes.secure_url || cldRes.url)) {
             finalOfferUrl = cldRes.secure_url || cldRes.url;
+            pagesCount = Number(cldRes.pages) || 1;
           }
         } catch (cldErr) {
           console.warn('Cloudinary upload fallback to data URL:', cldErr);
         }
       }
 
+      const offerData = {
+        url: finalOfferUrl,
+        ctc: offeredCtc,
+        date: joiningDate,
+        selectedDate: selectedDate,
+        pages: pagesCount
+      };
+      const offerTag = `[OFFER:${JSON.stringify(offerData)}]`;
+
       // Dual write: send to both /api/offer-letters and /api/applications/:id/status
       const payload = {
         applicationId: selectedAppId,
         offerLetterBase64: finalOfferUrl,
         offerLetterUrl: finalOfferUrl,
+        selectedDate,
         joiningDate,
         offeredCtc,
         notes,
         offerNotes: notes,
+        pages: pagesCount,
         uploadedBy: currentUser?.id || currentUser?._id || '',
         uploaderName: currentUser?.name || 'HR Executive'
       };
@@ -301,9 +324,11 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
           body: JSON.stringify({
             offerLetterUrl: finalOfferUrl,
             offeredCtc,
+            selectedDate,
             joiningDate,
             offerNotes: notes,
-            adminNotes: notes ? `${notes} [OFFER:${JSON.stringify({ url: finalOfferUrl, ctc: offeredCtc, date: joiningDate })}]` : `[OFFER:${JSON.stringify({ url: finalOfferUrl, ctc: offeredCtc, date: joiningDate })}]`,
+            offerPages: pagesCount,
+            adminNotes: notes ? `${notes} ${offerTag}` : offerTag,
             uploadedBy: currentUser?.id || currentUser?._id || '',
             uploaderName: currentUser?.name || 'HR Executive'
           })
@@ -317,6 +342,7 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
       setFileBase64('');
       setFileName('');
       setRawFile(null);
+      setSelectedDate('');
       setJoiningDate('');
       setOfferedCtc('');
       setNotes('');
@@ -326,6 +352,27 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleOpenPreview = (item) => {
+    const fileUrl = getFullFileUrl(item.offerLetterUrl);
+    if (!fileUrl) return;
+    const initialPages = getDocumentPages(fileUrl, item.pages || 10);
+    setPreviewModal({
+      url: fileUrl,
+      candidateName: item.candidateName || 'Candidate',
+      pages: initialPages
+    });
+  };
+
+  const handlePageError = (failedPageNum) => {
+    setPreviewModal(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        pages: prev.pages.filter(p => p.page < failedPageNum)
+      };
+    });
   };
 
   const handleDelete = async (appId, candName) => {
@@ -494,6 +541,7 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
                   <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>Candidate</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>Role & Company</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>Offered CTC</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>Selected Date</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>Joining Date</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>HR & Branch</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.8rem', textAlign: 'center' }}>Actions</th>
@@ -502,7 +550,6 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
               <tbody>
                 {filteredLetters.map((item, idx) => {
                   const fileUrl = getFullFileUrl(item.offerLetterUrl);
-                  const isPdf = item.offerLetterUrl && item.offerLetterUrl.toLowerCase().includes('.pdf');
 
                   return (
                     <tr key={item.id || item._id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -524,12 +571,21 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
                         )}
                       </td>
                       <td style={{ padding: '14px 16px' }}>
+                        {item.selectedDate ? (
+                          <span style={{ color: '#059669', fontWeight: 700, fontSize: '0.85rem' }}>
+                            {item.selectedDate}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
                         {item.offerJoiningDate ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0f172a', fontWeight: 600, fontSize: '0.85rem' }}>
                             <Calendar size={14} color="#64748b" /> {item.offerJoiningDate}
                           </div>
                         ) : (
-                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Pending</span>
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>—</span>
                         )}
                       </td>
                       <td style={{ padding: '14px 16px' }}>
@@ -539,16 +595,10 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
                       <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
-                            onClick={() => {
-                              if (isPdf) {
-                                window.open(fileUrl, '_blank');
-                              } else {
-                                setPreviewFile(fileUrl);
-                              }
-                            }}
+                            onClick={() => handleOpenPreview(item)}
                             className="btn-secondary"
                             style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' }}
-                            title="View Offer Letter"
+                            title="View All Offer Letter Pages"
                           >
                             <Eye size={14} /> View
                           </button>
@@ -629,14 +679,14 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
                 {fileName && <div style={{ fontSize: '0.78rem', color: '#059669', marginTop: '4px', fontWeight: 600 }}>Selected: {fileName}</div>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '14px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                     3. Offered CTC (Optional)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 3.5 LPA or 35,000 / mo"
+                    placeholder="e.g. 3.5 LPA"
                     value={offeredCtc}
                     onChange={(e) => setOfferedCtc(e.target.value)}
                     style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem' }}
@@ -644,7 +694,18 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    4. Joining Date (Optional)
+                    4. Selected Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    5. Joining Date (Optional)
                   </label>
                   <input
                     type="date"
@@ -657,7 +718,7 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
 
               <div style={{ marginBottom: '18px' }}>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  5. Remarks / Verification Notes
+                  6. Remarks / Verification Notes
                 </label>
                 <textarea
                   rows={2}
@@ -691,20 +752,51 @@ export default function OfferLettersManager({ API_URL, currentUser, hrApplicatio
         </div>
       )}
 
-      {/* Lightbox Preview Modal */}
-      {previewFile && (
+      {/* Lightbox Preview Modal (All Pages) */}
+      {previewModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '850px', width: '100%', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 800, color: '#0f172a' }}>Offer Letter Preview</span>
-              <button onClick={() => setPreviewFile(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+          <div style={{ background: '#fff', borderRadius: '16px', maxWidth: '880px', width: '100%', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>
+                  📄 {previewModal.candidateName} — Offer Letter
+                </span>
+                <span style={{ fontSize: '0.8rem', background: '#dbeafe', color: '#1e40af', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                  {previewModal.pages.length} {previewModal.pages.length === 1 ? 'Page' : 'Pages'}
+                </span>
+              </div>
+              <button onClick={() => setPreviewModal(null)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', justifyContent: 'center', background: '#f8fafc' }}>
-              <img src={previewFile} alt="Offer Letter" style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }} />
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+              {previewModal.pages.map((p) => (
+                <div key={p.page} style={{ background: '#fff', borderRadius: '10px', boxShadow: '0 4px 14px rgba(0,0,0,0.12)', overflow: 'hidden', width: '100%', maxWidth: '820px' }}>
+                  <div style={{ background: '#f8fafc', padding: '8px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                      Page {p.page} of {previewModal.pages.length}
+                    </span>
+                    <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>
+                      Open High-Res ↗
+                    </a>
+                  </div>
+                  <div style={{ padding: '12px', background: '#ffffff', display: 'flex', justifyContent: 'center' }}>
+                    <img
+                      src={p.url}
+                      alt={`Offer Letter Page ${p.page}`}
+                      onError={() => handlePageError(p.page)}
+                      style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px' }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-            <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <a href={previewFile} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 16px', borderRadius: '8px' }}>
-                Open Original Window
+
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: '#fff' }}>
+              <button onClick={() => setPreviewModal(null)} className="btn-secondary" style={{ padding: '8px 16px', borderRadius: '8px' }}>
+                Close
+              </button>
+              <a href={previewModal.url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', padding: '8px 20px', borderRadius: '8px' }}>
+                Open Original Document
               </a>
             </div>
           </div>

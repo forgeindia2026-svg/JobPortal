@@ -42,7 +42,34 @@ export async function uploadToCloudinary(file) {
     resultUrl = resultUrl.replace(/\.pdf$/i, '.jpg');
   }
 
-  return resultUrl;
+  const wrapped = new String(resultUrl);
+  wrapped.url = resultUrl;
+  wrapped.pages = Number(data.pages) || 1;
+  wrapped.format = data.format || '';
+  return wrapped;
+}
+
+/**
+ * Returns an array of page objects for a Cloudinary document: [{ page: 1, url: '...' }, ...].
+ * If pages count is known, generates pg_1 through pg_N.
+ * If unknown, defaults up to 10 pages, and the viewer prunes nonexistent pages on error.
+ */
+export function getDocumentPages(url, maxPages = 10) {
+  if (!url) return [];
+  const base = String(url).trim();
+  if (!base.includes('res.cloudinary.com') || !base.includes('/image/upload/')) {
+    return [{ page: 1, url: base }];
+  }
+  const cleanBase = base.replace(/\/image\/upload\/(pg_\d+\/)?/, '/image/upload/');
+  const count = Math.max(1, Math.min(Number(maxPages) || 10, 20));
+  const pages = [];
+  for (let p = 1; p <= count; p++) {
+    pages.push({
+      page: p,
+      url: cleanBase.replace('/image/upload/', `/image/upload/pg_${p}/`)
+    });
+  }
+  return pages;
 }
 
 /**
