@@ -35,13 +35,13 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         </div>
       </div>
 
-      {/* 2nd: FIC Banking Training 100% placement or Refund (Ruby Crimson / Rose) */}
+      {/* 2nd: FIC Banking Training 100% placement or Refund (Axis Bank Burgundy / Deep Maroon) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('fic_banking_training')}
         style={{
-          background: 'linear-gradient(135deg, #9f1239 0%, #be123c 40%, #e11d48 75%, #db2777 100%)',
-          boxShadow: '0 8px 24px rgba(225, 29, 72, 0.38), 0 2px 6px rgba(219, 39, 119, 0.25)',
+          background: 'linear-gradient(135deg, #6b0f37 0%, #831843 45%, #97144d 100%)',
+          boxShadow: '0 8px 24px rgba(151, 20, 77, 0.4), 0 2px 6px rgba(131, 24, 67, 0.25)',
         }}
       >
         <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -66,13 +66,13 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         </div>
       </div>
 
-      {/* 3rd: FIC Free IT Internship (Vibrant Sunset Amber / Warm Coral Orange) */}
+      {/* 3rd: FIC Free IT Internship (Royal Electric Blue) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('fic_it_internship')}
         style={{
-          background: 'linear-gradient(135deg, #c2410c 0%, #ea580c 45%, #f59e0b 100%)',
-          boxShadow: '0 8px 24px rgba(234, 88, 12, 0.38), 0 2px 6px rgba(194, 65, 12, 0.25)',
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%)',
+          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.38), 0 2px 6px rgba(30, 58, 138, 0.25)',
         }}
       >
         <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -97,13 +97,13 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         </div>
       </div>
 
-      {/* 4th: FIC IT Training & 100% placement (Royal Blue / Electric Cobalt) */}
+      {/* 4th: FIC IT Training & 100% placement (Vibrant Sunset Amber / Warm Orange) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('fic_it_placement')}
         style={{
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%)',
-          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.38), 0 2px 6px rgba(30, 58, 138, 0.25)',
+          background: 'linear-gradient(135deg, #c2410c 0%, #ea580c 45%, #f59e0b 100%)',
+          boxShadow: '0 8px 24px rgba(234, 88, 12, 0.38), 0 2px 6px rgba(194, 65, 12, 0.25)',
         }}
       >
         <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -128,13 +128,13 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         </div>
       </div>
 
-      {/* 5th: FIC IT Training Courses (Deep Amethyst Purple / Violet) */}
+      {/* 5th: FIC IT Training Courses (Ruby Crimson / Rose) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('fic_it_course')}
         style={{
-          background: 'linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #9333ea 100%)',
-          boxShadow: '0 8px 24px rgba(124, 58, 237, 0.38), 0 2px 6px rgba(88, 28, 135, 0.25)',
+          background: 'linear-gradient(135deg, #9f1239 0%, #be123c 40%, #e11d48 75%, #db2777 100%)',
+          boxShadow: '0 8px 24px rgba(225, 29, 72, 0.38), 0 2px 6px rgba(219, 39, 119, 0.25)',
         }}
       >
         <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
