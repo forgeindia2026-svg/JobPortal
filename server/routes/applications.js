@@ -1,26 +1,69 @@
 const express = require('express');
 const router = express.Router();
-const { readDBAsync, ApplicationModel, CandidateModel, JobModel } = require('../db');
+const { readDBAsync, ApplicationModel, CandidateModel, JobModel, UserModel, CompanyModel, ItTrainingProcessModel } = require('../db');
 
-// GET /api/applications (supports ?candidateId=xxx & ?status=xxx & ?jobId=xxx & ?mobile=xxx & ?email=xxx)
+// In-memory cache for reference metadata to avoid querying 8 collections on every request
+let metaCache = {
+  data: null,
+  timestamp: 0,
+};
+const CACHE_TTL_MS = 20000; // 20s cache
+
+async function getCachedMeta() {
+  const now = Date.now();
+  if (metaCache.data && (now - metaCache.timestamp < CACHE_TTL_MS)) {
+    return metaCache.data;
+  }
+  const [users, jobs, companies, itProcesses] = await Promise.all([
+    UserModel.find({}, 'id name referralCode role').lean(),
+    JobModel.find({}).lean(),
+    CompanyModel.find({}).lean(),
+    ItTrainingProcessModel.find({}).lean().catch(() => []),
+  ]);
+
+  const hrUsersMap = Object.fromEntries((users || []).map(u => [String(u.referralCode || '').toLowerCase(), u]));
+  const jobsMap = new Map((jobs || []).map(j => [j.id, j]));
+  const companiesMap = new Map((companies || []).map(c => [c.id, c]));
+  const itProcessesMap = new Map((itProcesses || []).map(p => [p.id, p]));
+
+  metaCache = {
+    data: { users, jobs, companies, itProcesses, hrUsersMap, jobsMap, companiesMap, itProcessesMap },
+    timestamp: now,
+  };
+  return metaCache.data;
+}
+
+// GET /api/applications (supports ?candidateId=xxx & ?status=xxx & ?jobId=xxx & ?mobile=xxx & ?email=xxx & ?limit=xxx)
 router.get('/', async (req, res) => {
   try {
-    const { candidateId, status, jobId, mobile, email } = req.query;
-    const db = await readDBAsync();
-    let apps = db.applications || [];
+    const { candidateId, status, jobId, mobile, email, limit } = req.query;
 
-    if (candidateId) {
-      apps = apps.filter(a => a.candidateId === candidateId);
+    const mongoFilter = {};
+    if (candidateId) mongoFilter.candidateId = candidateId;
+    if (jobId) mongoFilter.jobId = jobId;
+    if (status) mongoFilter.status = new RegExp(`^${status}$`, 'i');
+
+    const limitNum = parseInt(limit, 10);
+    let appQuery = ApplicationModel.find(mongoFilter).lean().sort({ appliedAt: -1, createdAt: -1 });
+    if (!isNaN(limitNum) && limitNum > 0) {
+      appQuery = appQuery.limit(limitNum);
     }
-    if (jobId) {
-      apps = apps.filter(a => a.jobId === jobId);
-    }
+
+    const [rawApps, candidates, meta] = await Promise.all([
+      appQuery,
+      CandidateModel.find({}, 'id name email mobile location qualification experience resumeUrl').lean(),
+      getCachedMeta(),
+    ]);
+
+    let apps = rawApps || [];
+    const candidatesMap = new Map((candidates || []).map(c => [c.id, c]));
+
     if (mobile) {
       const cleanMobile = String(mobile).replace(/\D/g, '');
       if (cleanMobile) {
         apps = apps.filter(a => {
           const m = String(a.candidateDetails?.mobile || '').replace(/\D/g, '');
-          const cand = db.candidates.find(c => c.id === a.candidateId);
+          const cand = candidatesMap.get(a.candidateId);
           const cm = String(cand?.mobile || '').replace(/\D/g, '');
           return m === cleanMobile || cm === cleanMobile;
         });
@@ -31,25 +74,21 @@ router.get('/', async (req, res) => {
       if (cleanEmail) {
         apps = apps.filter(a => {
           const e = String(a.candidateDetails?.email || '').trim().toLowerCase();
-          const cand = db.candidates.find(c => c.id === a.candidateId);
+          const cand = candidatesMap.get(a.candidateId);
           const ce = String(cand?.email || '').trim().toLowerCase();
           return e === cleanEmail || ce === cleanEmail;
         });
       }
     }
-    if (status) {
-      apps = apps.filter(a => a.status && a.status.toLowerCase() === status.toLowerCase());
-    }
 
-    // Populate references
-    const hrUsersMap = Object.fromEntries((db.users || []).map(u => [String(u.referralCode || '').toLowerCase(), u]));
+    const { hrUsersMap, jobsMap, companiesMap, itProcessesMap } = meta;
 
     const populated = apps.map(app => {
       const refUser = hrUsersMap[String(app.referredBy || '').toLowerCase()];
-      const candidate = db.candidates.find(c => c.id === app.candidateId) || app.candidateDetails || {};
-      let job = db.jobs.find(j => j.id === app.jobId);
+      const candidate = candidatesMap.get(app.candidateId) || app.candidateDetails || {};
+      let job = jobsMap.get(app.jobId);
       if (!job) {
-        const itProc = (db.itTrainingProcesses || []).find(p => p.id === app.jobId);
+        const itProc = itProcessesMap.get(app.jobId);
         if (itProc) {
           const compName = itProc.itCategory === 'Course' ? 'FIC IT Courses' : itProc.itCategory === 'Internship' ? 'FIC Free IT Internship' : itProc.itCategory === 'Fast Track' ? 'FIC Fast Track IT Training' : 'FIC IT Training & Placement';
           const procTag = itProc.processName ? ` (${itProc.processName.toUpperCase()})` : '';
@@ -66,7 +105,7 @@ router.get('/', async (req, res) => {
           };
         }
       }
-      const company = db.companies.find(c => c.id === app.companyId || (job && c.id === job.companyId)) || {};
+      const company = companiesMap.get(app.companyId) || (job ? companiesMap.get(job.companyId) : null) || {};
 
       let computedPaymentAmount = app.paymentAmount;
       if (computedPaymentAmount === undefined || computedPaymentAmount === null) {
