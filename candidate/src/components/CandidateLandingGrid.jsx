@@ -4,7 +4,7 @@ import { Building2, ChevronRight } from 'lucide-react';
 export default function CandidateLandingGrid({ onSelectCard, jobsCount, companiesCount }) {
   return (
     <div className="kpi-landing-grid">
-      {/* CARD 1: Banking Jobs (Vibrant Emerald Green) */}
+      {/* 1st: Banking Jobs (Vibrant Emerald Green) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('banking')}
@@ -35,69 +35,7 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         </div>
       </div>
 
-      {/* CARD 2: FIC IT Training & 100% placement (Royal Blue / Violet) */}
-      <div
-        className="kpi-landing-card"
-        onClick={() => onSelectCard('fic_it_placement')}
-        style={{
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #7c3aed 100%)',
-          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.38), 0 2px 6px rgba(124, 58, 237, 0.25)',
-        }}
-      >
-        <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div className="kpi-card-header-flex">
-          <div className="kpi-card-icon-wrap">
-            <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div>
-            <h3 className="kpi-card-title-text">
-              FIC IT Training & 100% placement
-            </h3>
-          </div>
-        </div>
-
-        <div className="kpi-card-footer-bar">
-          <span className="kpi-card-action-text">
-            🎯 Selection & Interview
-          </span>
-          <div className="kpi-card-arrow-circle">
-            <ChevronRight size={16} color="#ffffff" />
-          </div>
-        </div>
-      </div>
-
-      {/* CARD 3: FIC IT Training Courses (Deep Sapphire / Ocean Blue) */}
-      <div
-        className="kpi-landing-card"
-        onClick={() => onSelectCard('fic_it_course')}
-        style={{
-          background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #2563eb 100%)',
-          boxShadow: '0 8px 24px rgba(2, 132, 199, 0.38), 0 2px 6px rgba(37, 99, 235, 0.25)',
-        }}
-      >
-        <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div className="kpi-card-header-flex">
-          <div className="kpi-card-icon-wrap">
-            <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div>
-            <h3 className="kpi-card-title-text">
-              FIC IT Training Courses
-            </h3>
-          </div>
-        </div>
-
-        <div className="kpi-card-footer-bar">
-          <span className="kpi-card-action-text">
-            📖 View Courses
-          </span>
-          <div className="kpi-card-arrow-circle">
-            <ChevronRight size={16} color="#ffffff" />
-          </div>
-        </div>
-      </div>
-
-      {/* CARD 4: FIC Banking Training 100% placement or Refund (Ruby Crimson / Rose) */}
+      {/* 2nd: FIC Banking Training 100% placement or Refund (Ruby Crimson / Rose) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('fic_banking_training')}
@@ -128,13 +66,13 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         </div>
       </div>
 
-      {/* CARD 5: FIC Free IT Internship (Rich Forest Teal / Deep Emerald) */}
+      {/* 3rd: FIC Free IT Internship (Vibrant Sunset Amber / Warm Coral Orange) */}
       <div
         className="kpi-landing-card"
         onClick={() => onSelectCard('fic_it_internship')}
         style={{
-          background: 'linear-gradient(135deg, #065f46 0%, #0d9488 55%, #10b981 100%)',
-          boxShadow: '0 8px 24px rgba(13, 148, 136, 0.38), 0 2px 6px rgba(5, 150, 105, 0.25)',
+          background: 'linear-gradient(135deg, #c2410c 0%, #ea580c 45%, #f59e0b 100%)',
+          boxShadow: '0 8px 24px rgba(234, 88, 12, 0.38), 0 2px 6px rgba(194, 65, 12, 0.25)',
         }}
       >
         <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -152,6 +90,68 @@ export default function CandidateLandingGrid({ onSelectCard, jobsCount, companie
         <div className="kpi-card-footer-bar">
           <span className="kpi-card-action-text">
             🚀 View Internships
+          </span>
+          <div className="kpi-card-arrow-circle">
+            <ChevronRight size={16} color="#ffffff" />
+          </div>
+        </div>
+      </div>
+
+      {/* 4th: FIC IT Training & 100% placement (Royal Blue / Electric Cobalt) */}
+      <div
+        className="kpi-landing-card"
+        onClick={() => onSelectCard('fic_it_placement')}
+        style={{
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%)',
+          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.38), 0 2px 6px rgba(30, 58, 138, 0.25)',
+        }}
+      >
+        <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div className="kpi-card-header-flex">
+          <div className="kpi-card-icon-wrap">
+            <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <h3 className="kpi-card-title-text">
+              FIC IT Training & 100% placement
+            </h3>
+          </div>
+        </div>
+
+        <div className="kpi-card-footer-bar">
+          <span className="kpi-card-action-text">
+            🎯 Selection & Interview
+          </span>
+          <div className="kpi-card-arrow-circle">
+            <ChevronRight size={16} color="#ffffff" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5th: FIC IT Training Courses (Deep Amethyst Purple / Violet) */}
+      <div
+        className="kpi-landing-card"
+        onClick={() => onSelectCard('fic_it_course')}
+        style={{
+          background: 'linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #9333ea 100%)',
+          boxShadow: '0 8px 24px rgba(124, 58, 237, 0.38), 0 2px 6px rgba(88, 28, 135, 0.25)',
+        }}
+      >
+        <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div className="kpi-card-header-flex">
+          <div className="kpi-card-icon-wrap">
+            <img src="/logo.png" alt="FIC Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <h3 className="kpi-card-title-text">
+              FIC IT Training Courses
+            </h3>
+          </div>
+        </div>
+
+        <div className="kpi-card-footer-bar">
+          <span className="kpi-card-action-text">
+            📖 View Courses
           </span>
           <div className="kpi-card-arrow-circle">
             <ChevronRight size={16} color="#ffffff" />
