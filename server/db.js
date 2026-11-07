@@ -224,13 +224,48 @@ const InterviewModel = mongoose.model('Interview', interviewSchema);
 
 const withdrawalRequestSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
-  userId: String,
-  amount: Number,
+  userId: { type: String, required: true, index: true },
+  userName: String,
+  userRole: String,
+  userEmail: String,
+  userMobile: String,
+  amount: { type: Number, required: true },
   status: { type: String, default: 'Pending' }, // Pending, Paid, Rejected
+  payoutMethod: { type: String, default: 'upi' }, // 'upi' | 'bank'
+  upiId: String,
+  bankDetails: {
+    accountHolder: String,
+    accountNumber: String,
+    ifscCode: String,
+    bankName: String
+  },
+  adminNotes: String,
+  transactionRef: String,
+  processedBy: String,
   requestedAt: { type: String, default: () => new Date().toISOString() },
   processedAt: String
-});
+}, { timestamps: true });
 const WithdrawalRequestModel = mongoose.model('WithdrawalRequest', withdrawalRequestSchema);
+
+const walletTransactionSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: { type: String, required: true, index: true },
+  userName: String,
+  userRole: String, // 'agent' | 'hr'
+  type: { type: String, required: true }, // 'credit_direct' | 'credit_upline' | 'credit_hr_override' | 'debit_withdrawal' | 'adjustment'
+  amount: { type: Number, required: true },
+  balanceAfter: { type: Number, default: 0 },
+  description: String,
+  applicationId: String,
+  candidateName: String,
+  jobTitle: String,
+  closerUserId: String,
+  closerUserName: String,
+  levelDepth: { type: Number, default: 0 },
+  withdrawalRequestId: String,
+  createdAt: { type: String, default: () => new Date().toISOString() }
+}, { timestamps: true });
+const WalletTransactionModel = mongoose.model('WalletTransaction', walletTransactionSchema);
 
 const globalSettingsSchema = new mongoose.Schema({
   type: { type: String, required: true, unique: true },
@@ -1083,6 +1118,7 @@ module.exports = {
   GlobalSettingsModel,
   PartnerIncentiveModel,
   WithdrawalRequestModel,
+  WalletTransactionModel,
   InterviewModel,
   BranchItProjectModel,
   BranchItMasterProjectModel,

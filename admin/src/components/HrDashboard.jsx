@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Headphones, Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut, Target } from 'lucide-react';
+  Headphones, Share2, Users, MousePointerClick, Copy, ChevronDown, ChevronUp, Phone, Mail, MapPin, Calendar, Briefcase, LayoutDashboard, Gift, CalendarDays, Settings, Search, Download, Bell, X, FileText, CheckCircle, UserCog, GraduationCap, Zap, TrendingUp, FileCheck, Check, Send, ExternalLink, Award, Sparkles, LogOut, Target, Wallet } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
 import AgentsManager from './AgentsManager';
 import SubAgentsManager from './SubAgentsManager';
+import PartnerWalletManager from './PartnerWalletManager';
 import OffersAndTargetsModal from './OffersAndTargetsModal';
 import OffersAndTargetsView from './OffersAndTargetsView';
 import OfferLettersManager, { extractOffer } from './OfferLettersManager';
@@ -863,6 +864,10 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
             <Gift size={18} /><span>Incentives</span>
           </button>
 
+          <button className={`nav-item ${activeTab === 'wallet' ? 'active' : ''}`} onClick={() => { setActiveTab('wallet'); setSidebarOpen && setSidebarOpen(false); }} style={{ whiteSpace: 'nowrap' }}>
+            <Wallet size={18} /><span>My Wallet 💼</span>
+          </button>
+
           {Boolean(isFollowUpAssigned || currentUser?.isFollowUpHr) && (
             <button
               className={`nav-item ${activeTab === 'follow_ups' ? 'active' : ''}`}
@@ -1016,6 +1021,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
           <FollowUpCentralManager
             API_URL={API_URL}
             currentUser={currentUser}
+          />
+        )}
+
+        {activeTab === 'wallet' && (
+          <PartnerWalletManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+            showToast={showToast}
           />
         )}
 

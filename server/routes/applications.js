@@ -398,6 +398,15 @@ router.put('/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Application not found.' });
     }
 
+    if (status) {
+      const s = String(status).toLowerCase().trim();
+      const isClosed = s.includes('select') || s.includes('closed') || s.includes('join') || s.includes('hired') || s.includes('convert');
+      if (isClosed && !updated.mlmCommissionDistributed) {
+        const { distributeMlmCommission } = require('../services/mlmService');
+        distributeMlmCommission(updated).catch(err => console.error('Error distributing MLM commission:', err));
+      }
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update application status in MongoDB Atlas.' });
@@ -418,6 +427,15 @@ router.put('/:id/reference', async (req, res) => {
 
     if (!updated) {
       return res.status(404).json({ error: 'Application not found.' });
+    }
+
+    if (status) {
+      const s = String(status).toLowerCase().trim();
+      const isClosed = s.includes('select') || s.includes('closed') || s.includes('join') || s.includes('hired') || s.includes('convert');
+      if (isClosed && !updated.mlmCommissionDistributed) {
+        const { distributeMlmCommission } = require('../services/mlmService');
+        distributeMlmCommission(updated).catch(err => console.error('Error distributing MLM commission:', err));
+      }
     }
 
     res.json(updated);

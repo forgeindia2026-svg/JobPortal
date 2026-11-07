@@ -64,6 +64,7 @@ app.use('/api/branch-it-projects', require('./routes/branchItProjects'));
 app.use('/api/offer-targets', require('./routes/offerTargets'));
 app.use('/api/offer-letters', require('./routes/offerLetters'));
 app.use('/api/follow-ups', require('./routes/followUps'));
+app.use('/api/wallet', require('./routes/wallet'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

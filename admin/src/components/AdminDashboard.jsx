@@ -5,7 +5,7 @@ import {
   LayoutDashboard, FolderTree, Building2, Briefcase, Users, FileText, Gift, Check, X,
   Calendar, CalendarDays, BarChart3, Plus, Edit, Trash2, ExternalLink, RefreshCw, XCircle, GraduationCap, UserPlus, Download, CheckCircle, CreditCard, ArrowLeft, Search, FileCheck, Clock, MousePointerClick,
   Copy, Lock, Eye, EyeOff, Wallet, ChevronRight, Send, Share2, LogOut,
-  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield, Trophy, UserCheck
+  UserCog, ShieldCheck, Key, User, Mail, Phone, Shield, Trophy, UserCheck, Layers
 } from 'lucide-react';
 
 import JobFormModal from './JobFormModal';
@@ -21,6 +21,7 @@ import ManipalPayoutManager from './ManipalPayoutManager';
 import OfferTargetsManager from './OfferTargetsManager';
 import OfferLettersManager from './OfferLettersManager';
 import FollowUpCentralManager from './FollowUpCentralManager';
+import AdminMlmSettingsManager from './AdminMlmSettingsManager';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 // Bank themes & styling helpers for Admin Dashboard
@@ -2853,6 +2854,18 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           onClick={() => handleTabChange('manipal-payout-status')}
         >
           <Wallet size={18} /> Manipal Payout
+        </button>
+
+        <button
+          className={`nav-item ${activeTab === 'mlm_settings' ? 'active' : ''}`}
+          onClick={() => handleTabChange('mlm_settings')}
+          style={{
+            background: activeTab === 'mlm_settings' ? 'rgba(37, 99, 235, 0.15)' : undefined,
+            color: activeTab === 'mlm_settings' ? '#2563eb' : undefined,
+            fontWeight: activeTab === 'mlm_settings' ? 700 : undefined
+          }}
+        >
+          <Layers size={18} color={activeTab === 'mlm_settings' ? '#2563eb' : undefined} /> MLM Slabs & Payouts 💰
         </button>
 
         <button
@@ -6813,6 +6826,14 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           />
         )}
 
+        {activeTab === 'mlm_settings' && (
+          <AdminMlmSettingsManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+            showToast={showToast}
+          />
+        )}
+
         {activeTab === 'offer_letters' && (
           <OfferLettersManager
             API_URL={API_URL}
@@ -7815,6 +7836,14 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           <OfferTargetsManager
             API_URL={API_URL}
             currentUser={currentUser}
+          />
+        )}
+
+        {activeTab === 'mlm_settings' && (
+          <AdminMlmSettingsManager
+            API_URL={API_URL}
+            currentUser={currentUser}
+            showToast={showToast}
           />
         )}
 
