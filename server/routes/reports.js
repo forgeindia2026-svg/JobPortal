@@ -1,22 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const { readDBAsync, GlobalSettingsModel } = require('../db');
+const {
+  JobModel,
+  CandidateModel,
+  ApplicationModel,
+  InterviewModel,
+  CategoryModel,
+  CompanyModel,
+  GlobalSettingsModel
+} = require('../db');
+
+// In-memory cache for dashboard KPI report (15 seconds TTL)
+let reportCache = { data: null, timestamp: 0 };
+const REPORT_TTL = 15000;
 
 // GET /api/reports/dashboard
 router.get('/dashboard', async (req, res) => {
   try {
-    const db = await readDBAsync();
-    const platformStats = await GlobalSettingsModel.findOne({ type: 'platform_stats' }).lean().catch(() => null);
+    const now = Date.now();
+    if (reportCache.data && (now - reportCache.timestamp < REPORT_TTL)) {
+      return res.json(reportCache.data);
+    }
+
+    const [
+      totalJobs,
+      activeJobs,
+      platformStats,
+      rawApps,
+      rawCandidates,
+      rawInterviews,
+      categories,
+      companies
+    ] = await Promise.all([
+      JobModel.countDocuments(),
+      JobModel.countDocuments({ status: { $regex: /^active$/i } }),
+      GlobalSettingsModel.findOne({ type: 'platform_stats' }).lean().catch(() => null),
+      ApplicationModel.find({}, 'id status candidateId categoryId companyId').lean(),
+      CandidateModel.find({}, 'id email mobile').lean(),
+      InterviewModel.find({ status: { $in: ['Scheduled', null] } }, 'applicationId candidateId round status').lean(),
+      CategoryModel.find({}, 'id name').lean(),
+      CompanyModel.find({}, 'id name').lean()
+    ]);
+
     const directLinkClicks = platformStats?.data?.directLinkClicks || 0;
+    const applications = rawApps || [];
+    const candidates = rawCandidates || [];
 
-    const validApps = db.applications.filter(a => a.status !== 'Payment Pending');
+    const validApps = applications.filter(a => a.status !== 'Payment Pending');
     const candidateIdsWithValidApps = new Set(validApps.map(a => String(a.candidateId)));
-    const candidateIdsWithPendingApps = new Set(db.applications.filter(a => a.status === 'Payment Pending').map(a => String(a.candidateId)));
+    const candidateIdsWithPendingApps = new Set(applications.filter(a => a.status === 'Payment Pending').map(a => String(a.candidateId)));
 
-    const totalJobs = db.jobs.length;
-    const activeJobs = db.jobs.filter(j => j.status === 'Active').length;
-    
-    const activeCandidates = db.candidates.filter(c => {
+    const activeCandidates = candidates.filter(c => {
       const hasValid = candidateIdsWithValidApps.has(String(c.id));
       const hasPending = candidateIdsWithPendingApps.has(String(c.id));
       if (hasPending && !hasValid) return false;
@@ -49,7 +83,7 @@ router.get('/dashboard', async (req, res) => {
 
     // Deduplicate scheduled interviews count
     const uniqueIntMap = new Map();
-    (db.interviews || []).forEach(item => {
+    (rawInterviews || []).forEach(item => {
       if (!item.status || item.status === 'Scheduled') {
         const key = `${item.applicationId || item.candidateId}_${item.round || 'HR Screening'}`;
         if (!uniqueIntMap.has(key)) {
@@ -58,34 +92,34 @@ router.get('/dashboard', async (req, res) => {
       }
     });
     const scheduledInterviews = uniqueIntMap.size;
-    const selectedCandidates = db.applications.filter(a => a.status === 'Selected').length;
+    const selectedCandidates = applications.filter(a => a.status === 'Selected').length;
 
     // Group applications by category
+    const catMap = new Map((categories || []).map(c => [c.id, c.name]));
     const appsByCategory = {};
-    db.applications.forEach(app => {
-      const cat = db.categories.find(c => c.id === app.categoryId);
-      const catName = cat ? cat.name : 'Other';
+    applications.forEach(app => {
+      const catName = catMap.get(app.categoryId) || 'Other';
       appsByCategory[catName] = (appsByCategory[catName] || 0) + 1;
     });
 
     // Group applications by company
+    const compMap = new Map((companies || []).map(c => [c.id, c.name]));
     const appsByCompany = {};
-    db.applications.forEach(app => {
-      const comp = db.companies.find(c => c.id === app.companyId);
-      const compName = comp ? comp.name : 'Other';
+    applications.forEach(app => {
+      const compName = compMap.get(app.companyId) || 'Other';
       appsByCompany[compName] = (appsByCompany[compName] || 0) + 1;
     });
 
     // Applications status breakdown
     const statusBreakdown = {
-      Applied: db.applications.filter(a => a.status === 'Applied').length,
-      Shortlisted: db.applications.filter(a => a.status === 'Shortlisted').length,
-      'Interview Scheduled': db.applications.filter(a => a.status === 'Interview Scheduled').length,
-      Selected: db.applications.filter(a => a.status === 'Selected').length,
-      Rejected: db.applications.filter(a => a.status === 'Rejected').length
+      Applied: applications.filter(a => a.status === 'Applied').length,
+      Shortlisted: applications.filter(a => a.status === 'Shortlisted').length,
+      'Interview Scheduled': applications.filter(a => a.status === 'Interview Scheduled').length,
+      Selected: applications.filter(a => a.status === 'Selected').length,
+      Rejected: applications.filter(a => a.status === 'Rejected').length
     };
 
-    res.json({
+    const responseData = {
       kpis: {
         totalJobs,
         activeJobs,
@@ -100,7 +134,10 @@ router.get('/dashboard', async (req, res) => {
         appsByCompany,
         statusBreakdown
       }
-    });
+    };
+
+    reportCache = { data: responseData, timestamp: now };
+    res.json(responseData);
   } catch (err) {
     res.status(500).json({ error: 'Failed to generate dashboard report from MongoDB Atlas.' });
   }

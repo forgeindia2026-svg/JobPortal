@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const path = require('path');
 const fs = require('fs');
 
@@ -17,6 +18,9 @@ const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Enable HTTP compression (reduces JSON payload size by up to 90%)
+app.use(compression());
 
 // Enable CORS and JSON parsing
 app.use(cors());

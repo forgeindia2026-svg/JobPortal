@@ -49,9 +49,13 @@ router.get('/', async (req, res) => {
       appQuery = appQuery.limit(limitNum);
     }
 
-    const [rawApps, candidates, meta] = await Promise.all([
-      appQuery,
-      CandidateModel.find({}, 'id name email mobile location qualification experience resumeUrl').lean(),
+    const rawApps = await appQuery;
+    const candIds = [...new Set((rawApps || []).map(a => a.candidateId).filter(Boolean))];
+
+    const [candidates, meta] = await Promise.all([
+      (mobile || email)
+        ? CandidateModel.find({}, 'id name email mobile location qualification experience resumeUrl').lean()
+        : CandidateModel.find({ id: { $in: candIds } }, 'id name email mobile location qualification experience resumeUrl').lean(),
       getCachedMeta(),
     ]);
 

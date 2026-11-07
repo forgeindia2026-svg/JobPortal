@@ -1,42 +1,53 @@
 const express = require('express');
 const router = express.Router();
-const { readDBAsync, JobModel } = require('../db');
+const { JobModel, CompanyModel, CategoryModel, invalidateDBCache } = require('../db');
+
+// In-memory cache for companies & categories (rarely change)
+let metaCache = { companies: null, categories: null, timestamp: 0 };
+const META_TTL = 30000; // 30s cache
+
+async function getJobMeta() {
+  const now = Date.now();
+  if (metaCache.companies && metaCache.categories && (now - metaCache.timestamp < META_TTL)) {
+    return metaCache;
+  }
+  const [companies, categories] = await Promise.all([
+    CompanyModel.find({}).lean(),
+    CategoryModel.find({}).lean()
+  ]);
+  metaCache = { companies: companies || [], categories: categories || [], timestamp: now };
+  return metaCache;
+}
 
 // GET /api/jobs (supports query: categoryId, companyId, status, search, location)
 router.get('/', async (req, res) => {
   try {
     const { categoryId, companyId, status, search, location } = req.query;
-    const db = await readDBAsync();
-    let jobs = db.jobs || [];
-
-    if (categoryId) {
-      jobs = jobs.filter(j => j.categoryId === categoryId);
-    }
-    if (companyId) {
-      jobs = jobs.filter(j => j.companyId === companyId);
-    }
-    if (status) {
-      jobs = jobs.filter(j => j.status && j.status.toLowerCase() === status.toLowerCase());
-    }
-    if (location) {
-      jobs = jobs.filter(j => j.location && j.location.toLowerCase().includes(location.toLowerCase()));
-    }
+    const filter = {};
+    if (categoryId) filter.categoryId = categoryId;
+    if (companyId) filter.companyId = companyId;
+    if (status) filter.status = new RegExp(`^${status}$`, 'i');
+    if (location) filter.location = new RegExp(location, 'i');
     if (search) {
-      const q = search.toLowerCase();
-      jobs = jobs.filter(j => 
-        (j.title && j.title.toLowerCase().includes(q)) ||
-        (j.description && j.description.toLowerCase().includes(q)) ||
-        (j.skills && j.skills.some(s => s.toLowerCase().includes(q)))
-      );
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { skills: searchRegex }
+      ];
     }
+
+    const [jobs, { companies, categories }] = await Promise.all([
+      JobModel.find(filter).lean(),
+      getJobMeta()
+    ]);
 
     // Populate company and category details for easy UI rendering
     const baseUrl = process.env.API_BASE_URL || `${req.protocol}://${req.get('host')}`;
-    const populated = jobs.map(job => {
-      const company = db.companies.find(c => c.id === job.companyId);
-      const category = db.categories.find(cat => cat.id === job.categoryId);
+    const populated = (jobs || []).map(job => {
+      const company = companies.find(c => c.id === job.companyId);
+      const category = categories.find(cat => cat.id === job.categoryId);
       let companyLogo = company ? (company.logo || '') : '';
-      // Strip any localhost URLs stored in the DB (old/dev data)
       if (companyLogo.match(/^https?:\/\/localhost(:\d+)?/)) {
         companyLogo = companyLogo.replace(/^https?:\/\/localhost(:\d+)?/, baseUrl);
       } else if (companyLogo.startsWith('/')) {
@@ -67,18 +78,19 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const db = await readDBAsync();
-    const job = db.jobs.find(j => j.id === id);
+    const [job, { companies, categories }] = await Promise.all([
+      JobModel.findOne({ id }).lean(),
+      getJobMeta()
+    ]);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found.' });
     }
 
-    const company = db.companies.find(c => c.id === job.companyId);
-    const category = db.categories.find(cat => cat.id === job.categoryId);
+    const company = companies.find(c => c.id === job.companyId);
+    const category = categories.find(cat => cat.id === job.categoryId);
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     let companyLogo = company ? (company.logo || '') : '';
-    // Strip any localhost URLs stored in the DB (old/dev data)
     if (companyLogo.match(/^https?:\/\/localhost(:\d+)?/)) {
       companyLogo = companyLogo.replace(/^https?:\/\/localhost(:\d+)?/, baseUrl);
     } else if (companyLogo.startsWith('/')) {
@@ -184,6 +196,7 @@ router.post('/', async (req, res) => {
     };
 
     const savedJob = await JobModel.create(newJob);
+    invalidateDBCache();
     console.log('✅ New Job saved directly into MongoDB Atlas Cloud:', savedJob.id);
     res.status(201).json(savedJob.toObject());
   } catch (err) {
@@ -203,6 +216,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Job opening not found.' });
     }
 
+    invalidateDBCache();
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update job in MongoDB Atlas.' });
@@ -217,6 +231,7 @@ router.delete('/:id', async (req, res) => {
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Job opening not found.' });
     }
+    invalidateDBCache();
     res.json({ message: 'Job opening deleted successfully from MongoDB Atlas.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete job from MongoDB Atlas.' });

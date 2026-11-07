@@ -7,37 +7,6 @@ router.get('/', async (req, res) => {
   try {
     const { candidateId, applicationId, role, referralCode, userId } = req.query;
 
-    // Clean up duplicate interviews in MongoDB Atlas if any exist
-    try {
-      const allDbInterviews = await InterviewModel.find({}).lean();
-      const seenKeys = new Map();
-      const duplicateIdsToDelete = [];
-
-      for (const item of allDbInterviews) {
-        const key = `${item.applicationId || item.candidateId}_${item.round || 'HR Screening'}`;
-        if (seenKeys.has(key)) {
-          const prev = seenKeys.get(key);
-          const prevTime = new Date(prev.updatedAt || prev.createdAt || 0).getTime();
-          const currTime = new Date(item.updatedAt || item.createdAt || 0).getTime();
-          if (currTime > prevTime) {
-            duplicateIdsToDelete.push(prev._id);
-            seenKeys.set(key, item);
-          } else {
-            duplicateIdsToDelete.push(item._id);
-          }
-        } else {
-          seenKeys.set(key, item);
-        }
-      }
-
-      if (duplicateIdsToDelete.length > 0) {
-        await InterviewModel.deleteMany({ _id: { $in: duplicateIdsToDelete } });
-        console.log(`🧹 Cleaned up ${duplicateIdsToDelete.length} duplicate interview records from MongoDB.`);
-      }
-    } catch (cleanupErr) {
-      console.warn('Auto-cleanup warning:', cleanupErr.message);
-    }
-
     const db = await readDBAsync();
     let interviews = db.interviews || [];
 

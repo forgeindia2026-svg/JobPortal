@@ -213,6 +213,38 @@ const itTrainingProcessSchema = new mongoose.Schema({
   updatedAt: String
 }, { strict: false });
 
+// Database indexes for high performance queries
+userSchema.index({ role: 1 });
+userSchema.index({ parentHrId: 1 });
+userSchema.index({ parentAgentId: 1 });
+userSchema.index({ teamLeaderId: 1 });
+userSchema.index({ branchManagerId: 1 });
+userSchema.index({ email: 1 });
+userSchema.index({ mobile: 1 });
+
+jobSchema.index({ status: 1 });
+jobSchema.index({ categoryId: 1 });
+jobSchema.index({ companyId: 1 });
+jobSchema.index({ createdAt: -1 });
+
+candidateSchema.index({ email: 1 });
+candidateSchema.index({ mobile: 1 });
+candidateSchema.index({ createdAt: -1 });
+
+applicationSchema.index({ candidateId: 1 });
+applicationSchema.index({ jobId: 1 });
+applicationSchema.index({ status: 1 });
+applicationSchema.index({ referredBy: 1 });
+applicationSchema.index({ appliedAt: -1 });
+applicationSchema.index({ createdAt: -1 });
+applicationSchema.index({ manipalPayoutStatus: 1 });
+applicationSchema.index({ candidateId: 1, jobId: 1 });
+
+interviewSchema.index({ applicationId: 1 });
+interviewSchema.index({ candidateId: 1 });
+interviewSchema.index({ status: 1 });
+interviewSchema.index({ date: -1 });
+
 const UserModel = mongoose.model('User', userSchema);
 const CategoryModel = mongoose.model('Category', categorySchema);
 const CompanyModel = mongoose.model('Company', companySchema);
@@ -1057,8 +1089,22 @@ async function connectMongoDB() {
   }
 }
 
+// In-memory cache for readDBAsync with 15s TTL (collapses concurrent dashboard requests)
+let readDBCache = null;
+let readDBCacheTime = 0;
+const READ_DB_CACHE_TTL = 15000;
+
+function invalidateDBCache() {
+  readDBCache = null;
+  readDBCacheTime = 0;
+}
+
 // Read database directly from MongoDB Atlas Cloud collections
-async function readDBAsync() {
+async function readDBAsync(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && readDBCache && (now - readDBCacheTime < READ_DB_CACHE_TTL)) {
+    return readDBCache;
+  }
   try {
     const [users, categories, companies, jobs, candidates, applications, interviews, itTrainingProcesses] = await Promise.all([
       UserModel.find({}).lean(),
@@ -1070,7 +1116,7 @@ async function readDBAsync() {
       InterviewModel.find({}).lean(),
       ItTrainingProcessModel.find({}).lean()
     ]);
-    return {
+    readDBCache = {
       users: users || [],
       categories: categories || [],
       companies: companies || [],
@@ -1080,6 +1126,8 @@ async function readDBAsync() {
       interviews: interviews || [],
       itTrainingProcesses: (itTrainingProcesses && itTrainingProcesses.length > 0) ? itTrainingProcesses : initialData.itTrainingProcesses
     };
+    readDBCacheTime = now;
+    return readDBCache;
   } catch (err) {
     console.error('Error reading from MongoDB Atlas Cloud:', err.message);
     return {
@@ -1106,6 +1154,7 @@ function writeDB() {
 module.exports = {
   connectMongoDB,
   readDBAsync,
+  invalidateDBCache,
   readDB,
   writeDB,
   UserModel,
