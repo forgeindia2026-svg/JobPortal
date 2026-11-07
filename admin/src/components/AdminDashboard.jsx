@@ -6830,7 +6830,7 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           <AdminMlmSettingsManager
             API_URL={API_URL}
             currentUser={currentUser}
-            showToast={showToast}
+            showToast={(msg) => alert(msg)}
           />
         )}
 
@@ -7836,14 +7836,6 @@ export default function AdminDashboard({ API_URL, currentUser, onUpdateUser, sid
           <OfferTargetsManager
             API_URL={API_URL}
             currentUser={currentUser}
-          />
-        )}
-
-        {activeTab === 'mlm_settings' && (
-          <AdminMlmSettingsManager
-            API_URL={API_URL}
-            currentUser={currentUser}
-            showToast={showToast}
           />
         )}
 

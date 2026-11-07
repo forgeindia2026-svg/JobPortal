@@ -2,6 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Wallet, ArrowDownRight, ArrowUpRight, Clock, CheckCircle2, AlertCircle, RefreshCw, Send, DollarSign, Building2, QrCode } from 'lucide-react';
 
 export default function PartnerWalletManager({ API_URL, currentUser, showToast }) {
+  const notify = (msg, type = 'success') => {
+    if (typeof showToast === 'function') {
+      showToast(msg, type);
+    } else if (typeof window !== 'undefined' && window.alert) {
+      window.alert(msg);
+    }
+  };
+
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,7 +44,7 @@ export default function PartnerWalletManager({ API_URL, currentUser, showToast }
       }
     } catch (err) {
       console.error('Wallet fetch error:', err);
-      showToast && showToast('Failed to load wallet data', 'error');
+      notify('Failed to load wallet data', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -99,7 +107,7 @@ export default function PartnerWalletManager({ API_URL, currentUser, showToast }
         throw new Error(data.error || 'Withdrawal request failed');
       }
 
-      showToast && showToast(`Withdrawal request of ₹${amt} submitted successfully!`);
+      notify(`Withdrawal request of ₹${amt} submitted successfully!`);
       setWithdrawModalOpen(false);
       fetchWallet();
     } catch (err) {
@@ -623,3 +631,4 @@ export default function PartnerWalletManager({ API_URL, currentUser, showToast }
     </div>
   );
 }
+

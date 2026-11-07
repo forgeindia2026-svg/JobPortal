@@ -2,6 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Layers, CheckCircle2, XCircle, Clock, Save, RefreshCw, Send, AlertCircle, QrCode, Building2, Plus, Trash2 } from 'lucide-react';
 
 export default function AdminMlmSettingsManager({ API_URL, currentUser, showToast }) {
+  const notify = (msg, type = 'success') => {
+    if (typeof showToast === 'function') {
+      showToast(msg, type);
+    } else if (typeof window !== 'undefined' && window.alert) {
+      window.alert(msg);
+    }
+  };
+
   const [activeSubTab, setActiveSubTab] = useState('slabs'); // 'slabs' | 'withdrawals'
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,9 +72,9 @@ export default function AdminMlmSettingsManager({ API_URL, currentUser, showToas
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save settings');
-      showToast && showToast('MLM Commission Slabs saved successfully!');
+      notify('MLM Commission Slabs saved successfully!');
     } catch (err) {
-      showToast && showToast(err.message, 'error');
+      notify(err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -122,11 +130,11 @@ export default function AdminMlmSettingsManager({ API_URL, currentUser, showToas
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update request');
-      showToast && showToast(`Withdrawal #${selectedWithdrawal.id} marked as ${actionStatus}`);
+      notify(`Withdrawal #${selectedWithdrawal.id} marked as ${actionStatus}`);
       setActionModalOpen(false);
       fetchWithdrawals();
     } catch (err) {
-      showToast && showToast(err.message, 'error');
+      notify(err.message, 'error');
     } finally {
       setProcessingAction(false);
     }
@@ -678,3 +686,4 @@ export default function AdminMlmSettingsManager({ API_URL, currentUser, showToas
     </div>
   );
 }
+
