@@ -951,6 +951,7 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                       totalClosed: closedApps.length
                     };
                   });
+                  const topSourcers = [...hrStats].sort((a, b) => b.totalSourced - a.totalSourced);
                   const topClosers = [...hrStats].sort((a, b) => b.totalClosed - a.totalClosed);
 
                   return (

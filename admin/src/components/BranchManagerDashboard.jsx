@@ -898,6 +898,7 @@ export default function BranchManagerDashboard({ API_URL, currentUser, sidebarOp
                   totalClosed: closedApps.length
                 };
               });
+              const topSourcers = [...hrStats].sort((a,b) => b.totalSourced - a.totalSourced);
               const topClosers = [...hrStats].sort((a,b) => b.totalClosed - a.totalClosed);
 
               return (
