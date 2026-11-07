@@ -839,9 +839,14 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
     const hrUser = await UserModel.findOne({ referralCode: new RegExp('^' + referralCode + '$', 'i'), role: { $in: ['hr', 'agent'] } }).lean();
     
     let codesRegex = [new RegExp('^' + referralCode + '$', 'i')];
-    if (hrUser && hrUser.role === 'hr') {
-      const agents = await UserModel.find({ parentHrId: hrUser.id, role: 'agent' }).lean();
-      const agentCodes = agents.map(a => a.referralCode).filter(Boolean);
+    let agents = [];
+    if (hrUser) {
+      if (hrUser.role === 'hr') {
+        agents = await UserModel.find({ parentHrId: hrUser.id, role: 'agent' }).lean();
+      } else if (hrUser.role === 'agent') {
+        agents = await UserModel.find({ parentAgentId: hrUser.id, role: 'agent' }).lean();
+      }
+      const agentCodes = (agents || []).map(a => a.referralCode).filter(Boolean);
       agentCodes.forEach(c => codesRegex.push(new RegExp('^' + c + '$', 'i')));
     }
 
@@ -850,7 +855,7 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
     const db = await readDBAsync();
     
     // Fetch settings for dynamic incentive calculation if missing
-    const partnerIncentives = await PartnerIncentiveModel.find({ hrId: hrUser.id }).lean();
+    const partnerIncentives = await PartnerIncentiveModel.find({ hrId: hrUser?.id }).lean();
     const incSetting = await GlobalSettingsModel.findOne({ type: 'incentives' }).lean();
     const agentCut = incSetting?.data?.agentCutPercentage || 50;
 
@@ -883,7 +888,7 @@ router.get('/hr/:referralCode/dashboard', async (req, res) => {
          }
       }
 
-      const refAgent = agents.find(a => String(a.referralCode).toLowerCase() === String(app.referredBy).toLowerCase());
+      const refAgent = (agents || []).find(a => a.referralCode && String(a.referralCode).toLowerCase() === String(app.referredBy).toLowerCase());
       const partnerDisplayName = refAgent ? refAgent.name : null;
 
       return {
