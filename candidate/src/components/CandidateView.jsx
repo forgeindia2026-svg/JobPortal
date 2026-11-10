@@ -172,12 +172,25 @@ const FALLBACK_JOBS = Array.isArray(fallbackJobsData) && fallbackJobsData.length
   }
 ];
 
-export default function CandidateView({ API_URL, currentUser, targetJobId, onClearTargetJob }) {
+export default function CandidateView({ API_URL, currentUser, targetJobId, onClearTargetJob, targetCategory, onClearTargetCategory }) {
   const [activeTab, setActiveTab] = useState('browse'); // 'browse' or 'my_apps'
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [companies, setCompanies] = useState(FALLBACK_COMPANIES);
   const [jobs, setJobs] = useState(FALLBACK_JOBS);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    if (!targetCategory) return null;
+    const q = String(targetCategory).toLowerCase().trim();
+    const found = FALLBACK_CATEGORIES.find(c =>
+      c.id === q ||
+      c.id === `cat_${q}` ||
+      (c.name || '').toLowerCase().includes(q)
+    );
+    if (found) return found;
+    if (q === 'banking' || q === 'cat_banking') {
+      return { id: 'cat_banking', name: 'Banking & Financial Services' };
+    }
+    return null;
+  });
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -244,11 +257,16 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
         if (!state || state.page !== 'company') {
           setSelectedCompany(null);
         }
+      } else if (selectedCategory) {
+        if (!state || state.page !== 'category') {
+          setSelectedCategory(null);
+          if (onClearTargetCategory) onClearTargetCategory();
+        }
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [viewingJob, selectedCompany, ficView]);
+  }, [viewingJob, selectedCompany, ficView, selectedCategory]);
 
   const handleOpenFicBankSelection = () => {
     window.history.pushState({ page: 'fic_banks' }, '');
@@ -296,7 +314,17 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
           if (Array.isArray(cats) && cats.length > 0) {
             setCategories(cats);
             // Retain landing page categories view by default
-            // (selectedCategory remains null until user clicks a card)
+            if (targetCategory) {
+              const q = String(targetCategory).toLowerCase().trim();
+              const matchedCat = cats.find(c =>
+                c.id === q ||
+                c.id === `cat_${q}` ||
+                (c.name || '').toLowerCase().includes(q)
+              );
+              if (matchedCat) {
+                setSelectedCategory(matchedCat);
+              }
+            }
           }
         })
         .catch(err => console.error('Categories fetch error:', err));
@@ -816,6 +844,7 @@ export default function CandidateView({ API_URL, currentUser, targetJobId, onCle
   const goToCategoriesPage = () => {
     setSelectedCategory(null);
     setSelectedCompany(null);
+    if (onClearTargetCategory) onClearTargetCategory();
   };
 
   const goToCompaniesPage = () => {

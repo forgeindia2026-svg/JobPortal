@@ -236,6 +236,7 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     : 'https://jobs.forgeindiaconnect.in';
 
   const referralLink = `${candidatePortalBaseUrl}?ref=${currentUser.referralCode}`;
+  const bankingReferralLink = `${candidatePortalBaseUrl}?category=banking&ref=${currentUser.referralCode}`;
 
   const fetchStats = () => {
     fetch(`${API_URL}/api/users/hr/${currentUser.referralCode}/dashboard`)
@@ -376,6 +377,14 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
     })
     .catch(err => console.error('Error fetching jobs:', err));
   }, [API_URL, currentUser.id, currentUser.parentHrId, isAgent]);
+
+  const [copiedBanking, setCopiedBanking] = useState(false);
+  const copyBankingLink = () => {
+    navigator.clipboard.writeText(bankingReferralLink);
+    setCopiedBanking(true);
+    showToast('Banking Jobs referral link copied!');
+    setTimeout(() => setCopiedBanking(false), 2500);
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -2026,9 +2035,9 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 </div>
               </div>
 
-              {/* General Portal Link Reminder */}
+              {/* Dedicated Banking Jobs Link Banner */}
               <div style={{
-                background: 'rgba(0,0,0,0.2)',
+                background: 'rgba(0,0,0,0.25)',
                 borderRadius: '10px',
                 padding: '10px 14px',
                 display: 'flex',
@@ -2039,23 +2048,45 @@ export default function HrDashboard({ API_URL, currentUser, sidebarOpen, setSide
                 fontSize: '0.85rem'
               }}>
                 <span style={{ color: 'rgba(255,255,255,0.95)' }}>
-                  🌐 <strong>Overall Portal Link:</strong> {referralLink}
+                  🏦 <strong>Banking Jobs Link:</strong> {bankingReferralLink}
                 </span>
-                <button
-                  onClick={copyToClipboard}
-                  style={{
-                    background: copied ? '#10b981' : '#ffffff',
-                    color: copied ? '#ffffff' : '#1e3a8a',
-                    border: 'none',
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {copied ? 'Copied General Link!' : 'Copy General Link'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={copyBankingLink}
+                    style={{
+                      background: copiedBanking ? '#10b981' : '#ffffff',
+                      color: copiedBanking ? '#ffffff' : '#1e3a8a',
+                      border: 'none',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {copiedBanking ? '✓ Copied Banking Link!' : '📋 Copy Banking Link'}
+                  </button>
+                  <button
+                    onClick={copyToClipboard}
+                    style={{
+                      background: copied ? '#10b981' : 'rgba(255,255,255,0.18)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255,255,255,0.35)',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                    title="Copy general all-jobs portal link"
+                  >
+                    {copied ? '✓ Copied All-Jobs Link' : 'Copy All-Jobs Link'}
+                  </button>
+                </div>
               </div>
             </div>
 

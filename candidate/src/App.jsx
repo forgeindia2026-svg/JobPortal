@@ -15,11 +15,32 @@ export default function App() {
     }
   });
 
+  const [targetCategory, setTargetCategory] = useState(() => {
+    try {
+      const match = window.location.href.match(/[?&](?:category|cat)=([A-Za-z0-9_-]+)/i);
+      return match ? match[1].toLowerCase() : null;
+    } catch {
+      return null;
+    }
+  });
+
   const handleClearTargetJob = () => {
     setTargetJobId(null);
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete('job');
+      window.history.pushState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleClearTargetCategory = () => {
+    setTargetCategory(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('category');
+      url.searchParams.delete('cat');
       window.history.pushState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
     } catch {
       // fallback
@@ -72,6 +93,8 @@ export default function App() {
           currentUser={currentUser}
           targetJobId={targetJobId}
           onClearTargetJob={handleClearTargetJob}
+          targetCategory={targetCategory}
+          onClearTargetCategory={handleClearTargetCategory}
         />
       </main>
     </div>
