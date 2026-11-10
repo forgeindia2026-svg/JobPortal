@@ -563,36 +563,96 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
         </div>
       )}
 
-      {/* KPI Cards Row (2-Grid on Mobile, Auto-fit on Desktop) */}
+      {/* KPI Cards Row (2-Grid on Mobile, Auto-fit on Desktop - Clickable Filter Cards) */}
       <div className="dashboard-kpi-grid">
-        <div className="dashboard-kpi-card" style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+        {/* KPI 1: IT TEAM MEMBERS -> Switches to Employees View */}
+        <div
+          className="dashboard-kpi-card"
+          onClick={() => {
+            setViewMode('employees');
+            setStatusFilter('all');
+            setExpandedMemberName(null);
+          }}
+          style={{
+            background: viewMode === 'employees' ? '#f1f5f9' : '#f8fafc',
+            padding: '1.25rem',
+            borderRadius: '14px',
+            border: viewMode === 'employees' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            boxShadow: viewMode === 'employees' ? '0 4px 12px rgba(2, 132, 199, 0.12)' : '0 2px 4px rgba(0,0,0,0.02)'
+          }}
+          title="Click to view all IT Team Members"
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>IT Team Members</span>
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              IT Team Members {viewMode === 'employees' ? '✓' : ''}
+            </span>
             <div className="dashboard-kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <User size={16} color="#334155" />
             </div>
           </div>
           <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{totalMembers}</div>
           <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#64748b' }}>
-            {isAdmin ? 'Across all branches' : 'Assigned in this branch'}
+            {isAdmin ? 'Across all branches (Click to view)' : 'Assigned in this branch (Click to view)'}
           </span>
         </div>
 
-        <div className="dashboard-kpi-card" style={{ background: '#eff6ff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #bfdbfe' }}>
+        {/* KPI 2: ACTIVE PROJECTS -> Filters to In Progress projects */}
+        <div
+          className="dashboard-kpi-card"
+          onClick={() => {
+            setViewMode('projects');
+            setStatusFilter(prev => prev === 'In Progress' ? 'all' : 'In Progress');
+            setExpandedProjectId(null);
+          }}
+          style={{
+            background: statusFilter === 'In Progress' ? '#dbeafe' : '#eff6ff',
+            padding: '1.25rem',
+            borderRadius: '14px',
+            border: statusFilter === 'In Progress' ? '2px solid #2563eb' : '1px solid #bfdbfe',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            boxShadow: statusFilter === 'In Progress' ? '0 4px 12px rgba(37, 99, 235, 0.18)' : '0 2px 4px rgba(0,0,0,0.02)'
+          }}
+          title="Click to filter by Active / In Progress Projects"
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase' }}>Active Projects</span>
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase' }}>
+              Active Projects {statusFilter === 'In Progress' ? '✓' : ''}
+            </span>
             <div className="dashboard-kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Layers size={16} color="#2563eb" />
             </div>
           </div>
           <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#1e40af' }}>{activeProjects}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#2563eb' }}>In progress / review</span>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#2563eb' }}>
+            {statusFilter === 'In Progress' ? 'Showing In Progress projects' : 'In progress / review (Click to filter)'}
+          </span>
         </div>
 
-        <div className="dashboard-kpi-card" style={{ background: overdueProjects > 0 ? '#fef2f2' : '#f0fdf4', padding: '1.25rem', borderRadius: '14px', border: overdueProjects > 0 ? '1px solid #fecaca' : '1px solid #bbf7d0' }}>
+        {/* KPI 3: OVERDUE DEADLINES -> Filters to Overdue projects */}
+        <div
+          className="dashboard-kpi-card"
+          onClick={() => {
+            setViewMode('projects');
+            setStatusFilter(prev => prev === 'overdue' ? 'all' : 'overdue');
+            setExpandedProjectId(null);
+          }}
+          style={{
+            background: statusFilter === 'overdue' ? '#fee2e2' : overdueProjects > 0 ? '#fef2f2' : '#f0fdf4',
+            padding: '1.25rem',
+            borderRadius: '14px',
+            border: statusFilter === 'overdue' ? '2px solid #dc2626' : overdueProjects > 0 ? '1px solid #fecaca' : '1px solid #bbf7d0',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            boxShadow: statusFilter === 'overdue' ? '0 4px 12px rgba(220, 38, 38, 0.18)' : '0 2px 4px rgba(0,0,0,0.02)'
+          }}
+          title="Click to filter by Overdue Projects"
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
             <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: overdueProjects > 0 ? '#991b1b' : '#166534', textTransform: 'uppercase' }}>
-              {overdueProjects > 0 ? 'Overdue Deadlines' : 'On Track'}
+              {overdueProjects > 0 ? 'Overdue Deadlines' : 'On Track'} {statusFilter === 'overdue' ? '✓' : ''}
             </span>
             <div className="dashboard-kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', background: overdueProjects > 0 ? '#fee2e2' : '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertTriangle size={16} color={overdueProjects > 0 ? '#dc2626' : '#16a34a'} />
@@ -602,19 +662,41 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
             {overdueProjects}
           </div>
           <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: overdueProjects > 0 ? '#ef4444' : '#16a34a' }}>
-            {overdueProjects > 0 ? 'Action required immediately' : 'All running within schedule'}
+            {statusFilter === 'overdue' ? 'Showing overdue projects' : overdueProjects > 0 ? 'Action required (Click to filter)' : 'All on schedule'}
           </span>
         </div>
 
-        <div className="dashboard-kpi-card" style={{ background: '#f0fdf4', padding: '1.25rem', borderRadius: '14px', border: '1px solid #86efac' }}>
+        {/* KPI 4: COMPLETED -> Filters to Completed projects */}
+        <div
+          className="dashboard-kpi-card"
+          onClick={() => {
+            setViewMode('projects');
+            setStatusFilter(prev => prev === 'Completed' ? 'all' : 'Completed');
+            setExpandedProjectId(null);
+          }}
+          style={{
+            background: statusFilter === 'Completed' ? '#dcfce7' : '#f0fdf4',
+            padding: '1.25rem',
+            borderRadius: '14px',
+            border: statusFilter === 'Completed' ? '2px solid #16a34a' : '1px solid #86efac',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            boxShadow: statusFilter === 'Completed' ? '0 4px 12px rgba(22, 163, 74, 0.18)' : '0 2px 4px rgba(0,0,0,0.02)'
+          }}
+          title="Click to filter by Completed Projects"
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#14532d', textTransform: 'uppercase' }}>Completed</span>
+            <span className="dashboard-kpi-title" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#14532d', textTransform: 'uppercase' }}>
+              Completed {statusFilter === 'Completed' ? '✓' : ''}
+            </span>
             <div className="dashboard-kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <CheckCircle size={16} color="#16a34a" />
             </div>
           </div>
           <div className="dashboard-kpi-val" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#14532d' }}>{completedProjects}</div>
-          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#16a34a' }}>Successfully delivered</span>
+          <span className="dashboard-kpi-sub" style={{ fontSize: '0.75rem', color: '#16a34a' }}>
+            {statusFilter === 'Completed' ? 'Showing completed projects' : 'Successfully delivered (Click to filter)'}
+          </span>
         </div>
       </div>
 
