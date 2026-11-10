@@ -1822,41 +1822,64 @@ export default function HierarchyManager({ API_URL, currentUser, hrs = [], onRef
                         </div>
 
                         {/* Card Actions */}
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                              onClick={() => { setSelectedBmId(bm.id); setBranchTab('team_leaders'); }}
+                              style={{
+                                flex: 1,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                padding: '10px 14px',
+                                background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontWeight: 700,
+                                fontSize: '0.88rem',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                              }}
+                            >
+                              Manage Branch & Teams ➔
+                            </button>
+                            <button
+                              onClick={() => handleOpenBmModal(bm)}
+                              style={{ padding: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', color: '#475569' }}
+                              title="Edit Branch Manager"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBm(bm.id, bm.name, bm.branch)}
+                              style={{ padding: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', color: '#ef4444' }}
+                              title="Delete Branch"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+
                           <button
-                            onClick={() => { setSelectedBmId(bm.id); setBranchTab('team_leaders'); }}
+                            onClick={() => { setSelectedBmId(bm.id); setBranchTab('it_projects'); }}
                             style={{
-                              flex: 1,
+                              width: '100%',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '6px',
-                              padding: '10px 14px',
-                              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                              color: '#fff',
-                              border: 'none',
+                              padding: '8px 12px',
+                              background: '#eff6ff',
+                              color: '#1d4ed8',
+                              border: '1.5px solid #bfdbfe',
                               borderRadius: '8px',
                               fontWeight: 700,
-                              fontSize: '0.88rem',
-                              cursor: 'pointer',
-                              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                              fontSize: '0.82rem',
+                              cursor: 'pointer'
                             }}
                           >
-                            Manage Branch & Teams ➔
-                          </button>
-                          <button
-                            onClick={() => handleOpenBmModal(bm)}
-                            style={{ padding: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', color: '#475569' }}
-                            title="Edit Branch Manager"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBm(bm.id, bm.name, bm.branch)}
-                            style={{ padding: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', color: '#ef4444' }}
-                            title="Delete Branch"
-                          >
-                            <Trash2 size={16} />
+                            💻 View Branch IT Projects ({bmItCount}) ➔
                           </button>
                         </div>
                       </div>

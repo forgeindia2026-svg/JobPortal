@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Code, Plus, Search, Calendar, Clock, AlertTriangle, CheckCircle,
   FileText, Eye, Trash2, Edit2, X, Upload, Image, RefreshCw, CheckCircle2,
-  ExternalLink, User, Layers, Building2, MapPin, FolderKanban, Check, Sparkles
+  ExternalLink, User, Layers, Building2, MapPin, FolderKanban, Check, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 export default function BranchItProjectsTab({ API_URL, currentUser }) {
@@ -16,6 +16,11 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [branchFilter, setBranchFilter] = useState('all');
+
+  // View mode: 'projects' (Grouped by Project) | 'employees' (Grouped by IT Employee) | 'table' (Detailed Rows)
+  const [viewMode, setViewMode] = useState('projects');
+  const [expandedProjectId, setExpandedProjectId] = useState(null);
+  const [expandedMemberName, setExpandedMemberName] = useState(null);
 
   // Master IT Projects State
   const [masterProjects, setMasterProjects] = useState([]);
@@ -441,6 +446,55 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
     return matchesSearch && matchesStatus && matchesBranch;
   });
 
+  // Group by Project (for Project-centric view with team members)
+  const groupedProjects = useMemo(() => {
+    const map = new Map();
+    filteredProjects.forEach(p => {
+      const key = (p.projectName || 'General').trim().toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, {
+          id: p.id || key,
+          name: p.projectName || 'General Project',
+          branch: p.branch,
+          branchManagerName: p.branchManagerName,
+          description: p.description,
+          deadline: p.deadline,
+          status: p.status || 'In Progress',
+          members: []
+        });
+      }
+      const proj = map.get(key);
+      proj.members.push(p);
+      if (p.status === 'Completed' && proj.status !== 'In Progress') {
+        proj.status = 'Completed';
+      }
+      if (p.status === 'In Progress') {
+        proj.status = 'In Progress';
+      }
+    });
+    return Array.from(map.values());
+  }, [filteredProjects]);
+
+  // Group by Employee (for Employee-centric view with all projects)
+  const groupedEmployees = useMemo(() => {
+    const map = new Map();
+    filteredProjects.forEach(p => {
+      const key = (p.memberName || '').trim().toLowerCase();
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, {
+          name: p.memberName,
+          role: p.memberRole || 'Developer',
+          branch: p.branch,
+          branchManagerName: p.branchManagerName,
+          projects: []
+        });
+      }
+      map.get(key).projects.push(p);
+    });
+    return Array.from(map.values());
+  }, [filteredProjects]);
+
   // KPI calculations
   const totalMembers = new Set(projects.map(p => (p.memberName || '').trim().toLowerCase())).size;
   const activeProjects = projects.filter(p => p.status !== 'Completed').length;
@@ -617,16 +671,82 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
 
       {/* Projects List Container */}
       <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
-              IT Projects Directory ({filteredProjects.length})
+              IT Projects Directory ({viewMode === 'projects' ? groupedProjects.length : viewMode === 'employees' ? groupedEmployees.length : filteredProjects.length})
             </h3>
             <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              {isAdmin
-                ? 'Showing IT members clearly organized with their assigned Branch & Branch Manager'
+              {viewMode === 'projects'
+                ? 'Showing projects with active team members, deadlines & completion status'
+                : viewMode === 'employees'
+                ? 'Showing IT team members and all projects they have worked on'
                 : 'Assignments and live countdown deadlines for this branch'}
             </span>
+          </div>
+
+          {/* View Mode Switcher Pills */}
+          <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', gap: '4px' }}>
+            <button
+              type="button"
+              onClick={() => { setViewMode('projects'); setExpandedProjectId(null); }}
+              style={{
+                border: 'none',
+                background: viewMode === 'projects' ? '#2563eb' : 'transparent',
+                color: viewMode === 'projects' ? '#fff' : '#475569',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s'
+              }}
+            >
+              📁 By Projects ({groupedProjects.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setViewMode('employees'); setExpandedMemberName(null); }}
+              style={{
+                border: 'none',
+                background: viewMode === 'employees' ? '#2563eb' : 'transparent',
+                color: viewMode === 'employees' ? '#fff' : '#475569',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s'
+              }}
+            >
+              👥 By Employees ({groupedEmployees.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              style={{
+                border: 'none',
+                background: viewMode === 'table' ? '#2563eb' : 'transparent',
+                color: viewMode === 'table' ? '#fff' : '#475569',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s'
+              }}
+            >
+              📋 Detailed Table
+            </button>
           </div>
         </div>
 
@@ -644,6 +764,342 @@ export default function BranchItProjectsTab({ API_URL, currentUser }) {
                 ? 'No projects match your filter query.'
                 : 'Click "+ Add IT Member / Project" to register your first IT project with email proof.'}
             </p>
+          </div>
+        ) : viewMode === 'projects' ? (
+          /* ========================================================================= */
+          /* VIEW MODE 1: BY PROJECTS (With assigned team members)                    */
+          /* ========================================================================= */
+          <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {groupedProjects.map((proj) => {
+              const isExpanded = expandedProjectId === proj.name;
+              const isCompleted = proj.status === 'Completed';
+
+              return (
+                <div
+                  key={proj.name}
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {/* Project Header Card */}
+                  <div
+                    onClick={() => setExpandedProjectId(isExpanded ? null : proj.name)}
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      background: isExpanded ? '#f8fafc' : '#ffffff',
+                      borderBottom: isExpanded ? '1px solid #e2e8f0' : 'none',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <div style={{ flex: 1, paddingRight: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                          📁 {proj.name}
+                        </span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: isCompleted ? '#dcfce7' : '#eff6ff',
+                            color: isCompleted ? '#15803d' : '#1d4ed8',
+                            border: `1px solid ${isCompleted ? '#86efac' : '#bfdbfe'}`,
+                            padding: '3px 10px',
+                            borderRadius: '20px',
+                            fontWeight: 700,
+                            fontSize: '0.78rem'
+                          }}
+                        >
+                          {isCompleted ? '✓ Completed' : '⏳ In Progress'}
+                        </span>
+                        {proj.branch && (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: '#f1f5f9',
+                              color: '#475569',
+                              border: '1px solid #cbd5e1',
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
+                            }}
+                          >
+                            <Building2 size={12} color="#64748b" /> {proj.branch}
+                            {proj.branchManagerName && ` • ${proj.branchManagerName}`}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', fontSize: '0.82rem', color: '#64748b' }}>
+                        <span>
+                          👥 <strong style={{ color: '#0f172a' }}>{proj.members.length}</strong> Team Member{proj.members.length > 1 ? 's' : ''}
+                        </span>
+                        {proj.deadline && (
+                          <span>
+                            📅 Target: <strong style={{ color: '#0f172a' }}>{new Date(proj.deadline + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+                          </span>
+                        )}
+                        {proj.description && (
+                          <span style={{ color: '#475569', maxWidth: '500px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            📝 {proj.description}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#2563eb' }}>
+                        {isExpanded ? 'Hide Members' : 'View Team Members'}
+                      </span>
+                      {isExpanded ? <ChevronUp size={18} color="#2563eb" /> : <ChevronDown size={18} color="#2563eb" />}
+                    </div>
+                  </div>
+
+                  {/* Expanded Members Table / List */}
+                  {isExpanded && (
+                    <div style={{ padding: '1rem 1.5rem', background: '#ffffff' }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+                        Assigned Developers & Roles ({proj.members.length})
+                      </div>
+                      <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                              <th style={{ padding: '10px 14px' }}>Member Name</th>
+                              <th style={{ padding: '10px 14px' }}>Role</th>
+                              <th style={{ padding: '10px 14px' }}>Individual Status</th>
+                              <th style={{ padding: '10px 14px' }}>Deadline</th>
+                              <th style={{ padding: '10px 14px' }}>Email Proof</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'right' }}>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {proj.members.map((m) => {
+                              const deadlineInfo = getDeadlineStatus(m.deadline, m.status);
+                              const proofUrl = m.emailProofUrl ? `${resolvedApi}${m.emailProofUrl}` : null;
+                              return (
+                                <tr key={m.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <td style={{ padding: '12px 14px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>
+                                        {(m.memberName || 'M')[0].toUpperCase()}
+                                      </div>
+                                      <span style={{ fontWeight: 800, color: '#0f172a' }}>{m.memberName}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: '12px 14px' }}>
+                                    <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                      {m.memberRole || 'Developer'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '12px 14px' }}>
+                                    <select
+                                      value={m.status || 'In Progress'}
+                                      onChange={(e) => handleQuickStatusChange(m, e.target.value)}
+                                      style={{
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 700,
+                                        border: '1px solid #cbd5e1',
+                                        background: m.status === 'Completed' ? '#dcfce7' : '#fff',
+                                        color: m.status === 'Completed' ? '#15803d' : '#0f172a'
+                                      }}
+                                    >
+                                      <option value="In Progress">In Progress</option>
+                                      <option value="Under Review">Under Review</option>
+                                      <option value="Completed">Completed</option>
+                                      <option value="Delayed">Delayed</option>
+                                    </select>
+                                  </td>
+                                  <td style={{ padding: '12px 14px', fontSize: '0.8rem' }}>
+                                    {m.deadline ? new Date(m.deadline + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}
+                                  </td>
+                                  <td style={{ padding: '12px 14px' }}>
+                                    {proofUrl ? (
+                                      <button
+                                        onClick={() => setViewProofModal(m)}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                      >
+                                        <Eye size={12} /> View Proof
+                                      </button>
+                                    ) : (
+                                      <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>No Proof</span>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                      <button
+                                        onClick={() => handleOpenEditModal(m)}
+                                        style={{ padding: '4px 8px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                                        title="Edit assignment"
+                                      >
+                                        <Edit2 size={12} />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDelete(m.id)}
+                                        style={{ padding: '4px 8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}
+                                        title="Delete assignment"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : viewMode === 'employees' ? (
+          /* ========================================================================= */
+          /* VIEW MODE 2: BY EMPLOYEES (With assigned projects)                      */
+          /* ========================================================================= */
+          <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {groupedEmployees.map((emp) => {
+              const isExpanded = expandedMemberName === emp.name;
+              return (
+                <div
+                  key={emp.name}
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div
+                    onClick={() => setExpandedMemberName(isExpanded ? null : emp.name)}
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      background: isExpanded ? '#f8fafc' : '#ffffff',
+                      borderBottom: isExpanded ? '1px solid #e2e8f0' : 'none',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.1rem' }}>
+                        {(emp.name || 'E')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{emp.name}</span>
+                          <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                            {emp.role}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>
+                          🏢 {emp.branch || 'Main Branch'} {emp.branchManagerName ? ` • Manager: ${emp.branchManagerName}` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800 }}>
+                        💼 {emp.projects.length} Project{emp.projects.length > 1 ? 's' : ''}
+                      </span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#2563eb' }}>
+                        {isExpanded ? 'Hide Projects' : 'View Projects'}
+                      </span>
+                      {isExpanded ? <ChevronUp size={18} color="#2563eb" /> : <ChevronDown size={18} color="#2563eb" />}
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{ padding: '1rem 1.5rem', background: '#ffffff' }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+                        Projects Assigned to {emp.name} ({emp.projects.length})
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {emp.projects.map((ep) => {
+                          const isCompleted = ep.status === 'Completed';
+                          const proofUrl = ep.emailProofUrl ? `${resolvedApi}${ep.emailProofUrl}` : null;
+                          return (
+                            <div
+                              key={ep.id}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '10px 14px',
+                                background: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '10px',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                              }}
+                            >
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>
+                                  📁 {ep.projectName}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                                  Role: <strong style={{ color: '#334155' }}>{ep.memberRole || emp.role}</strong>
+                                  {ep.deadline && ` • Deadline: ${ep.deadline}`}
+                                  {ep.description && ` • ${ep.description}`}
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    background: isCompleted ? '#dcfce7' : '#eff6ff',
+                                    color: isCompleted ? '#15803d' : '#1d4ed8',
+                                    border: `1px solid ${isCompleted ? '#86efac' : '#bfdbfe'}`,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px',
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem'
+                                  }}
+                                >
+                                  {isCompleted ? '✓ Completed' : '⏳ In Progress'}
+                                </span>
+
+                                {proofUrl && (
+                                  <button
+                                    onClick={() => setViewProofModal(ep)}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                  >
+                                    <Eye size={12} /> Proof
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <>

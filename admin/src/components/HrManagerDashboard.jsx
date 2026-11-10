@@ -3,7 +3,7 @@ import {
   Building2, Users, FileText, CalendarDays, CheckCircle2, Clock,
   RefreshCw, Search, Download, ArrowLeft, ExternalLink, XCircle,
   FileCheck, ChevronRight, LogOut, Filter, MapPin, Phone, Mail,
-  Award, Flame, Target, ShieldCheck, ChevronDown, Check, UserCheck, Briefcase
+  Award, Flame, Target, ShieldCheck, ChevronDown, ChevronUp, Check, UserCheck, Briefcase, X, FolderKanban, Code
 } from 'lucide-react';
 import OffersAndTargetsView from './OffersAndTargetsView';
 
@@ -124,14 +124,23 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
   const [newStatus, setNewStatus] = useState('Shortlisted');
   const [savingStatus, setSavingStatus] = useState(false);
 
+  // IT Projects Modal & State
+  const [itProjects, setItProjects] = useState([]);
+  const [selectedBranchForProjects, setSelectedBranchForProjects] = useState(null);
+  const [branchProjectsModalVisible, setBranchProjectsModalVisible] = useState(false);
+  const [branchProjectsTab, setBranchProjectsTab] = useState('projects'); // 'projects' | 'employees'
+  const [expandedProjName, setExpandedProjName] = useState(null);
+  const [expandedMemberName, setExpandedMemberName] = useState(null);
+
   const fetchOverview = useCallback(async () => {
     try {
       setLoading(true);
-      const [res, repRes, intRes, jobsRes] = await Promise.all([
+      const [res, repRes, intRes, jobsRes, itRes] = await Promise.all([
         fetch(`${API_URL}/api/users/hr-managers/${currentUser.id}/overview`),
         fetch(`${API_URL}/api/reports/dashboard`).catch(() => null),
         fetch(`${API_URL}/api/interviews`).catch(() => null),
         fetch(`${API_URL}/api/jobs`).catch(() => null),
+        fetch(`${API_URL}/api/branch-it-projects`).catch(() => null),
       ]);
       if (res && res.ok) {
         const json = await res.json();
@@ -151,6 +160,10 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
       if (jobsRes && jobsRes.ok) {
         const jobsJson = await jobsRes.json();
         if (Array.isArray(jobsJson)) setJobsList(jobsJson);
+      }
+      if (itRes && itRes.ok) {
+        const itJson = await itRes.json();
+        if (Array.isArray(itJson)) setItProjects(itJson);
       }
     } catch (err) {
       console.error('Error fetching HR manager overview:', err);
@@ -849,76 +862,184 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px' }}>
-                    {branches.map((b) => (
-                      <div
-                        key={b.branchId}
-                        style={{
-                          background: '#ffffff',
-                          borderRadius: '16px',
-                          padding: '1.25rem',
-                          border: '1.5px solid #e2e8f0',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onClick={() => {
-                          setBranchFilter(b.branchName);
-                          setActiveTab('applied');
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.borderColor = '#93c5fd';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(37,99,235,0.08)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'none';
-                          e.currentTarget.style.borderColor = '#e2e8f0';
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div>
-                            <span style={{ background: '#eff6ff', color: '#1d4ed8', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                              BRANCH
+                    {branches.map((b) => {
+                      const branchKey = (b.branchName || '').toLowerCase().trim();
+                      const branchIt = itProjects.filter((p) => {
+                        const pb = (p.branch || '').toLowerCase().trim();
+                        return (
+                          pb === branchKey ||
+                          (b.branchId && p.branchManagerId && String(p.branchManagerId) === String(b.branchId))
+                        );
+                      });
+
+                      // Group by Project
+                      const projMap = new Map();
+                      branchIt.forEach((p) => {
+                        const key = (p.projectName || 'General').trim().toLowerCase();
+                        if (!projMap.has(key)) {
+                          projMap.set(key, {
+                            id: p.id || key,
+                            name: p.projectName || 'General Project',
+                            status: p.status || 'In Progress',
+                            deadline: p.deadline || '',
+                            description: p.description || '',
+                            members: []
+                          });
+                        }
+                        const group = projMap.get(key);
+                        group.members.push(p);
+                        if (p.status === 'Completed' && group.status !== 'In Progress') {
+                          group.status = 'Completed';
+                        }
+                        if (p.status === 'In Progress') {
+                          group.status = 'In Progress';
+                        }
+                      });
+                      const branchGroupedProjects = Array.from(projMap.values());
+
+                      // Group by Employee
+                      const empMap = new Map();
+                      branchIt.forEach((p) => {
+                        const key = (p.memberName || '').trim().toLowerCase();
+                        if (!key) return;
+                        if (!empMap.has(key)) {
+                          empMap.set(key, {
+                            name: p.memberName,
+                            role: p.memberRole || 'Developer',
+                            projects: []
+                          });
+                        }
+                        empMap.get(key).projects.push(p);
+                      });
+                      const branchGroupedEmployees = Array.from(empMap.values());
+
+                      return (
+                        <div
+                          key={b.branchId}
+                          style={{
+                            background: '#ffffff',
+                            borderRadius: '16px',
+                            padding: '1.25rem',
+                            border: '1.5px solid #e2e8f0',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onClick={() => {
+                            setBranchFilter(b.branchName);
+                            setActiveTab('applied');
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.borderColor = '#93c5fd';
+                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(37,99,235,0.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'none';
+                            e.currentTarget.style.borderColor = '#e2e8f0';
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                              <span style={{ background: '#eff6ff', color: '#1d4ed8', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                                BRANCH
+                              </span>
+                              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px 0' }}>
+                                {b.branchName}
+                              </h3>
+                              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                Manager: <strong style={{ color: '#0f172a' }}>{b.managerName}</strong>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#2563eb' }}>
+                                {b.totalApplications}
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Applications</div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', background: '#f8fafc', padding: '10px', borderRadius: '10px', marginTop: '14px' }}>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Team Leaders</div>
+                              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>{b.totalTls}</div>
+                            </div>
+                            <div style={{ textAlign: 'center', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Executive HRs</div>
+                              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>{b.totalHrs}</div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#16a34a' }}>Closed</div>
+                              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#16a34a' }}>{b.selectedCandidates}</div>
+                            </div>
+                          </div>
+
+                          {/* 💻 IT Projects Action Button */}
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBranchForProjects({
+                                ...b,
+                                groupedProjects: branchGroupedProjects,
+                                groupedEmployees: branchGroupedEmployees,
+                                itCount: branchIt.length
+                              });
+                              setBranchProjectsTab('projects');
+                              setExpandedProjName(null);
+                              setExpandedMemberName(null);
+                              setBranchProjectsModalVisible(true);
+                            }}
+                            style={{
+                              marginTop: '10px',
+                              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                              border: '1.5px solid #bfdbfe',
+                              borderRadius: '10px',
+                              padding: '10px 12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '8px',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#bfdbfe'}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+                                💻
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e40af', letterSpacing: '0.3px' }}>
+                                    IT PROJECTS
+                                  </span>
+                                  <span style={{ background: '#2563eb', color: '#fff', padding: '1px 6px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>
+                                    {branchGroupedProjects.length}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: '#475569' }}>
+                                  {branchGroupedProjects.length > 0
+                                    ? `${branchGroupedProjects.length} Projects · ${branchGroupedEmployees.length} Members`
+                                    : 'No projects added yet'}
+                                </div>
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563eb', background: '#fff', padding: '4px 10px', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+                              View Details →
                             </span>
-                            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px 0' }}>
-                              {b.branchName}
-                            </h3>
-                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                              Manager: <strong style={{ color: '#0f172a' }}>{b.managerName}</strong>
-                            </div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#2563eb' }}>
-                              {b.totalApplications}
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Applications</div>
-                          </div>
-                        </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', background: '#f8fafc', padding: '10px', borderRadius: '10px', marginTop: '14px' }}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Team Leaders</div>
-                            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>{b.totalTls}</div>
-                          </div>
-                          <div style={{ textAlign: 'center', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0' }}>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Executive HRs</div>
-                            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>{b.totalHrs}</div>
-                          </div>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.72rem', color: '#16a34a' }}>Hired</div>
-                            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#16a34a' }}>{b.selectedCandidates}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '0.76rem', color: '#64748b' }}>📍 {b.location || 'Branch Office'}</span>
+                            <span style={{ fontSize: '0.78rem', color: '#2563eb', fontWeight: 700 }}>
+                              View Branch Pipeline →
+                            </span>
                           </div>
                         </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
-                          <span style={{ fontSize: '0.76rem', color: '#64748b' }}>📍 {b.location || 'Branch Office'}</span>
-                          <span style={{ fontSize: '0.78rem', color: '#2563eb', fontWeight: 700 }}>
-                            View Branch Pipeline →
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -2163,6 +2284,358 @@ export default function HrManagerDashboard({ API_URL, currentUser, sidebarOpen, 
                 style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: '#2563eb', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
               >
                 {savingStatus ? 'Saving...' : 'Save Status'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BRANCH IT PROJECTS & TEAM DETAILS */}
+      {branchProjectsModalVisible && selectedBranchForProjects && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+          onClick={() => setBranchProjectsModalVisible(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '680px',
+              maxHeight: '88vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              border: '1px solid #cbd5e1',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Branch IT Operations
+                </span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#ffffff' }}>
+                  💻 {selectedBranchForProjects.branchName ? selectedBranchForProjects.branchName.toUpperCase() : 'BRANCH'} IT PROJECTS
+                </h3>
+                <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                  Manager: <strong style={{ color: '#e2e8f0' }}>{selectedBranchForProjects.managerName || 'Assigned Manager'}</strong>
+                </div>
+              </div>
+              <button
+                onClick={() => setBranchProjectsModalVisible(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '34px',
+                  height: '34px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Subtabs Switcher */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', padding: '8px 16px', gap: '8px' }}>
+              <button
+                onClick={() => setBranchProjectsTab('projects')}
+                style={{
+                  flex: 1,
+                  padding: '9px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: branchProjectsTab === 'projects' ? '#2563eb' : 'transparent',
+                  color: branchProjectsTab === 'projects' ? '#fff' : '#475569',
+                  fontWeight: 800,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                📁 Projects ({(selectedBranchForProjects.groupedProjects || []).length})
+              </button>
+              <button
+                onClick={() => setBranchProjectsTab('employees')}
+                style={{
+                  flex: 1,
+                  padding: '9px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: branchProjectsTab === 'employees' ? '#2563eb' : 'transparent',
+                  color: branchProjectsTab === 'employees' ? '#fff' : '#475569',
+                  fontWeight: 800,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                👥 IT Employees ({(selectedBranchForProjects.groupedEmployees || []).length})
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {branchProjectsTab === 'projects' ? (
+                /* Projects List */
+                (selectedBranchForProjects.groupedProjects || []).length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#64748b' }}>
+                    <Code size={36} style={{ opacity: 0.3, margin: '0 auto 10px auto' }} />
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>No IT Projects Found</div>
+                    <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>No projects registered under this branch yet.</div>
+                  </div>
+                ) : (
+                  (selectedBranchForProjects.groupedProjects || []).map((proj) => {
+                    const isExpanded = expandedProjName === proj.name;
+                    const isCompleted = proj.status === 'Completed';
+
+                    return (
+                      <div
+                        key={proj.name}
+                        style={{
+                          background: '#fff',
+                          border: '1.5px solid #e2e8f0',
+                          borderRadius: '12px',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div
+                          onClick={() => setExpandedProjName(isExpanded ? null : proj.name)}
+                          style={{
+                            padding: '12px 14px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            background: isExpanded ? '#f8fafc' : '#fff',
+                            borderBottom: isExpanded ? '1px solid #e2e8f0' : 'none'
+                          }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
+                                📁 {proj.name}
+                              </span>
+                              <span
+                                style={{
+                                  background: isCompleted ? '#dcfce7' : '#eff6ff',
+                                  color: isCompleted ? '#15803d' : '#1d4ed8',
+                                  border: `1px solid ${isCompleted ? '#86efac' : '#bfdbfe'}`,
+                                  padding: '2px 8px',
+                                  borderRadius: '12px',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem'
+                                }}
+                              >
+                                {isCompleted ? '✓ Completed' : '⏳ In Progress'}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
+                              👥 <strong>{proj.members.length}</strong> Member{proj.members.length > 1 ? 's' : ''}
+                              {proj.deadline && ` • 📅 Target: ${proj.deadline}`}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563eb' }}>
+                            {isExpanded ? 'Hide ▲' : 'View Members ▼'}
+                          </span>
+                        </div>
+
+                        {isExpanded && (
+                          <div style={{ padding: '12px 14px', background: '#fafafa' }}>
+                            {proj.description && (
+                              <div style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '10px', fontStyle: 'italic' }}>
+                                📝 {proj.description}
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>
+                              Assigned Team Members:
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {proj.members.map((m, mIdx) => (
+                                <div
+                                  key={m.id || mIdx}
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 10px',
+                                    background: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px'
+                                  }}
+                                >
+                                  <div>
+                                    <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a' }}>{m.memberName}</div>
+                                    <div style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 700 }}>{m.memberRole || 'Developer'}</div>
+                                  </div>
+                                  <span
+                                    style={{
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      padding: '2px 8px',
+                                      borderRadius: '10px',
+                                      background: m.status === 'Completed' ? '#dcfce7' : '#eff6ff',
+                                      color: m.status === 'Completed' ? '#15803d' : '#1d4ed8'
+                                    }}
+                                  >
+                                    {m.status || 'In Progress'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )
+              ) : (
+                /* Employees List */
+                (selectedBranchForProjects.groupedEmployees || []).length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#64748b' }}>
+                    <Users size={36} style={{ opacity: 0.3, margin: '0 auto 10px auto' }} />
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>No IT Employees Found</div>
+                    <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>No members registered under this branch yet.</div>
+                  </div>
+                ) : (
+                  (selectedBranchForProjects.groupedEmployees || []).map((emp) => {
+                    const isExpanded = expandedMemberName === emp.name;
+
+                    return (
+                      <div
+                        key={emp.name}
+                        style={{
+                          background: '#fff',
+                          border: '1.5px solid #e2e8f0',
+                          borderRadius: '12px',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div
+                          onClick={() => setExpandedMemberName(isExpanded ? null : emp.name)}
+                          style={{
+                            padding: '12px 14px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            background: isExpanded ? '#f8fafc' : '#fff',
+                            borderBottom: isExpanded ? '1px solid #e2e8f0' : 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.88rem' }}>
+                              {(emp.name || 'E')[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a' }}>{emp.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#0369a1', fontWeight: 700 }}>{emp.role}</div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ background: '#eff6ff', color: '#1e40af', padding: '2px 8px', borderRadius: '12px', fontSize: '0.74rem', fontWeight: 800 }}>
+                              💼 {emp.projects.length} Project{emp.projects.length > 1 ? 's' : ''}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563eb' }}>
+                              {isExpanded ? 'Hide ▲' : 'View Projects ▼'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div style={{ padding: '12px 14px', background: '#fafafa' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>
+                              Projects Worked On:
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {emp.projects.map((ep, epIdx) => (
+                                <div
+                                  key={ep.id || epIdx}
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 10px',
+                                    background: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px'
+                                  }}
+                                >
+                                  <div>
+                                    <div style={{ fontWeight: 800, fontSize: '0.86rem', color: '#0f172a' }}>📁 {ep.projectName}</div>
+                                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Role: {ep.memberRole || emp.role}</div>
+                                  </div>
+                                  <span
+                                    style={{
+                                      fontSize: '0.72rem',
+                                      fontWeight: 800,
+                                      padding: '2px 8px',
+                                      borderRadius: '10px',
+                                      background: ep.status === 'Completed' ? '#dcfce7' : '#eff6ff',
+                                      color: ep.status === 'Completed' ? '#15803d' : '#1d4ed8'
+                                    }}
+                                  >
+                                    {ep.status || 'In Progress'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '10px 1.5rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setBranchProjectsModalVisible(false)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#fff',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
               </button>
             </div>
           </div>
